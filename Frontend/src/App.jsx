@@ -14,8 +14,9 @@ function App() {
   const { pathname, hash } = useLocation();
   const currentRoute = hash?.startsWith("#") ? hash.slice(1) : pathname;
   const isAuthPage = currentRoute === "/login" || currentRoute === "/register";
-  const isAdminArea = currentRoute === "/admin" || currentRoute.startsWith("/admin/") || currentRoute === "/employee" || currentRoute.startsWith("/employee/");
-  const showPublicChrome = !isAuthPage && !isAdminArea;
+  const isAdmin = currentRoute === "/admin" || currentRoute.startsWith("/admin/");
+  const isEmployee = currentRoute === "/employee" || currentRoute.startsWith("/employee/");
+  const showPublicChrome = !isAuthPage && !isAdmin && !isEmployee;
 
   if (loading) {
     return <Loader />;
@@ -28,7 +29,7 @@ function App() {
       <ScrollToTop/>
       <ScrollNavigator/>
       <Outlet />
-      <FloatingSupport />
+      {!isAdmin && <FloatingSupport />}
       {showPublicChrome && <Footer />}
     </section>
   );
