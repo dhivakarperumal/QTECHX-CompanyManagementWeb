@@ -103,10 +103,10 @@ const EmployeeHeader = ({ onMenuClick }) => {
     <button
       onClick={() => toggle(name)}
       title={title}
-      className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] transition-all duration-200 border
+      className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-2xl transition-all duration-200 border
         ${activeDropdown === name
-          ? "bg-white/10 border-white/20 text-white shadow-lg"
-          : "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-white/60 hover:text-white"
+          ? "bg-white/[0.12] border-white/[0.15] text-white shadow-lg shadow-black/20"
+          : "bg-white/[0.04] border-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/90 hover:border-white/[0.1]"
         }`}
     >
       {children}

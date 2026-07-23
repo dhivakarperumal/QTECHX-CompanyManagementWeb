@@ -49,10 +49,9 @@ const getPageInfo = (pathname) => {
 
 const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
   let viewAllLink = "/admin";
-  if (type === "orders") viewAllLink = "/admin/orders";
-  if (type === "stock") viewAllLink = "/admin/products";
-  if (type === "members") viewAllLink = "/admin/members";
-  if (type === "expiry") viewAllLink = "/admin/expiry-members";
+  if (type === "tasks") viewAllLink = "/admin/tasks";
+  if (type === "projects") viewAllLink = "/admin/projects";
+  if (type === "leaves") viewAllLink = "/admin/leaves";
 
   return (
     <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
@@ -65,10 +64,9 @@ const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
       <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
         {items.length ? items.map((item, i) => {
           let link = "/admin", label = "", sub = "";
-          if (type === "orders")  { link = "/admin/orders";         label = item.order_id;     sub = `₹${item.total}`; }
-          if (type === "stock")   { link = "/admin/products";       label = item.name;          sub = item.category; }
-          if (type === "members") { link = "/admin/members";        label = item.name || "New Member"; sub = `Joined ${dayjs(item.createdAt).format("hh:mm A")}`; }
-          if (type === "expiry")  { link = "/admin/expiry-members"; label = item.username;      sub = item.planName; }
+          if (type === "tasks")    { link = "/admin/tasks";    label = item.title;       sub = item.project; }
+          if (type === "projects") { link = "/admin/projects"; label = item.name;        sub = `Due: ${item.due}`; }
+          if (type === "leaves")   { link = "/admin/leaves";   label = item.employee;    sub = item.type; }
           return (
             <Link key={i} to={link} onClick={onClose} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition group">
               <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">{icon}</div>
@@ -94,7 +92,7 @@ const Header = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [alerts, setAlerts] = useState({ orders: [], lowStock: [], expiring: [], registrations: [] });
+  const [alerts, setAlerts] = useState({ tasks: [], projects: [], leaves: [] });
   const [currentTime, setCurrentTime] = useState(dayjs());
 
   const dropdownRef = useRef(null);
@@ -115,28 +113,23 @@ const Header = ({ onMenuClick }) => {
     return () => clearInterval(t);
   }, []);
 
-  /* fetch alerts */
+  /* fetch alerts mock */
   useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        const [o, s, e, r] = await Promise.all([
-          api.get("/orders/today").catch(() => ({ data: [] })),
-          api.get("/products/alerts/low-stock").catch(() => ({ data: [] })),
-          api.get("/memberships/alerts/expiring-soon").catch(() => ({ data: [] })),
-          api.get("/memberships/today").catch(() => ({ data: [] })),
-        ]);
-        const todayStr = new Date().toDateString();
-        setAlerts({
-          orders: o.data || [],
-          lowStock: s.data || [],
-          expiring: e.data || [],
-          registrations: (r.data || []).filter(x => new Date(x.createdAt || x.created_at).toDateString() === todayStr),
-        });
-      } catch {}
-    };
-    fetchAlerts();
-    const t = setInterval(fetchAlerts, 5 * 60 * 1000);
-    return () => clearInterval(t);
+    // Setting some mock alerts for demonstration
+    setAlerts({
+      tasks: [
+        { title: "Design Login UI Revamp", project: "CMS Web App" },
+        { title: "API Integration – Employee", project: "Backend Module" }
+      ],
+      projects: [
+        { name: "CMS Web App", due: "Aug 10" },
+        { name: "Backend Module", due: "Aug 20" }
+      ],
+      leaves: [
+        { employee: "Rahul Kumar", type: "Casual Leave" },
+        { employee: "Priya Sharma", type: "Sick Leave" }
+      ]
+    });
   }, []);
 
   /* focus search */
@@ -153,7 +146,7 @@ const Header = ({ onMenuClick }) => {
   }, [activeDropdown, showSearch]);
 
   const toggle = (name) => setActiveDropdown(p => p === name ? null : name);
-  const totalAlerts = alerts.orders.length + alerts.lowStock.length + alerts.expiring.length + alerts.registrations.length;
+  const totalAlerts = alerts.tasks.length + alerts.projects.length + alerts.leaves.length;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -174,10 +167,10 @@ const Header = ({ onMenuClick }) => {
       <button
         onClick={() => toggle(name)}
         title={title}
-        className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] transition-all duration-200 border
+        className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-2xl transition-all duration-200 border
           ${activeDropdown === name
-            ? "bg-white/10 border-white/20 text-white shadow-lg"
-            : "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-white/60 hover:text-white"
+            ? "bg-white/[0.12] border-white/[0.15] text-white shadow-lg shadow-black/20"
+            : "bg-white/[0.04] border-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/90 hover:border-white/[0.1]"
           }`}
       >
         {children}
@@ -232,36 +225,28 @@ const Header = ({ onMenuClick }) => {
             {/* Divider */}
             <div className="w-px h-6 bg-white/10 mx-1" />
 
-            {/* Orders */}
-            <IconBtn name="orders" badge={alerts.orders.length} badgeColor="bg-green-500" title="Today's Orders">
-              <ShoppingBag size={18} />
+            {/* Task Updates */}
+            <IconBtn name="tasks" badge={alerts.tasks.length} badgeColor="bg-blue-500" title="Task Updates">
+              <CheckSquare size={18} />
             </IconBtn>
-            {activeDropdown === "orders" && (
-              <AlertDropdown title="Today's Orders" items={alerts.orders} icon={<ShoppingBag size={13} className="text-green-400" />} type="orders" onClose={() => setActiveDropdown(null)} accent="bg-green-500/20 text-green-400" />
+            {activeDropdown === "tasks" && (
+              <AlertDropdown title="Task Updates" items={alerts.tasks} icon={<CheckSquare size={13} className="text-blue-400" />} type="tasks" onClose={() => setActiveDropdown(null)} accent="bg-blue-500/20 text-blue-400" />
             )}
 
-            {/* Low Stock */}
-            <IconBtn name="stock" badge={alerts.lowStock.length} badgeColor="bg-orange-500" title="Low Stock">
-              <Package size={18} />
+            {/* Project Updates */}
+            <IconBtn name="projects" badge={alerts.projects.length} badgeColor="bg-purple-500" title="Project Updates">
+              <FolderKanban size={18} />
             </IconBtn>
-            {activeDropdown === "stock" && (
-              <AlertDropdown title="Stock Alerts" items={alerts.lowStock} icon={<Package size={13} className="text-orange-400" />} type="stock" onClose={() => setActiveDropdown(null)} accent="bg-orange-500/20 text-orange-400" />
+            {activeDropdown === "projects" && (
+              <AlertDropdown title="Project Updates" items={alerts.projects} icon={<FolderKanban size={13} className="text-purple-400" />} type="projects" onClose={() => setActiveDropdown(null)} accent="bg-purple-500/20 text-purple-400" />
             )}
 
-            {/* Expiring */}
-            <IconBtn name="expiry" badge={alerts.expiring.length} badgeColor="bg-red-500" title="Expiring Plans">
-              <Clock size={18} />
+            {/* Leave Requests */}
+            <IconBtn name="leaves" badge={alerts.leaves.length} badgeColor="bg-yellow-500" title="Leave Requests">
+              <CalendarOff size={18} />
             </IconBtn>
-            {activeDropdown === "expiry" && (
-              <AlertDropdown title="Expiring Plans" items={alerts.expiring} icon={<Clock size={13} className="text-red-400" />} type="expiry" onClose={() => setActiveDropdown(null)} accent="bg-red-500/20 text-red-400" />
-            )}
-
-            {/* New Members */}
-            <IconBtn name="members" badge={alerts.registrations.length} badgeColor="bg-blue-500" title="New Members Today">
-              <Users size={18} />
-            </IconBtn>
-            {activeDropdown === "members" && (
-              <AlertDropdown title="New Members" items={alerts.registrations} icon={<User size={13} className="text-blue-400" />} type="members" onClose={() => setActiveDropdown(null)} accent="bg-blue-500/20 text-blue-400" />
+            {activeDropdown === "leaves" && (
+              <AlertDropdown title="Leave Requests" items={alerts.leaves} icon={<CalendarOff size={13} className="text-yellow-400" />} type="leaves" onClose={() => setActiveDropdown(null)} accent="bg-yellow-500/20 text-yellow-400" />
             )}
 
             {/* Bell summary */}

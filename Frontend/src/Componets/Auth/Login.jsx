@@ -230,7 +230,7 @@ const Login = () => {
             {submitted && <p className="text-green-500 text-sm text-center mt-2">✅ Login successful!</p>}
 
             <p className="text-center text-sm text-gray-500 mt-4">
-              Don't have an account? <Link to="/contact-admin" className="text-primary hover:text-orange-400 transition-colors">Contact Administrator</Link>
+              Don't have an account? <a href="tel:+1234567890" className="text-primary hover:text-orange-400 transition-colors">Contact Administrator</a>
             </p>
           </form>
         </div>

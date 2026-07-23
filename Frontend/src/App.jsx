@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Componets/CommonComponents/Navbar";
 import Header from "./Componets/CommonComponents/Header";
