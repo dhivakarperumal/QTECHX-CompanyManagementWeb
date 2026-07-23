@@ -1,15 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import webdesing from "../../public/images/ServicesImage/webdesing.webp";
-import ui_ux from "../../public/images/ServicesImage/ui_ux.webp";
-import mobileapp from "../../public/images/ServicesImage/mobileapp.webp";
-import ecommerce from "../../public/images/ServicesImage/ecommerce.webp";
-import itjobcources from "../../public/images/ServicesImage/itjobcources.webp";
-import responsive from "../../public/images/ServicesImage/responsive.webp";
-import seo from "../../public/images/ServicesImage/seo.webp";
-import crm from "../../public/images/ServicesImage/crm.webp";
-import internship from "../../public/images/ServicesImage/internship.webp";
-import digitalmarketing from "../../public/images/ServicesImage/digitalmarketing.webp";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -23,18 +13,6 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ServiceSlider from "./ServiceSlider";
 
-export const serviceImages = {
-  1: webdesing,
-  2: ui_ux,
-  3: mobileapp,
-  4: ecommerce,
-  5: itjobcources,
-  6: responsive,
-  7: seo,
-  8: crm,
-  9: internship,
-  10: digitalmarketing,
-};
 
 const ServiceDetails = () => {
   useEffect(() => {
