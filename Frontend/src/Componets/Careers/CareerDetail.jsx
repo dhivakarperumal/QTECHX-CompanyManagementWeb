@@ -7,8 +7,6 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import SocialMedia from "../Home/SocialMedia";
-import { fetchJobs } from "../Redux/jobsSlice";
-import { useDispatch, useSelector } from "react-redux";
 import emailjs from "@emailjs/browser";
 
 const CareerDetail = () => {
@@ -19,15 +17,31 @@ const CareerDetail = () => {
     });
   }, []);
 
-  const dispatch = useDispatch();
-  const { items: jobs, loading, error } = useSelector((state) => state.jobs);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [notifyModal, setNotifyModal] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifySubmitted, setNotifySubmitted] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchJobs());
-  }, [dispatch]);
+    const fetchJobsData = async () => {
+      try {
+        const response = await fetch("/Jobs.json");
+        if (!response.ok) {
+          throw new Error("Failed to fetch jobs");
+        }
+        const data = await response.json();
+        setJobs(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobsData();
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
