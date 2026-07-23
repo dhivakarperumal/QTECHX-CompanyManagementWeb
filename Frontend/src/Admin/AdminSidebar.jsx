@@ -2,86 +2,149 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Dumbbell,
-  Boxes,
   Users,
-  ShoppingCart,
+  FolderKanban,
+  CheckSquare,
+  GraduationCap,
+  BookOpen,
   Receipt,
-  CreditCard,
-  UserRound,
-  UserCheck,
-  ClipboardList,
+  DollarSign,
+  CalendarOff,
+  ClipboardCheck,
   BarChart3,
+  CalendarDays,
+  CalendarClock,
   X,
   ChevronDown,
   ChevronLeft,
   Home,
-  CalendarCheck,
-  Activity,
-  HeartPulse,
-  Package,
-  MessageSquare,
-  Send,
-  PhoneCall,
+  Briefcase,
+  UserCog,
+  FileText,
+  TrendingUp,
+  Clock,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
+import Logo from "/images/logo.png";
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-
-  { path: "/admin/followupenquriy", label: "Follow Up Enquiry", icon: PhoneCall },
-
-  // { path: "/admin/enquiry", label: "Client Enquiry", icon: MessageSquare },
-
-  { path: "/admin/members", label: "Members", icon: Users },
-  // { path: "/admin/pt-plans", label: "PT Plans", icon: CalendarCheck },
-  { path: "/admin/buy-pt-plan", label: "Buy PT Plans", icon: CreditCard },
-  { path: "/admin/buyplanadmin", label: "Buy Plans", icon: CreditCard },
-  { path: "/admin/emi", label: "EMI", icon: BarChart3 },
-  { path: "/admin/trainer-referred-plans", label: "Trainer Referred Plans", icon: UserCheck },
-
-  { path: "/admin/assignedtrainers", label: "Assigned Trainers", icon: UserCheck },
-
-  { path: "/admin/payments", label: "Payments", icon: CreditCard },
-
-  { path: "/admin/send-message", label: "Send Message", icon: Send },
-
   {
-    label: "Plans & Products",
-    icon: Package,
+    path: "/admin",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+
+  /* ---- PEOPLE ---- */
+  {
+    label: "Employees",
+    icon: Users,
     children: [
-      { path: "/admin/products", label: "Products", icon: Dumbbell },
-      { path: "/admin/plansall", label: "Normal Plans", icon: ClipboardList },
-      { path: "/admin/fecilities", label: "Facilities", icon: Activity },
-      { path: "/admin/stockdetails", label: "Supplements Stock", icon: Boxes },
+      { path: "/admin/employees", label: "All Employees", icon: Users },
+      { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
+      { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
     ],
   },
 
-  // {
-  //   label: "Attendance",
-  //   icon: CalendarCheck,
-  //   children: [
-  //     { path: "/admin/overall-attendance", label: "Overall Attendance", icon: ClipboardList },
-  //     { path: "/admin/member-attendance", label: "Member Attendance", icon: UserCheck },
-  //     { path: "/admin/biometric-logs", label: "Biometric Logs", icon: Activity },
-  //   ],
-  // },
+  /* ---- WORK ---- */
+  {
+    label: "Project Management",
+    icon: FolderKanban,
+    children: [
+      { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
+      { path: "/admin/projects/add", label: "New Project", icon: FileText },
+    ],
+  },
 
-  { path: "/admin/billing", label: "Billing", icon: Receipt },
+  {
+    label: "Task Management",
+    icon: CheckSquare,
+    children: [
+      { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
+      { path: "/admin/tasks/board", label: "Task Board", icon: FolderKanban },
+    ],
+  },
 
-  { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  /* ---- TRAINING ---- */
+  {
+    label: "Trainees Management",
+    icon: GraduationCap,
+    children: [
+      { path: "/admin/trainees", label: "All Trainees", icon: GraduationCap },
+      { path: "/admin/trainees/add", label: "Add Trainee", icon: UserCog },
+    ],
+  },
 
+  {
+    label: "Internship Management",
+    icon: BookOpen,
+    children: [
+      { path: "/admin/internships", label: "All Internships", icon: BookOpen },
+      { path: "/admin/internships/add", label: "Add Internship", icon: FileText },
+    ],
+  },
 
+  /* ---- FINANCE ---- */
+  {
+    label: "Expenses",
+    icon: Receipt,
+    children: [
+      { path: "/admin/expenses", label: "All Expenses", icon: Receipt },
+      { path: "/admin/expenses/add", label: "Add Expense", icon: FileText },
+    ],
+  },
 
+  {
+    label: "Payroll",
+    icon: DollarSign,
+    children: [
+      { path: "/admin/payroll", label: "Payroll Overview", icon: DollarSign },
+      { path: "/admin/payroll/run", label: "Run Payroll", icon: TrendingUp },
+    ],
+  },
 
+  /* ---- HR ---- */
+  {
+    label: "Leave Management",
+    icon: CalendarOff,
+    children: [
+      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
+      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
+    ],
+  },
 
+  {
+    label: "Attendance",
+    icon: ClipboardCheck,
+    children: [
+      { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
+      { path: "/admin/attendance/summary", label: "Summary", icon: BarChart3 },
+    ],
+  },
 
-  // { path: "/admin/commenworkoutdiet", label: "Workout & Diet", icon: HeartPulse },
-  // { path: "/admin/reports", label: "Reports & Analytics", icon: BarChart3 },
-  // { path: "/admin/equipment", label: "Gym Equipment", icon: Activity },
+  /* ---- ANALYTICS ---- */
+  {
+    path: "/admin/reports",
+    label: "Reports",
+    icon: BarChart3,
+  },
 
+  /* ---- CALENDAR ---- */
+  {
+    path: "/admin/office-calendar",
+    label: "Office Calendar",
+    icon: CalendarDays,
+  },
+
+  {
+    path: "/admin/my-calendar",
+    label: "My Daily Calendar",
+    icon: CalendarClock,
+  },
+
+  /* ---- BACK ---- */
   { path: "/", label: "Back Home", icon: Home },
 ];
 
@@ -91,186 +154,163 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
-  /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/members": ["/admin/members", "/admin/addmembers", "/admin/member_details", "/admin/expiry-members"],
-    "/admin/equipment": ["/admin/equipment", "/admin/addequipment"],
-    "/admin/staff": ["/admin/staff", "/admin/addstaff", "/admin/viewstaff"],
-    "/admin/products": ["/admin/products", "/admin/addproducts", "/admin/productdetail"],
-    "/admin/plansall": ["/admin/plansall", "/admin/addplan"],
-    "/admin/pt-plans": ["/admin/pt-plans", "/admin/add-pt-plan"],
-    "/admin/fecilities": ["/admin/fecilities", "/admin/addfecilities"],
-    "/admin/stockdetails": ["/admin/stockdetails", "/admin/add-stock"],
-    // Each attendance route is only active for its own exact path
-    "/admin/overall-attendance": ["/admin/overall-attendance"],
-    "/admin/member-attendance": ["/admin/member-attendance"],
-  };
-
-  /* ================= HELPERS ================= */
-  const isRouteActive = (basePath) => {
-    const paths = activeRouteMap[basePath];
-    if (paths) {
-      return paths.some((p) => 
-        location.pathname === p || location.pathname.startsWith(p + "/")
-      );
-    }
-    
-    if (basePath === "/admin" || basePath === "/") {
-      return location.pathname === basePath;
-    }
-    
-    return location.pathname === basePath || location.pathname.startsWith(basePath + "/");
-  };
-
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
   useEffect(() => {
     navItems.forEach((item) => {
       if (item.children) {
         const isChildActive = item.children.some((child) =>
-          isRouteActive(child.path)
+          location.pathname === child.path || location.pathname.startsWith(child.path + "/")
         );
-        if (isChildActive) {
-          setOpenMenu(item.label);
-        }
+        if (isChildActive) setOpenMenu(item.label);
       }
     });
   }, [location.pathname]);
 
-  const toggleMenu = (label) => {
-    setOpenMenu(openMenu === label ? null : label);
+  const isRouteActive = (path) => {
+    if (path === "/admin" || path === "/") return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + "/");
   };
+
+  const toggleMenu = (label) => setOpenMenu(openMenu === label ? null : label);
 
   return (
     <>
       {/* ========== MOBILE OVERLAY ========== */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden
-        transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${
+          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
       />
 
       {/* ========== SIDEBAR ========== */}
       <aside
         className={`
-        fixed top-0 left-0 z-50 h-full
-        bg-white/10 backdrop-blur-xl
-        border-r border-white/20
-        shadow-[0_20px_50px_rgba(0,0,0,0.35)]
-        flex flex-col transition-all duration-300
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0
-        ${collapsed ? "w-20" : "w-64"}
-      `}
+          fixed top-0 left-0 z-50 h-full flex flex-col
+          bg-[#0d0d12] border-r border-white/10
+          shadow-[4px_0_30px_rgba(0,0,0,0.5)]
+          transition-all duration-300
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+          ${collapsed ? "w-[80px]" : "w-72"}
+        `}
       >
         {/* ========== LOGO ========== */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
-            <img
-              src="/images/logo-dark1.png"
-              alt="Logo"
-              className="w-10 h-10 object-contain"
-            />
+        <div className={`flex items-center gap-3 border-b border-white/10 shrink-0 ${collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"}`}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/40 shrink-0">
+            <img src={Logo} alt="Logo" className="w-8 h-8 object-contain" />
           </div>
 
           {!collapsed && (
-            <div className="overflow-hidden">
-              <h1 className="text-lg font-semibold text-white">Gym Admin</h1>
-              <p className="text-xs text-white/60 truncate">
-                Welcome {userProfile?.displayName?.split(" ")[0] || "Admin"}
+            <div className="overflow-hidden flex-1">
+              <h1 className="text-sm font-bold text-white leading-tight">Q Techx Admin</h1>
+              <p className="text-[10px] text-white/50 truncate">
+                {userProfile?.displayName?.split(" ")[0] || "Administrator"}
               </p>
             </div>
           )}
 
           <button
             onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-white/60 hover:bg-white/20 lg:hidden"
+            className="ml-auto p-1.5 rounded-lg text-white/40 hover:bg-white/10 lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => {
             const Icon = item.icon;
 
             /* ===== DROPDOWN ITEM ===== */
             if (item.children) {
               const isMenuOpen = openMenu === item.label;
+              const isAnyChildActive = item.children.some((c) => isRouteActive(c.path));
 
               return (
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className="
-                      w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
-                      text-white/80 hover:bg-white/20
-                    "
+                    title={collapsed ? item.label : ""}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
+                      transition-all duration-200 group
+                      ${isAnyChildActive
+                        ? "bg-primary/15 text-primary"
+                        : "text-white/60 hover:text-white hover:bg-white/8"
+                      }
+                    `}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
-
+                    <Icon className={`w-[18px] h-[18px] shrink-0 ${isAnyChildActive ? "text-primary" : ""}`} />
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left">{item.label}</span>
+                        <span className="flex-1 text-left font-medium">{item.label}</span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
-                            }`}
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                            isMenuOpen ? "rotate-180" : ""
+                          }`}
                         />
                       </>
                     )}
                   </button>
 
                   {/* ===== SUB MENU ===== */}
-                  <div
-                    className={`ml-10 mt-1 space-y-1 overflow-hidden transition-all
-                    ${isMenuOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"}`}
-                  >
-                    {item.children.map((sub) => {
-                      const SubIcon = sub.icon;
-                      const isActive = isRouteActive(sub.path);
-
-                      return (
-                        <NavLink
-                          key={sub.path}
-                          to={sub.path}
-                          onClick={() => isOpen && onClose()}
-                          className={`
-                            flex items-center gap-2 px-3 py-2 rounded-lg text-sm
-                            ${isActive
-                              ? "bg-orange-500 text-white"
-                              : "text-white/70 hover:bg-white/20"
-                            }
-                          `}
-                        >
-                          <SubIcon className="w-4 h-4 mr-1 shrink-0" />
-                          <span>{sub.label}</span>
-                        </NavLink>
-                      );
-                    })}
-                  </div>
+                  {!collapsed && (
+                    <div
+                      className={`ml-8 mt-0.5 space-y-0.5 overflow-hidden transition-all duration-200 ${
+                        isMenuOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      {item.children.map((sub) => {
+                        const SubIcon = sub.icon;
+                        const isActive = isRouteActive(sub.path);
+                        return (
+                          <NavLink
+                            key={sub.path}
+                            to={sub.path}
+                            onClick={() => isOpen && onClose()}
+                            className={`
+                              flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs
+                              transition-all duration-200
+                              ${isActive
+                                ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
+                                : "text-white/50 hover:text-white hover:bg-white/8"
+                              }
+                            `}
+                          >
+                            <SubIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span>{sub.label}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             }
 
             /* ===== NORMAL ITEM ===== */
             const isActive = isRouteActive(item.path);
-
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.exact}
+                title={collapsed ? item.label : ""}
                 onClick={() => isOpen && onClose()}
                 className={`
-                  flex items-center gap-3 px-4 py-2.5 rounded-xl
+                  flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
+                  transition-all duration-200
                   ${isActive
-                    ? "bg-orange-500 text-white"
-                    : "text-white/80 hover:bg-white/20"
+                    ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
+                    : "text-white/60 hover:text-white hover:bg-white/8"
                   }
+                  ${collapsed ? "justify-center" : ""}
                 `}
               >
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <Icon className="w-[18px] h-[18px] shrink-0" />
+                {!collapsed && <span className="font-medium">{item.label}</span>}
               </NavLink>
             );
           })}
@@ -280,19 +320,36 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         <button
           onClick={onToggleCollapse}
           className="
-            hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2
-            w-9 h-9 rounded-full
-            bg-gradient-to-br from-orange-500 to-red-600
-            shadow-xl shadow-orange-500/40
+            hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
+            w-6 h-6 rounded-full
+            bg-primary shadow-lg shadow-primary/40
             items-center justify-center
             text-white hover:scale-110 transition-all
           "
         >
           <ChevronLeft
-            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
-              }`}
+            className={`w-3.5 h-3.5 transition-transform ${collapsed ? "rotate-180" : ""}`}
           />
         </button>
+
+        {/* ========== BOTTOM USER STRIP ========== */}
+        {!collapsed && (
+          <div className="px-3 py-3 border-t border-white/10 shrink-0">
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {(userProfile?.displayName?.[0] || "A").toUpperCase()}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-xs font-semibold text-white truncate">
+                  {userProfile?.displayName || "Administrator"}
+                </p>
+                <p className="text-[10px] text-white/40 truncate">
+                  {userProfile?.role || "Super Admin"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );
