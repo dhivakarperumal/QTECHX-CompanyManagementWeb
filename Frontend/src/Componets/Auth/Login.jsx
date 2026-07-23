@@ -4,7 +4,7 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { getRoleHome } from "../../PrivateRouter/roleUtils";
 import api from "../../api";
 import Logo from '/images/logo.png';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, Users, BarChart3, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, Users, BarChart3, ArrowRight, ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -232,6 +232,14 @@ const Login = () => {
             <p className="text-center text-sm text-gray-500 mt-4">
               Don't have an account? <a href="tel:+1234567890" className="text-primary hover:text-orange-400 transition-colors">Contact Administrator</a>
             </p>
+            
+            <div className="flex justify-center mt-2">
+              <Link to="/" className="inline-flex items-center gap-1 text-sm transition-colors group">
+                <ArrowLeft size={16} className="text-gray-500 group-hover:-translate-x-1 transition-transform group-hover:text-white" /> 
+                <span className="text-gray-500 group-hover:text-white transition-colors">Back</span> 
+                <span className="text-primary group-hover:text-orange-400 transition-colors">Home</span>
+              </Link>
+            </div>
           </form>
         </div>
 

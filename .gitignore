@@ -1,25 +1,36 @@
+# Node dependencies
+node_modules/
+
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+*.log
 
-node_modules
-dist
+# Environment files
 .env
-dist-ssr
-*.local
+.env.local
+.env.*.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Dependency directories for nested projects
+Backend/node_modules/
+Frontend/node_modules/
+
+# Build output
+dist/
+build/
+.vite/
+
+# System files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Coverage reports
+coverage/
+
+# Misc
+*.tgz
