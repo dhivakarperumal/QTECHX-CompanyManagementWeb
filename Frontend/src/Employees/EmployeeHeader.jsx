@@ -103,10 +103,10 @@ const EmployeeHeader = ({ onMenuClick }) => {
     <button
       onClick={() => toggle(name)}
       title={title}
-      className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
+      className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] transition-all duration-200 border
         ${activeDropdown === name
-          ? "bg-primary text-white shadow-lg shadow-primary/30"
-          : "bg-white/8 hover:bg-white/15 text-white/70 hover:text-white border border-white/10"
+          ? "bg-white/10 border-white/20 text-white shadow-lg"
+          : "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-white/60 hover:text-white"
         }`}
     >
       {children}
@@ -162,7 +162,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
             {/* Notifications Bell */}
             <div className="relative">
               <IconBtn name="notifications" badge={unreadCount} title="Notifications">
-                <Bell size={16} />
+                <Bell size={18} />
               </IconBtn>
 
               {activeDropdown === "notifications" && (
@@ -203,7 +203,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
             {/* Quick links */}
             <IconBtn name="quick" title="Quick Actions">
-              <TrendingUp size={16} />
+              <TrendingUp size={18} />
             </IconBtn>
             {activeDropdown === "quick" && (
               <div className="absolute right-20 top-full mt-3 w-48 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 space-y-0.5">
