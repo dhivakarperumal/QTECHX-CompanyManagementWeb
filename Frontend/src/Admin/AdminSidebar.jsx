@@ -194,8 +194,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         {/* ========== LOGO ========== */}
         <div className={`flex items-center gap-3 border-b border-white/10 shrink-0 ${collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"}`}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/40 shrink-0">
-            <img src={Logo} alt="Logo" className="w-8 h-8 object-contain" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 p-1"
+            style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.2) 0%, rgba(249,115,22,0.05) 100%)', border: '1px solid rgba(249,115,22,0.25)', boxShadow: '0 0 18px rgba(249,115,22,0.15), inset 0 1px 0 rgba(255,255,255,0.08)' }}
+          >
+            <img src={Logo} alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
           </div>
 
           {!collapsed && (
