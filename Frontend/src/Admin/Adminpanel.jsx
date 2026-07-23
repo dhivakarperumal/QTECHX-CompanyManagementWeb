@@ -28,7 +28,7 @@ const AdminLayout = () => {
 
 
   return (
-    <div className={`admin-root flex min-h-screen ${isPrintPage ? 'bg-white' : 'bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]'} text-white`}>
+    <div className={`admin-root flex min-h-screen ${isPrintPage ? 'bg-white text-black' : 'text-white'}`}>
       
       {/* Sidebar */}
       {!isPrintPage && (

@@ -1,561 +1,338 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Menu,
-  Search,
-  Bell,
-  Settings,
-  User,
-  LogOut,
-  ChevronDown,
-  ShoppingBag,
-  Package,
-  Clock,
-  AlertCircle,
-  X,
-  LayoutDashboard,
-  MessageSquare,
-  Users,
-  CreditCard,
-  UserCheck,
-  ClipboardList,
-  Activity,
-  UserRound,
-  CalendarCheck,
-  Receipt,
-  ShoppingCart,
-  BarChart3,
-  Dumbbell,
-  HeartPulse,
-  Send,
-  Boxes,
-  Plus,
-  PhoneCall
+  Menu, Search, Bell, Settings, User, LogOut, ChevronDown, X,
+  LayoutDashboard, ClipboardCheck, CalendarOff, FolderKanban,
+  CheckSquare, Clock, DollarSign, Video, CalendarDays, CalendarClock,
+  TrendingUp, FileText, AlertCircle, CheckCircle2, Timer,
 } from "lucide-react";
-import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
 
-
+/* ── page title map ── */
 const pageInfo = {
-  "/admin": { title: "Dashboard", icon: LayoutDashboard },
-  "/admin/followupenquriy": { title: "Follow Up Enquiry", icon: PhoneCall },
-  "/admin/enquiry": { title: "Client Enquiry", icon: MessageSquare },
-  "/admin/products": { title: "Products", icon: Dumbbell },
-  "/admin/addproducts": { title: "Add Products", icon: Plus },
-  "/admin/orders": { title: "Orders", icon: ShoppingCart },
-  "/admin/trainer-referred-plans": { title: "Trainer Referred Plans", icon: ClipboardList },
-  "/admin/members": { title: "Members", icon: Users },
-  "/admin/addmembers": { title: "Add Members", icon: Plus },
-  "/admin/plansall": { title: "Normal Plans", icon: ClipboardList },
-  "/admin/buyplanadmin": { title: "Buy Plans", icon: CreditCard },
-  "/admin/assignedtrainers": { title: "Assigned Trainers", icon: UserCheck },
-  "/admin/addplan": { title: "Add Plan", icon: Plus },
-  "/admin/fecilities": { title: "Facilities", icon: Activity },
-  "/admin/addfecilities": { title: "Add Facilities", icon: Plus },
-  "/admin/staff": { title: "Trainers & Staffs", icon: UserRound },
-  "/admin/addstaff": { title: "Add Staffs", icon: Plus },
-  "/admin/appointments": { title: "Appointments", icon: CalendarCheck },
-  "/admin/billing": { title: "Billing", icon: Receipt },
-  "/admin/stockdetails": { title: "Inventory", icon: Boxes },
-  "/admin/equipment": { title: "Gym Equipments", icon: Activity },
-  "/admin/overall-attendance": { title: "Attendance", icon: CalendarCheck },
-  "/admin/reports": { title: "Reports", icon: BarChart3 },
-  "/admin/settings": { title: "Settings", icon: Settings },
-  "/admin/settings/profile": { title: "Profile", icon: User },
-  "/admin/settings/usermanagement": { title: "Usermanagement", icon: UserRound },
-  "/admin/settings/reviews": { title: "Review", icon: MessageSquare },
-  "/admin/settings/servicelist": { title: "Services Lists", icon: ClipboardList },
-  "/admin/settings/offers": { title: "Marketing Offers", icon: ShoppingBag },
-  "/admin/addservice": { title: "Add Services", icon: Plus },
-  "/admin/send-message": { title: "Bulk Messaging", icon: Send },
-  "/admin/payments": { title: "Payments", icon: CreditCard },
-  "/admin/emi": { title: "EMI Payments", icon: CreditCard },
-  "/admin/member-attendance": { title: "Member Attendance", icon: Users },
-  "/admin/commenworkoutdiet": { title: "Workout & Diet", icon: HeartPulse },
-  "/admin/users": { title: "Users", icon: Users },
-  "/admin/pt-form": { title: "Personal Training Form", icon: HeartPulse },
-  "/admin/pt-plans": { title: "PT Plans", icon: CalendarCheck },
-  "/admin/add-pt-plan": { title: "Add PT Plan", icon: Plus },
-  "/admin/buy-pt-plan": { title: "Buy PT Plans", icon: CreditCard },
-  "/admin/member_details": { title: "Member Details", icon: User },
-  "/admin/plan-history": { title: "Plan History", icon: Clock },
-  "/admin/expiry-members": { title: "Plan Expiry Details", icon: Clock },
+  "/employee":                   { title: "Dashboard",        icon: LayoutDashboard },
+  "/employee/attendance":        { title: "My Attendance",    icon: ClipboardCheck },
+  "/employee/leaves":            { title: "My Leave",         icon: CalendarOff },
+  "/employee/projects":          { title: "My Projects",      icon: FolderKanban },
+  "/employee/tasks":             { title: "My Tasks",         icon: CheckSquare },
+  "/employee/timesheet":         { title: "Timesheet",        icon: Clock },
+  "/employee/payroll":           { title: "Salary & Payroll", icon: DollarSign },
+  "/employee/meetings":          { title: "Meetings",         icon: Video },
+  "/employee/settings":          { title: "Settings",         icon: Settings },
+  "/employee/settings/profile":  { title: "Profile",          icon: User },
 };
 
+const getPageInfo = (pathname) => {
+  const sorted = Object.entries(pageInfo).sort((a, b) => b[0].length - a[0].length);
+  for (const [path, info] of sorted) {
+    if (pathname === path || pathname.startsWith(path + "/")) return info;
+  }
+  return { title: "Dashboard", icon: LayoutDashboard };
+};
+
+/* ── notification item ── */
+const notifications = [
+  { id: 1, type: "task",    icon: CheckSquare,  color: "text-blue-400",   bg: "bg-blue-500/15",   title: "New task assigned",          sub: "Design Review — Due Jul 25",  time: "2m ago" },
+  { id: 2, type: "leave",   icon: CheckCircle2, color: "text-green-400",  bg: "bg-green-500/15",  title: "Leave approved",             sub: "Jul 10 – Jul 11 Casual Leave", time: "1h ago" },
+  { id: 3, type: "meeting", icon: Video,        color: "text-purple-400", bg: "bg-purple-500/15", title: "Meeting in 30 minutes",       sub: "Sprint Planning — 3:00 PM",    time: "30m ago" },
+  { id: 4, type: "payroll", icon: DollarSign,   color: "text-emerald-400",bg: "bg-emerald-500/15",title: "Salary credited",            sub: "₹45,000 — July Payroll",       time: "2d ago" },
+];
+
+/* ══════════════════ MAIN HEADER ══════════════════ */
 const EmployeeHeader = ({ onMenuClick }) => {
-  const [activeDropdown, setActiveDropdown] = useState(null); // 'profile', 'notifications', 'orders', 'stock', 'expiry'
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [showSearch, setShowSearch]         = useState(false);
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [currentTime, setCurrentTime]       = useState(dayjs());
+  const [unreadCount]                       = useState(notifications.length);
 
-  const [alerts, setAlerts] = useState({
-    orders: [],
-    lowStock: [],
-    expiring: [],
-    registrations: []
-  });
-  const [loadingAlerts, setLoadingAlerts] = useState(false);
-
-  // Refs
   const dropdownRef = useRef(null);
-  const searchContainerRef = useRef(null);
-  const searchInputRef = useRef(null);
+  const searchRef   = useRef(null);
+  const inputRef    = useRef(null);
 
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const { profileName, role, email, logout } = useAuth();
 
-  const toggleDropdown = (name) => {
-    setActiveDropdown(prev => prev === name ? null : name);
-  };
+  const userName = profileName || "Employee";
+  const userRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
+  const { title: pageTitle, icon: PageIcon } = getPageInfo(location.pathname);
 
+  /* live clock */
   useEffect(() => {
-    if (showSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [showSearch]);
-
-  useEffect(() => {
-    const fetchAllAlerts = async () => {
-      try {
-        setLoadingAlerts(true);
-
-        const [ordersRes, lowStockRes, expiringRes, regsRes] = await Promise.all([
-          api.get('/orders/today').catch(() => ({ data: [] })),
-          api.get('/products/alerts/low-stock').catch(() => ({ data: [] })),
-          api.get('/memberships/alerts/expiring-soon').catch(() => ({ data: [] })),
-          api.get('/memberships/today').catch(() => ({ data: [] }))
-        ]);
-
-        const todayStr = new Date().toDateString();
-        const strictTodayRegs = (regsRes.data || []).filter(r => {
-          const d = r.createdAt || r.created_at;
-          if (!d) return false;
-          return new Date(d).toDateString() === todayStr;
-        });
-
-        setAlerts({
-          orders: ordersRes.data || [],
-          lowStock: lowStockRes.data || [],
-          expiring: expiringRes.data || [],
-          registrations: strictTodayRegs,
-        });
-      } catch (err) {
-        console.error("Dashboard alerts error:", err);
-      } finally {
-        setLoadingAlerts(false);
-      }
-    };
-
-    fetchAllAlerts();
-
-    const interval = setInterval(fetchAllAlerts, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    const t = setInterval(() => setCurrentTime(dayjs()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  // Click outside listener
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // For all dropdowns (handled by one parent ref in Admin Header)
-      if (activeDropdown && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setActiveDropdown(null);
-      }
-      // For Search Overlay
-      if (showSearch && searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
-        setShowSearch(false);
-      }
-    };
+  /* focus search input */
+  useEffect(() => { if (showSearch) inputRef.current?.focus(); }, [showSearch]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  /* click outside */
+  useEffect(() => {
+    const h = (e) => {
+      if (activeDropdown && dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setActiveDropdown(null);
+      if (showSearch && searchRef.current && !searchRef.current.contains(e.target))
+        setShowSearch(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, [activeDropdown, showSearch]);
 
-  const totalAlerts =
-    alerts.orders.length +
-    alerts.lowStock.length +
-    alerts.expiring.length +
-    alerts.registrations.length;
+  /* keyboard shortcut Cmd/Ctrl+K */
+  useEffect(() => {
+    const h = (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setShowSearch(p => !p); } };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, []);
 
-  const getPageInfo = () => {
-    // Sort paths by length descending to match more specific routes first
-    const sortedPaths = Object.entries(pageInfo).sort((a, b) => b[0].length - a[0].length);
-
-    for (const [path, info] of sortedPaths) {
-      if (location.pathname === path || location.pathname.startsWith(path + "/")) {
-        return info;
-      }
-    }
-
-    return { title: "Dashboard", icon: LayoutDashboard };
-  };
-
-  const { title: currentPageTitle, icon: PageIcon } = getPageInfo();
-
-  const handleLogout = async () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
+  const toggle    = (name) => setActiveDropdown(p => p === name ? null : name);
+  const handleLogout = () => { logout(); navigate("/login", { replace: true }); };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-
-    let target = "/admin/members"; // Default to members if on dashboard
-    if (location.pathname.includes("products")) target = "/admin/products";
-    else if (location.pathname.includes("orders")) target = "/admin/orders";
-    else if (location.pathname.includes("members")) target = "/admin/members";
-    else if (location.pathname.includes("staff") || location.pathname.includes("trainer")) target = "/admin/staff";
-
-    navigate(`${target}?search=${encodeURIComponent(searchQuery)}`);
+    navigate(`/employee/tasks?search=${encodeURIComponent(searchQuery)}`);
     setShowSearch(false);
     setSearchQuery("");
   };
 
-  const { profileName, role, email, logout } = useAuth();
-
-  // ✅ Safe values
-  const userName = profileName || "Admin";
-  const userRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Administrator";
+  /* icon button */
+  const IconBtn = ({ name, badge, title, children }) => (
+    <button
+      onClick={() => toggle(name)}
+      title={title}
+      className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
+        ${activeDropdown === name
+          ? "bg-primary text-white shadow-lg shadow-primary/30"
+          : "bg-white/8 hover:bg-white/15 text-white/70 hover:text-white border border-white/10"
+        }`}
+    >
+      {children}
+      {badge > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 flex items-center justify-center rounded-full text-[9px] font-bold text-white ring-2 ring-[#0d0d12] bg-primary">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
 
   return (
-    <header className="sticky top-0 z-30 
-      bg-white/10 backdrop-blur-xl 
-      border-b border-white/20
-      shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+    <>
+      <header className="sticky top-0 z-30 bg-[#0d0d12]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
+        <div className="flex items-center gap-3 px-4 sm:px-6 h-18" ref={dropdownRef}>
 
-      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-
-        {/* LEFT */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          {/* ── HAMBURGER (mobile) ── */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl 
-            bg-white/10 hover:bg-white/20 
-            text-white transition shrink-0"
+            className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white transition shrink-0"
           >
-            <Menu className="w-5 h-5" />
+            <Menu size={18} />
           </button>
 
-          <h1 className="text-sm sm:text-lg lg:text-2xl font-bold 
-            text-white tracking-tight flex items-center gap-2 truncate">
-            <PageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF3131] shrink-0" />
-            <span className="truncate">{currentPageTitle}</span>
-          </h1>
-        </div>
-
-        {/* RIGHT */}
-        <div className="flex items-center gap-2 shrink-0" ref={dropdownRef}>
-
-          {/* TODAY ORDERS ICON */}
-          <div className="relative">
-            <button
-
-              onClick={() => toggleDropdown('orders')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'orders' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-              title="Today's Orders"
-            >
-              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
-              {alerts.orders.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
-                  {alerts.orders.length}
-                </span>
-              )}
-            </button>
-            {activeDropdown === 'orders' && (
-              <AlertDropdown
-                title="Today's Orders"
-                items={alerts.orders}
-                icon={<ShoppingBag className="w-4 h-4 text-green-500" />}
-                type="orders"
-                onClose={() => setActiveDropdown(null)}
-                badgeColor="bg-green-500/20 text-green-400"
-              />
-            )}
+          {/* ── PAGE TITLE + CLOCK ── */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+              <PageIcon size={16} className="text-primary" />
+            </div>
+            <div className="min-w-0 hidden sm:block">
+              <h1 className="text-base font-bold text-white truncate leading-tight">{pageTitle}</h1>
+              <p className="text-[10px] text-white/35 leading-none">
+                {currentTime.format("ddd, DD MMM YYYY")} · {currentTime.format("hh:mm:ss A")}
+              </p>
+            </div>
           </div>
 
-          {/* LOW STOCK ICON */}
-          <div className="relative">
+          {/* ── RIGHT ACTIONS ── */}
+          <div className="flex items-center gap-2 shrink-0">
+
+            {/* Search bar */}
             <button
-              onClick={() => toggleDropdown('stock')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'stock' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-              title="Low Stock Alerts"
+              onClick={() => setShowSearch(p => !p)}
+              className="flex items-center gap-2 px-3 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 text-white/50 hover:text-white transition text-xs"
             >
-              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
-              {alerts.lowStock.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
-                  {alerts.lowStock.length}
-                </span>
-              )}
-            </button>
-            {activeDropdown === 'stock' && (
-              <AlertDropdown
-                title="Stock Alerts"
-                items={alerts.lowStock}
-                icon={<Package className="w-4 h-4 text-orange-500" />}
-                type="stock"
-                onClose={() => setActiveDropdown(null)}
-                badgeColor="bg-orange-500/20 text-orange-400"
-              />
-            )}
-          </div>
-
-          {/* EXPIRING PLANS ICON */}
-          <div className="relative">
-            <button
-              onClick={() => toggleDropdown('expiry')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'expiry' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-              title="Expiring Memberships"
-            >
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-              {alerts.expiring.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
-                  {alerts.expiring.length}
-                </span>
-              )}
-            </button>
-            {activeDropdown === 'expiry' && (
-              <AlertDropdown
-                title="Expirations"
-                items={alerts.expiring}
-                icon={<Clock className="w-4 h-4 text-red-500" />}
-                type="expiry"
-                onClose={() => setActiveDropdown(null)}
-                badgeColor="bg-red-500/20 text-red-400"
-              />
-            )}
-          </div>
-
-          <div className="w-[1px] h-6 bg-white/10 mx-1 hidden sm:block" />
-
-          {/* ADD TODAY MEMBERS ICON */}
-          <div className="relative">
-            <button
-              onClick={() => toggleDropdown('members')}
-              className={`p-2 rounded-xl transition relative ${activeDropdown === 'members' ? 'bg-[#FF3131] text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-              title="New Members Today"
-            >
-              <User className="w-4 h-4 sm:w-5 sm:h-5" />
-              {alerts.registrations.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white ring-2 ring-[#0b0c10]">
-                  {alerts.registrations.length}
-                </span>
-              )}
-            </button>
-            {activeDropdown === 'members' && (
-              <AlertDropdown
-                title="New Members"
-                items={alerts.registrations}
-                icon={<User className="w-4 h-4 text-blue-500" />}
-                type="members"
-                onClose={() => setActiveDropdown(null)}
-                badgeColor="bg-blue-500/20 text-blue-400"
-              />
-            )}
-          </div>
-
-          {/* SEARCH TRIGGER */}
-          <button
-            onClick={() => setShowSearch(p => !p)}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition"
-          >
-            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-
-          {/* PROFILE */}
-          <div className="relative">
-            <button
-              onClick={() => toggleDropdown('profile')}
-              className="flex items-center gap-3 px-2 md:px-3 py-1 md:py-1.5 
-              rounded-2xl bg-white/10 hover:bg-white/20 
-              transition"
-            >
-              <div className="w-7 h-7 sm:w-9 sm:w-9 rounded-full 
-                bg-gradient-to-br from-cyan-500 to-sky-600
-                flex items-center justify-center text-white font-semibold">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-semibold text-white">
-                  {userName}
-                </p>
-                <p className="text-xs text-white/60">
-                  {userRole}
-                </p>
-              </div>
-
-              <ChevronDown
-                className={`hidden sm:block w-4 h-4 text-white/70 transition 
-                ${activeDropdown === 'profile' ? "rotate-180" : ""}`}
-              />
+              <Search size={14} />
+              <span className="hidden md:block">Search...</span>
+              <span className="hidden md:block text-[10px] bg-white/10 px-1.5 py-0.5 rounded-md">⌘K</span>
             </button>
 
-            {activeDropdown === 'profile' && (
-              <>
-                {/* <div
-                  onClick={() => setActiveDropdown(null)}
-                  className="fixed inset-0 z-40"
-                /> */}
+            <div className="w-px h-6 bg-white/10 mx-1" />
 
-                <div className="absolute right-0 mt-4 w-52
-                  bg-gray-900 backdrop-blur-xl
-                  border border-white/20
-                  rounded-2xl shadow-2xl z-50 p-1">
+            {/* Notifications Bell */}
+            <div className="relative">
+              <IconBtn name="notifications" badge={unreadCount} title="Notifications">
+                <Bell size={16} />
+              </IconBtn>
 
-                  <div className="px-3 py-2 border-b border-white/10">
-                    <p className="text-sm font-semibold text-white">
-                      {userName}
-                    </p>
-                    <p className="text-xs text-white/60">
-                      {email}
-                    </p>
+              {activeDropdown === "notifications" && (
+                <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  {/* header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                      <Bell size={14} className="text-primary" /> Notifications
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-primary/20 text-primary">
+                      {unreadCount} New
+                    </span>
                   </div>
-
-                  <Link
-                    to="/admin/settings/profile"
-                    onClick={() => setActiveDropdown(null)}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-white/20 
-                    text-sm text-white transition"
-                  >
-                    <User className="w-4 h-4" /> Profile
-                  </Link>
-
-                  <Link
-                    to="/admin/settings"
-                    onClick={() => setActiveDropdown(null)}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-white/20 
-                    text-sm text-white transition"
-                  >
-                    <Settings className="w-4 h-4" /> Settings
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 px-3 py-2 
-                    rounded-xl hover:bg-red-500/20 
-                    text-sm text-red-400 w-full transition"
-                  >
-                    <LogOut className="w-4 h-4" /> Logout
+                  {/* list */}
+                  <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+                    {notifications.map(n => {
+                      const NIcon = n.icon;
+                      return (
+                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition cursor-pointer group">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.bg}`}>
+                            <NIcon size={14} className={n.color} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-white group-hover:text-primary transition">{n.title}</p>
+                            <p className="text-[10px] text-white/40 mt-0.5 truncate">{n.sub}</p>
+                          </div>
+                          <span className="text-[9px] text-white/25 shrink-0 mt-0.5">{n.time}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button className="w-full block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
+                    View All Notifications
                   </button>
                 </div>
-              </>
+              )}
+            </div>
+
+            {/* Quick links */}
+            <IconBtn name="quick" title="Quick Actions">
+              <TrendingUp size={16} />
+            </IconBtn>
+            {activeDropdown === "quick" && (
+              <div className="absolute right-20 top-full mt-3 w-48 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 space-y-0.5">
+                {[
+                  { label: "Apply Leave",   path: "/employee/leaves/apply",    icon: CalendarOff  },
+                  { label: "Log Hours",     path: "/employee/timesheet/log",    icon: Clock        },
+                  { label: "My Tasks",      path: "/employee/tasks",            icon: CheckSquare  },
+                  { label: "Meetings",      path: "/employee/meetings",         icon: Video        },
+                  { label: "My Pay Slips",  path: "/employee/payroll/slips",    icon: DollarSign   },
+                ].map(l => {
+                  const LIcon = l.icon;
+                  return (
+                    <Link key={l.path} to={l.path} onClick={() => setActiveDropdown(null)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/8 text-sm text-white/70 hover:text-white transition">
+                      <LIcon size={14} className="text-primary" /> {l.label}
+                    </Link>
+                  );
+                })}
+              </div>
             )}
-          </div>
-        </div>
-      </div>
-      {/* SEARCH OVERLAY */}
-      {showSearch && (
-        <div className="absolute inset-0 z-50 bg-gray-950 flex items-center px-4 sm:px-6 animate-in slide-in-from-top duration-300" ref={searchContainerRef}>
-          <form onSubmit={handleSearch} className="flex-1 flex items-center gap-4 max-w-4xl mx-auto">
-            <Search className="w-6 h-6 text-[#FF3131]" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search products, orders, members..."
-              className="flex-1 bg-transparent border-none text-white focus:ring-0 text-xl font-medium outline-none"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowSearch(false)}
-              className="p-2 rounded-full hover:bg-white/10 text-gray-400 transition"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </form>
-        </div>
-      )}
-    </header>
-  );
-};
 
-const AlertDropdown = ({ title, items, icon, type, onClose, badgeColor }) => (
-  <>
-    {/* <div onClick={onClose} className="fixed inset-0 z-40" /> */}
-    <div className="absolute right-0 mt-4 w-80 max-h-[450px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-      <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          {icon} {title}
-        </h3>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${badgeColor}`}>
-          {items.length} Active
-        </span>
-      </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {items.length > 0 ? (
-          <div className="divide-y divide-white/5">
-            {items.map((item, idx) => {
-              let link = "/admin";
-              let content = null;
+            <div className="w-px h-6 bg-white/10 mx-1" />
 
-              if (type === 'orders') {
-                link = "/admin/orders";
-                content = (
-                  <>
-                    <p className="text-xs font-bold text-white group-hover:text-green-400 transition-colors">{item.order_id}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">₹{item.total} • {new Date(item.created_at).toLocaleTimeString()}</p>
-                  </>
-                );
-              } else if (type === 'stock') {
-                link = "/admin/products";
-                content = (
-                  <>
-                    <p className="text-xs font-bold text-white group-hover:text-orange-400 transition-colors uppercase">{item.name}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Category: {item.category}</p>
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[9px] font-black uppercase">Low Stock</span>
-                  </>
-                );
-              } else if (type === 'members') {
-                link = "/admin/members";
-                content = (
-                  <>
-                    <p className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors uppercase">{item.name || item.username || "New Member"}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Joined at: {new Date(item.createdAt || item.created_at).toLocaleTimeString()}</p>
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase">New Registration</span>
-                  </>
-                );
-              } else if (type === 'expiry') {
-                link = "/admin/expiry-members";
-                const daysLeft = Math.ceil((new Date(item.endDate) - new Date()) / (1000 * 60 * 60 * 24));
-                content = (
-                  <>
-                    <p className="text-xs font-bold text-white group-hover:text-red-400 transition-colors uppercase">{item.username}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{item.planName}</p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-400 uppercase">
-                        Expiring {daysLeft <= 0 ? 'Today' : `in ${daysLeft}d`}
-                      </span>
-                      <span className="text-[9px] text-gray-600">{new Date(item.endDate).toLocaleDateString()}</span>
+            {/* Profile */}
+            <div className="relative">
+              <button
+                onClick={() => toggle("profile")}
+                className={`flex items-center gap-2.5 pl-2 pr-3 h-9 rounded-xl transition-all duration-200 border
+                  ${activeDropdown === "profile"
+                    ? "bg-primary/15 border-primary/40 shadow-lg shadow-primary/10"
+                    : "bg-white/8 hover:bg-white/15 border-white/10"
+                  }`}
+              >
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-semibold text-white leading-tight">{userName}</p>
+                  <p className="text-[10px] text-white/40 leading-none">{userRole}</p>
+                </div>
+                <ChevronDown size={13} className={`hidden sm:block text-white/40 transition-transform ${activeDropdown === "profile" ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* Profile dropdown */}
+              {activeDropdown === "profile" && (
+                <div className="absolute right-0 top-full mt-3 w-56 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  {/* user info */}
+                  <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10 bg-white/5">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-base font-bold shrink-0">
+                      {userName.charAt(0).toUpperCase()}
                     </div>
-                  </>
-                );
-              }
-
-              return (
-                <Link key={idx} to={link} onClick={onClose} className="p-4 block hover:bg-white/5 transition group">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                      {icon}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      {content}
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-bold text-white truncate">{userName}</p>
+                      <p className="text-[10px] text-white/40 truncate">{email}</p>
+                      <span className="inline-block mt-1 text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-semibold">{userRole}</span>
                     </div>
                   </div>
-                </Link>
-              );
-            })}
+                  {/* links */}
+                  <div className="p-1.5 space-y-0.5">
+                    <Link to="/employee/settings/profile" onClick={() => setActiveDropdown(null)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 text-sm text-white/80 hover:text-white transition">
+                      <User size={15} className="text-white/40" /> My Profile
+                    </Link>
+                    <Link to="/employee/settings" onClick={() => setActiveDropdown(null)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 text-sm text-white/80 hover:text-white transition">
+                      <Settings size={15} className="text-white/40" /> Settings
+                    </Link>
+                    <Link to="/employee/payroll/slips" onClick={() => setActiveDropdown(null)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 text-sm text-white/80 hover:text-white transition">
+                      <DollarSign size={15} className="text-white/40" /> Pay Slips
+                    </Link>
+                    <div className="h-px bg-white/10 my-1" />
+                    <button onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/15 text-sm text-red-400 hover:text-red-300 transition">
+                      <LogOut size={15} /> Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="p-10 text-center text-gray-500 text-xs">No active alerts for this category</div>
-        )}
-      </div>
-      <Link to={type === 'orders' ? "/admin/orders" : type === 'stock' ? "/admin/products" : "/admin/expiry-members"} onClick={onClose} className="p-3 bg-white/5 border-t border-white/10 text-center text-[10px] font-bold text-[#FF3131] hover:text-red-400 transition uppercase tracking-widest">
-        View All Records
-      </Link>
-    </div>
-  </>
-);
+        </div>
+      </header>
+
+      {/* ── SEARCH OVERLAY ── */}
+      {showSearch && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-24 px-4" onClick={() => setShowSearch(false)}>
+          <div ref={searchRef} className="w-full max-w-2xl bg-[#13141a] border border-white/15 rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <form onSubmit={handleSearch} className="flex items-center gap-3 px-5 py-4 border-b border-white/10">
+              <Search size={18} className="text-primary shrink-0" />
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search tasks, projects, leaves..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent text-white text-base outline-none placeholder:text-white/30"
+              />
+              <button type="button" onClick={() => setShowSearch(false)} className="text-white/30 hover:text-white transition">
+                <X size={18} />
+              </button>
+            </form>
+            <div className="px-5 py-3">
+              <p className="text-[11px] text-white/30 uppercase tracking-widest mb-2">Quick Links</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "My Tasks",     path: "/employee/tasks" },
+                  { label: "Attendance",   path: "/employee/attendance" },
+                  { label: "Apply Leave",  path: "/employee/leaves/apply" },
+                  { label: "Timesheet",    path: "/employee/timesheet" },
+                  { label: "My Projects",  path: "/employee/projects" },
+                  { label: "Pay Slips",    path: "/employee/payroll/slips" },
+                ].map(l => (
+                  <Link key={l.path} to={l.path} onClick={() => setShowSearch(false)}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-primary/20 hover:text-primary text-white/60 text-xs transition border border-white/8">
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="px-5 py-2 text-[10px] text-white/20 flex justify-between border-t border-white/5">
+              <span>Press <kbd className="bg-white/10 px-1 rounded">Enter</kbd> to search</span>
+              <span>Press <kbd className="bg-white/10 px-1 rounded">Esc</kbd> to close</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export default EmployeeHeader;
