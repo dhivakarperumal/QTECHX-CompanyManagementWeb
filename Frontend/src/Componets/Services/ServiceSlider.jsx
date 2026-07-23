@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import Slider from "react-slick";
 
 const PieceImage = ({ src, rows = 3, cols = 3, active }) => {
@@ -14,8 +13,8 @@ const PieceImage = ({ src, rows = 3, cols = 3, active }) => {
       const randomRotate = Math.random() * 90 - 45;
 
       pieces.push(
-        <motion.div
-          key={`${row}-${col}-${active}`} // 👈 key depends on active slide
+        <div
+          key={`${row}-${col}-${active}`}
           className="absolute"
           style={{
             width: `${pieceWidth}%`,
@@ -25,14 +24,6 @@ const PieceImage = ({ src, rows = 3, cols = 3, active }) => {
             backgroundImage: `url(${src})`,
             backgroundSize: `${cols * 100}% ${rows * 100}%`,
             backgroundPosition: `${(col / (cols - 1)) * 100}% ${(row / (rows - 1)) * 100}%`,
-          }}
-          initial={{ opacity: 0.7, scale: 0.95 }}   // not fully hidden
-animate={{ opacity: 1, scale: 1 }}
-
-          transition={{
-            duration: 0.7,
-            ease: "easeOut",
-            delay: (row * cols + col) * 0.04,
           }}
         />
       );

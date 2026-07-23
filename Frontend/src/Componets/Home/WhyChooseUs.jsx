@@ -7,7 +7,6 @@ import Button from "../Components/Button";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Logo from "/images/logo.png";
-import { motion } from "framer-motion"; 
 
 const WhyChooseUs = () => {
   useEffect(() => {
@@ -63,12 +62,10 @@ const WhyChooseUs = () => {
         >
 
 
-          <motion.img
+          <img
             src={Logo}
             alt="Q-TechX Logo"
-            className="absolute w-28 md:w-40 lg:w-44 top-5 md:top-11 left-5 md:left-12 opacity-80"
-            animate={{ y: [0, -15, 0] }}   // moves up and down
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-5 left-5 w-28 opacity-80 animate-floating md:top-11 md:left-12 md:w-40 lg:w-44"
           />
 
           {/* Main Illustration */}

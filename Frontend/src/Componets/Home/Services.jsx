@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import {
   FaCode,
   FaLaptopCode,
@@ -62,29 +61,13 @@ function Services() {
           const Icon = iconMap[service.image];
 
           return (
-            <motion.div
+            <div
               key={service.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.4 }}
               className="relative flex h-[380px] flex-col justify-evenly overflow-hidden rounded-xl bg-white p-6 text-black shadow transition hover:shadow-lg"
             >
-              <motion.div
-                className="absolute -bottom-24 right-1 h-35 w-35 rounded-full bg-[#ffb066]"
-                animate={{ x: [0, 20, 0], y: [0, -20, 0] }}
-                transition={{ duration: 6, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-              />
-              <motion.div
-                className="absolute -top-12 right-1 h-25 w-25 rounded-full bg-[#ffb066]"
-                animate={{ x: [0, -20, 0], y: [0, 20, 0] }}
-                transition={{ duration: 5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-              />
-              <motion.div
-                className="absolute left-0 top-1/2 h-12 w-12 rounded-full bg-[#ffb066]"
-                animate={{ x: [0, 25, 0], y: [0, -25, 0] }}
-                transition={{ duration: 7, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-              />
+              <div className="absolute -bottom-24 right-1 h-35 w-35 rounded-full bg-[#ffb066] animate-bounce-bg" />
+              <div className="absolute -top-12 right-1 h-25 w-25 rounded-full bg-[#ffb066] animate-bounce-bg" />
+              <div className="absolute left-0 top-1/2 h-12 w-12 rounded-full bg-[#ffb066] animate-bounce-bg" />
 
               <div className="relative z-10 flex flex-col items-center gap-4 text-center">
                 <div className="flex-shrink-0">
@@ -103,7 +86,7 @@ function Services() {
                   {service.short_description}
                 </p>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
