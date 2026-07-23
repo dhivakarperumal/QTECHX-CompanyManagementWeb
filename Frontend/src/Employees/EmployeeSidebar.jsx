@@ -99,12 +99,9 @@ const navItems = [
     icon: Video,
     children: [
       { path: "/employee/meetings", label: "All Meetings", icon: Video },
-      { path: "/employee/meetings/upcoming", label: "Upcoming", icon: CalendarDays },
-    ],
-  },
-
-  /* ---- BACK ---- */
-  { path: "/", label: "Back Home", icon: Home },
+      { path: "/employee/meetings/upcoming", label: "Upcoming", icon: CalendarDays }
+    ]
+  }
 ];
 
 /* ================= SIDEBAR ================= */
@@ -186,7 +183,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto scrollbar-hide">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -203,7 +200,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     onClick={() => toggleMenu(item.label)}
                     title={collapsed ? item.label : ""}
                     className={`
-                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
+                      w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm
                       transition-all duration-200
                       ${
                         isAnyChildActive
@@ -234,7 +231,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-8 mt-0.5 space-y-0.5 overflow-hidden transition-all duration-200 ${
+                      className={`ml-8 mt-1 space-y-1 overflow-hidden transition-all duration-200 ${
                         isMenuOpen
                           ? "max-h-60 opacity-100"
                           : "max-h-0 opacity-0"
@@ -249,7 +246,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             to={sub.path}
                             onClick={() => isOpen && onClose()}
                             className={`
-                              flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs
+                              flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs
                               transition-all duration-200
                               ${
                                 isActive
@@ -279,7 +276,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 title={collapsed ? item.label : ""}
                 onClick={() => isOpen && onClose()}
                 className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
+                  flex items-center gap-3 px-3 py-3 rounded-xl text-sm
                   transition-all duration-200
                   ${
                     isActive
