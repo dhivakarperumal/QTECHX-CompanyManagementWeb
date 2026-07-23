@@ -1,10 +1,5 @@
 // Projects.jsx
-import React, { useEffect, useState } from "react";
-
-import Slider from "react-slick";
-import { FiArrowRight, FiArrowLeft } from "react-icons/fi";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import React, { useState } from "react";
 import ProjectCard from "../Components/ProjectCard";
 
 const Projects = () => {
@@ -40,23 +35,6 @@ const Projects = () => {
   ];
 
   const [activeCategory, setActiveCategory] = useState("All");
-  const [slidesToShow, setSlidesToShow] = useState(3);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setSlidesToShow(1);
-      } else if (window.innerWidth < 1024) {
-        setSlidesToShow(2);
-      } else {
-        setSlidesToShow(2);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Extract unique categories
   const categories = ["All", ...new Set(items.map((p) => p.category))];
@@ -66,29 +44,6 @@ const Projects = () => {
     activeCategory === "All"
       ? items
       : items.filter((p) => p.category === activeCategory);
-
-  const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    arrows: window.innerWidth >= 768,
-    nextArrow: (
-      <button className="absolute top-1/2 right-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80">
-        <FiArrowRight className="text-primary text-xl" />{" "}
-        {/* arrow color white */}
-      </button>
-    ),
-    prevArrow: (
-      <button className="absolute top-1/2 left-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80">
-        <FiArrowLeft className="text-primary text-xl" />{" "}
-        {/* arrow color white */}
-      </button>
-    ),
-  };
 
   return (
     <section className="py-16 bg-primary/10">
@@ -122,17 +77,17 @@ const Projects = () => {
         </div>
 
         <div className="md:col-span-3 relative">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">
+          <h3 className="mb-6 text-2xl font-bold text-gray-800">
             {activeCategory === "All" ? "All Projects" : activeCategory}
           </h3>
 
-          <Slider {...settings}>
-  {filteredProjects.map((project, i) => (
-    <div key={project.id} className="p-2 h-full">
-      <ProjectCard project={project} aosDelay={i * 150} />
-    </div>
-  ))}
-</Slider>
+          <div className="grid gap-6 md:grid-cols-2">
+            {filteredProjects.map((project, i) => (
+              <div key={project.id} className="h-full">
+                <ProjectCard project={project} aosDelay={i * 150} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
