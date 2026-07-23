@@ -24,7 +24,7 @@ function App() {
 
   return (
     <section>
-      {showPublicChrome && <Header />}
+      {/* {showPublicChrome && <Header />} */}
       {showPublicChrome && <Navbar />}
       <ScrollToTop/>
       <ScrollNavigator/>
