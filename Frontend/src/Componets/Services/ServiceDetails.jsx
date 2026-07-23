@@ -8,7 +8,6 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
 
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ServiceSlider from "./ServiceSlider";

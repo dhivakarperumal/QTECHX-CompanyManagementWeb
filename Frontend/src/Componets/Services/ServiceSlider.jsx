@@ -1,5 +1,6 @@
 import { useState } from "react";
-import Slider from "react-slick";
+import SliderLib from "react-slick";
+const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
 const PieceImage = ({ src, rows = 3, cols = 3, active }) => {
   const pieces = [];
