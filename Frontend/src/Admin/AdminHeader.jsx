@@ -47,40 +47,47 @@ const getPageInfo = (pathname) => {
   return { title: "Dashboard", icon: LayoutDashboard };
 };
 
-/* ══════════════════ ALERT DROPDOWN ══════════════════ */
-const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => (
-  <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
-    {/* header */}
-    <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
-      <span className="text-sm font-bold text-white flex items-center gap-2">{icon} {title}</span>
-      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${accent}`}>{items.length} Active</span>
+const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
+  let viewAllLink = "/admin";
+  if (type === "orders") viewAllLink = "/admin/orders";
+  if (type === "stock") viewAllLink = "/admin/products";
+  if (type === "members") viewAllLink = "/admin/members";
+  if (type === "expiry") viewAllLink = "/admin/expiry-members";
+
+  return (
+    <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
+      {/* header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+        <span className="text-sm font-bold text-white flex items-center gap-2">{icon} {title}</span>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${accent}`}>{items.length} Active</span>
+      </div>
+      {/* list */}
+      <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
+        {items.length ? items.map((item, i) => {
+          let link = "/admin", label = "", sub = "";
+          if (type === "orders")  { link = "/admin/orders";         label = item.order_id;     sub = `₹${item.total}`; }
+          if (type === "stock")   { link = "/admin/products";       label = item.name;          sub = item.category; }
+          if (type === "members") { link = "/admin/members";        label = item.name || "New Member"; sub = `Joined ${dayjs(item.createdAt).format("hh:mm A")}`; }
+          if (type === "expiry")  { link = "/admin/expiry-members"; label = item.username;      sub = item.planName; }
+          return (
+            <Link key={i} to={link} onClick={onClose} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition group">
+              <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">{icon}</div>
+              <div>
+                <p className="text-xs font-semibold text-white group-hover:text-primary transition">{label}</p>
+                <p className="text-[10px] text-white/40 mt-0.5">{sub}</p>
+              </div>
+            </Link>
+          );
+        }) : (
+          <div className="py-8 text-center text-white/30 text-xs">No alerts</div>
+        )}
+      </div>
+      <Link to={viewAllLink} onClick={onClose} className="block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
+        View All
+      </Link>
     </div>
-    {/* list */}
-    <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
-      {items.length ? items.map((item, i) => {
-        let link = "/admin", label = "", sub = "";
-        if (type === "orders")  { link = "/admin/orders";         label = item.order_id;     sub = `₹${item.total}`; }
-        if (type === "stock")   { link = "/admin/products";       label = item.name;          sub = item.category; }
-        if (type === "members") { link = "/admin/members";        label = item.name || "New Member"; sub = `Joined ${dayjs(item.createdAt).format("hh:mm A")}`; }
-        if (type === "expiry")  { link = "/admin/expiry-members"; label = item.username;      sub = item.planName; }
-        return (
-          <Link key={i} to={link} onClick={onClose} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition group">
-            <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">{icon}</div>
-            <div>
-              <p className="text-xs font-semibold text-white group-hover:text-primary transition">{label}</p>
-              <p className="text-[10px] text-white/40 mt-0.5">{sub}</p>
-            </div>
-          </Link>
-        );
-      }) : (
-        <div className="py-8 text-center text-white/30 text-xs">No alerts</div>
-      )}
-    </div>
-    <Link to={link} onClick={onClose} className="block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
-      View All
-    </Link>
-  </div>
-);
+  );
+};
 
 /* ══════════════════ MAIN HEADER ══════════════════ */
 const Header = ({ onMenuClick }) => {
@@ -167,10 +174,10 @@ const Header = ({ onMenuClick }) => {
       <button
         onClick={() => toggle(name)}
         title={title}
-        className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200
+        className={`relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] transition-all duration-200 border
           ${activeDropdown === name
-            ? "bg-primary text-white shadow-lg shadow-primary/30"
-            : "bg-white/8 hover:bg-white/15 text-white/70 hover:text-white border border-white/10"
+            ? "bg-white/10 border-white/20 text-white shadow-lg"
+            : "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-white/60 hover:text-white"
           }`}
       >
         {children}
@@ -227,7 +234,7 @@ const Header = ({ onMenuClick }) => {
 
             {/* Orders */}
             <IconBtn name="orders" badge={alerts.orders.length} badgeColor="bg-green-500" title="Today's Orders">
-              <ShoppingBag size={16} />
+              <ShoppingBag size={18} />
             </IconBtn>
             {activeDropdown === "orders" && (
               <AlertDropdown title="Today's Orders" items={alerts.orders} icon={<ShoppingBag size={13} className="text-green-400" />} type="orders" onClose={() => setActiveDropdown(null)} accent="bg-green-500/20 text-green-400" />
@@ -235,7 +242,7 @@ const Header = ({ onMenuClick }) => {
 
             {/* Low Stock */}
             <IconBtn name="stock" badge={alerts.lowStock.length} badgeColor="bg-orange-500" title="Low Stock">
-              <Package size={16} />
+              <Package size={18} />
             </IconBtn>
             {activeDropdown === "stock" && (
               <AlertDropdown title="Stock Alerts" items={alerts.lowStock} icon={<Package size={13} className="text-orange-400" />} type="stock" onClose={() => setActiveDropdown(null)} accent="bg-orange-500/20 text-orange-400" />
@@ -243,7 +250,7 @@ const Header = ({ onMenuClick }) => {
 
             {/* Expiring */}
             <IconBtn name="expiry" badge={alerts.expiring.length} badgeColor="bg-red-500" title="Expiring Plans">
-              <Clock size={16} />
+              <Clock size={18} />
             </IconBtn>
             {activeDropdown === "expiry" && (
               <AlertDropdown title="Expiring Plans" items={alerts.expiring} icon={<Clock size={13} className="text-red-400" />} type="expiry" onClose={() => setActiveDropdown(null)} accent="bg-red-500/20 text-red-400" />
@@ -251,7 +258,7 @@ const Header = ({ onMenuClick }) => {
 
             {/* New Members */}
             <IconBtn name="members" badge={alerts.registrations.length} badgeColor="bg-blue-500" title="New Members Today">
-              <Users size={16} />
+              <Users size={18} />
             </IconBtn>
             {activeDropdown === "members" && (
               <AlertDropdown title="New Members" items={alerts.registrations} icon={<User size={13} className="text-blue-400" />} type="members" onClose={() => setActiveDropdown(null)} accent="bg-blue-500/20 text-blue-400" />
@@ -259,7 +266,7 @@ const Header = ({ onMenuClick }) => {
 
             {/* Bell summary */}
             <IconBtn name="bell" badge={totalAlerts} badgeColor="bg-primary" title="All Notifications">
-              <Bell size={16} />
+              <Bell size={18} />
             </IconBtn>
 
             {/* Divider */}
