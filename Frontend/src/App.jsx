@@ -11,9 +11,10 @@ import FloatingSupport from "./Componets/CommonComponents/FloatingSupport";
 
 function App() {
   const [loading] = useState(false);
-  const { pathname } = useLocation();
-  const isAuthPage = pathname === "/login" || pathname === "/register";
-  const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/employee" || pathname.startsWith("/employee/");
+  const { pathname, hash } = useLocation();
+  const currentRoute = hash?.startsWith("#") ? hash.slice(1) : pathname;
+  const isAuthPage = currentRoute === "/login" || currentRoute === "/register";
+  const isAdminArea = currentRoute === "/admin" || currentRoute.startsWith("/admin/") || currentRoute === "/employee" || currentRoute.startsWith("/employee/");
   const showPublicChrome = !isAuthPage && !isAdminArea;
 
   if (loading) {
