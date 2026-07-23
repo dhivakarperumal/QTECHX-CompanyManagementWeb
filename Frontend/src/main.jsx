@@ -22,6 +22,8 @@ import WhyChooseUs from './Componets/WhyChooseUs/WhyChooseUs.jsx';
 import WhoWeWorkWith from "./Componets/WhyChooseUs/WhoWeWorkWith.jsx";
 import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
 import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
+import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
+import ContactPage from "./Componets/Contact/ContactPage.jsx";
 
 // Normalize URLs when using hash routing so legacy or direct /admin paths map to /#/admin
 const { pathname, search, hash } = window.location
@@ -49,6 +51,8 @@ const router = createHashRouter([
       { path: "/whoweworkwith", element: <WhoWeWorkWith /> },
       { path: "/whatwedo", element: <WhatWeDo /> },
       { path: "/achievements", element: <OurAchievements /> },
+      { path: "/career", element: <CareerDetail /> },
+      { path: "/contact", element: <ContactPage /> },
       {
         path: 'login',
         element: <Login />,
