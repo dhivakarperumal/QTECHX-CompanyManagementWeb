@@ -1,205 +1,338 @@
-﻿import React, { useContext, useState } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../PrivateRouter/AuthContext";
-import { StoreContext } from "../../PrivateRouter/StoreContext";
-import PageContainer from "./PageContainer";
-import { Menu, X, User, Heart, ShoppingCart, Search } from "lucide-react";
-import logo from "/images/logo.png";
+﻿import React, { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
+import Button from "../Components/Button";
+import {
+  FaCode,
+  FaLaptopCode,
+  FaPaintBrush,
+  FaSearch,
+  FaMobileAlt,
+  FaUsersCog,
+  FaShoppingCart,
+  FaUserGraduate,
+  FaChalkboardTeacher,
+  FaBullhorn,
+} from "react-icons/fa";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
-  const { cart, wishlist } = useContext(StoreContext);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
+  const [openMenu, setOpenMenu] = useState(null);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [mobileSubMenu, setMobileSubMenu] = useState(null);
+  const dropdownRef = useRef(null);
+  const location = useLocation();
 
-  const cartCount = cart?.length || 0;
-  const wishlistCount = wishlist?.length || 0;
+  const services = [
+    { id: 1, title: "Web Development", path: "/services/web-development", icon: "FaLaptopCode" },
+    { id: 2, title: "Mobile App Development", path: "/services/mobile-app-development", icon: "FaMobileAlt" },
+    { id: 3, title: "UI/UX Design", path: "/services/ui-ux-design", icon: "FaPaintBrush" },
+    { id: 4, title: "Digital Marketing", path: "/services/digital-marketing", icon: "FaBullhorn" },
+  ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const whoWeAreLinks = [
+    { id: 1, title: "Why Choose Us", path: "/whychooseus" },
+    { id: 2, title: "Who We Work With", path: "/whoweworkwith" },
+    { id: 3, title: "What We Do", path: "/whatwedo" },
+    { id: 4, title: "Our Achievements", path: "/achievements" },
+  ];
+
+  const iconMap = {
+    FaCode,
+    FaLaptopCode,
+    FaPaintBrush,
+    FaSearch,
+    FaMobileAlt,
+    FaUsersCog,
+    FaShoppingCart,
+    FaUserGraduate,
+    FaChalkboardTeacher,
+    FaBullhorn,
+  };
+
+  useEffect(() => {
+    setOpenMenu(null);
+    setMobileSubMenu(null);
+    setMobileMenu(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleMenu = (menu) => {
+    setOpenMenu((current) => (current === menu ? null : menu));
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-      <PageContainer>
-        <div className="flex h-16 items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-green-800">QTech Solutions</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                isActive ? "text-green-800" : "hover:text-green-800"
-              }
-            >
-              Home
-            </NavLink>
-            <NavLink
-              to="/shop"
-              className={({ isActive }) =>
-                isActive ? "text-green-800" : "hover:text-green-800"
-              }
-            >
-              Shop
-            </NavLink>
-            <NavLink
-              to="/about"
-              className={({ isActive }) =>
-                isActive ? "text-green-800" : "hover:text-green-800"
-              }
-            >
-              About
-            </NavLink>
-            <NavLink
-              to="/contactus"
-              className={({ isActive }) =>
-                isActive ? "text-green-800" : "hover:text-green-800"
-              }
-            >
-              Contact
-            </NavLink>
-          </nav>
-
-          <div className="hidden md:flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2">
-              <Search size={18} className="text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search products"
-                className="w-64 bg-transparent text-sm outline-none"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigate("/wishlist")}
-              className="relative text-gray-600 hover:text-green-800"
-            >
-              <Heart size={22} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/cart")}
-              className="relative text-gray-600 hover:text-green-800"
-            >
-              <ShoppingCart size={22} />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <User size={18} />
-              {user ? (
-                <button onClick={handleLogout} className="font-semibold hover:text-green-800">
-                  Logout
-                </button>
-              ) : (
-                <Link to="/login" className="font-semibold hover:text-green-800">
-                  Sign In
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <button
-            className="md:hidden text-gray-700"
-            onClick={() => setMobileOpen((prev) => !prev)}
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+    <nav className="fixed left-0 top-0 z-50 flex h-18 w-full items-center justify-between bg-white px-6 py-2 shadow-md md:px-15">
+      <Link to="/" className="flex items-center gap-0.5">
+        <img src="/images/logo.png" alt="logo" className="h-12 w-auto" />
+        <div className="flex flex-col leading-tight">
+          <span className="text-base font-bold text-gray-900 md:text-lg">Q-Techx</span>
+          <span className="text-center text-xs text-gray-800 md:text-sm">Solutions</span>
         </div>
-      </PageContainer>
+      </Link>
 
-      {mobileOpen && (
-        <div className="border-t border-gray-200 bg-white md:hidden">
-          <div className="flex flex-col gap-2 px-4 py-4 text-sm text-gray-700">
+      <ul className="hidden items-center justify-center gap-8 font-medium md:flex" ref={dropdownRef}>
+        <li>
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
+            }
+          >
+            Home
+          </NavLink>
+        </li>
+        <li>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
+            }
+          >
+            About
+          </NavLink>
+        </li>
+
+        <li className="relative">
+          <div
+            onClick={() => toggleMenu("services")}
+            className="flex cursor-pointer items-center gap-1"
+          >
+            Services <FiChevronDown />
+          </div>
+          {openMenu === "services" && (
+            <div className="absolute left-[-2.5rem] top-full mt-2 grid w-[24rem] grid-cols-2 gap-2 rounded-md bg-white p-4 shadow-lg z-50">
+              {services.map((srv) => {
+                const Icon = iconMap[srv.icon] || FaCode;
+                return (
+                  <NavLink
+                    key={srv.id}
+                    to={srv.path}
+                    className={({ isActive }) =>
+                      isActive
+                        ? "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary"
+                        : "flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                    }
+                  >
+                    <Icon className="text-xl text-primary" />
+                    {srv.title}
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </li>
+
+        <li>
+          <NavLink
+            to="/projects"
+            className={({ isActive }) =>
+              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
+            }
+          >
+            Projects
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/prices"
+            className={({ isActive }) =>
+              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
+            }
+          >
+            Prices
+          </NavLink>
+        </li>
+
+        <li className="relative">
+          <div
+            onClick={() => toggleMenu("whoWeAre")}
+            className="flex cursor-pointer items-center gap-1"
+          >
+            Who We Are? <FiChevronDown />
+          </div>
+          {openMenu === "whoWeAre" && (
+            <div className="absolute top-full mt-2 w-60 rounded-md bg-white p-2 shadow-lg z-50">
+              {whoWeAreLinks.map((item) => (
+                <NavLink
+                  key={item.id}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    isActive
+                      ? "block rounded-md px-3 py-2 text-sm font-medium text-primary"
+                      : "block rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                  }
+                >
+                  {item.title}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </li>
+
+        <li>
+          <NavLink
+            to="/career"
+            className={({ isActive }) =>
+              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
+            }
+          >
+            Career
+          </NavLink>
+        </li>
+      </ul>
+
+      <Link to="/contact" className="hidden md:block">
+        <Button>Contact</Button>
+      </Link>
+
+      <button className="text-2xl md:hidden" onClick={() => setMobileMenu(true)}>
+        <FiMenu />
+      </button>
+
+      {mobileMenu && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="flex-1 bg-black/40" onClick={() => setMobileMenu(false)}></div>
+
+          <div className="h-full w-full overflow-y-auto bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Menu</h2>
+              <button onClick={() => setMobileMenu(false)}>
+                <FiX className="text-2xl" />
+              </button>
+            </div>
+
             <NavLink
               to="/"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-lg px-3 py-2 hover:bg-gray-100"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+              }
             >
               Home
             </NavLink>
             <NavLink
-              to="/shop"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-lg px-3 py-2 hover:bg-gray-100"
-            >
-              Shop
-            </NavLink>
-            <NavLink
               to="/about"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-lg px-3 py-2 hover:bg-gray-100"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+              }
             >
               About
             </NavLink>
+
+            <button onClick={() => setMobileSubMenu("services")} className="block w-full py-2 text-left">
+              Services →
+            </button>
+
             <NavLink
-              to="/contactus"
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-lg px-3 py-2 hover:bg-gray-100"
+              to="/projects"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+              }
+            >
+              Projects
+            </NavLink>
+
+            <NavLink
+              to="/prices"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+              }
+            >
+              Prices
+            </NavLink>
+
+            <button onClick={() => setMobileSubMenu("whoWeAre")} className="block w-full py-2 text-left">
+              Who We Are →
+            </button>
+
+            <NavLink
+              to="/career"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+              }
+            >
+              Career
+            </NavLink>
+
+            <NavLink
+              to="/contact"
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive
+                  ? "mt-4 block rounded-full border border-primary py-2 text-center font-medium text-primary"
+                  : "mt-4 block rounded-full border border-primary py-2 text-center text-gray-900 hover:text-primary"
+              }
             >
               Contact
             </NavLink>
-            <button
-              type="button"
-              onClick={() => {
-                navigate("/wishlist");
-                setMobileOpen(false);
-              }}
-              className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-100"
-            >
-              <span>Wishlist</span>
-              {wishlistCount > 0 && <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">{wishlistCount}</span>}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                navigate("/cart");
-                setMobileOpen(false);
-              }}
-              className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-100"
-            >
-              <span>Cart</span>
-              {cartCount > 0 && <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] text-white">{cartCount}</span>}
-            </button>
-            {user ? (
-              <button
-                type="button"
-                onClick={() => {
-                  handleLogout();
-                  setMobileOpen(false);
-                }}
-                className="rounded-lg bg-green-800 px-3 py-2 text-white"
-              >
-                Logout
-              </button>
-            ) : (
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg bg-green-800 px-3 py-2 text-white text-center"
-              >
-                Sign In
-              </Link>
-            )}
           </div>
         </div>
       )}
-    </header>
+
+      {mobileSubMenu && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="flex-1 bg-black/40" onClick={() => setMobileSubMenu(null)}></div>
+          <div className="h-full w-full overflow-y-auto bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{mobileSubMenu === "services" ? "Services" : "Who We Are"}</h2>
+              <button onClick={() => setMobileSubMenu(null)}>
+                <FiX className="text-2xl" />
+              </button>
+            </div>
+
+            {mobileSubMenu === "services" &&
+              services.map((srv) => {
+                const Icon = iconMap[srv.icon] || FaCode;
+                return (
+                  <NavLink
+                    key={srv.id}
+                    to={srv.path}
+                    onClick={() => {
+                      setMobileMenu(false);
+                      setMobileSubMenu(null);
+                    }}
+                    className={({ isActive }) =>
+                      isActive ? "flex items-center gap-2 py-2 font-medium text-primary" : "flex items-center gap-2 py-2 text-gray-900 hover:text-primary"
+                    }
+                  >
+                    <Icon className="text-xl text-primary" />
+                    {srv.title}
+                  </NavLink>
+                );
+              })}
+
+            {mobileSubMenu === "whoWeAre" &&
+              whoWeAreLinks.map((item) => (
+                <NavLink
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setMobileMenu(false)}
+                  className={({ isActive }) =>
+                    isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
+                  }
+                >
+                  {item.title}
+                </NavLink>
+              ))}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 };
 
