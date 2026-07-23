@@ -15,6 +15,7 @@ import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
+import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
 
 // Normalize URLs when using hash routing so legacy or direct /admin paths map to /#/admin
 const { pathname, search, hash } = window.location
@@ -35,6 +36,7 @@ const router = createHashRouter([
         element: <Home />,
       },
       { path: "/about", element: <AboutUs /> },
+      { path: "/services/:id", element: <ServiceDetails /> },
       {
         path: 'login',
         element: <Login />,

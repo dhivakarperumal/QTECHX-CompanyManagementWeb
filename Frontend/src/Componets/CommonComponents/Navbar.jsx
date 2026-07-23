@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import Button from "../Components/Button";
@@ -23,10 +23,10 @@ const Navbar = () => {
   const location = useLocation();
 
   const services = [
-    { id: 1, title: "Web Development", path: "/services/web-development", icon: "FaLaptopCode" },
-    { id: 2, title: "Mobile App Development", path: "/services/mobile-app-development", icon: "FaMobileAlt" },
-    { id: 3, title: "UI/UX Design", path: "/services/ui-ux-design", icon: "FaPaintBrush" },
-    { id: 4, title: "Digital Marketing", path: "/services/digital-marketing", icon: "FaBullhorn" },
+    { id: 1, title: "Web Development", path: "/services/1", icon: "FaLaptopCode" },
+    { id: 5, title: "Mobile App Development", path: "/services/5", icon: "FaMobileAlt" },
+    { id: 3, title: "UI/UX Design", path: "/services/3", icon: "FaPaintBrush" },
+    { id: 10, title: "Digital Marketing", path: "/services/10", icon: "FaBullhorn" },
   ];
 
   const whoWeAreLinks = [

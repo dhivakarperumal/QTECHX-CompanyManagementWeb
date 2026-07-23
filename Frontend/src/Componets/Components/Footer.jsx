@@ -5,16 +5,27 @@ import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
 import  Buttons from './Buttons'
-import { useSelector, useDispatch } from "react-redux";
-import { fetchServices } from "../Redux/serviceSlice"; // adjust path
 
 const Footer = () => {
-   const dispatch = useDispatch();
-  const { items: services, loading, error } = useSelector((state) => state.services);
+  const [services, setServices] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
 
   useEffect(() => {
-    dispatch(fetchServices());
-  }, [dispatch]);
+    fetch("/Service.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then((data) => {
+        setServices(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   if (loading) return <p className="text-gray-500">Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
