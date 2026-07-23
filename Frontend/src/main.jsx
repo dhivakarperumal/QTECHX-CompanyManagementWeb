@@ -16,6 +16,7 @@ import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
 import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
+import Projects from './Componets/Home/Projects.jsx'
 
 // Normalize URLs when using hash routing so legacy or direct /admin paths map to /#/admin
 const { pathname, search, hash } = window.location
@@ -37,6 +38,7 @@ const router = createHashRouter([
       },
       { path: "/about", element: <AboutUs /> },
       { path: "/services/:id", element: <ServiceDetails /> },
+      { path: "/projects", element: <Projects /> },
       {
         path: 'login',
         element: <Login />,
