@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Componets/CommonComponents/Navbar";
 import Header from "./Componets/CommonComponents/Header";
-import Footer from "./Componets/CommonComponents/Footer";
+import Footer from "./Componets/Components/Footer";
 
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
 import ScrollNavigator from "./Componets/CommonComponents/ScrollNavigator";
@@ -30,7 +30,8 @@ function App() {
       <ScrollNavigator/>
       <Outlet />
       {!isAdmin && <FloatingSupport />}
-      {showPublicChrome && <Footer />}
+      <Footer/>
+      {/* {showPublicChrome && <Footer />} */}
     </section>
   );
 }

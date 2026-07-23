@@ -1,34 +1,10 @@
-export { default } from "../CommonComponents/Footer";
-import React, { useEffect } from "react";
+import React from "react";
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { NavLink } from "react-router-dom";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
 import  Buttons from './Buttons'
 
 const Footer = () => {
-  const [services, setServices] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-
-  useEffect(() => {
-    fetch("/Service.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch");
-        return res.json();
-      })
-      .then((data) => {
-        setServices(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) return <p className="text-gray-500">Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
   return (
     <footer className="bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 md:px-18 py-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
@@ -51,12 +27,11 @@ const Footer = () => {
   <div className="space-y-3 text-gray-700 text-sm leading-relaxed">
     <p className="flex items-start gap-2">
       <FaMapMarkerAlt className="text-primary mt-1 shrink-0" />
-      <span>No.58 Vaitheeswaran Nagar
-      Tirupattur - 635 653</span>
+      <span>Tirupattur, Tamil Nadu, India, 635 653.</span>
     </p>
     <p className="flex items-center gap-2">
       <FaPhoneAlt className="text-primary shrink-0" /> 
-      <span>+91 965 9133 504</span>
+      <span>+91 91235 89879</span>
     </p>
     <p className="flex items-center gap-2">
       <FaEnvelope className="text-primary shrink-0" /> 
@@ -65,15 +40,17 @@ const Footer = () => {
   </div>
 </div>
 
+
+       
 {/* Quick Links */}
-<div className="">
+<div>
   <h2 className="text-lg font-bold mb-5 text-gray-900">Quick Links</h2>
   <ul className="space-y-3 text-gray-700 text-sm">
     {[
       { name: "Home", path: "/" },
       { name: "About", path: "/about" },
-      { name: "Projects", path: "/projects" },
-       { name: "Prices", path: "/prices" },
+      { name: "Services", path: "/services" },
+      { name: "Products", path: "/products" },
       { name: "Career", path: "/career" },
       { name: "Contact", path: "/contact" },
     ].map((link, idx) => (
@@ -89,32 +66,31 @@ const Footer = () => {
     ))}
   </ul>
 </div>
-      
-{/* Services Links */}
+       {/* Features */}
+<div>
+  <h2 className="text-lg font-bold mb-5 text-gray-900">Our Features</h2>
+  <ul className="space-y-3 text-gray-700 text-sm">
+    {[
+      { name: "Why Choose Us", path: "/why-choose-us" },
+      { name: "Who We Work", path: "/who-we-work" },
+      { name: "What We Do", path: "/what-we-do" },
+      { name: "Our Achievements", path: "/achievements" },
+      { name: "Terms Of Services", path: "/terms" },
+      { name: "Privacy Policy", path: "/privacy-policy" },
+    ].map((item, idx) => (
+      <li
+        key={idx}
+        className="flex items-center  gap-2 justify-between hover:text-primary cursor-pointer transition-colors"
+      >
+        <MdOutlineArrowForwardIos className="ml-2 text-primary  group-hover:text-primary transition" />
 
-   <div className=" -ml-0 md:-ml-18 ">
-      <h2 className="text-lg font-bold mb-5 text-gray-900">Our Services</h2>
-      <ul className="space-y-3 text-gray-600 text-sm">
-        {services.slice(0,6 ).map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center gap-2  cursor-pointer"
-          >
-            <MdOutlineArrowForwardIos className=" text-primary" />
-
-            <NavLink
-              to={`/services/${item.id}`}
-              className= "text-gray-700  hover:text-primary"       
-            >
-              {item.title}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
-    </div>
-
-           
-
+        <Link to={item.path} className="flex-1">
+          {item.name}
+        </Link>
+      </li>
+    ))}
+  </ul>
+</div>
 
         {/* Newsletter */}
         <div>
