@@ -90,6 +90,20 @@ const employeeDeptData = [
   { name: 'Others', value: 16, color: '#111827' },
 ];
 
+const recentCompletedTasksData = [
+  { name: 'Homepage Redesign', project: 'Website V2', assignee: 'Alex Morgan', avatar: 'https://i.pravatar.cc/150?u=5', status: 'Completed' },
+  { name: 'API Integration', project: 'Mobile App', assignee: 'Sam Smith', avatar: 'https://i.pravatar.cc/150?u=6', status: 'Completed' },
+  { name: 'Database Migration', project: 'Backend Ops', assignee: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=1', status: 'Completed' },
+  { name: 'Q3 Financial Report', project: 'Finance', assignee: 'Lisa Ray', avatar: 'https://i.pravatar.cc/150?u=7', status: 'Completed' },
+];
+
+const leaveRequestsData = [
+  { employee: 'Michael Scott', avatar: 'https://i.pravatar.cc/150?u=8', type: 'Sick Leave', duration: 'Oct 12 - Oct 14' },
+  { employee: 'Jim Halpert', avatar: 'https://i.pravatar.cc/150?u=9', type: 'Casual Leave', duration: 'Oct 15 (1 day)' },
+  { employee: 'Pam Beesly', avatar: 'https://i.pravatar.cc/150?u=10', type: 'Maternity', duration: 'Nov 1 - Jan 31' },
+  { employee: 'Dwight Schrute', avatar: 'https://i.pravatar.cc/150?u=11', type: 'Emergency', duration: 'Oct 13 (Half day)' },
+];
+
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════ */
@@ -338,6 +352,93 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* ── TABLES ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2">
+        
+        {/* Recent Tasks Completed Table */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-primary" /> Recent Tasks Completed
+            </h2>
+            <button className="text-xs text-primary hover:underline">View All</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-xs text-white/50">
+                  <th className="pb-3 font-medium">Task Name</th>
+                  <th className="pb-3 font-medium">Project</th>
+                  <th className="pb-3 font-medium">Assigned To</th>
+                  <th className="pb-3 font-medium text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {recentCompletedTasksData.map((task, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="py-3 font-medium text-white text-xs">{task.name}</td>
+                    <td className="py-3 text-white/70 text-xs">{task.project}</td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={task.avatar} alt={task.assignee} className="w-6 h-6 rounded-full" />
+                        <span className="text-white/80 text-[11px]">{task.assignee}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="bg-green-500/10 text-green-400 text-[10px] px-2 py-1 rounded-full font-semibold">
+                        {task.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Leave Requests Table */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <CalendarOff size={16} className="text-primary" /> Leave Requests
+            </h2>
+            <button className="text-xs text-primary hover:underline">View All</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-xs text-white/50">
+                  <th className="pb-3 font-medium">Employee</th>
+                  <th className="pb-3 font-medium">Leave Type</th>
+                  <th className="pb-3 font-medium">Duration</th>
+                  <th className="pb-3 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {leaveRequestsData.map((leave, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={leave.avatar} alt={leave.employee} className="w-6 h-6 rounded-full" />
+                        <span className="text-white/80 font-medium text-xs">{leave.employee}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-white/70 text-[11px]">{leave.type}</td>
+                    <td className="py-3 text-white/50 text-[10px]">{leave.duration}</td>
+                    <td className="py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="bg-green-500/15 text-green-400 hover:bg-green-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Approve</button>
+                        <button className="bg-red-500/15 text-red-400 hover:bg-red-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Reject</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>
