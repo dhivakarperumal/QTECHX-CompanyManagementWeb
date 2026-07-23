@@ -1,20 +1,30 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchReviews } from "../Redux/reviewSlice";
+
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 const Testimonial = () => {
-  const dispatch = useDispatch();
-  const { items: reviews, loading, error } = useSelector((state) => state.reviews);
-
-  useEffect(() => {
-    dispatch(fetchReviews());
-  }, [dispatch]);
-
-  if (loading) return <p className="text-center">Loading testimonials...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  const reviews = [
+    {
+      name: "John Doe",
+      role: "CEO, Tech Corp",
+      image: "https://randomuser.me/api/portraits/men/1.jpg",
+      quote: "The service provided was exceptional. We saw a significant increase in our productivity and overall business growth."
+    },
+    {
+      name: "Jane Smith",
+      role: "Marketing Director",
+      image: "https://randomuser.me/api/portraits/women/2.jpg",
+      quote: "Absolutely brilliant work. They delivered on time and exceeded all our expectations with their innovative solutions."
+    },
+    {
+      name: "Robert Johnson",
+      role: "Founder, Startup Inc",
+      image: "https://randomuser.me/api/portraits/men/3.jpg",
+      quote: "Their team was highly professional and dedicated. I highly recommend them for any digital transformation needs."
+    }
+  ];
 
   const settings = {
     dots: false,

@@ -1,12 +1,12 @@
 import Hero from "./Hero";
-// import Services from "./Services";
+import Services from "./Services";
 import AboutUs from "./AboutUs";
-// import Methodology from "./Methodology";
-// import WhyChooseUs from "./WhyChooseUs";
-// import Projects from "./Projects";
-// import Careers from "./Careers";
-// import Testimonial from "./Testimonial";
-// import SocialMedia from "./SocialMedia";
+import Methodology from "./Methodology";
+import WhyChooseUs from "./WhyChooseUs";
+import Projects from "./Projects";
+import Careers from "./Careers";
+import Testimonial from "./Testimonial";
+import SocialMedia from "./SocialMedia";
 import EventBanner from "./EventBanner";
 
 const Home = () => {
@@ -15,14 +15,14 @@ const Home = () => {
     <>
       <Hero />
       <EventBanner/>
-      {/* <Services/> */}
+      <Services/>
       <AboutUs/>
-      {/* <Methodology/>
+      <Methodology/>
       <WhyChooseUs />
       <Projects />
       <Careers />
       <Testimonial />
-      <SocialMedia /> */}
+      <SocialMedia />
     </>
   );
 };

@@ -8,5 +8,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "framer-motion": "^12.42.2",
+    "react-slick": "^0.31.0",
+    "slick-carousel": "^1.8.1"
   }
 }

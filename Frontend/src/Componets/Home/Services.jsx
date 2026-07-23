@@ -1,7 +1,6 @@
 // src/components/ServiceList.jsx
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchServices } from "../Redux/serviceSlice";
+
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -35,8 +34,32 @@ function Services() {
 };
  
 
-  const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.services);
+  const items = [
+    {
+      id: 1,
+      title: "Web Development",
+      short_description: "We build modern and responsive websites tailored to your needs.",
+      image: "FaLaptopCode"
+    },
+    {
+      id: 2,
+      title: "Mobile App Development",
+      short_description: "Native and cross-platform mobile applications for iOS and Android.",
+      image: "FaMobileAlt"
+    },
+    {
+      id: 3,
+      title: "UI/UX Design",
+      short_description: "Beautiful and intuitive user interfaces that engage your audience.",
+      image: "FaPaintBrush"
+    },
+    {
+      id: 4,
+      title: "Digital Marketing",
+      short_description: "Result-driven marketing strategies to grow your business online.",
+      image: "FaBullhorn"
+    }
+  ];
 
   const [slidesToShow, setSlidesToShow] = useState(3);
 
@@ -56,15 +79,6 @@ function Services() {
     window.addEventListener("resize", updateSlides);
     return () => window.removeEventListener("resize", updateSlides);
   }, []);
-
-  useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchServices());
-    }
-  }, [dispatch, items.length]);
-
-  if (loading) return <p>Loading services...</p>;
-  if (error) return <p>Error: {error}</p>;
 
   // ✅ slick settings (dynamic slidesToShow)
   const settings = {

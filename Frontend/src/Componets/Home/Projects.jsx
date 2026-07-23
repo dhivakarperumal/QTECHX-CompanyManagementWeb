@@ -1,7 +1,6 @@
 // Projects.jsx
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects } from "../Redux/projectSlice";
+
 import Slider from "react-slick";
 import { FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import "slick-carousel/slick/slick.css";
@@ -9,15 +8,39 @@ import "slick-carousel/slick/slick-theme.css";
 import ProjectCard from "../Components/ProjectCard";
 
 const Projects = () => {
-  const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.projects);
+  const items = [
+    {
+      id: 1,
+      title: "E-Commerce Platform",
+      category: "Web App",
+      image: "/images/project1.png",
+      description: "A full-featured online store with payment gateway integration."
+    },
+    {
+      id: 2,
+      title: "Fitness Tracker",
+      category: "Mobile App",
+      image: "/images/project2.png",
+      description: "A mobile application to track daily workouts and nutrition."
+    },
+    {
+      id: 3,
+      title: "Corporate Dashboard",
+      category: "Web App",
+      image: "/images/project3.png",
+      description: "Internal analytics dashboard for enterprise management."
+    },
+    {
+      id: 4,
+      title: "Real Estate Portal",
+      category: "Website",
+      image: "/images/project4.png",
+      description: "Platform for buying and selling properties."
+    }
+  ];
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [slidesToShow, setSlidesToShow] = useState(3);
-
-  useEffect(() => {
-    dispatch(fetchProjects());
-  }, [dispatch]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,10 +57,6 @@ const Projects = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  if (loading) return <p className="text-center py-10">Loading projects...</p>;
-  if (error)
-    return <p className="text-center py-10 text-red-500">Error: {error}</p>;
 
   // Extract unique categories
   const categories = ["All", ...new Set(items.map((p) => p.category))];
