@@ -4,8 +4,12 @@ import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, BarChart3, TrendingUp,
   TrendingDown, ArrowUpRight, Clock, AlertCircle, CheckCircle2,
-  Timer, UserPlus, Briefcase, Activity, Calendar,
+  UserPlus, Briefcase, Activity, Calendar, ChevronDown, Settings
 } from 'lucide-react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 /* ─── Helpers ─── */
 const greeting = () => {
@@ -22,9 +26,7 @@ const today = new Date().toLocaleDateString('en-IN', {
 /* ─── Stat Card ─── */
 const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor }) => (
   <div className="relative overflow-hidden rounded-2xl p-5 border border-white/8 bg-white/4 hover:bg-white/6 transition-all duration-300 group">
-    {/* bg glow */}
     <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-20 ${bgColor}`} />
-
     <div className="flex items-start justify-between mb-4">
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>
         <Icon size={20} />
@@ -38,7 +40,6 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor
         </span>
       )}
     </div>
-
     <p className="text-3xl font-bold text-white mb-1">{value}</p>
     <p className="text-white/50 text-xs font-medium">{label}</p>
   </div>
@@ -63,21 +64,31 @@ const ActivityRow = ({ icon: Icon, iconColor, iconBg, title, sub, time, badge, b
   </div>
 );
 
-/* ─── Progress Bar ─── */
-const ProgressBar = ({ label, value, max, color }) => {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div className="mb-4 last:mb-0">
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-white/70 text-xs font-medium">{label}</span>
-        <span className="text-white text-xs font-bold">{value}<span className="text-white/30">/{max}</span></span>
-      </div>
-      <div className="w-full bg-white/8 rounded-full h-1.5">
-        <div className={`h-1.5 rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-};
+/* ─── Mock Data for Charts ─── */
+const overviewData = [
+  { name: 'May 1', employees: 10, projects: 50 },
+  { name: 'May 6', employees: 40, projects: 120 },
+  { name: 'May 11', employees: 55, projects: 100 },
+  { name: 'May 16', employees: 80, projects: 140 },
+  { name: 'May 21', employees: 70, projects: 120 },
+  { name: 'May 26', employees: 110, projects: 160 },
+  { name: 'May 31', employees: 140, projects: 220 },
+];
+
+const tasksStatusData = [
+  { name: 'Completed', value: 178, color: '#f97316' }, 
+  { name: 'In Progress', value: 48, color: '#4b5563' }, 
+  { name: 'Pending', value: 16, color: '#9ca3af' }, 
+];
+
+const employeeDeptData = [
+  { name: 'Engineering', value: 96, color: '#f97316' },
+  { name: 'Marketing', value: 48, color: '#6b7280' },
+  { name: 'Sales', value: 40, color: '#4b5563' },
+  { name: 'HR', value: 32, color: '#374151' },
+  { name: 'Finance', value: 24, color: '#1f2937' },
+  { name: 'Others', value: 16, color: '#111827' },
+];
 
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD
@@ -102,35 +113,10 @@ const AdminDashboard = () => {
     { icon: CheckCircle2,  iconColor: 'text-green-400',   iconBg: 'bg-green-500/15',   title: 'Project milestone achieved',      sub: 'CMS Web App — Phase 1 complete',          time: '22m ago', badge: 'Done',      badgeColor: 'bg-green-500/20 text-green-400' },
     { icon: CalendarOff,   iconColor: 'text-yellow-400',  iconBg: 'bg-yellow-500/15',  title: 'Leave request submitted',         sub: 'Rahul Kumar — Casual Leave Jul 28',       time: '1h ago',  badge: 'Pending',   badgeColor: 'bg-yellow-500/20 text-yellow-400' },
     { icon: AlertCircle,   iconColor: 'text-red-400',     iconBg: 'bg-red-500/15',     title: 'Task overdue alert',              sub: 'API Integration — Backend Module',        time: '2h ago',  badge: 'Overdue',   badgeColor: 'bg-red-500/20 text-red-400' },
-    { icon: DollarSign,    iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/15', title: 'Expense claim approved',          sub: 'Arjun Mehta — ₹4,200 Travel',            time: '3h ago',  badge: 'Approved',  badgeColor: 'bg-emerald-500/20 text-emerald-400' },
-    { icon: GraduationCap, iconColor: 'text-teal-400',    iconBg: 'bg-teal-500/15',    title: 'New trainee batch started',       sub: 'Web Dev Batch — 8 students',              time: 'Yesterday',badge: 'Active',   badgeColor: 'bg-teal-500/20 text-teal-400' },
   ];
-
-  const departments = [
-    { label: 'Engineering',  value: 42, max: 50, color: 'bg-blue-500' },
-    { label: 'Design',       value: 18, max: 25, color: 'bg-primary' },
-    { label: 'Marketing',    value: 15, max: 20, color: 'bg-purple-500' },
-    { label: 'HR & Admin',   value: 12, max: 15, color: 'bg-emerald-500' },
-    { label: 'Finance',      value: 10, max: 14, color: 'bg-yellow-500' },
-  ];
-
-  const upcomingEvents = [
-    { title: 'Monthly All-Hands Meeting',  date: 'Jul 25',  time: '10:00 AM', type: 'meeting',  color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
-    { title: 'Q3 Project Review',          date: 'Jul 26',  time: '2:00 PM',  type: 'review',   color: 'bg-primary/15 border-primary/30 text-primary' },
-    { title: 'July Payroll Processing',    date: 'Jul 31',  time: 'All Day',  type: 'payroll',  color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
-    { title: 'New Intern Orientation',     date: 'Aug 1',   time: '9:00 AM',  type: 'training', color: 'bg-pink-500/15 border-pink-500/30 text-pink-400' },
-  ];
-
-  const taskOverview = [
-    { label: 'Completed',   value: 89,  color: 'text-green-400',  bg: 'bg-green-500' },
-    { label: 'In Progress', value: 67,  color: 'text-blue-400',   bg: 'bg-blue-500' },
-    { label: 'Pending',     value: 34,  color: 'text-yellow-400', bg: 'bg-yellow-500' },
-    { label: 'Overdue',     value: 12,  color: 'text-red-400',    bg: 'bg-red-500' },
-  ];
-  const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 text-white min-h-screen">
 
       {/* ── GREETING BANNER ── */}
       <div className="relative rounded-2xl overflow-hidden p-6 md:p-8 border border-primary/20"
@@ -167,11 +153,96 @@ const AdminDashboard = () => {
         {stats.map((s, i) => <StatCard key={i} {...s} />)}
       </div>
 
-      {/* ── MIDDLE ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* ── CHARTS ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* Company Overview (Line Chart) */}
+        <div className="lg:col-span-8 bg-white/4 border border-white/8 p-6 rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold text-white">Company Overview</h2>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
+              This Month <ChevronDown size={14} />
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={overviewData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Line type="monotone" dataKey="projects" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="employees" stroke="#6b7280" strokeWidth={2} dot={{ r: 3, fill: '#6b7280' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center justify-start gap-6 mt-4 ml-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+              <span className="text-xs text-white/60">Employees</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-500" />
+              <span className="text-xs text-white/60">Projects</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 rounded-2xl bg-white/4 border border-white/8 p-5">
+        {/* Tasks by Status (Donut Chart) */}
+        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <h2 className="text-sm font-bold text-white mb-2">Tasks by Status</h2>
+          <div className="flex-1 relative flex items-center justify-center h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={tasksStatusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {tasksStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+              <span className="text-2xl font-bold text-white">242</span>
+              <span className="text-[10px] text-white/50">Total</span>
+            </div>
+          </div>
+          <div className="space-y-3 mt-4">
+            {tasksStatusData.map((t, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  <span className="text-white/70">{t.name}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-white">{t.value}</span>
+                  <span className="text-white/40">({Math.round((t.value/242)*100)}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* Original Recent Activity */}
+        <div className="lg:col-span-5 rounded-2xl bg-white/4 border border-white/8 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-bold text-base flex items-center gap-2">
               <Activity size={17} className="text-primary" /> Recent Activity
@@ -181,119 +252,92 @@ const AdminDashboard = () => {
           {recentActivity.map((a, i) => <ActivityRow key={i} {...a} />)}
         </div>
 
-        {/* Department Headcount */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Briefcase size={17} className="text-primary" /> Departments
-            </h2>
-            <span className="text-xs text-white/30">Headcount</span>
+        {/* Employees by Department (Donut) */}
+        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
           </div>
-          {departments.map((d, i) => <ProgressBar key={i} {...d} />)}
-        </div>
-      </div>
-
-      {/* ── BOTTOM ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Task Overview */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <CheckSquare size={17} className="text-primary" /> Task Overview
-            </h2>
-            <span className="text-xs text-white/30">Total: {totalTasks}</span>
+          <div className="flex-1 relative flex items-center justify-center h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={employeeDeptData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={1}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {employeeDeptData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+              <span className="text-2xl font-bold text-white">256</span>
+              <span className="text-[10px] text-white/50">Total</span>
+            </div>
           </div>
-
-          {/* Stacked bar */}
-          <div className="flex w-full rounded-full overflow-hidden h-3 mb-5 gap-0.5">
-            {taskOverview.map((t, i) => (
-              <div key={i} className={`${t.bg} transition-all duration-700`} style={{ width: `${(t.value / totalTasks) * 100}%` }} />
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {taskOverview.map((t, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/4 rounded-xl px-4 py-3 border border-white/6">
+          <div className="space-y-2 mt-4">
+            {employeeDeptData.map((t, i) => (
+              <div key={i} className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${t.bg}`} />
-                  <span className="text-white/60 text-xs">{t.label}</span>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  <span className="text-white/70">{t.name}</span>
                 </div>
-                <span className={`text-base font-bold ${t.color}`}>{t.value}</span>
+                <div className="flex gap-2">
+                  <span className="font-medium text-white">{t.value}</span>
+                  <span className="text-white/40">({Math.round((t.value/256)*100)}%)</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Upcoming Events */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Calendar size={17} className="text-primary" /> Upcoming Events
-            </h2>
-            <button className="text-xs text-primary hover:underline">View Calendar</button>
-          </div>
-          <div className="space-y-3">
-            {upcomingEvents.map((e, i) => (
-              <div key={i} className={`flex items-center gap-4 p-3.5 rounded-xl border ${e.color}`}>
-                <div className="text-center shrink-0 w-10">
-                  <p className="text-[10px] font-bold uppercase opacity-70">{e.date.split(' ')[0]}</p>
-                  <p className="text-xl font-black leading-tight">{e.date.split(' ')[1]}</p>
-                </div>
-                <div className="w-px h-10 bg-current opacity-20 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{e.title}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{e.time}</p>
-                </div>
-                <ArrowUpRight size={16} className="opacity-40 shrink-0" />
-              </div>
-            ))}
+        {/* Quick Actions */}
+        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <h2 className="text-sm font-bold text-white mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <UserPlus className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Add Employee</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Briefcase className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Add Project</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <CheckSquare className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Create Task</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Calendar className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Mark Attendance</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Activity className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Generate Report</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Settings className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">System Settings</span>
+            </div>
+            
           </div>
         </div>
 
-      </div>
-
-      {/* ── LEAVE SUMMARY STRIP ── */}
-      <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-bold text-base flex items-center gap-2">
-            <CalendarOff size={17} className="text-primary" /> Leave Requests — This Week
-          </h2>
-          <button className="text-xs text-primary hover:underline">Manage All</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/8">
-                {['Employee', 'Type', 'From', 'To', 'Days', 'Status'].map(h => (
-                  <th key={h} className="text-left text-white/40 text-xs font-semibold pb-3 pr-4">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {[
-                { name: 'Rahul Kumar',   type: 'Casual',   from: 'Jul 28', to: 'Jul 28', days: 1, status: 'Pending',  statusColor: 'bg-yellow-500/20 text-yellow-400' },
-                { name: 'Priya Sharma',  type: 'Medical',  from: 'Jul 30', to: 'Aug 1',  days: 3, status: 'Pending',  statusColor: 'bg-yellow-500/20 text-yellow-400' },
-                { name: 'Amit Verma',    type: 'Annual',   from: 'Aug 5',  to: 'Aug 9',  days: 5, status: 'Approved', statusColor: 'bg-green-500/20 text-green-400' },
-                { name: 'Sneha Pillai',  type: 'Casual',   from: 'Jul 25', to: 'Jul 25', days: 1, status: 'Approved', statusColor: 'bg-green-500/20 text-green-400' },
-                { name: 'Vikram Nair',   type: 'Personal', from: 'Aug 2',  to: 'Aug 3',  days: 2, status: 'Rejected', statusColor: 'bg-red-500/20 text-red-400' },
-              ].map((r, i) => (
-                <tr key={i} className="hover:bg-white/3 transition">
-                  <td className="py-3 pr-4 text-white font-medium">{r.name}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.type}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.from}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.to}</td>
-                  <td className="py-3 pr-4 text-white/70">{r.days}d</td>
-                  <td className="py-3">
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${r.statusColor}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div>
