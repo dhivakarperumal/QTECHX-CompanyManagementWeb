@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "Q-Techx Solutions",
+    "subtitle": "Full Stack",
+    "category": "E-Commerce",
+    "image": "/Project/p1.jpg",
+    "link": "https://farmely.qtechx.com/",
+    "description": "Farmley Date Bites is an e-commerce solution built to deliver natural and healthy snacks online. The platform ensures a smooth, simple, and very easy checkout experience for customers.",
+    "features": ["Product Catalog", "Secure Payments", "Order Tracking", "Discount Management"]
+  },
+  {
+    "id": 2,
+    "title": "Education JPS",
+    "subtitle": "Full Stack",
+    "category": "Education",
+    "image": "/Project/p2.jpg",
+    "link": "https://jpsscientificpublication.com/",
+    "description": "Education JPS provides platform for educational content, student management, and academic resources. It enhances learning and also makes academic administration truly seamless.",
+    "features": ["Course Management", "Student Portal", "Online Exams", "Result Analysis"]
+  },
+  {
+    "id": 3,
+    "title": "Bathra Steel Doors",
+    "subtitle": "Full Stack",
+    "category": "Website",
+    "image": "/Project/p3.jpg",
+    "link": "https://bathrasteeldoors.in/",
+    "description": "Bathra Steel Doors showcases premium steel doors through a professional and responsive website discovery and product inquiries simple, effortless, reliable interested customers.",
+    "features": ["Product Showcase", "Responsive Design", "Gallery View", "Inquiry Form"]
+  },
+  {
+    "id": 4,
+    "title": "Lyca",
+    "subtitle": "Full Stack",
+    "category": "Web Application",
+    "image": "/Project/p4.jpg",
+    "link": "https://www.lycasurvey.com/",
+    "description": "Lyca is a powerful survey web application that simplifies data collection, user interaction, and analytics for organizations of all sizes, helping them achieve reliable insights and growth.",
+    "features": ["Survey Creation", "Data Analytics", "User Management", "Reports"]
+  },
+  {
+    "id": 5,
+    "title": "Q-Techx Solutions",
+    "subtitle": "Full Stack",
+    "category": "E-Commerce",
+    "image": "/Project/p5.jpg",
+    "link": "https://shoe.qtechx.com/shopping",
+    "description": "Q-techx Solution offers a modern e-commerce system tailored for footwear sales, featuring flexible product filters, a shopping cart, and a secure online payment and checkout flow.",
+    "features": ["Product Filters", "Wishlist", "Cart System", "Payment Gateway"]
+  },
+  {
+    "id": 6,
+    "title": "Marutham Thinner",
+    "subtitle": "Full Stack",
+    "category": "Website",
+    "image": "/Project/p6.jpg",
+    "link": "https://maruthammarketing.com/index.html",
+    "description": "Marutham Thinner provides an engaging business website that represents its products, services & unique brand identity with a modern, clean & simple user interface design.",
+    "features": ["Company Profile", "Services Display", "Contact Form", "SEO Optimized"]
+  },
+  {
+    "id": 7,
+    "title": "Ak Crane Service",
+    "subtitle": "Full Stack",
+    "category": "Website",
+    "image": "/Project/p7.jpg",
+    "link": "https://akcraneservice.com/#",
+    "description": "Ak Crane Service uses a responsive website to display their crane rental services and also allow customers to easily navigate offerings and request service bookings with complete ease.",
+    "features": ["Service Listings", "Booking Request", "Location Map", "Contact Support"]
+  },
+  {
+    "id": 8,
+    "title": "Kavi's Dry Fruites",
+    "subtitle": "Full Stack",
+    "category": "E-Commerce",
+    "image": "/Project/p8.jpg",
+    "link": "https://kavisdryfruits.com/",
+    "description": "Kavi's Dry Fruits offers a user-friendly online store for premium and high-quality dry fruits, ensuring smooth checkout, simple navigation, and a very reliable shopping experience.",
+    "features": ["Product Variants", "Customer Reviews", "Secure Checkout", "Discount Coupons"]
+  },
+  {
+    "id": 9,
+    "title": "Q-Techx Solutions",
+    "subtitle": "Full Stack",
+    "category": "Web Application",
+    "image": "/Project/p9.jpg",
+    "link": "https://www.qtechx.com/",
+    "description": "Q-Techx Solutions is a web application designed for business growth, providing rich analytics dashboards, improved reporting tools, and professional client management solutions.",
+    "features": ["Business Solutions", "Analytics Dashboard", "Client Management", "Cloud Integration"]
+  },
+  {
+    "id": 10,
+    "title": "Sarvam",
+    "subtitle": "Full Stack",
+    "category": "Web Application",
+    "image": "/Project/p10.jpg",
+    "link": "https://sarvamtax.com/",
+    "description": "Sarvam is a smart tax and finance web application that simplifies billing, reporting, and also professional client management for modern accounting professionals and their businesses.",
+    "features": ["Tax Management", "Billing System", "Client Records", "Reports & Analytics"]
+  },
+  {
+    "id": 11,
+    "title": "Sri Saravana Shoppings",
+    "subtitle": "Full Stack",
+    "category": "E-Commerce",
+    "image": "/Project/p11.png",
+    "link": "https://saravanashoppings.com/",
+    "description": "Sri Saravana Shoppings is an e-commerce platform for premium dry fruits, offering a seamless shopping experience with secure checkout and product variants.",
+    "features": ["Product Variants", "Customer Reviews", "Secure Checkout", "Discount Coupons"]
+  },
+  {
+    "id": 12,
+    "title": "Mauval Print.IN",
+    "subtitle": "Full Stack",
+    "category": "E-Commerce",
+    "image": "/Project/p12.png",
+    "link": "https://mauvalprint.in/",
+    "description": "Mauval Print.IN is an e-commerce platform for premium dry fruits, offering a seamless shopping experience with secure checkout and product variants.",
+    "features": ["Product Variants", "Customer Reviews", "Secure Checkout", "Discount Coupons"]
+  }
+]

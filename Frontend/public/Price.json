@@ -1,0 +1,132 @@
+[
+  {
+    "plan_title": "Static Website",
+    "price": "\u20b920,000/-",
+    "audience": "Individuals, small businesses, and startups",
+    "description": "Professional 5-page responsive website with essential features at an affordable price.",
+    "features": [
+      "5 Pages (Home, About, Services, Contact, etc.)",
+      ".IN or .COM Domain Name",
+      "Free Domain Registration",
+      "1 Year Free Hosting",
+      "Unlimited Business Email IDs",
+      "Enquiry Form",
+      "Responsive Design",
+      "Google Map Integration"
+    ]
+  },
+  {
+    "plan_title": "Dynamic Website",
+    "price": "\u20b930,000/-",
+    "audience": "Small to large businesses",
+    "description": "Dynamic 7-page website with CMS features for content control and better interaction.",
+    "features": [
+      "7 Pages + Blog/Services",
+      ".IN or .COM Domain Name",
+      "Free Domain Registration",
+      "1 Year Free Hosting",
+      "Unlimited Email IDs",
+      "Enquiry Form with Email Notification",
+      "Responsive Design",
+      "Google Map Integration",
+      "Admin Panel for Add/Edit/Delete",
+      "SEO-Friendly URL Structure"
+    ]
+  },
+  {
+    "plan_title": "Web Application Development",
+    "price": "\u20b935,000 \u2013 \u20b93,00,000+",
+    "audience": "Startups, Enterprises, and SaaS Platforms",
+    "description": "Custom-built web applications with scalable architecture and full backend integration.",
+    "features": [
+      "Custom Modules & Features",
+      "Frontend + Backend (React.js + Node.js)",
+      "REST API Integration",
+      "Authentication System",
+      "Responsive Admin Panel",
+      "Deployment & Versioning",
+      "Database Integration (MongoDB)"
+    ]
+  },
+  {
+    "plan_title": "Mobile Application Development",
+    "price": "\u20b950,000 \u2013 \u20b94,00,000+",
+    "audience": "Product Owners, Enterprises, EdTech, Healthcare",
+    "description": "Cross-platform mobile apps built with React Native or Flutter with complete feature set.",
+    "features": [
+      "Android & iOS Support",
+      "Login, Push Notification, Payments",
+      "Dynamic API Integration",
+      "Offline Support",
+      "Admin Panel Connectivity",
+      "Play Store / App Store Upload"
+    ]
+  },
+  {
+    "plan_title": "UI/UX Design",
+    "price": "\u20b95,000 \u2013 \u20b950,000+",
+    "audience": "Startups, Design Teams, App Developers",
+    "description": "Modern, conversion-driven UI/UX designs for web and mobile interfaces.",
+    "features": [
+      "Wireframes & Mockups",
+      "Interactive Prototypes",
+      "UI Component Libraries",
+      "Mobile-First Design",
+      "Figma or Adobe XD Deliverables"
+    ]
+  },
+  {
+    "plan_title": "Search Engine Optimization (SEO)",
+    "price": "\u20b95,000 \u2013 \u20b950,000/month",
+    "audience": "Business websites, Blogs, E-Commerce",
+    "description": "Improve visibility, keyword rankings, and traffic with our result-oriented SEO plans.",
+    "features": [
+      "On-Page Optimization",
+      "Technical SEO Fixes",
+      "Backlink Building",
+      "Keyword Targeting",
+      "Performance & Traffic Reports"
+    ]
+  },
+  {
+    "plan_title": "E-Commerce Development",
+    "price": "\u20b925,000 \u2013 \u20b92,50,000+",
+    "audience": "Retailers, D2C Brands, Online Sellers",
+    "description": "Full-fledged online stores with payment gateway, inventory, and admin panel.",
+    "features": [
+      "Product Catalog & Filters",
+      "Cart & Checkout",
+      "Coupon & Offer Engine",
+      "Payment Gateway Integration",
+      "Admin Management System",
+      "Order Tracking System"
+    ]
+  },
+  {
+    "plan_title": "CRM Solutions",
+    "price": "\u20b940,000 \u2013 \u20b93,00,000+",
+    "audience": "Sales Teams, Institutes, Service Providers",
+    "description": "Custom CRM systems to manage leads, tasks, customer data, and reporting.",
+    "features": [
+      "Lead & Contact Management",
+      "Email & SMS Integration",
+      "User Role Permissions",
+      "Follow-Up Reminders",
+      "Custom Dashboards",
+      "Reporting & Analytics"
+    ]
+  },
+  {
+    "plan_title": "Internship & Job-Oriented Courses",
+    "price": "\u20b93,000 \u2013 \u20b915,000",
+    "audience": "College Students, Freshers, Career Switchers",
+    "description": "Industry-level training in web development, UI/UX, and full stack development.",
+    "features": [
+      "1\u20133 Month Internship Options",
+      "Live Projects with Mentorship",
+      "React.js & Full Stack Training",
+      "Certification & Resume Help",
+      "Mock Interviews & Job Guidance"
+    ]
+  }
+]

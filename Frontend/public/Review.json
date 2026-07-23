@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Mohan",
+    "role": "Founder, M-Tech Solutions",
+    "quote": "Q-Techx Solutions delivered our project with great precision. Their team was responsive, reliable, and technically strong. Highly recommended.",
+    "image": "/images/testimonial1.png"
+  },
+  {
+    "name": "Surya",
+    "role": "Operations Head, Surya Enterprises",
+    "quote": "Their dedication to timelines and attention to detail really impressed us. Communication was seamless from start to finish.",
+    "image": "/images/testimonial2.jpg"
+  },
+  {
+    "name": "Praveen",
+    "role": "Digital Marketing Consultant",
+    "quote": "We collaborated with Q-Techx for a website revamp. The result was modern, fast, and user-friendly. Great job by the team!",
+    "image": "/images/testimonial3.jpg"
+  },
+  {
+    "name": "Gopi",
+    "role": "Co-Founder, G-Tech Hardware",
+    "quote": "Our eCommerce site was built exactly how we envisioned. The support team was always available for quick changes. Excellent service!",
+    "image": "/images/testimonial4.jpg"
+  },
+  {
+    "name": "Ayyandhurai",
+    "role": "CEO, Ayyan Ventures",
+    "quote": "Very professional and committed team. From design to deployment, everything was handled smoothly. Will definitely work again.",
+    "image": "/images/testimonial5.jpg"
+  },
+  {
+    "name": "Moorthi",
+    "role": "Director, Moorthi Constructions",
+    "quote": "They created a stunning portfolio site for us. The UI/UX was clean, mobile-friendly, and exactly what we needed.",
+    "image": "/images/testimonial6.jpg"
+  },
+  {
+    "name": "Karthik",
+    "role": "IT Manager, Karthik Systems",
+    "quote": "We outsourced a web app project to Q-Techx and the results were exceptional. Their React expertise really stands out.",
+    "image": "/images/testimonial7.jpg"
+  },
+  {
+    "name": "Kavimozhi",
+    "role": "Marketing Lead, Kavisoft Pvt Ltd",
+    "quote": "Their creative team helped us with brand visuals and content that aligned perfectly with our vision. Very happy with the results.",
+    "image": "/images/testimonial8.jpg"
+  },
+  {
+    "name": "Lokesh",
+    "role": "Founder, Lokesh Digital",
+    "quote": "Thanks to Q-Techx, we now have a fast, SEO-optimized website that attracts more leads. Impressive work!",
+    "image": "/images/testimonial9.png"
+  },
+  {
+    "name": "Deepak",
+    "role": "Business Consultant",
+    "quote": "I appreciate their client-first approach. Timely delivery, regular updates, and great support even after deployment.",
+    "image": "/images/testimonial10.png"
+  }
+]

@@ -1,0 +1,319 @@
+[
+  {
+    "id":1,
+    "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaCode",
+    "singlepageimage":["/images/WebDevelopment1.jpg","/images/WebDevelopment2.jpg","/images/WebDevelopment3.jpg","/images/WebDevelopment4.jpg"],
+    "title": "Web Application Development",
+    "tagline": "Custom, Scalable & High-Performance Web Applications",
+    "short_description": "Q-Techx Solutions develops tailor-made web applications using React.js, Node.js, and other modern stacks. Our solutions are secure, scalable, and designed for performance. From client portals to SaaS platforms, we ensure clean code, smooth user experience, and long-term maintainability.",
+    "detailed_description": "Q-Techx Solutions offers robust and customized web application development services to meet unique business goals. From simple tools to complex enterprise-level systems, our applications are engineered with flexibility, speed, and security in mind.\n\nUsing modern technologies such as React.js, Node.js, and MongoDB, we deliver scalable and maintainable applications that grow with your business. Our solutions include user dashboards, admin panels, reporting tools, and cloud integrations. We build APIs, implement role-based access, and ensure responsive designs for every screen size.\n\nWe follow an agile methodology to deliver fast iterations, client feedback, and continuous deployment. Whether you're building from scratch or modernizing a legacy system, Q-Techx is your technology partner from start to finish.",
+    "description": "End-to-end custom web application development with modern tech and scalable architecture.",
+    "what_we_offer": [
+      "Custom Web App Architecture",
+      "Front-end & Back-end Integration",
+      "RESTful API & Database Design",
+      "Security & Authentication",
+      "Real-time Features",
+      "Maintenance & Upgrades"
+    ],
+    "why_choose_us": {
+      "Custom-Built Solutions": "Tailored exactly to your business processes",
+      "Scalable Tech Stack": "Built on React, Node.js, MongoDB",
+      "Clean UI": "User-first design and responsive layout",
+      "Secure": "Robust architecture and encrypted systems"
+    },
+    "technologies_we_use": [
+      "React.js",
+      "Node.js",
+      "MongoDB",
+      "Express.js",
+      "JWT",
+      "AWS"
+    ],
+    "cta_button": "Get in Touch"
+  },
+  {
+    "id":2,
+    "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaLaptopCode",
+    "singlepageimage":["/images/ResponsiveWeb.jpg","/images/ResponsiveWeb1.jpg","/images/ResponsiveWeb2.jpg","/images/ResponsiveWeb3.jpg"],
+    "title": "Responsive Website Design",
+    "tagline": "Elegant, Mobile-Optimized & Conversion-Focused Websites",
+    "short_description": "We create responsive websites that work across all devices. Our design team ensures mobile-first, fast-loading, and visually appealing websites that match your brand identity while enhancing user engagement.",
+    "detailed_description": "At Q-Techx Solutions, we create responsive websites that combine modern aesthetics with user-focused experiences. Our websites are crafted to be functional across all screen sizes, ensuring accessibility and performance.\n\nWe use mobile-first design principles, flexible grids, and scalable content structures. Every layout is tested for performance, readability, and user interaction. Whether you're building a business site, portfolio, or landing page, we deliver high-conversion designs.\n\nFrom custom animations to interactive elements, our front-end team builds every component with pixel precision. Websites are optimized for speed, SEO, and browser compatibility. Let us turn your brand vision into a responsive and engaging website.",
+    "description": "Responsive websites with clean UI, fast load speeds, and cross-device functionality.",
+    "what_we_offer": [
+      "Mobile-First Design",
+      "Clean & Modern Layouts",
+      "SEO Friendly Structure",
+      "Cross-Browser Compatibility",
+      "Conversion-Focused CTAs",
+      "Ongoing Design Updates"
+    ],
+    "why_choose_us": {
+      "Fast & Fluid": "Websites that load quickly and navigate smoothly",
+      "Brand-Aligned": "Designs that reflect your unique identity",
+      "SEO Ready": "Optimized structures from day one",
+      "Mobile First": "Optimized for phones, tablets, and desktops"
+    },
+    "technologies_we_use": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "Bootstrap",
+      "Tailwind",
+      "React"
+    ],
+    "cta_button": "Get in Touch"
+  },
+  {
+    "id":3,
+    "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaPaintBrush",
+    "singlepageimage":["/images/ui1.jpg","/images/ui2.jpg","/images/ui3.jpg","/images/ui.jpg"],
+    "title": "UI/UX Design",
+    "tagline": "User-Centric Design with Intuitive Navigation",
+    "short_description": "Our UI/UX design services ensure users enjoy seamless experiences with modern aesthetics. From wireframes to final visuals, we build designs that engage and convert.",
+    "detailed_description": "Q-Techx Solutions delivers UI/UX design that blends creativity with functionality. Our design process begins with research and wireframing, ensuring that every user touchpoint is meaningful and effective.\n\nWe build user flows, interactive prototypes, and full-scale mockups using tools like Figma and Adobe XD. Every design undergoes usability testing and iteration. Whether it\u2019s a web dashboard, mobile app, or landing page, we ensure user satisfaction at every click.\n\nWith emphasis on accessibility, consistency, and visual appeal, our designs support business goals like increased engagement and retention.",
+    "description": "UI/UX services focused on engagement, usability, and visual excellence.",
+    "what_we_offer": [
+      "Wireframes & Prototypes",
+      "UI Component Libraries",
+      "Interactive Mockups",
+      "User Research & Personas",
+      "Mobile-Friendly Interfaces",
+      "Design Systems & Branding"
+    ],
+    "why_choose_us": {
+      "User-First": "Designed with real user behaviors in mind",
+      "Modern Tools": "Built using Figma, Adobe XD",
+      "Consistent Branding": "Across all screens and devices",
+      "Conversion-Driven": "Crafted to drive results"
+    },
+    "technologies_we_use": [
+      "Figma",
+      "Adobe XD",
+      "Zeplin",
+      "InVision"
+    ],
+    "cta_button": "Get in Touch"
+  }, 
+  {
+    "id":4,
+    "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaSearch",
+    "singlepageimage":["/images/seo1.jpg","/images/seo2.jpg","/images/seo3.jpg","/images/seo4.jpg"],
+        "title": "Search Engine Optimization (SEO)",
+        "tagline": "Boost Your Online Visibility with Proven SEO Strategies",
+        "short_description": "Our SEO services help your website rank higher and attract targeted traffic. From on-page optimization to backlink building, we implement white-hat SEO techniques tailored to your goals.",
+         "detailed_description": "At Q-Techx Solutions, we provide result-driven SEO services that improve your website’s visibility and attract high-quality traffic. Our strategy includes keyword research, on-page optimization, technical SEO, and ethical backlink building. We enhance meta tags, fix crawl issues, boost page speed, and implement structured data to ensure search engine friendliness. Our SEO experts follow Google’s best practices and deliver monthly progress reports. With a strong focus on long-term results, we help you achieve higher rankings, improved domain authority, and increased conversions across all digital channels.",
+        "description": "White-hat SEO strategies for long-term organic traffic and online presence growth.",
+        "what_we_offer": [
+            "SEO Audits & Reporting",
+            "On-page Optimization",
+            "Keyword Research",
+            "Technical SEO",
+            "Backlink Strategy",
+            "Content Optimization"
+        ],
+        "why_choose_us": {
+            "White-Hat Practices": "Ethical methods aligned with Google’s algorithms",
+            "Content-Focused": "SEO-friendly content creation",
+            "Custom Strategy": "Based on your industry and goals",
+            "Proven Results": "Traffic and ranking growth over time"
+        },
+        "technologies_we_use": [
+            "Google Search Console", "Ahrefs", "SEMrush", "Yoast", "Screaming Frog"
+        ],
+        "cta_button": "Get in Touch"
+    },
+    {
+      "id":5,
+      "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaMobileAlt",
+    "singlepageimage":["/images/mad1.jpg","/images/mad2.jpg","/images/mad3.jpg","/images/mad4.jpg"],
+        "title": "Mobile Application Development",
+        "tagline": "Build Feature-Rich Android & iOS Apps for Your Business",
+        "short_description": "Q-Techx Solutions develops mobile apps with high performance and user-friendly design. We offer cross-platform development using React Native and Flutter for faster time to market.",
+        "detailed_description": "Q-Techx Solutions develops high-quality mobile applications for Android and iOS using frameworks like React Native and Flutter. Our apps are built for performance, usability, and cross-platform compatibility. From idea to deployment, we handle UI design, backend integration, and testing. We create apps with features like notifications, secure login, payments, and offline support. Whether you need a startup MVP or a full-scale enterprise app, we deliver scalable, bug-free solutions. We also assist with Play Store and App Store publishing, ongoing updates, and post-launch support.",
+        "description": "Cross-platform mobile apps built for performance and user engagement.",
+        "what_we_offer": [
+            "iOS & Android App Development",
+            "Cross-Platform with React Native/Flutter",
+            "Push Notifications & APIs",
+            "App Store Deployment",
+            "App UI/UX Design",
+            "Ongoing Maintenance"
+        ],
+        "why_choose_us": {
+            "Fast Delivery": "Rapid MVP development",
+            "Cross-Platform": "One codebase, multiple platforms",
+            "Secure & Scalable": "Built for real-world performance",
+            "Custom UI": "Designed for better retention"
+        },
+        "technologies_we_use": [
+            "React Native", "Flutter", "Firebase", "Android Studio", "Xcode"
+        ],
+        "cta_button": "Get in Touch"
+    },
+    {
+      "id":6,
+      "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaUsersCog",
+    "size": "text-4xl",
+    "singlepageimage":["/images/crm1.jpg","/images/crm2.jpg","/images/crm3.jpg","/images/crm4.jpg"],
+        "title": "Customer Relationship Management (CRM) Solutions",
+        "tagline": "Automate and Manage Customer Interactions with Custom CRMs",
+        "short_description": "We build CRM solutions that help you manage leads, track interactions, and automate workflows. Designed to improve sales, service, and customer satisfaction.",
+        "detailed_description": "Q-Techx Solutions builds custom CRM systems that streamline how businesses manage leads, sales, and customer communication. Our CRM solutions include contact tracking, email integration, task automation, and reporting dashboards. Designed for efficiency, our systems are role-based, cloud-accessible, and tailored to fit your business process. We integrate popular tools like Gmail, WhatsApp, and SMS, enabling you to centralize operations. Whether you're in education, services, or real estate, our CRM helps improve productivity, automate follow-ups, and drive better customer relationships.",
+        "description": "Custom CRM tools for lead tracking, task automation, and client engagement.",
+        "what_we_offer": [
+            "Custom CRM Dashboard",
+            "Lead & Contact Management",
+            "Automated Reminders & Notifications",
+            "Role-Based Access",
+            "3rd Party Integrations",
+            "Reports & Analytics"
+        ],
+        "why_choose_us": {
+            "Tailored Workflows": "Custom features for your industry",
+            "Scalable Systems": "CRM that grows with your business",
+            "Visual Dashboards": "Data-rich and easy to use",
+            "Integrations": "WhatsApp, Gmail, SMS, Payment Gateways"
+        },
+        "technologies_we_use": [
+            "React", "Node.js", "MongoDB", "Firebase", "Twilio", "SendGrid"
+        ],
+        "cta_button": "Get in Touch"
+    },
+    {
+      "id":7,
+      "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaShoppingCart",
+    "singlepageimage":["/images/ec5.jpg","/images/ec3.jpg","/images/ec.jpg","/images/ec4.jpg"],
+
+        "title": "E-Commerce Development",
+        "tagline": "Start Selling Online with Powerful E-Commerce Platforms",
+        "short_description": "We create custom e-commerce websites with secure payments, inventory systems, and user-friendly interfaces. Whether it’s Shopify or a fully custom store, we deliver results.",
+        "detailed_description": "We design and develop e-commerce websites that are secure, fast, and optimized for conversions. Q-Techx Solutions builds custom stores or leverages platforms like Shopify and WooCommerce based on your needs. Our e-commerce solutions include user-friendly product catalogs, secure payments, order tracking, and admin panels. We also integrate inventory systems, shipping APIs, and coupon engines. With responsive design and SEO optimization, our online stores perform across all devices. Whether launching a new brand or scaling an existing store, we deliver reliable e-commerce platforms that grow with you.",
+        "description": "Custom and CMS-based e-commerce development for smooth online selling.",
+        "what_we_offer": [
+            "Custom Product Catalog",
+            "Payment Gateway Integration",
+            "Order Management",
+            "Shopify/WooCommerce/Custom Stores",
+            "Responsive UI",
+            "Inventory Tracking"
+        ],
+        "why_choose_us": {
+            "Conversion-Focused": "UX designed to increase sales",
+            "Secure Transactions": "End-to-end encrypted",
+            "Custom Features": "Tailored to your business model",
+            "Mobile Ready": "Optimized for all screens"
+        },
+        "technologies_we_use": [
+            "React", "Node.js", "MongoDB", "Shopify", "WooCommerce", "Stripe", "Razorpay"
+        ],
+        "cta_button": "Get in Touch"
+    },
+    {
+      "id":8,
+      "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaUserGraduate",
+    "singlepageimage":["/images/intern1.jpg","/images/intern2.jpg","/images/itjob3.jpg","/images/itjob4.jpg"],
+        "title": "Internship Programs for College Students",
+        "tagline": "Gain Real-World Experience Before You Graduate",
+        "short_description": "We provide internships in web development, mobile apps, and UI/UX design. Interns work on live projects and receive hands-on mentoring and certification.",
+        "detailed_description": "Our internship programs give college students hands-on training in technologies like HTML, CSS, JavaScript, React, and more. Interns work on real-time projects under mentor guidance, gaining experience in team collaboration, version control, and client-based development. We focus on building practical skills needed for IT careers through weekly assignments, feedback, and performance reviews. The program ends with a certificate of completion and career readiness tips. With flexible schedules and live support, Q-Techx Solutions helps bridge the gap between classroom learning and the tech industry.",
+        "description": "Live project-based internships to prepare college students for IT jobs.",
+        "what_we_offer": [
+            "Front-End Training",
+            "Live Projects",
+            "Code Reviews & Mentorship",
+            "Certificate of Completion",
+            "Resume Building",
+            "Job Guidance"
+        ],
+        "why_choose_us": {
+            "Real Projects": "Work on actual client tasks",
+            "Mentor Support": "Get weekly feedback and guidance",
+            "Flexible Timing": "Designed for college schedules",
+            "Career Focused": "Prepares you for interviews"
+        },
+        "technologies_we_use": [
+            "HTML", "CSS", "JavaScript", "React", "GitHub", "Figma"
+        ],
+        "cta_button": "Apply Now"
+    },
+    {
+      "id":9,
+      "icon": "/images/update.gif",
+    "icon1": "/images/update (1).gif",
+    "image": "FaChalkboardTeacher",
+    "singlepageimage":["/images/itjob1.jpg","/images/itjob2.jpg","/images/itjob3.jpg","/images/itjob4.jpg"],
+        "title": "IT Job-Oriented Courses",
+        "tagline": "Master Skills and Launch Your Tech Career",
+        "short_description": "Our job-ready training programs include React.js, full-stack development, and more. Industry-standard curriculum, live projects, and placement guidance included.",
+        "detailed_description": "Q-Techx Solutions offers practical, job-ready training in web and software development. Our courses cover React.js, full-stack development, UI/UX, backend programming, and deployment. Taught by industry experts, each course includes real-time projects, assignments, and career coaching. We guide students through resume building, LinkedIn optimization, mock interviews, and job search strategy. Our curriculum is regularly updated to match hiring trends, ensuring learners gain relevant skills. Whether you're a student, fresher, or career switcher, we help you prepare for your next IT role confidently and efficiently.",
+        "description": "Professional training for web development, full-stack, and job placement preparation.",
+        "what_we_offer": [
+            "React.js Development",
+            "Full Stack Courses",
+            "Live Project Work",
+            "Resume & LinkedIn Help",
+            "Mock Interviews",
+            "Placement Support"
+        ],
+        "why_choose_us": {
+            "Project-Based": "Build real apps during learning",
+            "Affordable Fees": "Value-packed training",
+            "Career Mentorship": "Get help landing your first job",
+            "Updated Curriculum": "Aligned with current hiring needs"
+        },
+        "technologies_we_use": [
+            "React", "Node.js", "MongoDB", "Git", "Vercel", "Netlify"
+        ],
+        "cta_button": "Join Now"
+    },
+    {
+  "id": 10,
+  "icon": "/images/update.gif",
+  "icon1": "/images/update (1).gif",
+    "image": "FaBullhorn",
+    "singlepageimage":["/images/dm1.jpg","/images/dm2.jpg","/images/dm3.jpg","/images/dm4.jpg"],
+  "title": "Digital Marketing",
+  "tagline": "Grow Your Brand with Targeted Digital Campaigns",
+  "short_description": "Q-Techx Solutions offers strategic digital marketing services to help businesses grow online. From social media to PPC and content marketing, we craft data-driven campaigns that deliver measurable results.",
+  "detailed_description": "Q-Techx Solutions delivers full-scale digital marketing solutions that drive visibility, engagement, and conversions. Our team blends creativity with analytics to build campaigns that resonate with your target audience.\n\nWe offer SEO, social media marketing (SMM), Google Ads, email marketing, and content strategy tailored to your brand. From creating high-performing ad creatives to running performance-optimized campaigns, we handle everything end-to-end.\n\nWith ongoing performance tracking, A/B testing, and monthly reporting, we ensure your marketing budget brings ROI. Whether you're looking to increase brand awareness or generate quality leads, we help your business grow across all digital platforms.",
+  "description": "Result-driven digital marketing services to boost brand visibility and ROI.",
+  "what_we_offer": [
+    "Social Media Marketing (Facebook, Instagram, LinkedIn)",
+    "Google Ads & PPC Campaigns",
+    "Email Marketing Automation",
+    "Content Creation & Strategy",
+    "SEO Integration",
+    "Performance Tracking & Reporting"
+  ],
+  "why_choose_us": {
+    "ROI-Focused": "Campaigns designed to deliver measurable business value",
+    "Multi-Channel Expertise": "Cross-platform marketing strategy",
+    "Creative & Data-Driven": "Balance of design and analytics",
+    "Transparent Reporting": "Clear insights into performance and growth"
+  },
+  "technologies_we_use": [
+    "Meta Ads Manager", "Google Ads", "Mailchimp", "Canva", "Google Analytics", "Hootsuite"
+  ],
+  "cta_button": "Start Marketing Today"
+}
+
+
+]
