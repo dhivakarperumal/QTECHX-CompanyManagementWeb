@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 
 /* ─── Helpers ─── */
@@ -88,6 +88,15 @@ const employeeDeptData = [
   { name: 'HR', value: 32, color: '#374151' },
   { name: 'Finance', value: 24, color: '#1f2937' },
   { name: 'Others', value: 16, color: '#111827' },
+];
+
+const revenueData = [
+  { month: 'Jan', revenue: 45000, expenses: 32000 },
+  { month: 'Feb', revenue: 52000, expenses: 34000 },
+  { month: 'Mar', revenue: 48000, expenses: 31000 },
+  { month: 'Apr', revenue: 61000, expenses: 38000 },
+  { month: 'May', revenue: 59000, expenses: 40000 },
+  { month: 'Jun', revenue: 75000, expenses: 45000 },
 ];
 
 const recentCompletedTasksData = [
@@ -352,6 +361,53 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* ── REVENUE ROW ── */}
+      <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col mt-5">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-bold text-white flex items-center gap-2">
+            <DollarSign size={16} className="text-primary" /> Company Revenue
+          </h2>
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
+            Last 6 Months <ChevronDown size={14} />
+          </div>
+        </div>
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                itemStyle={{ color: '#fff' }}
+              />
+              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex items-center justify-center gap-6 mt-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded bg-primary" />
+            <span className="text-xs text-white/60">Revenue</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded bg-gray-500" />
+            <span className="text-xs text-white/60">Expenses</span>
+          </div>
+        </div>
       </div>
 
       {/* ── TABLES ROW ── */}
