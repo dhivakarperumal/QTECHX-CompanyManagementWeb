@@ -17,6 +17,7 @@ import {
   CalendarDays,
   TrendingUp,
   Users,
+  CalendarClock,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -101,6 +102,18 @@ const navItems = [
       { path: "/employee/meetings", label: "All Meetings", icon: Video },
       { path: "/employee/meetings/upcoming", label: "Upcoming", icon: CalendarDays }
     ]
+  },
+
+  /* ---- CALENDAR ---- */
+  {
+    path: "/employee/office-calendar",
+    label: "Office Calendar",
+    icon: CalendarDays,
+  },
+  {
+    path: "/employee/my-calendar",
+    label: "My Daily Calendar",
+    icon: CalendarClock,
   }
 ];
 
