@@ -13,14 +13,11 @@ import AdminLayout from './Admin/Adminpanel.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
+import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
+import TraineeLayout from './Trainee/TraineePanel.jsx'
 
-// Normalize URLs when using hash routing so legacy or direct /admin paths map to /#/admin
-const { pathname, search, hash } = window.location
-if (pathname !== '/' && pathname !== '' && !pathname.startsWith('/#')) {
-  const normalizedPath = pathname.replace(/^\/+/g, '').replace(/\/+$/, '')
-  const normalizedHash = hash && hash.startsWith('#/') ? hash : `#/${normalizedPath}`
-  window.history.replaceState(null, '', `/${search}${normalizedHash}`)
-}
+
+
 
 const router = createHashRouter([
   {
@@ -52,6 +49,7 @@ const router = createHashRouter([
             index: true,
             element: <AdminDashboard />,
           },
+          
         ],
       },
       {
@@ -65,6 +63,21 @@ const router = createHashRouter([
           {
             index: true,
             element: <EmployeeDashboard />,
+          },
+        ],
+      },
+
+      {
+        path: 'trainee',
+        element: (
+          <PrivateRoute allowedRoles={["Trainee"]}>
+            <TraineeLayout />
+          </PrivateRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: <TraineeDashboard />,
           },
         ],
       },

@@ -1,6 +1,6 @@
 const { body, param, query, validationResult } = require("express-validator");
 
-const roles = ["Super Admin", "Admin", "Manager", "Staff", "Employee", "Customer"];
+const roles = ["Super Admin", "Admin", "Manager", "Staff", "Employee", "Trainee", "Customer", "User"];
 const statuses = ["Active", "Inactive"];
 
 const validateRequest = (req, res, next) => {
@@ -43,6 +43,7 @@ const listRules = [
   query("page").optional().isInt({ min: 1 }).toInt(),
   query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   query("status").optional().isIn(statuses).withMessage("Invalid status"),
+  query("role").optional().isIn(roles).withMessage("Invalid role"),
 ];
 
 const userIdRule = [param("userId").isUUID().withMessage("Invalid user_id")];

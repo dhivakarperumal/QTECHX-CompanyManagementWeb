@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from "react";
 
 const defaultAuthValue = {
   user: null,
@@ -21,32 +22,34 @@ export const useAuth = () => {
   return context || defaultAuthValue;
 };
 
+const normalizeRoleValue = (roleValue) => roleValue?.toString().trim();
+
+const loadStoredUser = () => {
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
+    const parsedUser = JSON.parse(storedUser);
+    if (!parsedUser) return null;
+    return {
+      ...parsedUser,
+      role: normalizeRoleValue(parsedUser.role),
+    };
+  } catch (error) {
+    console.error("Failed to parse stored user", error);
+    localStorage.removeItem("user");
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(loadStoredUser);
+  const [loading] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser || null);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Failed to parse stored user", error);
-      localStorage.removeItem("user");
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = (userData, token) => {
-    const normalizedUser = userData || null;
+    const login = (userData, token) => {
+    const normalizedUser = userData
+      ? { ...userData, role: normalizeRoleValue(userData.role) }
+      : null;
     setUser(normalizedUser);
     if (normalizedUser) {
       localStorage.setItem("user", JSON.stringify(normalizedUser));

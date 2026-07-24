@@ -44,7 +44,7 @@ async function findForLogin(identifier) {
   return rows[0] || null;
 }
 
-async function listUsers({ page, limit, search, status }) {
+async function listUsers({ page, limit, search, status, role }) {
   const db = getDB();
   const offset = (page - 1) * limit;
   const conditions = [];
@@ -58,6 +58,10 @@ async function listUsers({ page, limit, search, status }) {
   if (status) {
     conditions.push("status = ?");
     values.push(status);
+  }
+  if (role) {
+    conditions.push("role = ?");
+    values.push(role);
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
