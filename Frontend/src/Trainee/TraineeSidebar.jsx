@@ -105,46 +105,12 @@ const navItems = [
       { path: "/trainee/documents", label: "My Documents", icon: FileText },
       { path: "/trainee/documents/company", label: "Company Documents", icon: FolderKanban },
     ],
-  },
-
-  // Projects
-  {
-    label: "My Projects",
-    icon: FolderKanban,
-    children: [
-      { path: "/trainee/projects", label: "All Projects", icon: FolderKanban },
-      { path: "/trainee/projects/active", label: "Active Projects", icon: TrendingUp },
-    ],
-  },
-
-  // Salary & Payroll
-  {
-    label: "Salary & Payroll",
-    icon: DollarSign,
-    children: [
-      { path: "/trainee/payroll", label: "My Salary", icon: DollarSign },
-      { path: "/trainee/payroll/slips", label: "Pay Slips", icon: FileText },
-    ],
-  },
-
-  // Meetings
-  {
-    label: "Meetings",
-    icon: Video,
-    children: [
-      { path: "/trainee/meetings", label: "All Meetings", icon: Video },
-      { path: "/trainee/meetings/upcoming", label: "Upcoming", icon: CalendarDays },
-    ],
-  },
-
-  // Calendars
-  { path: "/trainee/office-calendar", label: "Office Calendar", icon: CalendarDays },
-  { path: "/trainee/my-calendar", label: "My Daily Calendar", icon: CalendarClock },
+  }
 ];
 
 /* ================= SIDEBAR ================= */
 const TraineeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
-  const { userProfile } = useAuth();
+  const { profileName, role } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
@@ -209,7 +175,7 @@ const TraineeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 Q Techx
               </h1>
               <p className="text-[10px] text-white/50 truncate">
-                {userProfile?.displayName?.split(" ")[0] || "Employee"} Portal
+                {profileName?.split(" ")[0] || "Trainee"} Portal
               </p>
             </div>
           )}
@@ -356,14 +322,14 @@ const TraineeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           <div className="px-3 py-3 border-t border-white/10 shrink-0">
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {(userProfile?.displayName?.[0] || "E").toUpperCase()}
+                {(profileName?.[0] || "T").toUpperCase()}
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs font-semibold text-white truncate">
-                  {userProfile?.displayName || "Employee"}
+                  {profileName || "Trainee"}
                 </p>
                 <p className="text-[10px] text-white/40 truncate">
-                  {userProfile?.role || "Staff"}
+                  {role || "Trainee"}
                 </p>
               </div>
             </div>

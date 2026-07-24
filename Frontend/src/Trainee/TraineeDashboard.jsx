@@ -75,8 +75,8 @@ const LeaveRow = ({ type, dates, status }) => {
 
 /* ── main ── */
 const TraineeDashboard = () => {
-  const { userProfile } = useAuth();
-  const name = userProfile?.displayName?.split(' ')[0] || 'Trainee';
+  const { profileName } = useAuth();
+  const name = profileName?.split(' ')[0] || 'Trainee';
 
   const greeting = () => {
     const h = new Date().getHours();
