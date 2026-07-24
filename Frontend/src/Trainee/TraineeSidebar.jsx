@@ -2,22 +2,42 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  ClipboardCheck,
+  Target,
+  ListTodo,
+  UserPlus,
+  Loader,
+  CheckCircle2,
+  UserCheck,
+  List,
+  BarChart2,
+  Timer,
+  Plane,
+  Umbrella,
   CalendarOff,
-  FolderKanban,
-  CheckSquare,
+  Send,
+  History,
   Clock,
-  DollarSign,
-  Video,
-  Home,
+  CalendarClock,
+  PlusCircle,
+  GraduationCap,
+  PlaySquare,
+  BookMarked,
+  PenTool,
+  LineChart,
+  Activity,
+  Trophy,
+  MessageSquare,
+  Files,
+  FileText,
+  Building2,
+  Users,
+  MonitorPlay,
+  CalendarRange,
+  Calendar,
+  Building,
   X,
   ChevronLeft,
-  ChevronDown,
-  FileText,
-  CalendarDays,
-  TrendingUp,
-  Users,
-  CalendarClock,
+  ChevronDown
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -35,33 +55,33 @@ const navItems = [
   // My Tasks
   {
     label: "My Tasks",
-    icon: CheckSquare,
+    icon: Target,
     children: [
-      { path: "/trainee/tasks/assigned", label: "Assigned Tasks", icon: Users },
-      { path: "/trainee/tasks/in-progress", label: "In Progress", icon: Clock },
-      { path: "/trainee/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
+      { path: "/trainee/tasks/assigned", label: "Assigned Tasks", icon: UserPlus },
+      { path: "/trainee/tasks/in-progress", label: "In Progress", icon: Loader },
+      { path: "/trainee/tasks/completed", label: "Completed Tasks", icon: CheckCircle2 },
     ],
   },
 
   // My Attendance
   {
     label: "My Attendance",
-    icon: ClipboardCheck,
+    icon: UserCheck,
     children: [
-      { path: "/trainee/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/trainee/attendance/summary", label: "Summary", icon: TrendingUp },
-      { path: "/trainee/attendance/checkin", label: "Check In / Check Out", icon: Clock },
+      { path: "/trainee/attendance", label: "Attendance Log", icon: List },
+      { path: "/trainee/attendance/summary", label: "Summary", icon: BarChart2 },
+      { path: "/trainee/attendance/checkin", label: "Check In / Check Out", icon: Timer },
     ],
   },
 
   // Leave Management
   {
     label: "Leave Management",
-    icon: CalendarOff,
+    icon: Umbrella,
     children: [
       { path: "/trainee/leaves", label: "My Leaves", icon: CalendarOff },
-      { path: "/trainee/leaves/apply", label: "Apply Leave", icon: FileText },
-      { path: "/trainee/leaves/history", label: "Leave History", icon: CalendarDays },
+      { path: "/trainee/leaves/apply", label: "Apply Leave", icon: Send },
+      { path: "/trainee/leaves/history", label: "Leave History", icon: History },
     ],
   },
 
@@ -70,56 +90,56 @@ const navItems = [
     label: "Timesheet",
     icon: Clock,
     children: [
-      { path: "/trainee/timesheet", label: "My Timesheet", icon: Clock },
-      { path: "/trainee/timesheet/add", label: "Add Timesheet", icon: FileText },
-      { path: "/trainee/timesheet/history", label: "Timesheet History", icon: CalendarDays },
+      { path: "/trainee/timesheet", label: "My Timesheet", icon: CalendarClock },
+      { path: "/trainee/timesheet/add", label: "Add Timesheet", icon: PlusCircle },
+      { path: "/trainee/timesheet/history", label: "Timesheet History", icon: History },
     ],
   },
 
   // Training
   {
     label: "Training",
-    icon: Video,
+    icon: GraduationCap,
     children: [
-      { path: "/trainee/training/modules", label: "Training Modules", icon: Video },
-      { path: "/trainee/training/materials", label: "Learning Materials", icon: FileText },
-      { path: "/trainee/training/assignments", label: "Assignments", icon: ClipboardCheck },
+      { path: "/trainee/training/modules", label: "Training Modules", icon: PlaySquare },
+      { path: "/trainee/training/materials", label: "Learning Materials", icon: BookMarked },
+      { path: "/trainee/training/assignments", label: "Assignments", icon: PenTool },
     ],
   },
 
   // Performance
   {
     label: "Performance",
-    icon: TrendingUp,
+    icon: Activity,
     children: [
-      { path: "/trainee/performance", label: "My Performance", icon: TrendingUp },
-      { path: "/trainee/performance/feedback", label: "Feedback", icon: FileText },
+      { path: "/trainee/performance", label: "My Performance", icon: Trophy },
+      { path: "/trainee/performance/feedback", label: "Feedback", icon: MessageSquare },
     ],
   },
 
   // Documents
   {
     label: "Documents",
-    icon: FileText,
+    icon: Files,
     children: [
       { path: "/trainee/documents", label: "My Documents", icon: FileText },
-      { path: "/trainee/documents/company", label: "Company Documents", icon: FolderKanban },
+      { path: "/trainee/documents/company", label: "Company Documents", icon: Building2 },
     ],
   },
 
   // Meetings
   {
     label: "Meetings",
-    icon: Video,
+    icon: MonitorPlay,
     children: [
-      { path: "/trainee/meetings", label: "All Meetings", icon: Video },
-      { path: "/trainee/meetings/upcoming", label: "Upcoming", icon: CalendarDays },
+      { path: "/trainee/meetings", label: "All Meetings", icon: List },
+      { path: "/trainee/meetings/upcoming", label: "Upcoming", icon: CalendarRange },
     ],
   },
 
   // Calendars
-  { path: "/trainee/office-calendar", label: "Office Calendar", icon: CalendarDays },
-  { path: "/trainee/my-calendar", label: "My Daily Calendar", icon: CalendarClock },
+  { path: "/trainee/office-calendar", label: "Office Calendar", icon: Building },
+  { path: "/trainee/my-calendar", label: "My Daily Calendar", icon: Calendar },
 ];
 
 /* ================= SIDEBAR ================= */
