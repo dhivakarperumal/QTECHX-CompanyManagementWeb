@@ -1,0 +1,21 @@
+# Frontend .gitignore
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*.local
+
+# Build / cache
+dist/
+build/
+.vite/
+.cache/
+coverage/
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# End of file

@@ -1,0 +1,33 @@
+# Root .gitignore - ignores common Node, editor, and build artifacts
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*.local
+
+# Logs
+logs/
+*.log
+pids/
+
+# Build / output
+dist/
+build/
+coverage/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Misc
+.parcel-cache/
+.vite/
+/.expo/
+# End of file
