@@ -105,7 +105,21 @@ const navItems = [
       { path: "/trainee/documents", label: "My Documents", icon: FileText },
       { path: "/trainee/documents/company", label: "Company Documents", icon: FolderKanban },
     ],
-  }
+  },
+
+  // Meetings
+  {
+    label: "Meetings",
+    icon: Video,
+    children: [
+      { path: "/trainee/meetings", label: "All Meetings", icon: Video },
+      { path: "/trainee/meetings/upcoming", label: "Upcoming", icon: CalendarDays },
+    ],
+  },
+
+  // Calendars
+  { path: "/trainee/office-calendar", label: "Office Calendar", icon: CalendarDays },
+  { path: "/trainee/my-calendar", label: "My Daily Calendar", icon: CalendarClock },
 ];
 
 /* ================= SIDEBAR ================= */
