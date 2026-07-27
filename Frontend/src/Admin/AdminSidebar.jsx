@@ -39,6 +39,27 @@ const navItems = [
     exact: true,
   },
 
+  /* ---- CLIENTS ---- */
+  {
+    label: "Clients",
+    icon: Handshake,
+    children: [
+      { path: "/admin/clients", label: "All Clients", icon: Users },
+      { path: "/admin/clients/add", label: "Add Client", icon: UserRoundPlus },
+    ],
+  },
+
+
+    /* ---- WORK ---- */
+  {
+    label: "Project Management",
+    icon: FolderKanban,
+    children: [
+      { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
+      { path: "/admin/projects/add", label: "New Project", icon: FileText },
+    ],
+  },
+
   /* ---- PEOPLE ---- */
   {
     label: "Employees",
@@ -50,15 +71,7 @@ const navItems = [
     ],
   },
 
-  /* ---- WORK ---- */
-  {
-    label: "Project Management",
-    icon: FolderKanban,
-    children: [
-      { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
-      { path: "/admin/projects/add", label: "New Project", icon: FileText },
-    ],
-  },
+
 
   {
     label: "Task Management",
@@ -66,6 +79,17 @@ const navItems = [
     children: [
       { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
       { path: "/admin/tasks/board", label: "Task Board", icon: FolderKanban },
+    ],
+  },
+
+    /* ---- PEOPLE ---- */
+  {
+    label: "Employees",
+    icon: Users,
+    children: [
+      { path: "/admin/employees", label: "All Employees", icon: Users },
+      { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
+      { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
     ],
   },
 
@@ -88,16 +112,7 @@ const navItems = [
     ],
   },
 
-  /* ---- CLIENTS ---- */
-  {
-    label: "Clients",
-    icon: Handshake,
-    children: [
-      { path: "/admin/clients", label: "All Clients", icon: Users },
-      { path: "/admin/clients/add", label: "Add Client", icon: UserRoundPlus },
-    ],
-  },
-
+  
   /* ---- FINANCE ---- */
   {
     label: "Expenses",
