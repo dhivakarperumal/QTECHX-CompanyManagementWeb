@@ -34,6 +34,7 @@ import {
   PlusSquare,
   Edit3,
   UserCheck,
+  Layers,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -120,20 +121,20 @@ const navItems = [
 
   /* ---- TRAINING ---- */
   {
-    label: "Trainees Management",
+    label: "Trainees & Internships",
     icon: GraduationCap,
     children: [
       { path: "/admin/trainees", label: "All Trainees", icon: GraduationCap },
       { path: "/admin/trainees/add", label: "Add Trainee", icon: UserCog },
-    ],
-  },
-
-  {
-    label: "Internship Management",
-    icon: BookOpen,
-    children: [
       { path: "/admin/internships", label: "All Internships", icon: BookOpen },
       { path: "/admin/internships/add", label: "Add Internship", icon: FileText },
+      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
+      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
+      { path: "/admin/leaves/followups", label: "Leave Followups", icon: Clock },
+      { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
+      { path: "/admin/attendance/summary", label: "Summary", icon: BarChart3 },
+      { path: "/admin/attendance/followups", label: "Attendance Followups", icon: Clock },
+      { path: "/admin/attendance/class", label: "Attendance Class", icon: Layers },
     ],
   },
 
@@ -154,25 +155,6 @@ const navItems = [
     children: [
       { path: "/admin/payroll", label: "Payroll Overview", icon: DollarSign },
       { path: "/admin/payroll/run", label: "Run Payroll", icon: TrendingUp },
-    ],
-  },
-
-  /* ---- HR ---- */
-  {
-    label: "Leave Management",
-    icon: CalendarOff,
-    children: [
-      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
-      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
-    ],
-  },
-
-  {
-    label: "Attendance",
-    icon: ClipboardCheck,
-    children: [
-      { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/admin/attendance/summary", label: "Summary", icon: BarChart3 },
     ],
   },
 
