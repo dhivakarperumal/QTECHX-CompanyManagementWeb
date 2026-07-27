@@ -268,7 +268,7 @@ const AttendancePage = () => {
                   <div className="mt-5 flex items-center justify-between text-sm text-white/60">
                     <span className="font-medium">Employee ID: {employee.employee_id}</span>
                     <Link to={`/admin/attendance/view/${employee.employee_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
-                      <Eye size={14} /> View Attendance
+                      <Eye size={14} /> View
                     </Link>
                   </div>
                 </div>
