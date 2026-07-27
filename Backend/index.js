@@ -8,6 +8,7 @@ require("dotenv").config();
 const { initDB } = require("./src/config/db");
 const usersRouter = require("./src/routers/usersRouter");
 const employeesRouter = require("./src/routers/employeesRouter");
+const attendanceRouter = require("./src/routers/attendanceRouter");
 
 const app = express();
 const als = new AsyncLocalStorage();
@@ -44,6 +45,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/users", usersRouter);
 app.use("/api/employees", employeesRouter);
+app.use("/api/attendance", attendanceRouter);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
