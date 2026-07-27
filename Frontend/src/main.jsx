@@ -10,6 +10,10 @@ import PrivateRoute from './PrivateRouter/PrivateRouter.jsx'
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import AdminDashboard from './Admin/AdminDashboard.jsx'
 import AdminLayout from './Admin/Adminpanel.jsx'
+import EmployeeList from './Admin/Employees/EmployeeList.jsx'
+import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
+// import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
+import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
@@ -71,7 +75,22 @@ const router = createHashRouter([
             index: true,
             element: <AdminDashboard />,
           },
-          
+          {
+            path: 'employees',
+            element: <EmployeeList />,
+          },
+          {
+            path: 'employees/add',
+            element: <EmployeeAdd />,
+          },
+          {
+            path: 'employees/edit/:id',
+            element: <EmployeeAdd />,
+          },
+          {
+            path: 'employees/view/:id',
+            element: <EmployeeView />,
+          }
         ],
       },
       {
