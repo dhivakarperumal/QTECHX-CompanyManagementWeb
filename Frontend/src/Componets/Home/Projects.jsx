@@ -1,23 +1,36 @@
 // Projects.jsx
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjects } from "../Redux/projectSlice";
-import Slider from "react-slick";
+import SliderLib from "react-slick";
 import { FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ProjectCard from "../Components/ProjectCard";
 
+const Slider = SliderLib.default ? SliderLib.default : SliderLib;
+
 const Projects = () => {
-  const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.projects);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [slidesToShow, setSlidesToShow] = useState(3);
 
   useEffect(() => {
-    dispatch(fetchProjects());
-  }, [dispatch]);
+    fetch("/Project.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        return res.json();
+      })
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -79,7 +92,7 @@ const Projects = () => {
           <p className="text-base uppercase tracking-widest font-semibold text-primary mb-2">
             Our Products
           </p>
-          <h2 className=" text-2xl md:text-3xl font-bold leading-snug mb-6">
+          <h2 className="text-3xl font-bold leading-snug mb-6">
             Latest Projects <br /> From Our Team
           </h2>
 
@@ -108,12 +121,12 @@ const Projects = () => {
           </h3>
 
           <Slider {...settings}>
-  {filteredProjects.map((project, i) => (
-    <div key={project.id} className="p-2 h-full">
-      <ProjectCard project={project} aosDelay={i * 150} />
-    </div>
-  ))}
-</Slider>
+            {filteredProjects.map((project, i) => (
+              <div key={project.id} className="p-2 h-full">
+                <ProjectCard project={project} aosDelay={i * 150} />
+              </div>
+            ))}
+          </Slider>
         </div>
       </div>
     </section>

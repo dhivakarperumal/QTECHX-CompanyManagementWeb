@@ -1,6 +1,5 @@
 import React, { useEffect,useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchProjects } from "../Redux/projectSlice";
+
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Head from "../Components/Head";
@@ -10,17 +9,27 @@ import SocialMedia from "../Home/SocialMedia";
 import ProjectCard from "../Components/ProjectCard";
 
 const ProjectPage = () => {
-  const dispatch = useDispatch();
-  const {
-    items: projects,
-    loading,
-    error,
-  } = useSelector((state) => state.projects);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchProjects());
+    fetch("/Project.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        return res.json();
+      })
+      .then((data) => {
+        setProjects(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+      
     AOS.init({ duration: 1200, easing: "ease-in-out", once: true });
-  }, [dispatch]);
+  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState("All");
 

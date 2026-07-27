@@ -1,6 +1,4 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchPrices } from "../Redux/priceSlice";
+import React, { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
 import Head from "../Components/Head";
 import { Link } from "react-router-dom";
@@ -8,12 +6,28 @@ import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
 
 const Prices = () => {
-  const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.prices);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchPrices());
-  }, [dispatch]);
+    const fetchPrices = async () => {
+      try {
+        const response = await fetch("/Price.json");
+        if (!response.ok) {
+          throw new Error("Failed to fetch prices");
+        }
+        const data = await response.json();
+        setItems(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrices();
+  }, []);
 
   if (loading) {
     return (
