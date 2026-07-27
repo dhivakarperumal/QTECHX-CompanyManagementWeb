@@ -13,6 +13,17 @@ import AdminLayout from './Admin/Adminpanel.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
+import RouteError from './Componets/Components/RouteError.jsx'
+import AboutUs from './Componets/About/About.jsx'
+import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
+import ProjectPage from "./Componets/Projects/ProjectPage.jsx";
+import Prices from "./Componets/Prices/Prices.jsx";
+import WhyChooseUs from './Componets/WhyChooseUs/WhyChooseUs.jsx';
+import WhoWeWorkWith from "./Componets/WhyChooseUs/WhoWeWorkWith.jsx";
+import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
+import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
+import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
+import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
 
@@ -26,11 +37,22 @@ const router = createHashRouter([
   {
     path: '/',
     element: <App />,
+    errorElement: <RouteError />,
     children: [
       {
         index: true,
         element: <Home />,
       },
+      { path: "/about", element: <AboutUs /> },
+      { path: "/services/:id", element: <ServiceDetails /> },
+      { path: "/projects", element: <ProjectPage /> },
+      { path: "/prices", element: <Prices /> },
+      { path: "/whychooseus", element: <WhyChooseUs /> },
+      { path: "/whoweworkwith", element: <WhoWeWorkWith /> },
+      { path: "/whatwedo", element: <WhatWeDo /> },
+      { path: "/achievements", element: <OurAchievements /> },
+      { path: "/career", element: <CareerDetail /> },
+      { path: "/contact", element: <ContactPage /> },
       {
         path: 'login',
         element: <Login />,
@@ -39,7 +61,7 @@ const router = createHashRouter([
         path: 'register',
         element: <Register />,
       },
-      
+
       {
         path: 'admin',
         element: (

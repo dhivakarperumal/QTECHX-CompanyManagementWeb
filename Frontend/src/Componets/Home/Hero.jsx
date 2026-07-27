@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
-// import heroImg from "/images/heroimage.png";
-import heroImg from "/images/About_1.png"; 
-import rocketImg from "/images/icon_3.png"; 
+const heroImg = "/images/heroimage.png";
+const rocketImg = "/images/rocketimage.png";
 
 import Button from "../Components/Button";
 import { Link } from "react-router-dom";

@@ -1,31 +1,26 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchReviews } from "../Redux/reviewSlice";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import React from "react";
 
 const Testimonial = () => {
-  const dispatch = useDispatch();
-  const { items: reviews, loading, error } = useSelector((state) => state.reviews);
-
-  useEffect(() => {
-    dispatch(fetchReviews());
-  }, [dispatch]);
-
-  if (loading) return <p className="text-center">Loading testimonials...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
-
-  const settings = {
-    dots: false,
-    infinite: true,
-    autoplay: true,
-    autoplaySpeed: 5000,
-    speed: 600,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    arrows: false,
-  };
+  const reviews = [
+    {
+      name: "John Doe",
+      role: "CEO, Tech Corp",
+      image: "https://randomuser.me/api/portraits/men/1.jpg",
+      quote: "The service provided was exceptional. We saw a significant increase in our productivity and overall business growth."
+    },
+    {
+      name: "Jane Smith",
+      role: "Marketing Director",
+      image: "https://randomuser.me/api/portraits/women/2.jpg",
+      quote: "Absolutely brilliant work. They delivered on time and exceeded all our expectations with their innovative solutions."
+    },
+    {
+      name: "Robert Johnson",
+      role: "Founder, Startup Inc",
+      image: "https://randomuser.me/api/portraits/men/3.jpg",
+      quote: "Their team was highly professional and dedicated. I highly recommend them for any digital transformation needs."
+    }
+  ];
 
   return (
     <section className="relative py-20 bg-gray-50 overflow-hidden">
@@ -45,17 +40,17 @@ const Testimonial = () => {
         <h5 className="text-primary uppercase tracking-widest text-sm sm:text-base">Testimonials</h5>
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-10">The Trust From Clients</h2>
 
-        <Slider {...settings}>
+        <div className="grid gap-6 md:grid-cols-3">
           {reviews.map((review, idx) => (
-            <div key={idx} className="px-4 sm:px-6">
-              <p className="text-base  text-justify  md:text-center sm:text-lg mb-6 relative z-10 leading-relaxed">
+            <div key={idx} className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="relative z-10 mb-6 text-base leading-relaxed text-justify sm:text-lg md:text-center">
                 {review.quote}
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 relative z-10">
+              <div className="relative z-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <img
                   src={review.image}
                   alt={review.name}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-purple-500"
+                  className="h-12 w-12 rounded-full border-2 border-purple-500 sm:h-14 sm:w-14"
                 />
                 <div className="text-center sm:text-left">
                   <h4 className="font-semibold">{review.name}</h4>
@@ -64,7 +59,7 @@ const Testimonial = () => {
               </div>
             </div>
           ))}
-        </Slider>
+        </div>
       </div>
     </section>
   );
