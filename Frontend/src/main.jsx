@@ -12,7 +12,7 @@ import AdminDashboard from './Admin/AdminDashboard.jsx'
 import AdminLayout from './Admin/Adminpanel.jsx'
 import EmployeeList from './Admin/Employees/EmployeeList.jsx'
 import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
-import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
+// import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
@@ -85,7 +85,7 @@ const router = createHashRouter([
           },
           {
             path: 'employees/edit/:id',
-            element: <EmployeeEdit />,
+            element: <EmployeeAdd />,
           },
           {
             path: 'employees/view/:id',

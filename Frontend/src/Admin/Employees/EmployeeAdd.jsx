@@ -1,12 +1,15 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiArrowLeft, FiSave } from "react-icons/fi";
 
 const EmployeeAdd = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -49,6 +52,74 @@ const EmployeeAdd = () => {
     nda_url: "",
   });
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toISOString().split("T")[0];
+  };
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchEmployee = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch employee details");
+        }
+
+        const data = await response.json();
+        const emp = data.employee;
+        
+        if (emp) {
+          setFormData({
+            employee_code: emp.employee_code || "",
+            first_name: emp.first_name || "",
+            last_name: emp.last_name || "",
+            gender: emp.gender || "",
+            dob: formatDate(emp.dob),
+            blood_group: emp.blood_group || "",
+            marital_status: emp.marital_status || "",
+            nationality: emp.nationality || "",
+            aadhaar_number: emp.aadhaar_number || "",
+            pan_number: emp.pan_number || "",
+            mobile_number: emp.mobile_number || "",
+            alternate_mobile: emp.alternate_mobile || "",
+            personal_email: emp.personal_email || "",
+            permanent_address: emp.permanent_address || "",
+            emergency_contact_person: emp.emergency_contact_person || "",
+            emergency_contact_number: emp.emergency_contact_number || "",
+            emergency_relationship: emp.emergency_relationship || "",
+            designation: emp.designation || "",
+            team_lead: emp.team_lead || "",
+            joining_date: formatDate(emp.joining_date),
+            confirmation_date: formatDate(emp.confirmation_date),
+            employment_status: emp.employment_status || "Active",
+            role: emp.role || "Employee",
+            salary_type: emp.salary_type || "",
+            basic_salary: emp.basic_salary || "",
+            bank_name: emp.bank_name || "",
+            account_number: emp.account_number || "",
+            ifsc_code: emp.ifsc_code || "",
+            upi_id: emp.upi_id || "",
+          });
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchEmployee();
+  }, [id, isEditMode]);
+
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === "file") {
@@ -73,8 +144,14 @@ const EmployeeAdd = () => {
         }
       });
 
-      const response = await fetch("http://localhost:5000/api/employees", {
-        method: "POST",
+      const url = isEditMode 
+        ? `http://localhost:5000/api/employees/${id}` 
+        : "http://localhost:5000/api/employees";
+        
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -83,10 +160,10 @@ const EmployeeAdd = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create employee");
+        throw new Error(errorData.message || `Failed to ${isEditMode ? "update" : "create"} employee`);
       }
 
-      alert("Employee created successfully!");
+      alert(`Employee ${isEditMode ? "updated" : "created"} successfully!`);
       navigate("/admin/employees");
     } catch (err) {
       setError(err.message);
@@ -98,6 +175,10 @@ const EmployeeAdd = () => {
   const inputClass = "w-full rounded-md border border-gray-300 p-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary";
   const labelClass = "mb-1 block text-sm font-medium text-gray-700";
 
+  if (fetching) {
+    return <div className="p-6 text-center text-gray-500">Loading employee details...</div>;
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -105,7 +186,7 @@ const EmployeeAdd = () => {
           <Link to="/admin/employees" className="text-gray-500 hover:text-gray-800">
             <FiArrowLeft size={24} />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800">Add New Employee</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{isEditMode ? "Edit Employee" : "Add New Employee"}</h1>
         </div>
       </div>
 
@@ -330,7 +411,7 @@ const EmployeeAdd = () => {
             className="flex items-center gap-2 rounded-md bg-primary px-6 py-2.5 font-medium text-white transition hover:bg-primary-dark disabled:opacity-70"
           >
             <FiSave />
-            {loading ? "Saving..." : "Save Employee"}
+            {loading ? "Saving..." : isEditMode ? "Update Employee" : "Save Employee"}
           </button>
         </div>
 
