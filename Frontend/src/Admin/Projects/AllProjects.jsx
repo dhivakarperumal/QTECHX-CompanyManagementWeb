@@ -320,7 +320,7 @@ export default function AllProjects() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View">
+                        <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View">
                           <Eye size={13} />
                         </button>
                         <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)}
@@ -370,7 +370,7 @@ export default function AllProjects() {
               <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
                 <span className="text-white/50 text-xs font-medium">{formatCurrency(p.total_project_cost)}</span>
                 <div className="flex items-center gap-1.5">
-                  <button className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
+                  <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
                   <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition"><Edit2 size={13} /></button>
                   <button onClick={() => setDeleteTarget(p)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition"><Trash2 size={13} /></button>
                 </div>
