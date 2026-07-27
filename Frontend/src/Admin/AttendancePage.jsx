@@ -16,6 +16,7 @@ const AttendancePage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [viewLoading, setViewLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [form, setForm] = useState({
     employee_id: "",
     date: today.toISOString().slice(0, 10),
@@ -39,16 +40,21 @@ const AttendancePage = () => {
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [employeeRes, summaryRes] = await Promise.all([
-        api.get("/employees?limit=200"),
-        api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`),
-      ]);
-
+      const employeeRes = await api.get("/employees?limit=200");
       setEmployees(employeeRes?.data?.data || []);
+    } catch (err) {
+      console.error("Failed to load employees", err);
+      setError("Unable to load employees. Please refresh or check your login.");
+    }
+
+    try {
+      const summaryRes = await api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`);
       setSummary(summaryRes?.data?.data || []);
-    } catch (error) {
-      console.error("Failed to load attendance data", error);
+    } catch (err) {
+      console.error("Failed to load attendance summary", err);
+      setError((prev) => prev ? prev + " Attendance summary could not be loaded." : "Attendance summary could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -238,37 +244,50 @@ const AttendancePage = () => {
           <Loader2 className="mr-3 animate-spin" /> Loading attendance details...
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {employeeCards.map((employee) => (
-            <div key={employee.employee_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-white/40">{employee.employee_code || "EMP"}</p>
-                  <h3 className="mt-1 text-lg font-semibold">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</h3>
-                </div>
-                <div className={`rounded-full p-2 ${employee.present_days > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-700/60 text-slate-300"}`}>
-                  {employee.present_days > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
-                </div>
-              </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-white/40">Present Days</p>
-                  <p className="mt-1 text-xl font-semibold text-emerald-400">{employee.present_days || 0}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-white/40">Absent Days</p>
-                  <p className="mt-1 text-xl font-semibold text-rose-400">{employee.absent_days || 0}</p>
-                </div>
-              </div>
-              <div className="mt-5 flex items-center justify-between text-sm text-white/60">
-                <span className="font-medium">Employee ID: {employee.employee_id}</span>
-                <button onClick={() => handleViewAttendance(employee)} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
-                  <Eye size={14} /> View Attendance
-                </button>
-              </div>
+        <>
+          {error && (
+            <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">
+              {error}
             </div>
-          ))}
-        </div>
+          )}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {employeeCards.length === 0 ? (
+              <div className="col-span-full rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60">
+                No employees found.
+              </div>
+            ) : (
+              employeeCards.map((employee) => (
+                <div key={employee.employee_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-white/40">{employee.employee_code || "EMP"}</p>
+                      <h3 className="mt-1 text-lg font-semibold">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</h3>
+                    </div>
+                    <div className={`rounded-full p-2 ${employee.present_days > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-700/60 text-slate-300"}`}>
+                      {employee.present_days > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
+                    </div>
+                  </div>
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-white/40">Present Days</p>
+                      <p className="mt-1 text-xl font-semibold text-emerald-400">{employee.present_days || 0}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-white/40">Absent Days</p>
+                      <p className="mt-1 text-xl font-semibold text-rose-400">{employee.absent_days || 0}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex items-center justify-between text-sm text-white/60">
+                    <span className="font-medium">Employee ID: {employee.employee_id}</span>
+                    <button onClick={() => handleViewAttendance(employee)} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
+                      <Eye size={14} /> View Attendance
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
 
       {isModalOpen && (
