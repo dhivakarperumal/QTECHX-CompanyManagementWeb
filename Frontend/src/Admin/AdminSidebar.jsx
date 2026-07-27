@@ -45,7 +45,6 @@ const navItems = [
       { path: "/admin/employees", label: "All Employees", icon: Users },
       { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
       { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/admin/attendance/summary", label: "Attendance Summary", icon: BarChart3 },
       { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
     ],
   },
