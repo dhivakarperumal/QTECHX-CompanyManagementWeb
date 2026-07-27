@@ -34,7 +34,7 @@ function App() {
       <ScrollNavigator/>
       <Outlet />
       {!isAdmin && <FloatingSupport />}
-      <Footer/>
+      {showPublicChrome && <Footer />}
       {/* {showPublicChrome && <Footer />} */}
     </section>
   );

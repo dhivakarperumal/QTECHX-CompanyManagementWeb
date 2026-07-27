@@ -88,7 +88,11 @@ const TraineeHeader = ({ onMenuClick }) => {
   }, []);
 
   const toggle    = (name) => setActiveDropdown(p => p === name ? null : name);
-  const handleLogout = () => { logout(); navigate("/login", { replace: true }); };
+  const handleLogout = () => {
+    logout();
+    setActiveDropdown(null);
+    window.location.hash = "#/login";
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();

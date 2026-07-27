@@ -24,6 +24,13 @@ export const useAuth = () => {
 
 const normalizeRoleValue = (roleValue) => roleValue?.toString().trim();
 
+const clearStoredAuth = () => {
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("user");
+  sessionStorage.removeItem("token");
+};
+
 const loadStoredUser = () => {
   try {
     const storedUser = localStorage.getItem("user");
@@ -63,8 +70,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    setLoginOpen(false);
+    clearStoredAuth();
   };
 
   // Map user data for Header/Sidebar compatibility

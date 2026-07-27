@@ -159,7 +159,11 @@ const Header = ({ onMenuClick }) => {
     setSearchQuery("");
   };
 
-  const handleLogout = () => { logout(); navigate("/login", { replace: true }); };
+  const handleLogout = () => {
+    logout();
+    setActiveDropdown(null);
+    window.location.hash = "#/login";
+  };
 
   /* icon button helper */
   const IconBtn = ({ name, badge, badgeColor, title, children }) => (

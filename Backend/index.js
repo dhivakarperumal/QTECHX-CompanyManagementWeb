@@ -6,7 +6,9 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const { initDB } = require("./src/config/db");
-const usersRouter = require("./src/routers/usersRouter");
+const usersRouter  = require("./src/routers/usersRouter");
+const clientRouter = require("./src/routers/clientRouter");
+
 
 const app = express();
 const als = new AsyncLocalStorage();
@@ -41,7 +43,20 @@ app.use(
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use("/api/users", usersRouter);
+app.use("/api/users",   usersRouter);
+app.use("/api/clients", clientRouter);
+
+// ── Stub routes for features not yet implemented in this backend ──────────────
+// These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
+app.get("/api/cart/:userId",           (req, res) => res.json({ success: true, data: [] }));
+app.get("/api/wishlist/:userId",       (req, res) => res.json({ success: true, data: [] }));
+app.post("/api/cart",                  (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
+app.post("/api/wishlist",              (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
+app.delete("/api/cart/:id",            (req, res) => res.json({ success: true }));
+app.put("/api/cart/:id",               (req, res) => res.json({ success: true }));
+app.delete("/api/cart/clear/:userId",  (req, res) => res.json({ success: true }));
+app.delete("/api/wishlist/:uid/:pid",  (req, res) => res.json({ success: true }));
+
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

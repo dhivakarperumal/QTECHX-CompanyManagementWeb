@@ -25,6 +25,12 @@ import {
   Clock,
   Handshake,
   UserRoundPlus,
+  List,
+  FolderPlus,
+  ClipboardList,
+  Image,
+  Server,
+  Globe,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -46,6 +52,7 @@ const navItems = [
     children: [
       { path: "/admin/clients", label: "All Clients", icon: Users },
       { path: "/admin/clients/add", label: "Add Client", icon: UserRoundPlus },
+      { path: "/admin/clients/followups", label: "Followups", icon: Clock },
     ],
   },
 
@@ -82,16 +89,26 @@ const navItems = [
     ],
   },
 
-    /* ---- PEOPLE ---- */
   {
-    label: "Employees",
-    icon: Users,
-    children: [
-      { path: "/admin/employees", label: "All Employees", icon: Users },
-      { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
-      { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
-    ],
-  },
+  label: "My Projects",
+  icon: FolderKanban,
+  children: [
+    { path: "/admin/projects", label: "Project List", icon: List },
+    { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
+
+    { path: "/admin/projects/plans", label: "Project Plans", icon: ClipboardList },
+    { path: "/admin/projects/quotations", label: "Project Quotations", icon: FileText },
+
+    { path: "/admin/projects/documents", label: "Project Documents", icon: FileText },
+    { path: "/admin/projects/images", label: "Project Images", icon: Image },
+
+    { path: "/admin/projects/hosting", label: "Hosting Management", icon: Server },
+    { path: "/admin/projects/domains", label: "Domain Management", icon: Globe },
+
+    { path: "/admin/projects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
+  ],
+},
+
 
   /* ---- TRAINING ---- */
   {
@@ -190,8 +207,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     });
   }, [location.pathname]);
 
-  const isRouteActive = (path) => {
+  const isRouteActive = (path, exact = false) => {
     if (path === "/admin" || path === "/") return location.pathname === path;
+    if (exact) return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
@@ -292,7 +310,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = isRouteActive(sub.path);
+                        const isActive = isRouteActive(sub.path, true);
                         return (
                           <NavLink
                             key={sub.path}

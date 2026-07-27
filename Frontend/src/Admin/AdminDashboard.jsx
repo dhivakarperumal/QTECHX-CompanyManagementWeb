@@ -153,6 +153,24 @@ const leaveRequestsData = [
   { employee: 'Dwight Schrute', avatar: 'https://i.pravatar.cc/150?u=11', type: 'Emergency', duration: 'Oct 13 (Half day)' },
 ];
 
+// Recent activity mock and ActivityRow component (used in Recent Activity section)
+const recentActivity = [
+  { title: 'New employee onboarded', meta: 'HR', time: '2h ago', user: 'Alex Morgan', avatar: 'https://i.pravatar.cc/150?u=21' },
+  { title: 'Database backup completed', meta: 'Ops', time: '5h ago', user: 'System', avatar: 'https://i.pravatar.cc/150?u=22' },
+  { title: 'Project kickoff created', meta: 'Projects', time: '1d ago', user: 'Sam Smith', avatar: 'https://i.pravatar.cc/150?u=23' },
+  { title: 'Payroll processed', meta: 'Finance', time: '2d ago', user: 'Finance Bot', avatar: 'https://i.pravatar.cc/150?u=24' },
+];
+
+const ActivityRow = ({ title, meta, time, user, avatar }) => (
+  <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
+    <img src={avatar} alt={user} className="w-10 h-10 rounded-full" />
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold text-white truncate">{title}</p>
+      <p className="text-[11px] text-white/40 truncate">{meta} · {time}</p>
+    </div>
+  </div>
+);
+
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════ */
@@ -527,248 +545,6 @@ const AdminDashboard = () => {
               <ArrowUpRight size={16} className="opacity-40 shrink-0" />
             </div>
           ))}
-        </div>
-      </div>
-        {/* Quick Actions */}
-        <div className="lg:col-span-7 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
-          <h2 className="text-sm font-bold text-white mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <UserPlus className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Add Employee</span>
-            </div>
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Briefcase className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Add Project</span>
-            </div>
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <CheckSquare className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Create Task</span>
-            </div>
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Calendar className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Mark Attendance</span>
-            </div>
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Activity className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Generate Report</span>
-            </div>
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Settings className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">System Settings</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-        {/* Upcoming Events */}
-        <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
-                <Calendar size={20} />
-              </div>
-              <div>
-                <h2 className="text-white font-bold text-base">Upcoming Events</h2>
-                <p className="text-xs text-white/40">Stay ahead of the calendar</p>
-              </div>
-            </div>
-            <button className="text-xs text-primary hover:underline">View Calendar</button>
-          </div>
-          <div className="space-y-4">
-            {upcomingEvents.map((e, i) => (
-              <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4`}>
-                <div className="flex flex-col items-center justify-center shrink-0 rounded-3xl bg-white/5 w-14 h-14 text-white/90">
-                  <span className="text-[9px] uppercase tracking-[0.2em] text-white/50">{e.date.split(' ')[0]}</span>
-                  <span className="text-xl font-semibold leading-tight">{e.date.split(' ')[1]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{e.title}</p>
-                  <p className="text-white/40 text-xs mt-1">{e.time}</p>
-                </div>
-                <ArrowUpRight size={16} className="opacity-40 shrink-0" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Company Revenue */}
-        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <DollarSign size={16} className="text-primary" /> Company Revenue
-            </h2>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
-              Last 6 Months <ChevronDown size={14} />
-            </div>
-          </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded bg-primary" />
-              <span className="text-xs text-white/60">Revenue</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded bg-gray-500" />
-              <span className="text-xs text-white/60">Expenses</span>
-            </div>
-
-      {/* ── REVENUE ROW ── */}
-      <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col mt-5">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <DollarSign size={16} className="text-primary" /> Company Revenue
-          </h2>
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
-            Last 6 Months <ChevronDown size={14} />
-          </div>
-        </div>
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-              />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex items-center justify-center gap-6 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded bg-primary" />
-            <span className="text-xs text-white/60">Revenue</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded bg-gray-500" />
-            <span className="text-xs text-white/60">Expenses</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── TABLES ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2">
-        
-        {/* Recent Tasks Completed Table */}
-        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-primary" /> Recent Tasks Completed
-            </h2>
-            <button className="text-xs text-primary hover:underline">View All</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 text-xs text-white/50">
-                  <th className="pb-3 font-medium">Task Name</th>
-                  <th className="pb-3 font-medium">Project</th>
-                  <th className="pb-3 font-medium">Assigned To</th>
-                  <th className="pb-3 font-medium text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {recentCompletedTasksData.map((task, i) => (
-                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                    <td className="py-3 font-medium text-white text-xs">{task.name}</td>
-                    <td className="py-3 text-white/70 text-xs">{task.project}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <img src={task.avatar} alt={task.assignee} className="w-6 h-6 rounded-full" />
-                        <span className="text-white/80 text-[11px]">{task.assignee}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 text-right">
-                      <span className="bg-green-500/10 text-green-400 text-[10px] px-2 py-1 rounded-full font-semibold">
-                        {task.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Leave Requests Table */}
-        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <CalendarOff size={16} className="text-primary" /> Leave Requests
-            </h2>
-            <button className="text-xs text-primary hover:underline">View All</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 text-xs text-white/50">
-                  <th className="pb-3 font-medium">Employee</th>
-                  <th className="pb-3 font-medium">Leave Type</th>
-                  <th className="pb-3 font-medium">Duration</th>
-                  <th className="pb-3 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {leaveRequestsData.map((leave, i) => (
-                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <img src={leave.avatar} alt={leave.employee} className="w-6 h-6 rounded-full" />
-                        <span className="text-white/80 font-medium text-xs">{leave.employee}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 text-white/70 text-[11px]">{leave.type}</td>
-                    <td className="py-3 text-white/50 text-[10px]">{leave.duration}</td>
-                    <td className="py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="bg-green-500/15 text-green-400 hover:bg-green-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Approve</button>
-                        <button className="bg-red-500/15 text-red-400 hover:bg-red-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Reject</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
 

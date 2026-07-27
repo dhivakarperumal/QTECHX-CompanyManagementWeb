@@ -64,7 +64,12 @@ export const StoreProvider = ({ children }) => {
                 : [];
             setCart(cartData);
         } catch (err) {
-            console.error("Fetch cart error:", err);
+            // 404 = route not available on this backend (company management app)
+            if (err?.response?.status === 404 || err?.response?.status === 405) {
+                setCart([]);
+            } else {
+                console.error("Fetch cart error:", err);
+            }
         } finally {
             setLoadingCart(false);
         }
@@ -85,7 +90,12 @@ export const StoreProvider = ({ children }) => {
                 : [];
             setWishlist(wishlistData);
         } catch (err) {
-            console.error("Fetch wishlist error:", err);
+            // 404 = route not available on this backend (company management app)
+            if (err?.response?.status === 404 || err?.response?.status === 405) {
+                setWishlist([]);
+            } else {
+                console.error("Fetch wishlist error:", err);
+            }
         } finally {
             setLoadingWishlist(false);
         }

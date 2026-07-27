@@ -17,6 +17,7 @@ const dbConfig = {
 let pool;
 
 async function ensureSchema(pool) {
+  // ── Users ────────────────────────────────────────────────────────────────
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS users (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -36,6 +37,68 @@ async function ensureSchema(pool) {
       UNIQUE KEY uq_users_username (username),
       UNIQUE KEY uq_users_email (email),
       UNIQUE KEY uq_users_mobile (mobile)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  // ── Clients ──────────────────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS clients (
+      id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid        VARCHAR(36)  NOT NULL,
+      company_name         VARCHAR(255) NULL,
+      client_name          VARCHAR(255) NOT NULL,
+      email                VARCHAR(255) NULL,
+      phone_number         VARCHAR(20)  NULL,
+      contact_person       VARCHAR(255) NULL,
+      client_status        ENUM('Active','Inactive','Lead','Prospect','Converted','Closed') NOT NULL DEFAULT 'Lead',
+      service_type         ENUM('Website','Mobile App','Web App','Software','Other') NULL,
+      business_name        VARCHAR(255) NULL,
+      business_type        VARCHAR(255) NULL,
+      requirement          TEXT NULL,
+      notes_summary        TEXT NULL,
+      follow_up_date       DATE NULL,
+      follow_up_time       TIME NULL,
+      next_follow_up_date  DATE NULL,
+      next_follow_up_time  TIME NULL,
+      discussion_summary   TEXT NULL,
+      follow_up_status     ENUM('Pending','Completed','Rescheduled','Cancelled') NOT NULL DEFAULT 'Pending',
+      reminder             TINYINT(1) NOT NULL DEFAULT 0,
+      created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by           VARCHAR(36) NULL,
+      updated_by           VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_clients_uuid (uuid),
+      INDEX idx_clients_status (client_status),
+      INDEX idx_clients_service (service_type),
+      INDEX idx_clients_follow_up (follow_up_date),
+      INDEX idx_clients_follow_up_status (follow_up_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  // ── Client Documents ─────────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS client_documents (
+      id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid          VARCHAR(36)  NOT NULL,
+      client_id     INT UNSIGNED NOT NULL,
+      document_type VARCHAR(100) NOT NULL,
+      document_name VARCHAR(255) NOT NULL,
+      file_name     VARCHAR(255) NOT NULL,
+      file_path     VARCHAR(500) NOT NULL,
+      file_size     INT UNSIGNED NOT NULL,
+      mime_type     VARCHAR(100) NOT NULL,
+      description   TEXT NULL,
+      created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by    VARCHAR(36) NULL,
+      updated_by    VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_client_docs_uuid (uuid),
+      INDEX idx_client_docs_client_id (client_id),
+      CONSTRAINT fk_client_docs_client
+        FOREIGN KEY (client_id) REFERENCES clients (id)
+        ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 }

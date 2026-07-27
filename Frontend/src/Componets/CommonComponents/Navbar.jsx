@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import Button from "../Components/Button";
 import {
@@ -21,6 +22,8 @@ const Navbar = () => {
   const [mobileSubMenu, setMobileSubMenu] = useState(null);
   const dropdownRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const services = [
     { id: 1, title: "Web Development", path: "/services/1", icon: "FaLaptopCode" },
@@ -196,6 +199,19 @@ const Navbar = () => {
         <Button>Contact</Button>
       </Link>
 
+      {user && (
+        <button
+          onClick={() => {
+            logout();
+            setMobileMenu(false);
+            navigate('/login');
+          }}
+          className="ml-4 hidden md:inline-block rounded-full border border-red-400 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+        >
+          Logout
+        </button>
+      )}
+
       <button className="text-2xl md:hidden" onClick={() => setMobileMenu(true)}>
         <FiMenu />
       </button>
@@ -280,6 +296,19 @@ const Navbar = () => {
             >
               Contact
             </NavLink>
+
+            {user && (
+              <button
+                onClick={() => {
+                  logout();
+                  setMobileMenu(false);
+                  navigate('/login');
+                }}
+                className="mt-4 w-full rounded-full border border-red-400 py-2 text-center text-red-600 hover:bg-red-50"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       )}
