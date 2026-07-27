@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '../../api';
 import ClientFormModal from './ClientFormModal';
+import StatusUpdateModal from './StatusUpdateModal';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
@@ -69,13 +70,22 @@ function Avatar({ name, index, size = 'md' }) {
   );
 }
 
-function StatusPill({ status }) {
+function StatusPill({ status, onClick }) {
   const s = STATUS_STYLES[status] || STATUS_STYLES.Inactive;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full ${s.pill}`}>
+    <button 
+      onClick={(e) => {
+        if (onClick) {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
+      disabled={!onClick}
+      className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full transition ${s.pill} ${onClick ? 'cursor-pointer hover:opacity-80 hover:shadow-md' : 'cursor-default'}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {status}
-    </span>
+    </button>
   );
 }
 
@@ -125,7 +135,7 @@ function DeleteModal({ client, onConfirm, onCancel, loading }) {
 }
 
 // ─── View Drawer ──────────────────────────────────────────────────────────────
-function ViewDrawer({ client, index, onClose, onEdit }) {
+function ViewDrawer({ client, index, onClose, onEdit, onStatusClick }) {
   const drawerRef = useRef(null);
   const [documents, setDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
@@ -179,7 +189,7 @@ function ViewDrawer({ client, index, onClose, onEdit }) {
                 </p>
               )}
               <div className="mt-1.5">
-                <StatusPill status={client.client_status} />
+                <StatusPill status={client.client_status} onClick={() => onStatusClick(client)} />
               </div>
             </div>
           </div>
@@ -258,6 +268,42 @@ function ViewDrawer({ client, index, onClose, onEdit }) {
                     </span>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section: History / Timeline */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Timeline & History</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-3">
+              {loadingDocs ? (
+                <div className="flex items-center gap-2 text-white/40 text-sm">
+                  <Loader2 size={14} className="animate-spin" /> Loading history…
+                </div>
+              ) : client.history && client.history.length > 0 ? (
+                <div className="space-y-4">
+                  {client.history.map((log, i) => (
+                    <div key={log.id || i} className="relative pl-4 border-l-2 border-white/10 last:border-transparent">
+                      <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-primary" />
+                      <div className="mb-1 flex items-center justify-between">
+                        <p className="text-xs font-semibold text-white">{log.event_type}</p>
+                        <span className="text-[10px] text-white/40">{fmtDate(log.created_at)}</span>
+                      </div>
+                      {log.new_status && log.new_status !== log.old_status && (
+                        <p className="text-[11px] text-white/60 mb-1">
+                          Status changed to <span className="font-semibold text-white">{log.new_status}</span>
+                        </p>
+                      )}
+                      {log.discussion_summary && (
+                        <div className="mt-2 bg-white/5 p-2 rounded-lg text-[11px] text-white/70 italic border border-white/10">
+                          "{log.discussion_summary}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-white/40">No history available.</p>
               )}
             </div>
           </div>
@@ -367,6 +413,7 @@ export default function AllClients() {
   
   const [isFormOpen, setIsFormOpen]     = useState(false);
   const [editClientTarget, setEditClientTarget] = useState(null);
+  const [statusUpdateTarget, setStatusUpdateTarget] = useState(null);
 
   // ── Fetch clients ──
   const fetchClients = useCallback(async () => {
@@ -468,6 +515,7 @@ export default function AllClients() {
           index={viewIndex}
           onClose={() => setViewClient(null)}
           onEdit={() => { setViewClient(null); setEditClientTarget(viewClient); setIsFormOpen(true); }}
+          onStatusClick={(c) => { setViewClient(null); setStatusUpdateTarget(c); }}
         />
       )}
 
@@ -476,6 +524,19 @@ export default function AllClients() {
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => { fetchClients(); fetchStats(); }}
         editClient={editClientTarget}
+      />
+
+      <StatusUpdateModal
+        isOpen={!!statusUpdateTarget}
+        onClose={() => setStatusUpdateTarget(null)}
+        client={statusUpdateTarget}
+        onSuccess={() => {
+          setStatusUpdateTarget(null);
+          setDeleteMsg(`Status updated successfully.`);
+          setTimeout(() => setDeleteMsg(''), 3000);
+          fetchClients();
+          fetchStats();
+        }}
       />
 
       {/* ── Page Header ── */}
@@ -733,7 +794,7 @@ export default function AllClients() {
                     </td>
 
                     {/* Status */}
-                    <td className="px-4 py-3.5"><StatusPill status={c.client_status} /></td>
+                    <td className="px-4 py-3.5"><StatusPill status={c.client_status} onClick={() => setStatusUpdateTarget(c)} /></td>
 
                     {/* Service */}
                     <td className="px-4 py-3.5">
@@ -821,7 +882,7 @@ export default function AllClients() {
                       )}
                     </div>
                   </div>
-                  <StatusPill status={c.client_status} />
+                  <StatusPill status={c.client_status} onClick={() => setStatusUpdateTarget(c)} />
                 </div>
 
                 {/* Contact */}

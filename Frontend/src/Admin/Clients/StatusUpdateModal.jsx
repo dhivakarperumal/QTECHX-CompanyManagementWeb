@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, MessageSquare, ShieldCheck, Loader2 } from 'lucide-react';
 import api from '../../api';
-import { StatusPill } from './AllClients'; // Wait, StatusPill is exported from AllClients? Actually, let's just define styles locally or import from constants if they exist.
 
 const CLIENT_STATUSES = ["Lead", "Prospect", "Active", "Inactive", "Converted", "Closed"];
 
