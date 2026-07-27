@@ -100,7 +100,7 @@ const EmployeeAdd = () => {
 
       {error && <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-white p-6 shadow">
+      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-black p-6 shadow">
         
         {/* Personal Details */}
         <div>
