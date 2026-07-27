@@ -82,11 +82,17 @@ const Login = () => {
       >
         {/* Top Logo */}
         <div className="flex items-center gap-3">
-          <img src={Logo} alt="Logo" className="w-10 h-10 object-contain" />
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-500/40 to-transparent blur-2xl" />
+            <div className="relative z-10 w-16 h-16 rounded-full border border-orange-400/30 bg-[#111317] flex items-center justify-center shadow-[0_0_30px_rgba(248,116,14,0.18)]">
+              <img src={Logo} alt="Logo" className="w-15 h-15 object-contain" />
+            </div>
+          </div>
           <div className="leading-tight">
-            <h1 className="text-lg font-bold text-white tracking-wide">COMPANY</h1>
-            <h2 className="text-base font-bold text-white tracking-wide uppercase">MANAGEMENT</h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest">System</p>
+            <h1 className="text-lg font-bold text-white tracking-wide">
+              Q-Techx <span className="text-primary">Solutions</span>
+            </h1>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-white/40">Administrator Portal</p>
           </div>
         </div>
 
