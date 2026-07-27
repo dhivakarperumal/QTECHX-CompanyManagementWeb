@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
-  DollarSign, CalendarOff, ClipboardCheck, BarChart3, TrendingUp,
+  DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
   TrendingDown, ArrowUpRight, Clock, AlertCircle, CheckCircle2,
-  Timer, UserPlus, Briefcase, Activity, Calendar,
+  UserPlus, Briefcase, Activity, Calendar,
 } from 'lucide-react';
 
 /* ─── Helpers ─── */
@@ -21,17 +20,18 @@ const today = new Date().toLocaleDateString('en-IN', {
 
 /* ─── Stat Card ─── */
 const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor }) => (
-  <div className="relative overflow-hidden rounded-2xl p-5 border border-white/8 bg-white/4 hover:bg-white/6 transition-all duration-300 group">
+  <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/6">
     {/* bg glow */}
-    <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-20 ${bgColor}`} />
+    <div className={`absolute -top-5 -right-6 w-28 h-28 rounded-full blur-3xl opacity-25 ${bgColor}`} />
+    <div className="absolute inset-x-5 top-5 h-px bg-white/10" />
 
-    <div className="flex items-start justify-between mb-4">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>
+    <div className="flex items-center justify-between mb-5 relative">
+      <div className={`w-12 h-12 rounded-3xl flex items-center justify-center ${color} ring-1 ring-white/10`}>
         <Icon size={20} />
       </div>
       {change !== undefined && (
         <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-          changeType === 'up' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'
+          changeType === 'up' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
         }`}>
           {changeType === 'up' ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
           {change}
@@ -39,10 +39,69 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor
       )}
     </div>
 
-    <p className="text-3xl font-bold text-white mb-1">{value}</p>
-    <p className="text-white/50 text-xs font-medium">{label}</p>
+    <p className="text-3xl font-semibold text-white mb-1 leading-none">{value}</p>
+    <p className="text-white/50 text-xs uppercase tracking-[0.18em] font-semibold">{label}</p>
   </div>
 );
+
+const MiniMetric = ({ icon: Icon, label, value, accent }) => (
+  <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-4 shadow-lg shadow-black/20 transition hover:bg-white/10">
+    <div className={`w-11 h-11 rounded-3xl flex items-center justify-center ${accent}`}>
+      <Icon size={18} />
+    </div>
+    <p className="text-white font-semibold text-lg mt-3">{value}</p>
+    <p className="text-white/40 text-[11px] uppercase tracking-[0.24em] mt-1">{label}</p>
+  </div>
+);
+
+const TrendGraph = ({ data }) => {
+  const max = Math.max(...data, 1);
+  const points = data.map((value, index) => {
+    const x = data.length === 1 ? 0 : (index / (data.length - 1)) * 100;
+    const y = 100 - (value / max) * 100;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="rounded-3xl bg-[#0d1018]/90 border border-white/10 p-4 shadow-xl shadow-black/20">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-white/40">Task Trend</p>
+          <p className="text-white font-semibold">Weekly completion</p>
+        </div>
+        <span className="text-[11px] text-white/40 uppercase tracking-[0.2em]">7 days</span>
+      </div>
+      <div className="relative h-32 w-full">
+        <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+          <defs>
+            <linearGradient id="trendLine" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#fb923c" stopOpacity="1" />
+              <stop offset="100%" stopColor="#fb923c" stopOpacity="0.15" />
+            </linearGradient>
+          </defs>
+          <polyline
+            fill="none"
+            stroke="#fb923c"
+            strokeWidth="2.5"
+            points={points}
+          />
+          <path d={`M0,100 L${points} L100,100`} fill="url(#trendLine)" opacity="0.45" />
+          {data.map((value, index) => {
+            const x = data.length === 1 ? 0 : (index / (data.length - 1)) * 100;
+            const y = 100 - (value / max) * 100;
+            return <circle key={index} cx={`${x}`} cy={`${y}`} r="2.2" fill="#fb923c" />;
+          })}
+        </svg>
+        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#0d1018] to-transparent" />
+      </div>
+      <div className="mt-4 grid grid-cols-7 gap-2 text-[10px] text-white/40">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+          <div key={day} className="text-center font-semibold text-white/60">{day}</div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 /* ─── Activity Row ─── */
 const ActivityRow = ({ icon: Icon, iconColor, iconBg, title, sub, time, badge, badgeColor }) => (
@@ -97,6 +156,20 @@ const AdminDashboard = () => {
     { icon: ClipboardCheck,label: 'Attendance Today',      value: '118/124', change: '6 absent',  changeType: 'down', color: 'bg-sky-500/20 text-sky-400',      bgColor: 'bg-sky-500' },
   ];
 
+  const heroMetrics = [
+    { icon: Users, label: 'Employees', value: '124', accent: 'bg-blue-500/10 text-blue-300' },
+    { icon: FolderKanban, label: 'Live Projects', value: '18', accent: 'bg-primary/10 text-primary' },
+    { icon: ClipboardCheck, label: 'Present Today', value: '118', accent: 'bg-emerald-500/10 text-emerald-300' },
+    { icon: Clock, label: 'Payroll Due', value: 'Jul 31', accent: 'bg-yellow-500/10 text-yellow-300' },
+  ];
+
+  const quickActions = [
+    { label: 'Add Employee',      icon: UserPlus },
+    { label: 'New Project',       icon: FolderKanban },
+    { label: 'Run Payroll',       icon: DollarSign },
+    { label: 'Open Calendar',     icon: Calendar },
+  ];
+
   const recentActivity = [
     { icon: UserPlus,      iconColor: 'text-blue-400',    iconBg: 'bg-blue-500/15',    title: 'New employee onboarded',          sub: 'Priya Sharma — UI Designer',              time: '5m ago',  badge: 'New',       badgeColor: 'bg-blue-500/20 text-blue-400' },
     { icon: CheckCircle2,  iconColor: 'text-green-400',   iconBg: 'bg-green-500/15',   title: 'Project milestone achieved',      sub: 'CMS Web App — Phase 1 complete',          time: '22m ago', badge: 'Done',      badgeColor: 'bg-green-500/20 text-green-400' },
@@ -127,37 +200,84 @@ const AdminDashboard = () => {
     { label: 'Pending',     value: 34,  color: 'text-yellow-400', bg: 'bg-yellow-500' },
     { label: 'Overdue',     value: 12,  color: 'text-red-400',    bg: 'bg-red-500' },
   ];
+  const taskTrend = [58, 72, 81, 76, 90, 84, 96];
   const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
 
   return (
     <div className="space-y-6 pb-6">
 
       {/* ── GREETING BANNER ── */}
-      <div className="relative rounded-2xl overflow-hidden p-6 md:p-8 border border-primary/20"
-        style={{ background: 'linear-gradient(135deg, rgba(248,116,14,0.1) 0%, rgba(248,116,14,0.03) 100%)' }}>
-        <div className="absolute right-4 top-4 opacity-5 pointer-events-none">
-          <BarChart3 size={140} />
-        </div>
-        <div className="relative">
-          <p className="text-primary text-sm font-semibold mb-1">{today}</p>
-          <h1 className="text-white text-2xl md:text-3xl font-bold">{greeting()}, {name}! 👋</h1>
-          <p className="text-white/50 text-sm mt-1">Here's your company overview for today.</p>
+      <div className="relative rounded-[2rem] overflow-hidden p-6 md:p-8 border border-white/10 bg-[#12131a]/70 shadow-2xl shadow-black/40">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-48 bg-[radial-gradient(circle_at_top_right,_rgba(248,116,14,0.22),transparent_40%)]" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-44 w-44 rounded-full bg-[radial-gradient(circle,_rgba(58,186,255,0.16),transparent_45%)] blur-3xl" />
+        <div className="relative grid gap-6 lg:grid-cols-[1.7fr_1.1fr] items-start">
+          <div className="relative z-10">
+            <p className="text-primary text-sm font-semibold mb-2 uppercase tracking-[0.24em]">{today}</p>
+            <h1 className="text-white text-3xl md:text-4xl font-bold tracking-tight">{greeting()}, {name}! 👋</h1>
+            <p className="text-white/60 text-sm max-w-xl mt-3">Welcome back to the command center. Review your top metrics, pending actions, and team health in one place.</p>
 
-          <div className="flex flex-wrap gap-3 mt-5">
-            {[
-              { icon: Users,         label: '124 Employees',  color: 'text-blue-400',    bg: 'bg-blue-500/15' },
-              { icon: Activity,      label: '18 Live Projects',color: 'text-primary',     bg: 'bg-primary/15'  },
-              { icon: ClipboardCheck,label: '118 Present Today',color: 'text-green-400', bg: 'bg-green-500/15' },
-              { icon: Clock,         label: 'Payroll Due Jul 31',color: 'text-yellow-400',bg: 'bg-yellow-500/15' },
-            ].map((b, i) => {
-              const BIcon = b.icon;
-              return (
-                <div key={i} className={`flex items-center gap-2 ${b.bg} rounded-xl px-3.5 py-2 border border-white/8`}>
-                  <BIcon size={14} className={b.color} />
-                  <span className="text-white text-xs font-medium">{b.label}</span>
+            <div className="flex flex-wrap gap-3 mt-6">
+              {quickActions.map((action, index) => {
+                const ActionIcon = action.icon;
+                return (
+                  <button key={index} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
+                    <ActionIcon size={14} />
+                    {action.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+              {heroMetrics.map((item, index) => (
+                <MiniMetric key={index} {...item} />
+              ))}
+            </div>
+          </div>
+
+          <div className="relative rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/40">Today’s highlights</p>
+                <h2 className="text-white font-bold text-lg mt-2">Key metrics</h2>
+              </div>
+              <span className="text-[11px] text-white/40 uppercase tracking-[0.2em]">Live</span>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
+                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
+                <div className="flex items-end gap-2">
+                  <p className="text-3xl font-semibold text-white">₹8.4L</p>
+                  <span className="text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded-full">+12%</span>
                 </div>
-              );
-            })}
+              </div>
+              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
+                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Team availability</p>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-white font-semibold text-sm">118 present, 6 absent</p>
+                  <span className="text-[11px] text-white/40 uppercase tracking-[0.2em]">95% up</span>
+                </div>
+                <div className="mt-4 h-2.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-emerald-400" style={{ width: '95%' }} />
+                </div>
+              </div>
+              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
+                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Next milestone</p>
+                <p className="text-white font-semibold text-sm">Q3 Project Review — Jul 26</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { label: 'Design', value: '72%' },
+                    { label: 'Dev', value: '54%' },
+                    { label: 'QA', value: '86%' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="rounded-3xl bg-white/5 p-2">
+                      <p className="text-[10px] text-white/40 uppercase tracking-[0.18em]">{item.label}</p>
+                      <p className="text-sm font-semibold text-white mt-1">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -197,53 +317,82 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Task Overview */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <CheckSquare size={17} className="text-primary" /> Task Overview
-            </h2>
-            <span className="text-xs text-white/30">Total: {totalTasks}</span>
+        <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
+                <CheckSquare size={20} />
+              </div>
+              <div>
+                <h2 className="text-white font-bold text-base">Task Overview</h2>
+                <p className="text-xs text-white/40">Current workload and progress</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center text-white/50 text-[11px]">
+              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Today</p>
+                <p className="text-white font-semibold mt-2">34 Tasks</p>
+              </div>
+              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Completion</p>
+                <p className="text-white font-semibold mt-2">78%</p>
+              </div>
+              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Total</p>
+                <p className="text-white font-semibold mt-2">{totalTasks} Tasks</p>
+              </div>
+            </div>
           </div>
 
-          {/* Stacked bar */}
-          <div className="flex w-full rounded-full overflow-hidden h-3 mb-5 gap-0.5">
-            {taskOverview.map((t, i) => (
-              <div key={i} className={`${t.bg} transition-all duration-700`} style={{ width: `${(t.value / totalTasks) * 100}%` }} />
-            ))}
+          <TrendGraph data={taskTrend} />
+
+          <div className="mt-6 overflow-hidden rounded-full bg-white/10 h-3 mb-6">
+            <div className="flex h-full">
+              {taskOverview.map((t, i) => (
+                <div key={i} className={`${t.bg} transition-all duration-700`} style={{ width: `${(t.value / totalTasks) * 100}%` }} />
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {taskOverview.map((t, i) => (
-              <div key={i} className="flex items-center justify-between bg-white/4 rounded-xl px-4 py-3 border border-white/6">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${t.bg}`} />
-                  <span className="text-white/60 text-xs">{t.label}</span>
+              <div key={i} className="rounded-3xl bg-[#0d1018]/80 border border-white/10 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${t.bg}`} />
+                    <span className="text-white/60 text-xs">{t.label}</span>
+                  </div>
+                  <span className={`text-sm font-semibold ${t.color}`}>{t.value}</span>
                 </div>
-                <span className={`text-base font-bold ${t.color}`}>{t.value}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Upcoming Events */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Calendar size={17} className="text-primary" /> Upcoming Events
-            </h2>
+        <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
+                <Calendar size={20} />
+              </div>
+              <div>
+                <h2 className="text-white font-bold text-base">Upcoming Events</h2>
+                <p className="text-xs text-white/40">Stay ahead of the calendar</p>
+              </div>
+            </div>
             <button className="text-xs text-primary hover:underline">View Calendar</button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {upcomingEvents.map((e, i) => (
-              <div key={i} className={`flex items-center gap-4 p-3.5 rounded-xl border ${e.color}`}>
-                <div className="text-center shrink-0 w-10">
-                  <p className="text-[10px] font-bold uppercase opacity-70">{e.date.split(' ')[0]}</p>
-                  <p className="text-xl font-black leading-tight">{e.date.split(' ')[1]}</p>
+              <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4` }>
+                <div className="flex flex-col items-center justify-center shrink-0 rounded-3xl bg-white/5 w-14 h-14 text-white/90">
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-white/50">{e.date.split(' ')[0]}</span>
+                  <span className="text-xl font-semibold leading-tight">{e.date.split(' ')[1]}</span>
                 </div>
-                <div className="w-px h-10 bg-current opacity-20 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-semibold truncate">{e.title}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{e.time}</p>
+                  <p className="text-white/40 text-xs mt-1">{e.time}</p>
                 </div>
                 <ArrowUpRight size={16} className="opacity-40 shrink-0" />
               </div>
