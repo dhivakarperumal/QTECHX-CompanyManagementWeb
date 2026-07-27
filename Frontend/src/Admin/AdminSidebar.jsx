@@ -44,6 +44,8 @@ const navItems = [
     children: [
       { path: "/admin/employees", label: "All Employees", icon: Users },
       { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
+      { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
+      { path: "/admin/attendance/summary", label: "Attendance Summary", icon: BarChart3 },
       { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
     ],
   },
@@ -112,15 +114,6 @@ const navItems = [
     children: [
       { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
       { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
-    ],
-  },
-
-  {
-    label: "Attendance",
-    icon: ClipboardCheck,
-    children: [
-      { path: "/admin/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/admin/attendance/summary", label: "Summary", icon: BarChart3 },
     ],
   },
 
