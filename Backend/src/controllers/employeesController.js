@@ -1,4 +1,6 @@
 const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
+const { createUser, updateUser } = require("../models/userModel");
 const {
   createEmployee,
   findByEmployeeId,
@@ -33,7 +35,33 @@ async function create(req, res) {
     employeeData.created_by = actor;
     employeeData.updated_by = actor;
 
+    // Extract password for user creation and remove from employee table insert
+    const userPassword = employeeData.password;
+    delete employeeData.password;
+    delete employeeData.confirm_password;
+
     const employee = await createEmployee(employeeData);
+
+    // Create User record
+    if (employeeData.username && userPassword) {
+      try {
+        const hashedPassword = await bcrypt.hash(userPassword, 12);
+        await createUser({
+          user_id: employeeData.employee_id,
+          username: employeeData.username,
+          email: employeeData.official_email || employeeData.personal_email,
+          mobile: employeeData.mobile_number,
+          password: hashedPassword,
+          role: employeeData.role,
+          status: employeeData.employment_status || "Active",
+          created_by: actor,
+          updated_by: actor,
+        });
+      } catch (err) {
+        console.error("Failed to create associated user account:", err);
+      }
+    }
+
     return res.status(201).json({ message: "Employee created successfully", employee });
   } catch (error) {
     console.error("Create Employee Error:", error);
@@ -89,12 +117,35 @@ async function update(req, res) {
       });
     }
 
-    // Prevent updating employee_id
+    // Prevent updating protected fields and passwords in employee table
     delete updates.employee_id;
     delete updates.created_by;
     delete updates.created_at;
+    
+    const userPassword = updates.password;
+    delete updates.password;
+    delete updates.confirm_password;
 
     const employee = await updateEmployee(req.params.employeeId, updates);
+
+    // Update User record
+    if (updates.username || updates.official_email || userPassword || updates.role || updates.employment_status || updates.mobile_number) {
+      try {
+        const userUpdates = {};
+        if (updates.username) userUpdates.username = updates.username;
+        if (updates.official_email) userUpdates.email = updates.official_email;
+        if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
+        if (updates.role) userUpdates.role = updates.role;
+        if (updates.employment_status) userUpdates.status = updates.employment_status;
+        if (userPassword) {
+          userUpdates.password = await bcrypt.hash(userPassword, 12);
+        }
+        await updateUser(req.params.employeeId, userUpdates);
+      } catch (err) {
+        console.error("Failed to update associated user account:", err);
+      }
+    }
+
     return res.json({ message: "Employee updated successfully", employee });
   } catch (error) {
     console.error("Update Employee Error:", error);

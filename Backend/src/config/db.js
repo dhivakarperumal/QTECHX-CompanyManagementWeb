@@ -283,6 +283,8 @@ async function ensureEmployeesSchema(pool) {
       offer_letter_url VARCHAR(255) NULL,
       appointment_letter_url VARCHAR(255) NULL,
       nda_url VARCHAR(255) NULL,
+      username VARCHAR(100) NULL,
+      official_email VARCHAR(255) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       created_by VARCHAR(36) NULL,
