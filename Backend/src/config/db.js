@@ -120,6 +120,88 @@ async function ensureSchema(pool) {
         ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  // ── Projects ──────────────────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS projects (
+      id                        INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid                      VARCHAR(36) NOT NULL,
+      project_code              VARCHAR(50) NULL,
+      project_name              VARCHAR(255) NOT NULL,
+      short_name                VARCHAR(100) NULL,
+      project_category          VARCHAR(100) NULL,
+      industry                  VARCHAR(100) NULL,
+      description               TEXT NULL,
+      objective                 TEXT NULL,
+      business_requirements     TEXT NULL,
+      client_name               VARCHAR(255) NULL,
+      company_name              VARCHAR(255) NULL,
+      contact_person            VARCHAR(255) NULL,
+      email                     VARCHAR(255) NULL,
+      phone_number              VARCHAR(20) NULL,
+      nda_signed                ENUM('Yes','No') NOT NULL DEFAULT 'No',
+      agreement_uploaded        ENUM('Yes','No') NOT NULL DEFAULT 'No',
+      total_project_cost        DECIMAL(15,2) NULL,
+      current_status            ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') NOT NULL DEFAULT 'Planning',
+      overall_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      proposal_date             DATE NULL,
+      approval_date             DATE NULL,
+      project_start_date        DATE NULL,
+      estimated_completion_date DATE NULL,
+      project_end_date          DATE NULL,
+      go_live_date              DATE NULL,
+      support_period            VARCHAR(100) NULL,
+      frontend_tech             VARCHAR(255) NULL,
+      mobile_tech               VARCHAR(255) NULL,
+      backend_tech              VARCHAR(255) NULL,
+      database_tech             VARCHAR(255) NULL,
+      github_link               VARCHAR(500) NULL,
+      domain_name               VARCHAR(255) NULL,
+      sub_domain_name           VARCHAR(255) NULL,
+      project_manager           VARCHAR(255) NULL,
+      ui_ux_designer            VARCHAR(255) NULL,
+      frontend_developers       TEXT NULL,
+      backend_developers        TEXT NULL,
+      ui_progress               TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      frontend_progress         TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      backend_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      testing_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      deployment_progress       TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      proposal_doc              VARCHAR(500) NULL,
+      quotation_doc             VARCHAR(500) NULL,
+      agreement_doc             VARCHAR(500) NULL,
+      nda_doc                   VARCHAR(500) NULL,
+      api_documentation         VARCHAR(500) NULL,
+      database_schema           VARCHAR(500) NULL,
+      source_code_backup        VARCHAR(500) NULL,
+      created_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by                VARCHAR(36) NULL,
+      updated_by                VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_projects_uuid (uuid),
+      INDEX idx_projects_status (current_status),
+      INDEX idx_projects_manager (project_manager(100))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  // ── Project Assignments ────────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS project_assignments (
+      id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      project_id  INT UNSIGNED NOT NULL,
+      employee_id VARCHAR(36)  NOT NULL,
+      role        ENUM('Project Manager','UI/UX Designer','Frontend Developer','Backend Developer','Tester','DevOps','QA') NOT NULL,
+      assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      assigned_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_proj_emp_role (project_id, employee_id, role),
+      INDEX idx_pa_project  (project_id),
+      INDEX idx_pa_employee (employee_id),
+      CONSTRAINT fk_pa_project  FOREIGN KEY (project_id)  REFERENCES projects  (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_pa_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {

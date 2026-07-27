@@ -9,6 +9,7 @@ const { initDB } = require("./src/config/db");
 const usersRouter  = require("./src/routers/usersRouter");
 const employeesRouter = require("./src/routers/employeesRouter");
 const clientRouter = require("./src/routers/clientRouter");
+const projectRouter = require("./src/routers/projectRouter");
 
 
 const app = express();
@@ -47,6 +48,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/users",   usersRouter);
 app.use("/api/employees", employeesRouter);
 app.use("/api/clients", clientRouter);
+app.use("/api/projects", projectRouter);
 
 // Serve static uploads
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

@@ -67,7 +67,7 @@ const navItems = [
     icon: FolderKanban,
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
-      { path: "/admin/projects/add", label: "New Project", icon: FileText },
+       { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
     ],
   },
 
@@ -102,19 +102,19 @@ const navItems = [
   label: "My Projects",
   icon: FolderKanban,
   children: [
-    { path: "/admin/projects", label: "Project List", icon: List },
-    { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
+    { path: "/admin/myprojects", label: "Project List", icon: List },
+    { path: "/admin/myprojects/add", label: "Add Project", icon: FolderPlus },
 
-    { path: "/admin/projects/plans", label: "Project Plans", icon: ClipboardList },
-    { path: "/admin/projects/quotations", label: "Project Quotations", icon: FileText },
+    { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
+    { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
 
-    { path: "/admin/projects/documents", label: "Project Documents", icon: FileText },
-    { path: "/admin/projects/images", label: "Project Images", icon: Image },
+    { path: "/admin/myprojects/documents", label: "Project Documents", icon: FileText },
+    { path: "/admin/myprojects/images", label: "Project Images", icon: Image },
 
-    { path: "/admin/projects/hosting", label: "Hosting Management", icon: Server },
-    { path: "/admin/projects/domains", label: "Domain Management", icon: Globe },
+    { path: "/admin/myprojects/hosting", label: "Hosting Management", icon: Server },
+    { path: "/admin/myprojects/domains", label: "Domain Management", icon: Globe },
 
-    { path: "/admin/projects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
+    { path: "/admin/myprojects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
   ],
 },
 

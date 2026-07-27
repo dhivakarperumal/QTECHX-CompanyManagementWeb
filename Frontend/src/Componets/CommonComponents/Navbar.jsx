@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import Button from "../Components/Button";
-import { useAuth } from "../../PrivateRouter/AuthContext";
 import {
   FaCode,
   FaLaptopCode,

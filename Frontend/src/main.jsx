@@ -30,7 +30,9 @@ import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
-import ProjectManagement from './Admin/Projects/ProjectManagement.jsx'
+import AllProjects from './Admin/Projects/AllProjects.jsx'
+import AddProject from './Admin/Projects/AddProject.jsx'
+import EditProject from './Admin/Projects/EditProject.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 
@@ -87,11 +89,15 @@ const router = createHashRouter([
           },
           {
             path: 'projects',
-            element: <ProjectManagement />,
+            element: <AllProjects />,
           },
           {
             path: 'projects/add',
-            element: <ProjectManagement />,
+            element: <AddProject />,
+          },
+          {
+            path: 'projects/edit/:id',
+            element: <EditProject />,
           },
           {
             path: 'employees',
