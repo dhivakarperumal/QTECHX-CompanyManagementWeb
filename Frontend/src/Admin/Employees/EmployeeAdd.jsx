@@ -11,6 +11,7 @@ const EmployeeAdd = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState(null);
+  const [existingFiles, setExistingFiles] = useState({});
 
   const [formData, setFormData] = useState({
     employee_code: "",
@@ -56,6 +57,15 @@ const EmployeeAdd = () => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
+  };
+
+  const getFileUrl = (path) => {
+    if (!path) return "";
+    let cleanPath = path.replace(/\\/g, '/');
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    return `http://localhost:5000/${cleanPath}`;
   };
 
   useEffect(() => {
@@ -108,6 +118,24 @@ const EmployeeAdd = () => {
             account_number: emp.account_number || "",
             ifsc_code: emp.ifsc_code || "",
             upi_id: emp.upi_id || "",
+            profile_photo: "",
+            resume_url: "",
+            aadhaar_url: "",
+            pan_url: "",
+            passport_url: "",
+            offer_letter_url: "",
+            appointment_letter_url: "",
+            nda_url: "",
+          });
+          setExistingFiles({
+            profile_photo: emp.profile_photo || null,
+            resume_url: emp.resume_url || null,
+            aadhaar_url: emp.aadhaar_url || null,
+            pan_url: emp.pan_url || null,
+            passport_url: emp.passport_url || null,
+            offer_letter_url: emp.offer_letter_url || null,
+            appointment_letter_url: emp.appointment_letter_url || null,
+            nda_url: emp.nda_url || null,
           });
         }
       } catch (err) {
@@ -201,6 +229,11 @@ const EmployeeAdd = () => {
             <div>
               <label className={labelClass}>Profile Photo</label>
               <input type="file" name="profile_photo" onChange={handleChange} className={inputClass} accept="image/*" />
+              {existingFiles.profile_photo && (
+                <a href={getFileUrl(existingFiles.profile_photo)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Photo
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>Employee Code</label>
@@ -370,30 +403,65 @@ const EmployeeAdd = () => {
             <div>
               <label className={labelClass}>Resume</label>
               <input type="file" name="resume_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.resume_url && (
+                <a href={getFileUrl(existingFiles.resume_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Resume
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>Aadhaar</label>
               <input type="file" name="aadhaar_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.aadhaar_url && (
+                <a href={getFileUrl(existingFiles.aadhaar_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Aadhaar
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>PAN</label>
               <input type="file" name="pan_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.pan_url && (
+                <a href={getFileUrl(existingFiles.pan_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current PAN
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>Passport</label>
               <input type="file" name="passport_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.passport_url && (
+                <a href={getFileUrl(existingFiles.passport_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Passport
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>Offer Letter</label>
               <input type="file" name="offer_letter_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.offer_letter_url && (
+                <a href={getFileUrl(existingFiles.offer_letter_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Offer Letter
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>Appointment Letter</label>
               <input type="file" name="appointment_letter_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.appointment_letter_url && (
+                <a href={getFileUrl(existingFiles.appointment_letter_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Appointment Letter
+                </a>
+              )}
             </div>
             <div>
               <label className={labelClass}>NDA</label>
               <input type="file" name="nda_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.nda_url && (
+                <a href={getFileUrl(existingFiles.nda_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current NDA
+                </a>
+              )}
             </div>
           </div>
         </div>
