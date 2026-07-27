@@ -50,8 +50,12 @@ const EmployeeAdd = () => {
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target;
+    if (type === "file") {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -61,13 +65,20 @@ const EmployeeAdd = () => {
 
     try {
       const token = localStorage.getItem("token");
+      
+      const submitData = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== "" && formData[key] !== null) {
+          submitData.append(key, formData[key]);
+        }
+      });
+
       const response = await fetch("http://localhost:5000/api/employees", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: submitData,
       });
 
       if (!response.ok) {
@@ -106,6 +117,10 @@ const EmployeeAdd = () => {
         <div>
           <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Personal Details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>Profile Photo</label>
+              <input type="file" name="profile_photo" onChange={handleChange} className={inputClass} accept="image/*" />
+            </div>
             <div>
               <label className={labelClass}>Employee Code</label>
               <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
@@ -269,35 +284,35 @@ const EmployeeAdd = () => {
 
         {/* Documents */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Documents (URL)</h2>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Documents</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className={labelClass}>Resume URL</label>
-              <input type="url" name="resume_url" value={formData.resume_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Resume</label>
+              <input type="file" name="resume_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Aadhaar URL</label>
-              <input type="url" name="aadhaar_url" value={formData.aadhaar_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Aadhaar</label>
+              <input type="file" name="aadhaar_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>PAN URL</label>
-              <input type="url" name="pan_url" value={formData.pan_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>PAN</label>
+              <input type="file" name="pan_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Passport URL</label>
-              <input type="url" name="passport_url" value={formData.passport_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Passport</label>
+              <input type="file" name="passport_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Offer Letter URL</label>
-              <input type="url" name="offer_letter_url" value={formData.offer_letter_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Offer Letter</label>
+              <input type="file" name="offer_letter_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Appointment Letter URL</label>
-              <input type="url" name="appointment_letter_url" value={formData.appointment_letter_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Appointment Letter</label>
+              <input type="file" name="appointment_letter_url" onChange={handleChange} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>NDA URL</label>
-              <input type="url" name="nda_url" value={formData.nda_url} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>NDA</label>
+              <input type="file" name="nda_url" onChange={handleChange} className={inputClass} />
             </div>
           </div>
         </div>

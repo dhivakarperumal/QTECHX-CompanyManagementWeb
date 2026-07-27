@@ -20,6 +20,13 @@ async function create(req, res) {
   try {
     const actor = req.user?.user_id || "SYSTEM";
     const employeeData = { ...req.body };
+
+    // Process uploaded files
+    if (req.files) {
+      Object.keys(req.files).forEach(key => {
+        employeeData[key] = `/uploads/${req.files[key][0].filename}`;
+      });
+    }
     
     // Set auto-generated fields
     employeeData.employee_id = uuidv4();
@@ -75,6 +82,13 @@ async function update(req, res) {
     const updates = { ...req.body };
     updates.updated_by = req.user?.user_id || "SYSTEM";
     
+    // Process uploaded files
+    if (req.files) {
+      Object.keys(req.files).forEach(key => {
+        updates[key] = `/uploads/${req.files[key][0].filename}`;
+      });
+    }
+
     // Prevent updating employee_id
     delete updates.employee_id;
     delete updates.created_by;
