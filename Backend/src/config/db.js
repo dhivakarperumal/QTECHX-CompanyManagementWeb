@@ -159,6 +159,58 @@ async function seedDefaultUser(pool) {
   console.log("Seeded default trainee login: trainee@gmail.com / Trai@123");
 }
 
+async function ensureEmployeesSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS employees (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      employee_id VARCHAR(36) NOT NULL,
+      employee_code VARCHAR(50) NULL,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NULL,
+      profile_photo VARCHAR(255) NULL,
+      gender ENUM('Male', 'Female', 'Other') NULL,
+      dob DATE NULL,
+      blood_group VARCHAR(10) NULL,
+      marital_status ENUM('Single', 'Married', 'Divorced', 'Widowed') NULL,
+      nationality VARCHAR(100) NULL,
+      aadhaar_number VARCHAR(20) NULL,
+      pan_number VARCHAR(20) NULL,
+      mobile_number VARCHAR(20) NOT NULL,
+      alternate_mobile VARCHAR(20) NULL,
+      personal_email VARCHAR(255) NULL,
+      permanent_address TEXT NULL,
+      emergency_contact_person VARCHAR(100) NULL,
+      emergency_contact_number VARCHAR(20) NULL,
+      emergency_relationship VARCHAR(50) NULL,
+      designation VARCHAR(100) NULL,
+      team_lead VARCHAR(100) NULL,
+      joining_date DATE NULL,
+      confirmation_date DATE NULL,
+      employment_status ENUM('Active', 'Inactive', 'Terminated', 'Resigned') NOT NULL DEFAULT 'Active',
+      role ENUM('Employee', 'Manager', 'Admin', 'HR') NOT NULL DEFAULT 'Employee',
+      salary_type VARCHAR(50) NULL,
+      basic_salary DECIMAL(10,2) NULL,
+      bank_name VARCHAR(100) NULL,
+      account_number VARCHAR(50) NULL,
+      ifsc_code VARCHAR(20) NULL,
+      upi_id VARCHAR(100) NULL,
+      resume_url VARCHAR(255) NULL,
+      aadhaar_url VARCHAR(255) NULL,
+      pan_url VARCHAR(255) NULL,
+      passport_url VARCHAR(255) NULL,
+      offer_letter_url VARCHAR(255) NULL,
+      appointment_letter_url VARCHAR(255) NULL,
+      nda_url VARCHAR(255) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_employees_employee_id (employee_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -169,6 +221,7 @@ async function initDB() {
     await connection.ping();
     connection.release();
     await ensureSchema(pool);
+    await ensureEmployeesSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;

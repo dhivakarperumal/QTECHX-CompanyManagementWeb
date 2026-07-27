@@ -7,6 +7,7 @@ require("dotenv").config();
 
 const { initDB } = require("./src/config/db");
 const usersRouter  = require("./src/routers/usersRouter");
+const employeesRouter = require("./src/routers/employeesRouter");
 const clientRouter = require("./src/routers/clientRouter");
 
 
@@ -44,6 +45,7 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/users",   usersRouter);
+app.use("/api/employees", employeesRouter);
 app.use("/api/clients", clientRouter);
 
 // Serve static uploads

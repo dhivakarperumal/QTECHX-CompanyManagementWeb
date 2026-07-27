@@ -10,6 +10,10 @@ import PrivateRoute from './PrivateRouter/PrivateRouter.jsx'
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import AdminDashboard from './Admin/AdminDashboard.jsx'
 import AdminLayout from './Admin/Adminpanel.jsx'
+import EmployeeList from './Admin/Employees/EmployeeList.jsx'
+import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
+// import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
+import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
@@ -26,6 +30,7 @@ import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
+import ProjectManagement from './Admin/Projects/ProjectManagement.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 
@@ -68,9 +73,42 @@ const router = createHashRouter([
           </PrivateRoute>
         ),
         children: [
-          { index: true, element: <AdminDashboard /> },
-          { path: 'clients',     element: <AllClients key="all" /> },
-          { path: 'clients/followups', element: <AllClients key="followups" defaultFuFilter="Pending" /> },
+          {
+            index: true,
+            element: <AdminDashboard />,
+          },
+          {
+            path: 'clients',
+            element: <AllClients key="all" />,
+          },
+          {
+            path: 'clients/followups',
+            element: <AllClients key="followups" defaultFuFilter="Pending" />,
+          },
+          {
+            path: 'projects',
+            element: <ProjectManagement />,
+          },
+          {
+            path: 'projects/add',
+            element: <ProjectManagement />,
+          },
+          {
+            path: 'employees',
+            element: <EmployeeList />,
+          },
+          {
+            path: 'employees/add',
+            element: <EmployeeAdd />,
+          },
+          {
+            path: 'employees/edit/:id',
+            element: <EmployeeAdd />,
+          },
+          {
+            path: 'employees/view/:id',
+            element: <EmployeeView />,
+          },
         ],
       },
       {
