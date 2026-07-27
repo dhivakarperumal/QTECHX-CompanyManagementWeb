@@ -2,7 +2,7 @@ import { useAuth } from '../PrivateRouter/AuthContext';
 import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
-  TrendingDown, ArrowUpRight, Clock, AlertCircle, CheckCircle2,
+  TrendingDown, ArrowUpRight, Clock, CheckCircle2,
   UserPlus, Briefcase, Activity, Calendar, ChevronDown, Settings
 } from 'lucide-react';
 import { 
@@ -104,25 +104,6 @@ const TrendGraph = ({ data }) => {
   );
 };
 
-/* ─── Activity Row ─── */
-const ActivityRow = ({ icon: Icon, iconColor, iconBg, title, sub, time, badge, badgeColor }) => (
-  <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 group hover:bg-white/3 -mx-2 px-2 rounded-xl transition">
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-      <Icon size={15} className={iconColor} />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-white text-sm font-medium truncate">{title}</p>
-      <p className="text-white/40 text-xs mt-0.5">{sub}</p>
-    </div>
-    <div className="text-right shrink-0">
-      {badge && (
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColor}`}>{badge}</span>
-      )}
-      <p className="text-white/25 text-[10px] mt-1">{time}</p>
-    </div>
-  </div>
-);
-
 /* ─── Mock Data for Charts ─── */
 const overviewData = [
   { name: 'May 1', employees: 10, projects: 50 },
@@ -204,23 +185,6 @@ const AdminDashboard = () => {
     { label: 'Open Calendar',     icon: Calendar },
   ];
 
-  const recentActivity = [
-    { icon: UserPlus,      iconColor: 'text-blue-400',    iconBg: 'bg-blue-500/15',    title: 'New employee onboarded',          sub: 'Priya Sharma — UI Designer',              time: '5m ago',  badge: 'New',       badgeColor: 'bg-blue-500/20 text-blue-400' },
-    { icon: CheckCircle2,  iconColor: 'text-green-400',   iconBg: 'bg-green-500/15',   title: 'Project milestone achieved',      sub: 'CMS Web App — Phase 1 complete',          time: '22m ago', badge: 'Done',      badgeColor: 'bg-green-500/20 text-green-400' },
-    { icon: CalendarOff,   iconColor: 'text-yellow-400',  iconBg: 'bg-yellow-500/15',  title: 'Leave request submitted',         sub: 'Rahul Kumar — Casual Leave Jul 28',       time: '1h ago',  badge: 'Pending',   badgeColor: 'bg-yellow-500/20 text-yellow-400' },
-    { icon: AlertCircle,   iconColor: 'text-red-400',     iconBg: 'bg-red-500/15',     title: 'Task overdue alert',              sub: 'API Integration — Backend Module',        time: '2h ago',  badge: 'Overdue',   badgeColor: 'bg-red-500/20 text-red-400' },
-    { icon: DollarSign,    iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/15', title: 'Expense claim approved',          sub: 'Arjun Mehta — ₹4,200 Travel',            time: '3h ago',  badge: 'Approved',  badgeColor: 'bg-emerald-500/20 text-emerald-400' },
-    { icon: GraduationCap, iconColor: 'text-teal-400',    iconBg: 'bg-teal-500/15',    title: 'New trainee batch started',       sub: 'Web Dev Batch — 8 students',              time: 'Yesterday',badge: 'Active',   badgeColor: 'bg-teal-500/20 text-teal-400' },
-  ];
-
-  const departments = [
-    { label: 'Engineering',  value: 42, max: 50, color: 'bg-blue-500' },
-    { label: 'Design',       value: 18, max: 25, color: 'bg-primary' },
-    { label: 'Marketing',    value: 15, max: 20, color: 'bg-purple-500' },
-    { label: 'HR & Admin',   value: 12, max: 15, color: 'bg-emerald-500' },
-    { label: 'Finance',      value: 10, max: 14, color: 'bg-yellow-500' },
-  ];
-
   const upcomingEvents = [
     { title: 'Monthly All-Hands Meeting',  date: 'Jul 25',  time: '10:00 AM', type: 'meeting',  color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
     { title: 'Q3 Project Review',          date: 'Jul 26',  time: '2:00 PM',  type: 'review',   color: 'bg-primary/15 border-primary/30 text-primary' },
@@ -236,7 +200,6 @@ const AdminDashboard = () => {
   ];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
   const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
-  ];
 
   return (
     <div className="space-y-6 pb-6 text-white min-h-screen">
@@ -270,46 +233,79 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="relative rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-5">
+          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,_rgba(248,116,20,0.18),transparent_35%)]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),transparent_40%)]" />
+            <div className="relative z-10 flex items-start justify-between gap-3 mb-6">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-white/40">Today’s highlights</p>
                 <h2 className="text-white font-bold text-lg mt-2">Key metrics</h2>
               </div>
-              <span className="text-[11px] text-white/40 uppercase tracking-[0.2em]">Live</span>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-white/70">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live
+              </div>
             </div>
-            <div className="space-y-4">
-              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
-                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
-                <div className="flex items-end gap-2">
-                  <p className="text-3xl font-semibold text-white">₹8.4L</p>
-                  <span className="text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded-full">+12%</span>
-                </div>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
-                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Team availability</p>
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-white font-semibold text-sm">118 present, 6 absent</p>
-                  <span className="text-[11px] text-white/40 uppercase tracking-[0.2em]">95% up</span>
-                </div>
-                <div className="mt-4 h-2.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full bg-emerald-400" style={{ width: '95%' }} />
-                </div>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-4 border border-white/8">
-                <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Next milestone</p>
-                <p className="text-white font-semibold text-sm">Q3 Project Review — Jul 26</p>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  {[
-                    { label: 'Design', value: '72%' },
-                    { label: 'Dev', value: '54%' },
-                    { label: 'QA', value: '86%' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="rounded-3xl bg-white/5 p-2">
-                      <p className="text-[10px] text-white/40 uppercase tracking-[0.18em]">{item.label}</p>
-                      <p className="text-sm font-semibold text-white mt-1">{item.value}</p>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-5 shadow-sm shadow-black/10">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-3xl font-semibold text-white">₹8.4L</p>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 rounded-full px-2 py-1">+12%</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-500/20 to-orange-400/10 text-orange-300">
+                    <DollarSign size={20} />
+                  </div>
+                </div>
+                <div className="mt-6 overflow-hidden rounded-full bg-white/10 h-2">
+                  <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '72%' }} />
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] text-white/50">
+                  <span>Monthly target</span>
+                  <span>72% achieved</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Team availability</p>
+                      <p className="text-white font-semibold text-lg mt-2">118/124</p>
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60 bg-white/5 rounded-full px-2 py-1">95% Up</span>
+                  </div>
+                  <div className="mt-4 rounded-full bg-white/10 h-2.5 overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-400" style={{ width: '95%' }} />
+                  </div>
+                  <p className="mt-3 text-[11px] text-white/50">Realtime presence and attendance stability</p>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Next milestone</p>
+                      <p className="text-white font-semibold text-sm mt-2">Q3 Project Review — Jul 26</p>
+                    </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-primary/10 text-primary">
+                      <Calendar size={18} />
+                    </div>
+                  </div>
+                  <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                    {[
+                      { label: 'Design', value: '72%' },
+                      { label: 'Dev', value: '54%' },
+                      { label: 'QA', value: '86%' },
+                    ].map((item, idx) => (
+                      <div key={idx} className="rounded-3xl bg-white/5 p-2">
+                        <p className="text-[10px] text-white/40 uppercase tracking-[0.18em]">{item.label}</p>
+                        <p className="text-sm font-semibold text-white mt-1">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -409,20 +405,8 @@ const AdminDashboard = () => {
 
       {/* ── BOTTOM ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
-        {/* Original Recent Activity */}
-        <div className="lg:col-span-5 rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Activity size={17} className="text-primary" /> Recent Activity
-            </h2>
-            <button className="text-xs text-primary hover:underline">View All</button>
-          </div>
-          {recentActivity.map((a, i) => <ActivityRow key={i} {...a} />)}
-        </div>
-
         {/* Employees by Department (Donut) */}
-        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+        <div className="lg:col-span-5 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
           </div>
@@ -480,40 +464,38 @@ const AdminDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+        <div className="lg:col-span-7 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
           <h2 className="text-sm font-bold text-white mb-6">Quick Actions</h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <UserPlus className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">Add Employee</span>
             </div>
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <Briefcase className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">Add Project</span>
             </div>
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <CheckSquare className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">Create Task</span>
             </div>
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <Calendar className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">Mark Attendance</span>
             </div>
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <Activity className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">Generate Report</span>
             </div>
-            
             <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
               <Settings className="text-primary" size={24} />
               <span className="text-[10px] font-medium text-white/80 text-center">System Settings</span>
             </div>
-            
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
         {/* Upcoming Events */}
         <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-6">
@@ -530,7 +512,7 @@ const AdminDashboard = () => {
           </div>
           <div className="space-y-4">
             {upcomingEvents.map((e, i) => (
-              <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4` }>
+              <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4`}>
                 <div className="flex flex-col items-center justify-center shrink-0 rounded-3xl bg-white/5 w-14 h-14 text-white/90">
                   <span className="text-[9px] uppercase tracking-[0.2em] text-white/50">{e.date.split(' ')[0]}</span>
                   <span className="text-xl font-semibold leading-tight">{e.date.split(' ')[1]}</span>
@@ -545,51 +527,50 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-      </div>
-
-      {/* ── REVENUE ROW ── */}
-      <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col mt-5">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <DollarSign size={16} className="text-primary" /> Company Revenue
-          </h2>
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
-            Last 6 Months <ChevronDown size={14} />
+        {/* Company Revenue */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <DollarSign size={16} className="text-primary" /> Company Revenue
+            </h2>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
+              Last 6 Months <ChevronDown size={14} />
+            </div>
           </div>
-        </div>
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-              />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="flex items-center justify-center gap-6 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded bg-primary" />
-            <span className="text-xs text-white/60">Revenue</span>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded bg-gray-500" />
-            <span className="text-xs text-white/60">Expenses</span>
+          <div className="flex items-center justify-center gap-6 mt-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded bg-primary" />
+              <span className="text-xs text-white/60">Revenue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded bg-gray-500" />
+              <span className="text-xs text-white/60">Expenses</span>
+            </div>
           </div>
         </div>
       </div>
