@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, MapPin, PlusCircle, X, Eye, Loader2, UserRoundCheck, UserRoundX } from "lucide-react";
 import api from "../api";
+import { Link } from "react-router-dom";
 
 const today = new Date();
 const defaultMonth = today.getMonth() + 1;
@@ -184,19 +185,6 @@ const AttendancePage = () => {
     }
   };
 
-  const handleViewAttendance = async (employee) => {
-    setSelectedEmployee(employee);
-    setIsViewModalOpen(true);
-    setViewLoading(true);
-    try {
-      const response = await api.get(`/attendance/${employee.employee_id}?month=${selectedMonth}&year=${selectedYear}`);
-      setEmployeeAttendance(response?.data?.data || []);
-    } catch (error) {
-      console.error("Failed to load employee attendance", error);
-    } finally {
-      setViewLoading(false);
-    }
-  };
 
   const employeeCards = useMemo(() => {
     return summary.length ? summary : employees.map((employee) => ({
@@ -279,9 +267,9 @@ const AttendancePage = () => {
                   </div>
                   <div className="mt-5 flex items-center justify-between text-sm text-white/60">
                     <span className="font-medium">Employee ID: {employee.employee_id}</span>
-                    <button onClick={() => handleViewAttendance(employee)} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
+                    <Link to={`/admin/attendance/view/${employee.employee_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
                       <Eye size={14} /> View Attendance
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))
@@ -378,62 +366,6 @@ const AttendancePage = () => {
         </div>
       )}
 
-      {isViewModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-[#0f172a] p-6 shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Monthly view</p>
-                <h3 className="text-xl font-semibold">{selectedEmployee?.employee_name || selectedEmployee?.employee_id} attendance</h3>
-              </div>
-              <button onClick={() => setIsViewModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="mt-6 max-h-[70vh] overflow-auto">
-              {viewLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="mr-3 animate-spin" /> Loading records...
-                </div>
-              ) : employeeAttendance.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-white/60">No attendance records found for this month.</div>
-              ) : (
-                <div className="space-y-3">
-                  {employeeAttendance.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold">{item.attendance_date}</p>
-                          <p className="text-sm text-white/60">Status: {item.attendance_status}</p>
-                        </div>
-                        <div className="grid gap-3 text-sm md:grid-cols-4">
-                          <div>
-                            <p className="text-white/40">Check In</p>
-                            <p>{item.check_in_time || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-white/40">Check Out</p>
-                            <p>{item.check_out_time || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-white/40">Working Hours</p>
-                            <p>{item.working_hours || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-white/40">Location</p>
-                            <p>{item.location || "—"}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
