@@ -13,6 +13,8 @@ const {
   findDocumentByUUID,
   listDocumentsByClientId,
   deleteDocument,
+  createHistoryRecord,
+  listHistoryByClientId,
 } = require("../models/clientModel");
 
 // ─── Multer Upload Configuration ─────────────────────────────────────────────
@@ -130,9 +132,9 @@ async function getClientByIdHandler(req, res) {
   try {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
-    // Also fetch documents
     const documents = await listDocumentsByClientId(client.id);
-    return ok(res, { data: { ...client, documents } });
+    const history = await listHistoryByClientId(client.id);
+    return ok(res, { data: { ...client, documents, history } });
   } catch (err) {
     console.error("getClientByIdHandler:", err);
     return fail(res, "Failed to retrieve client", 500, err.message);
@@ -196,6 +198,55 @@ async function deleteClientHandler(req, res) {
   } catch (err) {
     console.error("deleteClientHandler:", err);
     return fail(res, "Failed to delete client", 500, err.message);
+  }
+}
+
+// ─── History Controllers ────────────────────────────────────────────────────────
+
+/** POST /api/clients/:id/history */
+async function addClientHistoryHandler(req, res) {
+  try {
+    const existing = await findClientByUUID(req.params.id);
+    if (!existing) return fail(res, "Client not found", 404);
+
+    const { new_status, discussion_summary, next_follow_up_date, next_follow_up_time } = req.body;
+    
+    if (new_status && !CLIENT_STATUSES.includes(new_status)) {
+      return fail(res, `Invalid client_status. Allowed: ${CLIENT_STATUSES.join(", ")}`, 400);
+    }
+
+    const actor = req.user?.user_id || "SYSTEM";
+    const updates = { updated_by: actor };
+    let eventType = "Follow-up Update";
+
+    if (new_status && new_status !== existing.client_status) {
+      updates.client_status = new_status;
+      eventType = discussion_summary ? "Status Change & Follow-up" : "Status Change";
+    }
+    
+    if (discussion_summary) updates.discussion_summary = discussion_summary;
+    if (next_follow_up_date !== undefined) updates.next_follow_up_date = next_follow_up_date || null;
+    if (next_follow_up_time !== undefined) updates.next_follow_up_time = next_follow_up_time || null;
+
+    // Update the main client record if there are changes
+    if (Object.keys(updates).length > 1) {
+      await updateClient(existing.uuid, updates);
+    }
+
+    // Insert history record
+    await createHistoryRecord({
+      client_id: existing.id,
+      event_type: eventType,
+      old_status: existing.client_status,
+      new_status: new_status || existing.client_status,
+      discussion_summary: discussion_summary || null,
+      created_by: actor,
+    });
+
+    return ok(res, { message: "History updated successfully" }, 201);
+  } catch (err) {
+    console.error("addClientHistoryHandler:", err);
+    return fail(res, "Failed to add history", 500, err.message);
   }
 }
 
@@ -294,4 +345,5 @@ module.exports = {
   uploadDocumentHandler,
   getDocumentsHandler,
   deleteDocumentHandler,
+  addClientHistoryHandler,
 };

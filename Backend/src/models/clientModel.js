@@ -178,7 +178,30 @@ async function deleteDocument(uuid) {
   return doc;
 }
 
+// ─── Client History ──────────────────────────────────────────────────────────
+
+async function createHistoryRecord(data) {
+  const db = getDB();
+  const { client_id, event_type, old_status, new_status, discussion_summary, created_by } = data;
+  const [result] = await db.execute(
+    `INSERT INTO client_history (client_id, event_type, old_status, new_status, discussion_summary, created_by)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [client_id, event_type, old_status || null, new_status || null, discussion_summary || null, created_by || null]
+  );
+  return result.insertId;
+}
+
+async function listHistoryByClientId(clientId) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT * FROM client_history WHERE client_id = ? ORDER BY created_at DESC`,
+    [clientId]
+  );
+  return rows;
+}
+
 module.exports = {
   createClient, findClientById, findClientByUUID, listClients, updateClient, deleteClient,
   createDocument, findDocumentById, findDocumentByUUID, listDocumentsByClientId, deleteDocument,
+  createHistoryRecord, listHistoryByClientId,
 };

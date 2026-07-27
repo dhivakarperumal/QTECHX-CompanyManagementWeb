@@ -9,6 +9,7 @@ const {
   uploadDocumentHandler,
   getDocumentsHandler,
   deleteDocumentHandler,
+  addClientHistoryHandler,
 } = require("../controllers/clientController");
 
 const router = express.Router();
@@ -24,6 +25,9 @@ router.get(   "/",    authenticate, allStaff, getAllClientsHandler);
 router.get(   "/:id", authenticate, allStaff, getClientByIdHandler);
 router.put(   "/:id", authenticate, managers, updateClientHandler);
 router.delete("/:id", authenticate, admins,   deleteClientHandler);
+
+// ─── History & Status Updates ────────────────────────────────────────────────
+router.post(  "/:id/history", authenticate, managers, addClientHistoryHandler);
 
 // ─── Client Documents ─────────────────────────────────────────────────────────
 router.post(  "/:id/documents",         authenticate, managers, uploadDocumentHandler);

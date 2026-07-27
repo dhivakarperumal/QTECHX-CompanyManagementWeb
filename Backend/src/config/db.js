@@ -101,6 +101,25 @@ async function ensureSchema(pool) {
         ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  // ── Client History ─────────────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS client_history (
+      id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      client_id          INT UNSIGNED NOT NULL,
+      event_type         VARCHAR(100) NOT NULL,
+      old_status         VARCHAR(50) NULL,
+      new_status         VARCHAR(50) NULL,
+      discussion_summary TEXT NULL,
+      created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_by         VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      INDEX idx_client_history_client (client_id),
+      CONSTRAINT fk_client_history_client
+        FOREIGN KEY (client_id) REFERENCES clients (id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {
