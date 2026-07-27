@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
@@ -15,6 +15,9 @@ import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
 import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
+
+const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
+const AddClient  = lazy(() => import('./Admin/Clients/AddClient.jsx'))
 
 
 
@@ -45,11 +48,9 @@ const router = createHashRouter([
           </PrivateRoute>
         ),
         children: [
-          {
-            index: true,
-            element: <AdminDashboard />,
-          },
-          
+          { index: true, element: <AdminDashboard /> },
+          { path: 'clients',     element: <AllClients /> },
+          { path: 'clients/add', element: <AddClient /> },
         ],
       },
       {

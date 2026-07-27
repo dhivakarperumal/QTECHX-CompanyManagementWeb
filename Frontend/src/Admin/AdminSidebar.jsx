@@ -23,6 +23,8 @@ import {
   FileText,
   TrendingUp,
   Clock,
+  Handshake,
+  UserRoundPlus,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -83,6 +85,16 @@ const navItems = [
     children: [
       { path: "/admin/internships", label: "All Internships", icon: BookOpen },
       { path: "/admin/internships/add", label: "Add Internship", icon: FileText },
+    ],
+  },
+
+  /* ---- CLIENTS ---- */
+  {
+    label: "Clients",
+    icon: Handshake,
+    children: [
+      { path: "/admin/clients", label: "All Clients", icon: Users },
+      { path: "/admin/clients/add", label: "Add Client", icon: UserRoundPlus },
     ],
   },
 

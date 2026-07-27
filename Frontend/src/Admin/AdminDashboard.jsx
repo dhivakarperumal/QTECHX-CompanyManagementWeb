@@ -236,7 +236,6 @@ const AdminDashboard = () => {
   ];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
   const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
-  ];
 
   return (
     <div className="space-y-6 pb-6 text-white min-h-screen">
@@ -409,8 +408,8 @@ const AdminDashboard = () => {
 
       {/* ── BOTTOM ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
-        {/* Original Recent Activity */}
+
+        {/* Recent Activity — 5 cols */}
         <div className="lg:col-span-5 rounded-2xl bg-white/4 border border-white/8 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-bold text-base flex items-center gap-2">
@@ -421,20 +420,20 @@ const AdminDashboard = () => {
           {recentActivity.map((a, i) => <ActivityRow key={i} {...a} />)}
         </div>
 
-        {/* Employees by Department (Donut) */}
-        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
-          </div>
-          <div className="flex-1 relative flex items-center justify-center h-48">
+        {/* Employees by Dept — 4 cols */}
+        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col gap-4">
+          <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
+
+          {/* Donut chart */}
+          <div className="relative flex items-center justify-center" style={{ height: 180 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={employeeDeptData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
+                  innerRadius={55}
+                  outerRadius={75}
                   paddingAngle={1}
                   dataKey="value"
                   stroke="none"
@@ -443,20 +442,19 @@ const AdminDashboard = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold text-white">256</span>
               <span className="text-[10px] text-white/50">Total</span>
             </div>
           </div>
 
-          <TrendGraph data={taskTrend} />
-
-          <div className="mt-6 overflow-hidden rounded-full bg-white/10 h-3 mb-6">
+          {/* Task progress bar */}
+          <div className="overflow-hidden rounded-full bg-white/10 h-2.5">
             <div className="flex h-full">
               {taskOverview.map((t, i) => (
                 <div key={i} className={`${t.bg} transition-all duration-700`} style={{ width: `${(t.value / totalTasks) * 100}%` }} />
@@ -464,88 +462,77 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Task stats grid */}
+          <div className="grid grid-cols-2 gap-3">
             {taskOverview.map((t, i) => (
-              <div key={i} className="rounded-3xl bg-[#0d1018]/80 border border-white/10 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${t.bg}`} />
-                    <span className="text-white/60 text-xs">{t.label}</span>
-                  </div>
-                  <span className={`text-sm font-semibold ${t.color}`}>{t.value}</span>
+              <div key={i} className="rounded-2xl bg-[#0d1018]/80 border border-white/10 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${t.bg}`} />
+                  <span className="text-white/60 text-xs">{t.label}</span>
                 </div>
+                <span className={`text-sm font-bold ${t.color}`}>{t.value}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
-          <h2 className="text-sm font-bold text-white mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <UserPlus className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Add Employee</span>
-            </div>
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Briefcase className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Add Project</span>
-            </div>
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <CheckSquare className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Create Task</span>
-            </div>
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Calendar className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Mark Attendance</span>
-            </div>
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Activity className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">Generate Report</span>
-            </div>
-            
-            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
-              <Settings className="text-primary" size={24} />
-              <span className="text-[10px] font-medium text-white/80 text-center">System Settings</span>
-            </div>
-            
-        {/* Upcoming Events */}
-        <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
-                <Calendar size={20} />
-              </div>
-              <div>
-                <h2 className="text-white font-bold text-base">Upcoming Events</h2>
-                <p className="text-xs text-white/40">Stay ahead of the calendar</p>
-              </div>
-            </div>
-            <button className="text-xs text-primary hover:underline">View Calendar</button>
-          </div>
-          <div className="space-y-4">
-            {upcomingEvents.map((e, i) => (
-              <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4` }>
-                <div className="flex flex-col items-center justify-center shrink-0 rounded-3xl bg-white/5 w-14 h-14 text-white/90">
-                  <span className="text-[9px] uppercase tracking-[0.2em] text-white/50">{e.date.split(' ')[0]}</span>
-                  <span className="text-xl font-semibold leading-tight">{e.date.split(' ')[1]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{e.title}</p>
-                  <p className="text-white/40 text-xs mt-1">{e.time}</p>
-                </div>
-                <ArrowUpRight size={16} className="opacity-40 shrink-0" />
-              </div>
+        {/* Quick Actions — 3 cols */}
+        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-5 rounded-2xl flex flex-col">
+          <h2 className="text-sm font-bold text-white mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-3 flex-1">
+            {[
+              { icon: UserPlus,    label: 'Add Employee' },
+              { icon: Briefcase,   label: 'Add Project' },
+              { icon: CheckSquare, label: 'Create Task' },
+              { icon: Calendar,    label: 'Mark Attendance' },
+              { icon: Activity,    label: 'Generate Report' },
+              { icon: Settings,    label: 'System Settings' },
+            ].map(({ icon: Icon, label }, i) => (
+              <button
+                key={i}
+                className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-2 min-h-[80px]"
+              >
+                <Icon className="text-primary" size={22} />
+                <span className="text-[10px] font-medium text-white/80 text-center leading-tight">{label}</span>
+              </button>
             ))}
           </div>
         </div>
 
       </div>
+
+
+      {/* ── UPCOMING EVENTS ROW ── */}
+      <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl mt-5">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-base">Upcoming Events</h2>
+              <p className="text-xs text-white/40">Stay ahead of the calendar</p>
+            </div>
+          </div>
+          <button className="text-xs text-primary hover:underline">View Calendar</button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {upcomingEvents.map((e, i) => (
+            <div key={i} className={`rounded-3xl border ${e.color} p-4 bg-white/5 flex items-center gap-4`}>
+              <div className="flex flex-col items-center justify-center shrink-0 rounded-3xl bg-white/5 w-14 h-14 text-white/90">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-white/50">{e.date.split(' ')[0]}</span>
+                <span className="text-xl font-semibold leading-tight">{e.date.split(' ')[1]}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{e.title}</p>
+                <p className="text-white/40 text-xs mt-1">{e.time}</p>
+              </div>
+              <ArrowUpRight size={16} className="opacity-40 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+
 
       {/* ── REVENUE ROW ── */}
       <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col mt-5">
