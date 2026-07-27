@@ -100,12 +100,16 @@ const EmployeeAdd = () => {
 
       {error && <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-black p-6 shadow">
+      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-gray-400 p-6 shadow">
         
         {/* Personal Details */}
         <div>
           <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Personal Details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>Employee Code</label>
+              <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
+            </div>
             <div>
               <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
               <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} />
@@ -113,10 +117,6 @@ const EmployeeAdd = () => {
             <div>
               <label className={labelClass}>Last Name</label>
               <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Employee Code</label>
-              <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Gender</label>
