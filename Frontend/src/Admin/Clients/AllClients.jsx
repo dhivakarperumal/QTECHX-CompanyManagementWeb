@@ -1,47 +1,72 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
-  Handshake, Search, Edit2, Eye, Users, TrendingUp, UserCheck,
-  UserX, LayoutGrid, List, Loader2, RefreshCw, UserRoundPlus,
-  Mail, Phone, Building2, Briefcase, Calendar, AlertCircle,
-  ChevronLeft, ChevronRight, Clock, SlidersHorizontal, X,
+  Handshake, Search, Edit2, Eye, Users, TrendingUp, UserCheck, UserX,
+  LayoutGrid, List, Loader2, RefreshCw, UserRoundPlus, Mail, Phone,
+  Building2, Briefcase, Calendar, AlertCircle, ChevronLeft, ChevronRight,
+  Clock, SlidersHorizontal, X, Trash2, CheckCircle2, FileText, MessageSquare,
+  Bell, Hash, ChevronDown, Shield, Paperclip, Download
 } from 'lucide-react';
 import api from '../../api';
+import ClientFormModal from './ClientFormModal';
 
-// ─── Constants (mirror backend) ──────────────────────────────────────────────
-const CLIENT_STATUSES   = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
-const SERVICE_TYPES     = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
+const SERVICE_TYPES      = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
 const FOLLOW_UP_STATUSES = ['Pending', 'Completed', 'Rescheduled', 'Cancelled'];
 
 const STATUS_STYLES = {
-  Lead:      { pill: 'bg-sky-500/15 text-sky-400 border border-sky-500/25',      dot: 'bg-sky-400'      },
-  Prospect:  { pill: 'bg-violet-500/15 text-violet-400 border border-violet-500/25', dot: 'bg-violet-400' },
+  Lead:      { pill: 'bg-sky-500/15 text-sky-400 border border-sky-500/25',           dot: 'bg-sky-400'     },
+  Prospect:  { pill: 'bg-violet-500/15 text-violet-400 border border-violet-500/25',  dot: 'bg-violet-400'  },
   Active:    { pill: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25', dot: 'bg-emerald-400' },
-  Inactive:  { pill: 'bg-rose-500/15 text-rose-400 border border-rose-500/25',    dot: 'bg-rose-400'    },
-  Converted: { pill: 'bg-amber-500/15 text-amber-400 border border-amber-500/25', dot: 'bg-amber-400'   },
-  Closed:    { pill: 'bg-white/10 text-white/50 border border-white/15',          dot: 'bg-white/40'    },
+  Inactive:  { pill: 'bg-rose-500/15 text-rose-400 border border-rose-500/25',        dot: 'bg-rose-400'    },
+  Converted: { pill: 'bg-amber-500/15 text-amber-400 border border-amber-500/25',     dot: 'bg-amber-400'   },
+  Closed:    { pill: 'bg-white/10 text-white/50 border border-white/15',              dot: 'bg-white/40'    },
 };
 
-const FOLLOW_UP_STYLES = {
+const FOLLOW_STYLES = {
   Pending:     'bg-amber-500/15 text-amber-400',
   Completed:   'bg-emerald-500/15 text-emerald-400',
   Rescheduled: 'bg-sky-500/15 text-sky-400',
   Cancelled:   'bg-rose-500/15 text-rose-400',
 };
 
-// Colour palette for avatars (by index)
 const AVATAR_COLOURS = [
   '#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899',
   '#14b8a6','#f97316','#8b5cf6','#ef4444','#22c55e',
 ];
 
-function getInitials(name = '') {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0] || '')
-    .join('')
-    .toUpperCase() || '??';
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const initials = (name = '') =>
+  name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '??';
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const fmtTime = (t) => {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h, 10);
+  return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function Avatar({ name, index, size = 'md' }) {
+  const c = AVATAR_COLOURS[index % AVATAR_COLOURS.length];
+  const cls = size === 'lg'
+    ? 'w-14 h-14 rounded-2xl text-base'
+    : 'w-10 h-10 rounded-xl text-xs';
+  return (
+    <div
+      className={`${cls} flex items-center justify-center font-bold shrink-0 select-none`}
+      style={{ background: c + '28', border: `1.5px solid ${c}44`, color: c }}
+    >
+      {initials(name)}
+    </div>
+  );
 }
 
 function StatusPill({ status }) {
@@ -54,65 +79,308 @@ function StatusPill({ status }) {
   );
 }
 
-function Avatar({ name, index }) {
-  const colour = AVATAR_COLOURS[index % AVATAR_COLOURS.length];
-  return (
-    <div
-      className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 select-none"
-      style={{ background: colour + '28', border: `1.5px solid ${colour}44`, color: colour }}
-    >
-      {getInitials(name)}
-    </div>
+// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+function DeleteModal({ client, onConfirm, onCancel, loading }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+            <Trash2 size={18} className="text-rose-400" />
+          </div>
+          <div>
+            <h3 className="text-white font-bold text-base">Delete Client</h3>
+            <p className="text-white/40 text-xs mt-0.5">This action cannot be undone</p>
+          </div>
+        </div>
+
+        <p className="text-white/60 text-sm mb-6 leading-relaxed">
+          Are you sure you want to delete{' '}
+          <span className="text-white font-semibold">"{client?.client_name}"</span>?{' '}
+          All associated documents will also be permanently removed.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {loading ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
-function formatDate(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+// ─── View Drawer ──────────────────────────────────────────────────────────────
+function ViewDrawer({ client, index, onClose, onEdit }) {
+  const drawerRef = useRef(null);
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+
+  useEffect(() => {
+    if (client?.uuid) {
+      setLoadingDocs(true);
+      api.get(`/clients/${client.uuid}`)
+        .then(res => setDocuments(res.data.data.documents || []))
+        .catch(err => console.error('Failed to load docs', err))
+        .finally(() => setLoadingDocs(false));
+    }
+  }, [client?.uuid]);
+
+  if (!client) return null;
+
+  const colour = AVATAR_COLOURS[index % AVATAR_COLOURS.length];
+
+  const Row = ({ icon: Icon, label, value }) => {
+    if (!value) return null;
+    return (
+      <div className="flex gap-3 py-2.5 border-b border-white/[0.06] last:border-0">
+        <div className="w-6 shrink-0 flex items-start justify-center pt-0.5">
+          <Icon size={12} className="text-white/30" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold mb-0.5">{label}</p>
+          <p className="text-white/80 text-sm leading-snug break-words">{value}</p>
+        </div>
+      </div>
+    );
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-end">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        ref={drawerRef}
+        className="relative w-full max-w-md bg-[#0d0f14] border-l border-white/10 h-full overflow-y-auto shadow-2xl flex flex-col"
+        style={{ animation: 'slideInRight 0.25s cubic-bezier(0.16,1,0.3,1)' }}
+      >
+        {/* Drawer Header */}
+        <div className="sticky top-0 bg-[#0d0f14]/95 backdrop-blur border-b border-white/8 px-6 py-4 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <Avatar name={client.client_name} index={index} size="lg" />
+            <div>
+              <h2 className="text-white font-bold text-base leading-tight">{client.client_name}</h2>
+              {client.company_name && (
+                <p className="text-white/40 text-xs mt-0.5 flex items-center gap-1">
+                  <Building2 size={10} /> {client.company_name}
+                </p>
+              )}
+              <div className="mt-1.5">
+                <StatusPill status={client.client_status} />
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Drawer Body */}
+        <div className="flex-1 px-6 py-5 space-y-5">
+
+          {/* Section: Contact */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Contact Information</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-1">
+              <Row icon={Mail}     label="Email"          value={client.email} />
+              <Row icon={Phone}    label="Phone"          value={client.phone_number} />
+              <Row icon={Users}    label="Contact Person" value={client.contact_person} />
+            </div>
+          </div>
+
+          {/* Section: Business */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Business Details</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-1">
+              <Row icon={Building2} label="Business Name" value={client.business_name} />
+              <Row icon={Briefcase} label="Business Type" value={client.business_type} />
+              <Row icon={Briefcase} label="Service Type"  value={client.service_type} />
+            </div>
+          </div>
+
+          {/* Section: Requirement / Notes */}
+          {(client.requirement || client.notes_summary || client.discussion_summary) && (
+            <div>
+              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Notes & Requirements</p>
+              <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-1">
+                <Row icon={FileText}     label="Requirement"         value={client.requirement} />
+                <Row icon={MessageSquare} label="Notes / Summary"    value={client.notes_summary} />
+                <Row icon={MessageSquare} label="Discussion Summary" value={client.discussion_summary} />
+              </div>
+            </div>
+          )}
+
+          {/* Section: Follow-up */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Follow-up Scheduling</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-1">
+              {client.follow_up_status && (
+                <div className="flex gap-3 py-2.5 border-b border-white/[0.06]">
+                  <Shield size={12} className="text-white/30 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold mb-0.5">Follow-up Status</p>
+                    <span className={`inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full ${FOLLOW_STYLES[client.follow_up_status] || 'bg-white/10 text-white/50'}`}>
+                      {client.follow_up_status}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {client.follow_up_date && (
+                <Row icon={Calendar} label="Follow-up Date"
+                  value={`${fmtDate(client.follow_up_date)}${client.follow_up_time ? ' at ' + fmtTime(client.follow_up_time) : ''}`}
+                />
+              )}
+              {client.next_follow_up_date && (
+                <Row icon={Calendar} label="Next Follow-up"
+                  value={`${fmtDate(client.next_follow_up_date)}${client.next_follow_up_time ? ' at ' + fmtTime(client.next_follow_up_time) : ''}`}
+                />
+              )}
+              {client.reminder !== undefined && (
+                <div className="flex gap-3 py-2.5">
+                  <Bell size={12} className="text-white/30 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold mb-0.5">Reminder</p>
+                    <span className={`text-xs font-semibold ${client.reminder ? 'text-emerald-400' : 'text-white/30'}`}>
+                      {client.reminder ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section: Documents */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Documents</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-3">
+              {loadingDocs ? (
+                <div className="flex items-center gap-2 text-white/40 text-sm">
+                  <Loader2 size={14} className="animate-spin" /> Loading documents…
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="space-y-3">
+                  {documents.map(doc => (
+                    <div key={doc.uuid} className="flex items-start justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Paperclip size={14} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white leading-tight">{doc.document_name}</p>
+                          <p className="text-[10px] text-white/40 mt-1">{doc.document_type} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB</p>
+                          {doc.description && <p className="text-xs text-white/60 mt-1.5">{doc.description}</p>}
+                        </div>
+                      </div>
+                      {doc.file_path && (
+                        <a href={`http://localhost:5000/uploads/client_documents/${doc.file_path.split('\\').pop().split('/').pop()}`} target="_blank" rel="noreferrer"
+                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition shrink-0">
+                          <Download size={14} />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-white/40">No documents attached.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Section: Audit */}
+          <div>
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">System Info</p>
+            <div className="bg-white/[0.03] border border-white/8 rounded-xl px-4 py-1">
+              <Row icon={Hash}  label="UUID"       value={client.uuid} />
+              <Row icon={Clock} label="Created At"  value={fmtDate(client.created_at)} />
+              <Row icon={Clock} label="Updated At"  value={fmtDate(client.updated_at)} />
+            </div>
+          </div>
+        </div>
+
+        {/* Drawer Footer */}
+        <div className="sticky bottom-0 bg-[#0d0f14]/95 backdrop-blur border-t border-white/8 px-6 py-4 shrink-0">
+          <button
+            onClick={onEdit}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 transition shadow-lg shadow-primary/25"
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+          >
+            <Edit2 size={14} /> Edit This Client
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+      `}</style>
+    </div>,
+    document.body
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AllClients() {
   const navigate = useNavigate();
 
-  // ── View / UI state ──
-  const [viewMode, setViewMode] = useState('card'); // 'card' | 'table'
+  const [viewMode, setViewMode]   = useState('table');   // ← default TABLE
   const [showFilters, setShowFilters] = useState(false);
 
-  // ── Filter state ──
+  // Filters
   const [search, setSearch]               = useState('');
   const [statusFilter, setStatusFilter]   = useState('');
   const [serviceFilter, setServiceFilter] = useState('');
   const [fuFilter, setFuFilter]           = useState('');
 
-  // ── Pagination ──
+  // Pagination
   const [page, setPage]   = useState(1);
-  const [limit]           = useState(12);
+  const limit             = 15;
 
-  // ── Data state ──
+  // Data
   const [clients, setClients]       = useState([]);
   const [total, setTotal]           = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState('');
+  const [statsData, setStatsData]   = useState({ total: 0, active: 0, inactive: 0, leads: 0 });
 
-  // ── Stats (derived from API) ──
-  const [statsData, setStatsData] = useState({ total: 0, active: 0, inactive: 0, leads: 0 });
+  // Modals
+  const [viewClient, setViewClient]     = useState(null);
+  const [viewIndex, setViewIndex]       = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting]         = useState(false);
+  const [deleteMsg, setDeleteMsg]       = useState('');
+  
+  const [isFormOpen, setIsFormOpen]     = useState(false);
+  const [editClientTarget, setEditClientTarget] = useState(null);
 
-  // ── Fetch ──
+  // ── Fetch clients ──
   const fetchClients = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams({ page, limit });
-      if (search)        params.append('search', search);
-      if (statusFilter)  params.append('client_status', statusFilter);
-      if (serviceFilter) params.append('service_type', serviceFilter);
-      if (fuFilter)      params.append('follow_up_status', fuFilter);
+      const p = new URLSearchParams({ page, limit });
+      if (search)        p.append('search', search);
+      if (statusFilter)  p.append('client_status', statusFilter);
+      if (serviceFilter) p.append('service_type', serviceFilter);
+      if (fuFilter)      p.append('follow_up_status', fuFilter);
 
-      const { data } = await api.get(`/clients?${params}`);
-      if (data.success === false) throw new Error(data.message || 'Failed to fetch clients');
-
+      const { data } = await api.get(`/clients?${p}`);
+      if (data.success === false) throw new Error(data.message || 'Failed');
       const rows = data.data || [];
       setClients(rows);
       setTotal(data.pagination?.total ?? rows.length);
@@ -124,42 +392,91 @@ export default function AllClients() {
     }
   }, [page, limit, search, statusFilter, serviceFilter, fuFilter]);
 
-  // Fetch summary stats (no filters, high limit)
+  // ── Fetch stats (unfiltered overview) ──
   const fetchStats = useCallback(async () => {
     try {
-      const { data } = await api.get('/clients?limit=1000&page=1');
+      const { data } = await api.get('/clients?limit=500&page=1');
       if (!data.success) return;
       const all = data.data || [];
       setStatsData({
         total:    data.pagination?.total ?? all.length,
-        active:   all.filter((c) => c.client_status === 'Active').length,
-        inactive: all.filter((c) => c.client_status === 'Inactive').length,
-        leads:    all.filter((c) => c.client_status === 'Lead').length,
+        active:   all.filter(c => c.client_status === 'Active').length,
+        inactive: all.filter(c => c.client_status === 'Inactive').length,
+        leads:    all.filter(c => c.client_status === 'Lead').length,
       });
     } catch { /* silent */ }
   }, []);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
-  useEffect(() => { fetchStats(); },  [fetchStats]);
-
-  // Reset page on filter change
+  useEffect(() => { fetchStats(); },   [fetchStats]);
   useEffect(() => { setPage(1); }, [search, statusFilter, serviceFilter, fuFilter]);
 
-  const hasFilters = statusFilter || serviceFilter || fuFilter || search;
-  const clearFilters = () => {
-    setSearch(''); setStatusFilter(''); setServiceFilter(''); setFuFilter('');
+  // ── Delete ──
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/clients/${deleteTarget.uuid}`);
+      setDeleteMsg(`"${deleteTarget.client_name}" deleted successfully.`);
+      setDeleteTarget(null);
+      // Close view drawer if it was the same client
+      if (viewClient?.uuid === deleteTarget.uuid) setViewClient(null);
+      await fetchClients();
+      await fetchStats();
+      setTimeout(() => setDeleteMsg(''), 3500);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Delete failed');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
   };
 
+  const hasFilters = !!(statusFilter || serviceFilter || fuFilter || search);
+  const clearFilters = () => { setSearch(''); setStatusFilter(''); setServiceFilter(''); setFuFilter(''); };
+
   const stats = [
-    { label: 'Total Clients',  value: statsData.total,    icon: Users,      cls: 'text-blue-400',    bg: 'bg-blue-500/15'    },
-    { label: 'Active',         value: statsData.active,   icon: UserCheck,  cls: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-    { label: 'Inactive',       value: statsData.inactive, icon: UserX,      cls: 'text-rose-400',    bg: 'bg-rose-500/15'    },
-    { label: 'Leads',          value: statsData.leads,    icon: TrendingUp, cls: 'text-primary',     bg: 'bg-primary/15'     },
+    { label: 'Total Clients', value: statsData.total,    icon: Users,      cls: 'text-blue-400',    bg: 'bg-blue-500/15'    },
+    { label: 'Active',        value: statsData.active,   icon: UserCheck,  cls: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { label: 'Inactive',      value: statsData.inactive, icon: UserX,      cls: 'text-rose-400',    bg: 'bg-rose-500/15'    },
+    { label: 'Leads',         value: statsData.leads,    icon: TrendingUp, cls: 'text-primary',     bg: 'bg-primary/15'     },
   ];
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 pb-10 text-white min-h-screen">
+    <div className="space-y-5 pb-10 text-white min-h-screen">
+
+      {/* ── Success toast ── */}
+      {deleteMsg && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-2 duration-300">
+          <CheckCircle2 size={16} /> {deleteMsg}
+        </div>
+      )}
+
+      {/* ── Modals ── */}
+      {deleteTarget && (
+        <DeleteModal
+          client={deleteTarget}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+          loading={deleting}
+        />
+      )}
+      {viewClient && (
+        <ViewDrawer
+          client={viewClient}
+          index={viewIndex}
+          onClose={() => setViewClient(null)}
+          onEdit={() => { setViewClient(null); setEditClientTarget(viewClient); setIsFormOpen(true); }}
+        />
+      )}
+
+      <ClientFormModal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={() => { fetchClients(); fetchStats(); }}
+        editClient={editClientTarget}
+      />
 
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -176,20 +493,19 @@ export default function AllClients() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => fetchClients()}
-            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition"
+            onClick={fetchClients}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
             title="Refresh"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={loading ? 'animate-spin text-primary' : ''} />
           </button>
-          <a
-            href="#/admin/clients/add"
-            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-primary/30 hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }}
+          <button
+            onClick={() => { setEditClientTarget(null); setIsFormOpen(true); }}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-primary/25 hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
-            <UserRoundPlus size={15} />
-            Add Client
-          </a>
+            <UserRoundPlus size={15} /> Add Client
+          </button>
         </div>
       </div>
 
@@ -198,30 +514,30 @@ export default function AllClients() {
         {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-2xl p-5 flex items-center gap-4 hover:bg-white/[0.06] transition">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
-                <Icon size={20} className={s.cls} />
+            <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.06] transition">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
+                <Icon size={18} className={s.cls} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-white/50 text-xs mt-0.5">{s.label}</p>
+                <p className="text-xl font-bold text-white">{s.value}</p>
+                <p className="text-white/50 text-xs">{s.label}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ── Search + View Toggle + Filter Toggle ── */}
+      {/* ── Toolbar ── */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"
             placeholder="Search by name, company, email, phone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 focus:bg-white/8 transition"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition">
@@ -232,109 +548,88 @@ export default function AllClients() {
 
         {/* Filter toggle */}
         <button
-          onClick={() => setShowFilters((v) => !v)}
+          onClick={() => setShowFilters(v => !v)}
           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition ${
             showFilters || hasFilters
               ? 'bg-primary/15 border-primary/40 text-primary'
               : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
           }`}
         >
-          <SlidersHorizontal size={14} />
+          <SlidersHorizontal size={13} />
           Filters
           {hasFilters && (
             <span className="w-4 h-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">
               {[statusFilter, serviceFilter, fuFilter, search].filter(Boolean).length}
             </span>
           )}
+          <ChevronDown size={12} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
         </button>
 
-        {/* View mode toggle */}
+        {/* View toggle */}
         <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 gap-1">
-          <button
-            id="view-card"
-            onClick={() => setViewMode('card')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              viewMode === 'card' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white'
-            }`}
-          >
-            <LayoutGrid size={13} /> Card
-          </button>
           <button
             id="view-table"
             onClick={() => setViewMode('table')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              viewMode === 'table' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white'
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'table' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
             }`}
+            title="Table View"
           >
-            <List size={13} /> Table
+            <List size={15} />
+          </button>
+          <button
+            id="view-card"
+            onClick={() => setViewMode('card')}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'card' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid size={15} />
           </button>
         </div>
       </div>
 
-      {/* ── Expandable Filters ── */}
+      {/* ── Filters Panel ── */}
       {showFilters && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-bold text-white/60 uppercase tracking-wider">Filter By</p>
+            <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">Filter By</p>
             {hasFilters && (
-              <button onClick={clearFilters} className="text-xs text-primary/80 hover:text-primary transition flex items-center gap-1">
-                <X size={11} /> Clear all
+              <button onClick={clearFilters} className="text-xs text-primary/70 hover:text-primary flex items-center gap-1 transition">
+                <X size={10} /> Clear all
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Status filter */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
-              <label className="text-[11px] text-white/40 font-medium mb-1.5 block">Client Status</label>
-              <div className="flex flex-wrap gap-2">
-                {CLIENT_STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatusFilter(statusFilter === s ? '' : s)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-semibold border transition ${
-                      statusFilter === s
-                        ? 'bg-primary/20 border-primary/50 text-primary'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-2">Client Status</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CLIENT_STATUSES.map(s => (
+                  <button key={s} onClick={() => setStatusFilter(statusFilter === s ? '' : s)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${statusFilter === s ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}>
                     {s}
                   </button>
                 ))}
               </div>
             </div>
-            {/* Service filter */}
             <div>
-              <label className="text-[11px] text-white/40 font-medium mb-1.5 block">Service Type</label>
-              <div className="flex flex-wrap gap-2">
-                {SERVICE_TYPES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setServiceFilter(serviceFilter === s ? '' : s)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-semibold border transition ${
-                      serviceFilter === s
-                        ? 'bg-primary/20 border-primary/50 text-primary'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-2">Service Type</p>
+              <div className="flex flex-wrap gap-1.5">
+                {SERVICE_TYPES.map(s => (
+                  <button key={s} onClick={() => setServiceFilter(serviceFilter === s ? '' : s)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${serviceFilter === s ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}>
                     {s}
                   </button>
                 ))}
               </div>
             </div>
-            {/* Follow-up filter */}
             <div>
-              <label className="text-[11px] text-white/40 font-medium mb-1.5 block">Follow-up Status</label>
-              <div className="flex flex-wrap gap-2">
-                {FOLLOW_UP_STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setFuFilter(fuFilter === s ? '' : s)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-semibold border transition ${
-                      fuFilter === s
-                        ? 'bg-primary/20 border-primary/50 text-primary'
-                        : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-2">Follow-up Status</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FOLLOW_UP_STATUSES.map(s => (
+                  <button key={s} onClick={() => setFuFilter(fuFilter === s ? '' : s)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${fuFilter === s ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}>
                     {s}
                   </button>
                 ))}
@@ -344,21 +639,21 @@ export default function AllClients() {
         </div>
       )}
 
-      {/* ── Error Banner ── */}
+      {/* ── Error ── */}
       {error && (
         <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl">
-          <AlertCircle size={17} className="shrink-0" />
+          <AlertCircle size={16} className="shrink-0" />
           {error}
           <button onClick={fetchClients} className="ml-auto text-xs underline underline-offset-2 hover:opacity-80">Retry</button>
         </div>
       )}
 
-      {/* ── Loading Skeleton ── */}
+      {/* ── Loading ── */}
       {loading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3 text-white/40">
-            <Loader2 size={32} className="animate-spin text-primary/70" />
-            <p className="text-sm">Loading clients…</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={30} className="animate-spin text-primary/70" />
+            <p className="text-sm text-white/40">Loading clients…</p>
           </div>
         </div>
       )}
@@ -367,152 +662,50 @@ export default function AllClients() {
       {!loading && !error && clients.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-white/30">
           <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <Users size={32} className="opacity-40" />
+            <Users size={30} className="opacity-40" />
           </div>
           <p className="text-base font-semibold text-white/40">No clients found</p>
-          <p className="text-xs mt-1">
-            {hasFilters ? 'Try adjusting your filters.' : 'Add your first client to get started.'}
-          </p>
+          <p className="text-xs mt-1">{hasFilters ? 'Try adjusting your filters.' : 'Add your first client to get started.'}</p>
           {!hasFilters && (
-            <a
-              href="#/admin/clients/add"
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition shadow-lg shadow-primary/30 hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-            >
-              <UserRoundPlus size={15} /> Add First Client
-            </a>
+            <button
+              onClick={() => { setEditClientTarget(null); setIsFormOpen(true); }}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+              <UserRoundPlus size={14} /> Add First Client
+            </button>
           )}
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          CARD MODE
-      ══════════════════════════════════════════════════════════════ */}
-      {!loading && !error && clients.length > 0 && viewMode === 'card' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-          {clients.map((c, i) => {
-            const colour = AVATAR_COLOURS[i % AVATAR_COLOURS.length];
-            return (
-              <div
-                key={c.uuid}
-                className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.055] hover:border-white/14 hover:-translate-y-0.5 transition-all duration-200 group"
-              >
-                {/* Card Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar name={c.client_name} index={i} />
-                    <div className="min-w-0">
-                      <p className="text-white font-semibold text-sm leading-tight truncate">{c.client_name}</p>
-                      {c.company_name && (
-                        <p className="text-white/40 text-xs mt-0.5 truncate flex items-center gap-1">
-                          <Building2 size={10} /> {c.company_name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <StatusPill status={c.client_status} />
-                </div>
-
-                {/* Contact Info */}
-                <div className="space-y-1.5">
-                  {c.email && (
-                    <div className="flex items-center gap-2 text-white/50 text-xs">
-                      <Mail size={11} className="shrink-0 text-white/30" />
-                      <span className="truncate">{c.email}</span>
-                    </div>
-                  )}
-                  {c.phone_number && (
-                    <div className="flex items-center gap-2 text-white/50 text-xs">
-                      <Phone size={11} className="shrink-0 text-white/30" />
-                      <span>{c.phone_number}</span>
-                    </div>
-                  )}
-                  {c.follow_up_date && (
-                    <div className="flex items-center gap-2 text-white/50 text-xs">
-                      <Calendar size={11} className="shrink-0 text-white/30" />
-                      <span>Follow-up: {formatDate(c.follow_up_date)}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tags */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {c.service_type && (
-                    <span
-                      className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                      style={{ background: colour + '20', color: colour }}
-                    >
-                      {c.service_type}
-                    </span>
-                  )}
-                  {c.follow_up_status && (
-                    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full ${FOLLOW_UP_STYLES[c.follow_up_status] || 'bg-white/10 text-white/50'}`}>
-                      {c.follow_up_status}
-                    </span>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/8">
-                  <span className="text-[10px] text-white/30 flex items-center gap-1">
-                    <Clock size={9} />
-                    {formatDate(c.created_at)}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => navigate(`/admin/clients/${c.uuid}`)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition"
-                      title="View"
-                    >
-                      <Eye size={13} />
-                    </button>
-                    <button
-                      onClick={() => navigate(`/admin/clients/${c.uuid}/edit`)}
-                      className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary transition"
-                      title="Edit"
-                    >
-                      <Edit2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════
+      {/* ══════════════════════════════════════════
           TABLE MODE
-      ══════════════════════════════════════════════════════════════ */}
+      ══════════════════════════════════════════ */}
       {!loading && !error && clients.length > 0 && viewMode === 'table' && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[700px] text-sm">
               <thead>
-                <tr className="border-b border-white/8">
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-5 py-4">Client</th>
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-4 py-4">Contact</th>
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-4 py-4">Status</th>
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-4 py-4">Service</th>
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-4 py-4">Follow-up</th>
-                  <th className="text-left text-[11px] font-bold text-white/40 uppercase tracking-wider px-4 py-4">Date</th>
-                  <th className="text-right text-[11px] font-bold text-white/40 uppercase tracking-wider px-5 py-4">Actions</th>
+                <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Client</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Contact</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Service</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Follow-up</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Added</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {clients.map((c, i) => (
-                  <tr
-                    key={c.uuid}
-                    className="border-b border-white/[0.05] hover:bg-white/[0.03] transition-colors group"
-                  >
-                    {/* Client name + company */}
+                  <tr key={c.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                    {/* Client */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={c.client_name} index={i} />
                         <div>
                           <p className="text-white font-semibold text-sm leading-tight">{c.client_name}</p>
                           {c.company_name && (
-                            <p className="text-white/40 text-xs mt-0.5 flex items-center gap-1">
+                            <p className="text-white/35 text-xs mt-0.5 flex items-center gap-1">
                               <Building2 size={9} /> {c.company_name}
                             </p>
                           )}
@@ -524,69 +717,76 @@ export default function AllClients() {
                     <td className="px-4 py-3.5">
                       <div className="space-y-1">
                         {c.email && (
-                          <p className="text-white/60 text-xs flex items-center gap-1.5">
-                            <Mail size={10} className="text-white/30 shrink-0" />
-                            <span className="truncate max-w-[150px]">{c.email}</span>
+                          <p className="text-white/50 text-xs flex items-center gap-1.5">
+                            <Mail size={10} className="text-white/25 shrink-0" />
+                            <span className="truncate max-w-[140px]">{c.email}</span>
                           </p>
                         )}
                         {c.phone_number && (
-                          <p className="text-white/60 text-xs flex items-center gap-1.5">
-                            <Phone size={10} className="text-white/30 shrink-0" />
+                          <p className="text-white/50 text-xs flex items-center gap-1.5">
+                            <Phone size={10} className="text-white/25 shrink-0" />
                             {c.phone_number}
                           </p>
                         )}
+                        {!c.email && !c.phone_number && <span className="text-white/20 text-xs">—</span>}
                       </div>
                     </td>
 
                     {/* Status */}
-                    <td className="px-4 py-3.5">
-                      <StatusPill status={c.client_status} />
-                    </td>
+                    <td className="px-4 py-3.5"><StatusPill status={c.client_status} /></td>
 
                     {/* Service */}
                     <td className="px-4 py-3.5">
-                      {c.service_type ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/60 bg-white/8 border border-white/10 px-2.5 py-1 rounded-lg">
-                          <Briefcase size={9} className="text-white/30" /> {c.service_type}
-                        </span>
-                      ) : <span className="text-white/20 text-xs">—</span>}
+                      {c.service_type
+                        ? <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/55 bg-white/[0.07] border border-white/10 px-2.5 py-1 rounded-lg"><Briefcase size={9} className="text-white/25" /> {c.service_type}</span>
+                        : <span className="text-white/20 text-xs">—</span>}
                     </td>
 
                     {/* Follow-up */}
                     <td className="px-4 py-3.5">
                       <div className="space-y-1">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${FOLLOW_UP_STYLES[c.follow_up_status] || 'bg-white/10 text-white/50'}`}>
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
                           {c.follow_up_status || '—'}
                         </span>
                         {c.follow_up_date && (
-                          <p className="text-white/30 text-[10px] flex items-center gap-1">
-                            <Calendar size={8} /> {formatDate(c.follow_up_date)}
+                          <p className="text-white/25 text-[10px] flex items-center gap-1">
+                            <Calendar size={8} /> {fmtDate(c.follow_up_date)}
                           </p>
                         )}
                       </div>
                     </td>
 
-                    {/* Created date */}
+                    {/* Added date */}
                     <td className="px-4 py-3.5">
-                      <span className="text-white/40 text-xs">{formatDate(c.created_at)}</span>
+                      <span className="text-white/35 text-xs">{fmtDate(c.created_at)}</span>
                     </td>
 
                     {/* Actions */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* View */}
                         <button
-                          onClick={() => navigate(`/admin/clients/${c.uuid}`)}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/40 hover:text-white transition"
-                          title="View"
+                          onClick={() => { setViewClient(c); setViewIndex(i); }}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
+                          title="View Details"
                         >
                           <Eye size={13} />
                         </button>
+                        {/* Edit */}
                         <button
-                          onClick={() => navigate(`/admin/clients/${c.uuid}/edit`)}
-                          className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary transition"
-                          title="Edit"
+                          onClick={() => { setEditClientTarget(c); setIsFormOpen(true); }}
+                          className="w-7 h-7 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary border border-transparent hover:border-primary/30 flex items-center justify-center transition"
+                          title="Edit Client"
                         >
                           <Edit2 size={13} />
+                        </button>
+                        {/* Delete */}
+                        <button
+                          onClick={() => setDeleteTarget(c)}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                          title="Delete Client"
+                        >
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </td>
@@ -598,51 +798,137 @@ export default function AllClients() {
         </div>
       )}
 
+      {/* ══════════════════════════════════════════
+          CARD MODE
+      ══════════════════════════════════════════ */}
+      {!loading && !error && clients.length > 0 && viewMode === 'card' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+          {clients.map((c, i) => {
+            const colour = AVATAR_COLOURS[i % AVATAR_COLOURS.length];
+            return (
+              <div key={c.uuid}
+                className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar name={c.client_name} index={i} />
+                    <div className="min-w-0">
+                      <p className="text-white font-semibold text-sm leading-tight truncate">{c.client_name}</p>
+                      {c.company_name && (
+                        <p className="text-white/35 text-xs mt-0.5 truncate flex items-center gap-1">
+                          <Building2 size={9} /> {c.company_name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <StatusPill status={c.client_status} />
+                </div>
+
+                {/* Contact */}
+                <div className="space-y-1.5">
+                  {c.email && (
+                    <p className="text-white/45 text-xs flex items-center gap-2 truncate">
+                      <Mail size={11} className="text-white/25 shrink-0" /> {c.email}
+                    </p>
+                  )}
+                  {c.phone_number && (
+                    <p className="text-white/45 text-xs flex items-center gap-2">
+                      <Phone size={11} className="text-white/25 shrink-0" /> {c.phone_number}
+                    </p>
+                  )}
+                  {c.follow_up_date && (
+                    <p className="text-white/35 text-xs flex items-center gap-2">
+                      <Calendar size={11} className="text-white/20 shrink-0" /> {fmtDate(c.follow_up_date)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {c.service_type && (
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: colour + '20', color: colour }}>
+                      {c.service_type}
+                    </span>
+                  )}
+                  {c.follow_up_status && (
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
+                      {c.follow_up_status}
+                    </span>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/[0.07]">
+                  <span className="text-[10px] text-white/25 flex items-center gap-1">
+                    <Clock size={9} /> {fmtDate(c.created_at)}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => { setViewClient(c); setViewIndex(i); }}
+                      className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
+                      title="View"
+                    >
+                      <Eye size={13} />
+                    </button>
+                    <button
+                      onClick={() => { setEditClientTarget(c); setIsFormOpen(true); }}
+                      className="w-7 h-7 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary flex items-center justify-center transition"
+                      title="Edit"
+                    >
+                      <Edit2 size={13} />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(c)}
+                      className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                      title="Delete"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Pagination ── */}
       {!loading && !error && totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-1">
           <p className="text-xs text-white/30">
-            Page <span className="text-white/60 font-semibold">{page}</span> of{' '}
-            <span className="text-white/60 font-semibold">{totalPages}</span>
-            {' '}· {total} total
+            Page <span className="text-white/55 font-semibold">{page}</span> / <span className="text-white/55 font-semibold">{totalPages}</span>
+            &nbsp;·&nbsp;{total} total
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              onClick={() => setPage(p => p - 1)}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
             >
               <ChevronLeft size={14} />
             </button>
-
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const p = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
+            {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+              const pg = Math.max(1, Math.min(page - 2, totalPages - 4)) + idx;
               return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
+                <button key={pg} onClick={() => setPage(pg)}
                   className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${
-                    p === page
-                      ? 'bg-primary text-white shadow-md shadow-primary/30'
-                      : 'bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {p}
+                    pg === page ? 'bg-primary text-white shadow-md' : 'bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                  }`}>
+                  {pg}
                 </button>
               );
             })}
-
             <button
               disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              onClick={() => setPage(p => p + 1)}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
             >
               <ChevronRight size={14} />
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

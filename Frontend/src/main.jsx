@@ -28,8 +28,6 @@ import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
-const AddClient  = lazy(() => import('./Admin/Clients/AddClient.jsx'))
-
 
 
 
@@ -72,7 +70,6 @@ const router = createHashRouter([
         children: [
           { index: true, element: <AdminDashboard /> },
           { path: 'clients',     element: <AllClients /> },
-          { path: 'clients/add', element: <AddClient /> },
         ],
       },
       {

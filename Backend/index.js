@@ -46,6 +46,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/users",   usersRouter);
 app.use("/api/clients", clientRouter);
 
+// Serve static uploads
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 // ── Stub routes for features not yet implemented in this backend ──────────────
 // These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
 app.get("/api/cart/:userId",           (req, res) => res.json({ success: true, data: [] }));
