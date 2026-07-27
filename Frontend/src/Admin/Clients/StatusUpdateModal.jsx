@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, MessageSquare, ShieldCheck, Loader2, History } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import api from '../../api';
 
 const CLIENT_STATUSES = ["Lead", "Prospect", "Active", "Inactive", "Converted", "Closed"];
@@ -15,6 +16,9 @@ const statusColors = {
 };
 
 export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }) {
+  const location = useLocation();
+  const isFollowupsPage = location.pathname.includes('/followups');
+
   const [newStatus, setNewStatus] = useState('');
   const [discussion, setDiscussion] = useState('');
   const [nextDate, setNextDate] = useState('');
@@ -31,9 +35,11 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
       setNextDate('');
       setNextTime('');
       setError('');
-      fetchHistory();
+      if (isFollowupsPage) {
+        fetchHistory();
+      }
     }
-  }, [isOpen, client]);
+  }, [isOpen, client, isFollowupsPage]);
 
   const fetchHistory = async () => {
     try {
@@ -167,32 +173,34 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
           </div>
           </form>
 
-          <div className="p-6 bg-white/[0.01] border-t border-white/10">
-            <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-1.5">
-              <History size={12} /> Previous Discussions
-            </h3>
-            {fetchingHistory ? (
-              <div className="flex items-center justify-center py-4 text-white/30">
-                <Loader2 size={16} className="animate-spin" />
-              </div>
-            ) : history.filter(h => h.discussion_summary).length > 0 ? (
-              <div className="space-y-3">
-                {history.filter(h => h.discussion_summary).map((h, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-white/70">
-                    <p className="mb-2 whitespace-pre-wrap">{h.discussion_summary}</p>
-                    <div className="flex items-center justify-between text-[10px] text-white/30">
-                      <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span className="bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{h.new_status || h.old_status || 'N/A'}</span>
+          {isFollowupsPage && (
+            <div className="p-6 bg-white/[0.01] border-t border-white/10">
+              <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <History size={12} /> Previous Discussions
+              </h3>
+              {fetchingHistory ? (
+                <div className="flex items-center justify-center py-4 text-white/30">
+                  <Loader2 size={16} className="animate-spin" />
+                </div>
+              ) : history.filter(h => h.discussion_summary).length > 0 ? (
+                <div className="space-y-3">
+                  {history.filter(h => h.discussion_summary).map((h, i) => (
+                    <div key={i} className="bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-white/70">
+                      <p className="mb-2 whitespace-pre-wrap">{h.discussion_summary}</p>
+                      <div className="flex items-center justify-between text-[10px] text-white/30">
+                        <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{h.new_status || h.old_status || 'N/A'}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4 text-xs text-white/30 italic bg-white/5 rounded-xl border border-white/5">
-                No previous discussions found.
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-xs text-white/30 italic bg-white/5 rounded-xl border border-white/5">
+                  No previous discussions found.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <style>{`
