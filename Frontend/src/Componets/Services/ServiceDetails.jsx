@@ -1,17 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchServices } from "../Redux/serviceSlice";
-import webdesing from "../../public/images/ServicesImage/webdesing.webp";
-import ui_ux from "../../public/images/ServicesImage/ui_ux.webp";
-import mobileapp from "../../public/images/ServicesImage/mobileapp.webp";
-import ecommerce from "../../public/images/ServicesImage/ecommerce.webp";
-import itjobcources from "../../public/images/ServicesImage/itjobcources.webp";
-import responsive from "../../public/images/ServicesImage/responsive.webp";
-import seo from "../../public/images/ServicesImage/seo.webp";
-import crm from "../../public/images/ServicesImage/crm.webp";
-import internship from "../../public/images/ServicesImage/internship.webp";
-import digitalmarketing from "../../public/images/ServicesImage/digitalmarketing.webp";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -20,23 +8,10 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
 
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ServiceSlider from "./ServiceSlider";
 
-export const serviceImages = {
-  1: webdesing,
-  2: ui_ux,
-  3: mobileapp,
-  4: ecommerce,
-  5: itjobcources,
-  6: responsive,
-  7: seo,
-  8: crm,
-  9: internship,
-  10: digitalmarketing,
-};
 
 const ServiceDetails = () => {
   useEffect(() => {
@@ -48,14 +23,25 @@ const ServiceDetails = () => {
   }, []);
 
   const { id } = useParams();
-  const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.services);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchServices());
-    }
-  }, [dispatch, items.length]);
+    fetch("/Service.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch services");
+        return res.json();
+      })
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   if (loading) return <p>Loading service details...</p>;
   if (error) return <p>Error: {error}</p>;
