@@ -125,12 +125,12 @@ const EmployeeList = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-3">
-                      <button className="text-gray-400 transition hover:text-blue-600">
+                      <Link to={`/admin/employees/view/${emp.employee_id}`} className="text-gray-400 transition hover:text-blue-600">
                         <FiEye size={18} />
-                      </button>
-                      <button className="text-gray-400 transition hover:text-green-600">
+                      </Link>
+                      <Link to={`/admin/employees/edit/${emp.employee_id}`} className="text-gray-400 transition hover:text-green-600">
                         <FiEdit size={18} />
-                      </button>
+                      </Link>
                       <button
                         onClick={() => handleDelete(emp.employee_id)}
                         className="text-gray-400 transition hover:text-red-600"
