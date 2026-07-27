@@ -15,7 +15,11 @@ function App() {
   const currentRoute = hash?.startsWith("#") ? hash.slice(1) : pathname;
   const isAuthPage = currentRoute === "/login" || currentRoute === "/register";
   const isAdmin = currentRoute === "/admin" || currentRoute.startsWith("/admin/");
-  const isEmployee = currentRoute === "/employee" || currentRoute.startsWith("/employee/");
+  const isEmployee =
+    currentRoute === "/employee" ||
+    currentRoute.startsWith("/employee/") ||
+    currentRoute === "/trainee" ||
+    currentRoute.startsWith("/trainee/");
   const showPublicChrome = !isAuthPage && !isAdmin && !isEmployee;
 
   if (loading) {

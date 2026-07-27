@@ -2,22 +2,42 @@ import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  ClipboardCheck,
+  Target,
+  ListTodo,
+  UserPlus,
+  Loader,
+  CheckCircle2,
+  UserCheck,
+  List,
+  BarChart2,
+  Timer,
+  Plane,
+  Umbrella,
   CalendarOff,
-  FolderKanban,
-  CheckSquare,
+  Send,
+  History,
   Clock,
-  DollarSign,
-  Video,
-  Home,
+  CalendarClock,
+  PlusCircle,
+  GraduationCap,
+  PlaySquare,
+  BookMarked,
+  PenTool,
+  LineChart,
+  Activity,
+  Trophy,
+  MessageSquare,
+  Files,
+  FileText,
+  Building2,
+  Users,
+  MonitorPlay,
+  CalendarRange,
+  Calendar,
+  Building,
   X,
   ChevronLeft,
-  ChevronDown,
-  FileText,
-  CalendarDays,
-  TrendingUp,
-  Users,
-  CalendarClock,
+  ChevronDown
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -26,100 +46,105 @@ import Logo from "/images/logo.png";
 /* ================= NAV ITEMS ================= */
 const navItems = [
   {
-    path: "/employee",
+    path: "/trainee",
     label: "Dashboard",
     icon: LayoutDashboard,
     exact: true,
   },
 
-  /* ---- ATTENDANCE ---- */
-  {
-    label: "My Attendance",
-    icon: ClipboardCheck,
-    children: [
-      { path: "/employee/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/employee/attendance/summary", label: "Summary", icon: TrendingUp },
-    ],
-  },
-
-  /* ---- LEAVE ---- */
-  {
-    label: "My Leave",
-    icon: CalendarOff,
-    children: [
-      { path: "/employee/leaves", label: "My Leaves", icon: CalendarOff },
-      { path: "/employee/leaves/apply", label: "Apply Leave", icon: FileText },
-      { path: "/employee/leaves/history", label: "Leave History", icon: CalendarDays },
-    ],
-  },
-
-  /* ---- PROJECTS ---- */
-  {
-    label: "My Projects",
-    icon: FolderKanban,
-    children: [
-      { path: "/employee/projects", label: "All Projects", icon: FolderKanban },
-      { path: "/employee/projects/active", label: "Active Projects", icon: TrendingUp },
-    ],
-  },
-
-  /* ---- TASKS ---- */
+  // My Tasks
   {
     label: "My Tasks",
-    icon: CheckSquare,
+    icon: Target,
     children: [
-      { path: "/employee/tasks", label: "All Tasks", icon: CheckSquare },
-      { path: "/employee/tasks/board", label: "Task Board", icon: FolderKanban },
-      { path: "/employee/tasks/pending", label: "Pending Tasks", icon: FileText },
+      { path: "/trainee/tasks/assigned", label: "Assigned Tasks", icon: UserPlus },
+      { path: "/trainee/tasks/in-progress", label: "In Progress", icon: Loader },
+      { path: "/trainee/tasks/completed", label: "Completed Tasks", icon: CheckCircle2 },
     ],
   },
 
-  /* ---- TIMESHEET ---- */
+  // My Attendance
+  {
+    label: "My Attendance",
+    icon: UserCheck,
+    children: [
+      { path: "/trainee/attendance", label: "Attendance Log", icon: List },
+      { path: "/trainee/attendance/summary", label: "Summary", icon: BarChart2 },
+      { path: "/trainee/attendance/checkin", label: "Check In / Check Out", icon: Timer },
+    ],
+  },
+
+  // Leave Management
+  {
+    label: "Leave Management",
+    icon: Umbrella,
+    children: [
+      { path: "/trainee/leaves", label: "My Leaves", icon: CalendarOff },
+      { path: "/trainee/leaves/apply", label: "Apply Leave", icon: Send },
+      { path: "/trainee/leaves/history", label: "Leave History", icon: History },
+    ],
+  },
+
+  // Timesheet
   {
     label: "Timesheet",
     icon: Clock,
     children: [
-      { path: "/employee/timesheet", label: "My Timesheet", icon: Clock },
-      { path: "/employee/timesheet/log", label: "Log Hours", icon: FileText },
+      { path: "/trainee/timesheet", label: "My Timesheet", icon: CalendarClock },
+      { path: "/trainee/timesheet/add", label: "Add Timesheet", icon: PlusCircle },
+      { path: "/trainee/timesheet/history", label: "Timesheet History", icon: History },
     ],
   },
 
-  /* ---- PAYROLL ---- */
+  // Training
   {
-    label: "Salary & Payroll",
-    icon: DollarSign,
+    label: "Training",
+    icon: GraduationCap,
     children: [
-      { path: "/employee/payroll", label: "My Salary", icon: DollarSign },
-      { path: "/employee/payroll/slips", label: "Pay Slips", icon: FileText },
+      { path: "/trainee/training/modules", label: "Training Modules", icon: PlaySquare },
+      { path: "/trainee/training/materials", label: "Learning Materials", icon: BookMarked },
+      { path: "/trainee/training/assignments", label: "Assignments", icon: PenTool },
     ],
   },
 
-  /* ---- MEETINGS ---- */
+  // Performance
+  {
+    label: "Performance",
+    icon: Activity,
+    children: [
+      { path: "/trainee/performance", label: "My Performance", icon: Trophy },
+      { path: "/trainee/performance/feedback", label: "Feedback", icon: MessageSquare },
+    ],
+  },
+
+  // Documents
+  {
+    label: "Documents",
+    icon: Files,
+    children: [
+      { path: "/trainee/documents", label: "My Documents", icon: FileText },
+      { path: "/trainee/documents/company", label: "Company Documents", icon: Building2 },
+    ],
+  },
+
+  // Meetings
   {
     label: "Meetings",
-    icon: Video,
+    icon: MonitorPlay,
     children: [
-      { path: "/employee/meetings", label: "All Meetings", icon: Video },
-      { path: "/employee/meetings/upcoming", label: "Upcoming", icon: CalendarDays }
-    ]
+      { path: "/trainee/meetings", label: "All Meetings", icon: List },
+      { path: "/trainee/meetings/upcoming", label: "Upcoming", icon: CalendarRange },
+    ],
   },
 
-  /* ---- CALENDAR ---- */
-  {
-    path: "/employee/office-calendar",
-    label: "Office Calendar",
-    icon: CalendarDays,
-  },
-  {
-    path: "/employee/my-calendar",
-    label: "My Daily Calendar",
-    icon: CalendarClock,
-  }
+  // Calendars
+  { path: "/trainee/office-calendar", label: "Office Calendar", icon: Building },
+  { path: "/trainee/my-calendar", label: "My Daily Calendar", icon: Calendar },
 ];
 
 /* ================= SIDEBAR ================= */
-const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
-  const { userProfile } = useAuth();
+const TraineeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
+  const { profileName, role } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
@@ -138,7 +163,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   }, [location.pathname]);
 
   const isRouteActive = (path) => {
-    if (path === "/employee" || path === "/") return location.pathname === path;
+    if (path === "/trainee" || path === "/") return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
@@ -184,7 +209,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 Q Techx
               </h1>
               <p className="text-[10px] text-white/50 truncate">
-                {userProfile?.displayName?.split(" ")[0] || "Employee"} Portal
+                {profileName?.split(" ")[0] || "Trainee"} Portal
               </p>
             </div>
           )}
@@ -331,14 +356,14 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           <div className="px-3 py-3 border-t border-white/10 shrink-0">
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {(userProfile?.displayName?.[0] || "E").toUpperCase()}
+                {(profileName?.[0] || "T").toUpperCase()}
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs font-semibold text-white truncate">
-                  {userProfile?.displayName || "Employee"}
+                  {profileName || "Trainee"}
                 </p>
                 <p className="text-[10px] text-white/40 truncate">
-                  {userProfile?.role || "Staff"}
+                  {role || "Trainee"}
                 </p>
               </div>
             </div>
@@ -349,4 +374,4 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   );
 };
 
-export default EmployeeSidebar;
+export default TraineeSidebar;

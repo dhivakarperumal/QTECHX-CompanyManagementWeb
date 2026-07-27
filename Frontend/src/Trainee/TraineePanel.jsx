@@ -2,11 +2,11 @@ import { useState, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import React from "react";
 import { PacmanLoader } from "react-spinners";
-import Sidebar from "./AdminSidebar";
-import Header from "./AdminHeader";
-import FloatingSupport from "../Componets/CommonComponents/FloatingSupport";
+import Sidebar from "./TraineeSidebar";
+import Header from "./TraineeHeader";
+import UsersTable from "./UsersTable";
 
-const AdminLayout = () => {
+const TraineeLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(
@@ -25,11 +25,11 @@ const AdminLayout = () => {
   }, []);
 
   const location = useLocation();
-  const isPrintPage = location.pathname.includes('/admin/pt-form/print/');
+  const isPrintPage = location.pathname.includes('/trainee/print/');
 
 
   return (
-    <div className={`admin-root flex min-h-screen ${isPrintPage ? 'bg-white text-black' : 'text-white'}`}>
+    <div className={`employee-root flex min-h-screen ${isPrintPage ? 'bg-white text-black' : 'text-white'}`}>
       
       {/* Sidebar */}
       {!isPrintPage && (
@@ -62,6 +62,7 @@ const AdminLayout = () => {
               </div>
             }>
               <Outlet />
+        <UsersTable />
             </Suspense>
           </div>
         </main>
@@ -73,12 +74,9 @@ const AdminLayout = () => {
          </footer>
        )}
 
-       {/* Floating Support (Chat, WhatsApp, Call) */}
-       <FloatingSupport />
-
       </div>
     </div>
   );
 };
 
-export default AdminLayout;
+export default TraineeLayout;

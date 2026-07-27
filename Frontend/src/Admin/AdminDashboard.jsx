@@ -3,8 +3,12 @@ import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
   TrendingDown, ArrowUpRight, Clock, AlertCircle, CheckCircle2,
-  UserPlus, Briefcase, Activity, Calendar,
+  UserPlus, Briefcase, Activity, Calendar, ChevronDown, Settings
 } from 'lucide-react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts';
 
 /* ─── Helpers ─── */
 const greeting = () => {
@@ -21,10 +25,8 @@ const today = new Date().toLocaleDateString('en-IN', {
 /* ─── Stat Card ─── */
 const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor }) => (
   <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/6">
-    {/* bg glow */}
     <div className={`absolute -top-5 -right-6 w-28 h-28 rounded-full blur-3xl opacity-25 ${bgColor}`} />
     <div className="absolute inset-x-5 top-5 h-px bg-white/10" />
-
     <div className="flex items-center justify-between mb-5 relative">
       <div className={`w-12 h-12 rounded-3xl flex items-center justify-center ${color} ring-1 ring-white/10`}>
         <Icon size={20} />
@@ -38,7 +40,6 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor
         </span>
       )}
     </div>
-
     <p className="text-3xl font-semibold text-white mb-1 leading-none">{value}</p>
     <p className="text-white/50 text-xs uppercase tracking-[0.18em] font-semibold">{label}</p>
   </div>
@@ -122,21 +123,54 @@ const ActivityRow = ({ icon: Icon, iconColor, iconBg, title, sub, time, badge, b
   </div>
 );
 
-/* ─── Progress Bar ─── */
-const ProgressBar = ({ label, value, max, color }) => {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div className="mb-4 last:mb-0">
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-white/70 text-xs font-medium">{label}</span>
-        <span className="text-white text-xs font-bold">{value}<span className="text-white/30">/{max}</span></span>
-      </div>
-      <div className="w-full bg-white/8 rounded-full h-1.5">
-        <div className={`h-1.5 rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-};
+/* ─── Mock Data for Charts ─── */
+const overviewData = [
+  { name: 'May 1', employees: 10, projects: 50 },
+  { name: 'May 6', employees: 40, projects: 120 },
+  { name: 'May 11', employees: 55, projects: 100 },
+  { name: 'May 16', employees: 80, projects: 140 },
+  { name: 'May 21', employees: 70, projects: 120 },
+  { name: 'May 26', employees: 110, projects: 160 },
+  { name: 'May 31', employees: 140, projects: 220 },
+];
+
+const tasksStatusData = [
+  { name: 'Completed', value: 178, color: '#f97316' }, 
+  { name: 'In Progress', value: 48, color: '#4b5563' }, 
+  { name: 'Pending', value: 16, color: '#9ca3af' }, 
+];
+
+const employeeDeptData = [
+  { name: 'Engineering', value: 96, color: '#f97316' },
+  { name: 'Marketing', value: 48, color: '#6b7280' },
+  { name: 'Sales', value: 40, color: '#4b5563' },
+  { name: 'HR', value: 32, color: '#374151' },
+  { name: 'Finance', value: 24, color: '#1f2937' },
+  { name: 'Others', value: 16, color: '#111827' },
+];
+
+const revenueData = [
+  { month: 'Jan', revenue: 45000, expenses: 32000 },
+  { month: 'Feb', revenue: 52000, expenses: 34000 },
+  { month: 'Mar', revenue: 48000, expenses: 31000 },
+  { month: 'Apr', revenue: 61000, expenses: 38000 },
+  { month: 'May', revenue: 59000, expenses: 40000 },
+  { month: 'Jun', revenue: 75000, expenses: 45000 },
+];
+
+const recentCompletedTasksData = [
+  { name: 'Homepage Redesign', project: 'Website V2', assignee: 'Alex Morgan', avatar: 'https://i.pravatar.cc/150?u=5', status: 'Completed' },
+  { name: 'API Integration', project: 'Mobile App', assignee: 'Sam Smith', avatar: 'https://i.pravatar.cc/150?u=6', status: 'Completed' },
+  { name: 'Database Migration', project: 'Backend Ops', assignee: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=1', status: 'Completed' },
+  { name: 'Q3 Financial Report', project: 'Finance', assignee: 'Lisa Ray', avatar: 'https://i.pravatar.cc/150?u=7', status: 'Completed' },
+];
+
+const leaveRequestsData = [
+  { employee: 'Michael Scott', avatar: 'https://i.pravatar.cc/150?u=8', type: 'Sick Leave', duration: 'Oct 12 - Oct 14' },
+  { employee: 'Jim Halpert', avatar: 'https://i.pravatar.cc/150?u=9', type: 'Casual Leave', duration: 'Oct 15 (1 day)' },
+  { employee: 'Pam Beesly', avatar: 'https://i.pravatar.cc/150?u=10', type: 'Maternity', duration: 'Nov 1 - Jan 31' },
+  { employee: 'Dwight Schrute', avatar: 'https://i.pravatar.cc/150?u=11', type: 'Emergency', duration: 'Oct 13 (Half day)' },
+];
 
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD
@@ -202,9 +236,10 @@ const AdminDashboard = () => {
   ];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
   const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
+  ];
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-6 pb-6 text-white min-h-screen">
 
       {/* ── GREETING BANNER ── */}
       <div className="relative rounded-[2rem] overflow-hidden p-6 md:p-8 border border-white/10 bg-[#12131a]/70 shadow-2xl shadow-black/40">
@@ -287,11 +322,96 @@ const AdminDashboard = () => {
         {stats.map((s, i) => <StatCard key={i} {...s} />)}
       </div>
 
-      {/* ── MIDDLE ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* ── CHARTS ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* Company Overview (Line Chart) */}
+        <div className="lg:col-span-8 bg-white/4 border border-white/8 p-6 rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-bold text-white">Company Overview</h2>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
+              This Month <ChevronDown size={14} />
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={overviewData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Line type="monotone" dataKey="projects" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="employees" stroke="#6b7280" strokeWidth={2} dot={{ r: 3, fill: '#6b7280' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center justify-start gap-6 mt-4 ml-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+              <span className="text-xs text-white/60">Employees</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-500" />
+              <span className="text-xs text-white/60">Projects</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 rounded-2xl bg-white/4 border border-white/8 p-5">
+        {/* Tasks by Status (Donut Chart) */}
+        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <h2 className="text-sm font-bold text-white mb-2">Tasks by Status</h2>
+          <div className="flex-1 relative flex items-center justify-center h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={tasksStatusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {tasksStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+              <span className="text-2xl font-bold text-white">242</span>
+              <span className="text-[10px] text-white/50">Total</span>
+            </div>
+          </div>
+          <div className="space-y-3 mt-4">
+            {tasksStatusData.map((t, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  <span className="text-white/70">{t.name}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-semibold text-white">{t.value}</span>
+                  <span className="text-white/40">({Math.round((t.value/242)*100)}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        {/* Original Recent Activity */}
+        <div className="lg:col-span-5 rounded-2xl bg-white/4 border border-white/8 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-bold text-base flex items-center gap-2">
               <Activity size={17} className="text-primary" /> Recent Activity
@@ -301,46 +421,36 @@ const AdminDashboard = () => {
           {recentActivity.map((a, i) => <ActivityRow key={i} {...a} />)}
         </div>
 
-        {/* Department Headcount */}
-        <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Briefcase size={17} className="text-primary" /> Departments
-            </h2>
-            <span className="text-xs text-white/30">Headcount</span>
+        {/* Employees by Department (Donut) */}
+        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
           </div>
-          {departments.map((d, i) => <ProgressBar key={i} {...d} />)}
-        </div>
-      </div>
-
-      {/* ── BOTTOM ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Task Overview */}
-        <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-3xl bg-primary/10 text-primary flex items-center justify-center">
-                <CheckSquare size={20} />
-              </div>
-              <div>
-                <h2 className="text-white font-bold text-base">Task Overview</h2>
-                <p className="text-xs text-white/40">Current workload and progress</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 text-center text-white/50 text-[11px]">
-              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Today</p>
-                <p className="text-white font-semibold mt-2">34 Tasks</p>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Completion</p>
-                <p className="text-white font-semibold mt-2">78%</p>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-3 border border-white/10">
-                <p className="text-[10px] uppercase tracking-[0.24em] text-white/40">Total</p>
-                <p className="text-white font-semibold mt-2">{totalTasks} Tasks</p>
-              </div>
+          <div className="flex-1 relative flex items-center justify-center h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={employeeDeptData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={1}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {employeeDeptData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+              <span className="text-2xl font-bold text-white">256</span>
+              <span className="text-[10px] text-white/50">Total</span>
             </div>
           </div>
 
@@ -369,6 +479,41 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
+          <h2 className="text-sm font-bold text-white mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <UserPlus className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Add Employee</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Briefcase className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Add Project</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <CheckSquare className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Create Task</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Calendar className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Mark Attendance</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Activity className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">Generate Report</span>
+            </div>
+            
+            <div className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-3">
+              <Settings className="text-primary" size={24} />
+              <span className="text-[10px] font-medium text-white/80 text-center">System Settings</span>
+            </div>
+            
         {/* Upcoming Events */}
         <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
           <div className="flex items-center justify-between mb-6">
@@ -402,46 +547,137 @@ const AdminDashboard = () => {
 
       </div>
 
-      {/* ── LEAVE SUMMARY STRIP ── */}
-      <div className="rounded-2xl bg-white/4 border border-white/8 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-bold text-base flex items-center gap-2">
-            <CalendarOff size={17} className="text-primary" /> Leave Requests — This Week
+      {/* ── REVENUE ROW ── */}
+      <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col mt-5">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-bold text-white flex items-center gap-2">
+            <DollarSign size={16} className="text-primary" /> Company Revenue
           </h2>
-          <button className="text-xs text-primary hover:underline">Manage All</button>
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
+            Last 6 Months <ChevronDown size={14} />
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/8">
-                {['Employee', 'Type', 'From', 'To', 'Days', 'Status'].map(h => (
-                  <th key={h} className="text-left text-white/40 text-xs font-semibold pb-3 pr-4">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {[
-                { name: 'Rahul Kumar',   type: 'Casual',   from: 'Jul 28', to: 'Jul 28', days: 1, status: 'Pending',  statusColor: 'bg-yellow-500/20 text-yellow-400' },
-                { name: 'Priya Sharma',  type: 'Medical',  from: 'Jul 30', to: 'Aug 1',  days: 3, status: 'Pending',  statusColor: 'bg-yellow-500/20 text-yellow-400' },
-                { name: 'Amit Verma',    type: 'Annual',   from: 'Aug 5',  to: 'Aug 9',  days: 5, status: 'Approved', statusColor: 'bg-green-500/20 text-green-400' },
-                { name: 'Sneha Pillai',  type: 'Casual',   from: 'Jul 25', to: 'Jul 25', days: 1, status: 'Approved', statusColor: 'bg-green-500/20 text-green-400' },
-                { name: 'Vikram Nair',   type: 'Personal', from: 'Aug 2',  to: 'Aug 3',  days: 2, status: 'Rejected', statusColor: 'bg-red-500/20 text-red-400' },
-              ].map((r, i) => (
-                <tr key={i} className="hover:bg-white/3 transition">
-                  <td className="py-3 pr-4 text-white font-medium">{r.name}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.type}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.from}</td>
-                  <td className="py-3 pr-4 text-white/50">{r.to}</td>
-                  <td className="py-3 pr-4 text-white/70">{r.days}d</td>
-                  <td className="py-3">
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${r.statusColor}`}>
-                      {r.status}
-                    </span>
-                  </td>
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={revenueData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6b7280" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                itemStyle={{ color: '#fff' }}
+              />
+              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#6b7280" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex items-center justify-center gap-6 mt-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded bg-primary" />
+            <span className="text-xs text-white/60">Revenue</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded bg-gray-500" />
+            <span className="text-xs text-white/60">Expenses</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── TABLES ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2">
+        
+        {/* Recent Tasks Completed Table */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-primary" /> Recent Tasks Completed
+            </h2>
+            <button className="text-xs text-primary hover:underline">View All</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-xs text-white/50">
+                  <th className="pb-3 font-medium">Task Name</th>
+                  <th className="pb-3 font-medium">Project</th>
+                  <th className="pb-3 font-medium">Assigned To</th>
+                  <th className="pb-3 font-medium text-right">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="text-sm">
+                {recentCompletedTasksData.map((task, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="py-3 font-medium text-white text-xs">{task.name}</td>
+                    <td className="py-3 text-white/70 text-xs">{task.project}</td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={task.avatar} alt={task.assignee} className="w-6 h-6 rounded-full" />
+                        <span className="text-white/80 text-[11px]">{task.assignee}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="bg-green-500/10 text-green-400 text-[10px] px-2 py-1 rounded-full font-semibold">
+                        {task.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Leave Requests Table */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <CalendarOff size={16} className="text-primary" /> Leave Requests
+            </h2>
+            <button className="text-xs text-primary hover:underline">View All</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-xs text-white/50">
+                  <th className="pb-3 font-medium">Employee</th>
+                  <th className="pb-3 font-medium">Leave Type</th>
+                  <th className="pb-3 font-medium">Duration</th>
+                  <th className="pb-3 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {leaveRequestsData.map((leave, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={leave.avatar} alt={leave.employee} className="w-6 h-6 rounded-full" />
+                        <span className="text-white/80 font-medium text-xs">{leave.employee}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-white/70 text-[11px]">{leave.type}</td>
+                    <td className="py-3 text-white/50 text-[10px]">{leave.duration}</td>
+                    <td className="py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="bg-green-500/15 text-green-400 hover:bg-green-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Approve</button>
+                        <button className="bg-red-500/15 text-red-400 hover:bg-red-500/25 px-2 py-1 rounded text-[10px] font-semibold transition">Reject</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

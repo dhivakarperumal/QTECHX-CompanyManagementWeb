@@ -51,7 +51,13 @@ async function getAll(req, res) {
   try {
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 20);
-    const result = await listUsers({ page, limit, search: req.query.search?.trim(), status: req.query.status });
+    const result = await listUsers({
+      page,
+      limit,
+      search: req.query.search?.trim(),
+      status: req.query.status,
+      role: req.query.role,
+    });
     return res.json({
       data: result.rows.map(publicUser),
       pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) },
@@ -121,4 +127,26 @@ async function login(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove, login };
+async function addTrainee(req, res) {
+  try {
+    const password = await bcrypt.hash('defaultPass123', 12);
+    const actor = req.user?.user_id || "SYSTEM";
+    const user = await createUser({
+      user_id: uuidv4(),
+      username: "trainee",
+      email: req.body.email || "trainee@gmail.com",
+      mobile: req.body.mobile || "1234567898",
+      password,
+      role: "Trainee",
+      status: "Active",
+      created_by: actor,
+      updated_by: actor,
+    });
+    return res.status(201).json({ message: "Trainee created", user: publicUser(user) });
+  } catch (error) {
+    const message = duplicateMessage(error);
+    return res.status(message ? 409 : 500).json({ message: message || "Failed to create trainee" });
+  }
+}
+
+module.exports = { create, getAll, getOne, update, remove, login, addTrainee };
