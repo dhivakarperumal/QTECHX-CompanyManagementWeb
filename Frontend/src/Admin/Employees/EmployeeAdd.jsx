@@ -200,31 +200,31 @@ const EmployeeAdd = () => {
     }
   };
 
-  const inputClass = "w-full rounded-md border border-gray-300 p-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary";
-  const labelClass = "mb-1 block text-sm font-medium text-gray-700";
+  const inputClass = "w-full rounded-md border border-slate-700 bg-slate-800 p-2.5 text-sm text-slate-200 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary placeholder-slate-500";
+  const labelClass = "mb-1.5 block text-sm font-medium text-slate-300";
 
   if (fetching) {
-    return <div className="p-6 text-center text-gray-500">Loading employee details...</div>;
+    return <div className="min-h-screen bg-slate-900 p-6 text-center text-slate-400">Loading employee details...</div>;
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 min-h-screen bg-[#161C24] text-slate-200">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/admin/employees" className="text-gray-500 hover:text-gray-800">
+          <Link to="/admin/employees" className="text-slate-400 hover:text-white">
             <FiArrowLeft size={24} />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800">{isEditMode ? "Edit Employee" : "Add New Employee"}</h1>
+          <h1 className="text-2xl font-bold text-slate-100">{isEditMode ? "Edit Employee" : "Add New Employee"}</h1>
         </div>
       </div>
 
-      {error && <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && <div className="mb-6 rounded-md border border-red-500/50 bg-red-900/20 p-4 text-red-400">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-gray-400 p-6 shadow">
+      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-slate-800 bg-slate-900/50 p-6 shadow-xl">
         
         {/* Personal Details */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Personal Details</h2>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Personal Details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Profile Photo</label>
@@ -307,7 +307,7 @@ const EmployeeAdd = () => {
 
         {/* Emergency Contact */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Emergency Contact</h2>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Emergency Contact</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Contact Person</label>
@@ -326,7 +326,7 @@ const EmployeeAdd = () => {
 
         {/* Employment Details */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Employment Details</h2>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Employment Details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Designation</label>
@@ -367,7 +367,7 @@ const EmployeeAdd = () => {
 
         {/* Banking Details */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Banking Details</h2>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Banking Details</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Salary Type</label>
@@ -398,7 +398,7 @@ const EmployeeAdd = () => {
 
         {/* Documents */}
         <div>
-          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Documents</h2>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Documents</h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Resume</label>
@@ -469,7 +469,7 @@ const EmployeeAdd = () => {
         <div className="mt-8 flex justify-end gap-4">
           <Link
             to="/admin/employees"
-            className="rounded-md border border-gray-300 px-6 py-2.5 font-medium text-gray-700 transition hover:bg-gray-50"
+            className="rounded-md border border-slate-700 px-6 py-2.5 font-medium text-slate-300 transition hover:bg-slate-800"
           >
             Cancel
           </Link>
