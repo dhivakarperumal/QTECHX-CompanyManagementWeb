@@ -55,7 +55,7 @@ const navItems = [
     icon: Handshake,
     children: [
       { path: "/admin/clients", label: "All Clients", icon: Users },
-      { path: "/admin/clients/add", label: "Add Client", icon: UserRoundPlus },
+      
       { path: "/admin/clients/followups", label: "Followups", icon: Clock },
     ],
   },

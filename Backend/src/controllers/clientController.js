@@ -102,6 +102,14 @@ async function createClientHandler(req, res) {
       updated_by: actor,
     });
 
+    await createHistoryRecord({
+      client_id: client.id,
+      event_type: "Client Created",
+      new_status: client.client_status,
+      discussion_summary: "Initial client creation",
+      created_by: actor,
+    });
+
     return ok(res, { message: "Client created successfully", data: client }, 201);
   } catch (err) {
     console.error("createClientHandler:", err);
@@ -133,7 +141,23 @@ async function getClientByIdHandler(req, res) {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
     const documents = await listDocumentsByClientId(client.id);
-    const history = await listHistoryByClientId(client.id);
+    let history = await listHistoryByClientId(client.id);
+    
+    // Inject synthetic "Client Created" event for old clients missing it
+    if (!history.some(h => h.event_type === "Client Created")) {
+      history.push({
+        id: 'synthetic-creation',
+        event_type: "Client Created",
+        new_status: client.client_status,
+        discussion_summary: client.requirement || "Initial client creation",
+        created_at: client.created_at,
+        created_by: client.created_by
+      });
+    }
+
+    // Sort by created_at DESC (newest first)
+    history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
     return ok(res, { data: { ...client, documents, history } });
   } catch (err) {
     console.error("getClientByIdHandler:", err);
@@ -174,6 +198,22 @@ async function updateClientHandler(req, res) {
 
     updates.updated_by = req.user?.user_id || "SYSTEM";
     const client = await updateClient(req.params.id, updates);
+
+    // Log history if status or discussion changed
+    if (
+      (updates.client_status && updates.client_status !== existing.client_status) ||
+      (updates.discussion_summary && updates.discussion_summary !== existing.discussion_summary)
+    ) {
+      await createHistoryRecord({
+        client_id: existing.id,
+        event_type: "Profile Updated",
+        old_status: existing.client_status,
+        new_status: updates.client_status || existing.client_status,
+        discussion_summary: updates.discussion_summary || null,
+        created_by: updates.updated_by,
+      });
+    }
+
     return ok(res, { message: "Client updated successfully", data: client });
   } catch (err) {
     console.error("updateClientHandler:", err);

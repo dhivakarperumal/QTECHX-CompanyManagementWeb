@@ -69,7 +69,8 @@ const router = createHashRouter([
         ),
         children: [
           { index: true, element: <AdminDashboard /> },
-          { path: 'clients',     element: <AllClients /> },
+          { path: 'clients',     element: <AllClients key="all" /> },
+          { path: 'clients/followups', element: <AllClients key="followups" defaultFuFilter="Pending" /> },
         ],
       },
       {

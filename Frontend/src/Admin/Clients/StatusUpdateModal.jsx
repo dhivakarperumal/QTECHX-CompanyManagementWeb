@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Clock, MessageSquare, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, MessageSquare, ShieldCheck, Loader2, History } from 'lucide-react';
 import api from '../../api';
 
 const CLIENT_STATUSES = ["Lead", "Prospect", "Active", "Inactive", "Converted", "Closed"];
@@ -21,6 +21,8 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
   const [nextTime, setNextTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [history, setHistory] = useState([]);
+  const [fetchingHistory, setFetchingHistory] = useState(false);
 
   useEffect(() => {
     if (isOpen && client) {
@@ -29,8 +31,23 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
       setNextDate('');
       setNextTime('');
       setError('');
+      fetchHistory();
     }
   }, [isOpen, client]);
+
+  const fetchHistory = async () => {
+    try {
+      setFetchingHistory(true);
+      const { data } = await api.get(`/clients/${client.uuid}`);
+      if (data.success && data.data.history) {
+        setHistory(data.data.history);
+      }
+    } catch (err) {
+      console.error("Failed to fetch client history", err);
+    } finally {
+      setFetchingHistory(false);
+    }
+  };
 
   if (!isOpen || !client) return null;
 
@@ -148,11 +165,48 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
             </button>
           </div>
         </form>
+
+        <div className="p-6 bg-white/[0.01] border-t border-white/10 max-h-60 overflow-y-auto custom-scrollbar">
+          <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+            <History size={12} /> Previous Discussions
+          </h3>
+          {fetchingHistory ? (
+            <div className="flex items-center justify-center py-4 text-white/30">
+              <Loader2 size={16} className="animate-spin" />
+            </div>
+          ) : history.filter(h => h.discussion_summary).length > 0 ? (
+            <div className="space-y-3">
+              {history.filter(h => h.discussion_summary).map((h, i) => (
+                <div key={i} className="bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-white/70">
+                  <p className="mb-2 whitespace-pre-wrap">{h.discussion_summary}</p>
+                  <div className="flex items-center justify-between text-[10px] text-white/30">
+                    <span>{new Date(h.created_at).toLocaleDateString()} {new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{h.new_status || h.old_status || 'N/A'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-xs text-white/30 italic bg-white/5 rounded-xl border border-white/5">
+              No previous discussions found.
+            </div>
+          )}
+        </div>
       </div>
       <style>{`
         @keyframes scaleIn {
           from { transform: scale(0.95); opacity: 0; }
           to   { transform: scale(1);    opacity: 1; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
         }
       `}</style>
     </div>,

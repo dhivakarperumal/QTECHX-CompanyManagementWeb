@@ -380,7 +380,7 @@ function ViewDrawer({ client, index, onClose, onEdit, onStatusClick }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function AllClients() {
+export default function AllClients({ defaultFuFilter = '' }) {
   const navigate = useNavigate();
 
   const [viewMode, setViewMode]   = useState('table');   // ← default TABLE
@@ -390,7 +390,7 @@ export default function AllClients() {
   const [search, setSearch]               = useState('');
   const [statusFilter, setStatusFilter]   = useState('');
   const [serviceFilter, setServiceFilter] = useState('');
-  const [fuFilter, setFuFilter]           = useState('');
+  const [fuFilter, setFuFilter]           = useState(defaultFuFilter);
 
   // Pagination
   const [page, setPage]   = useState(1);
