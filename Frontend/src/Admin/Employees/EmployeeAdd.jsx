@@ -1,0 +1,327 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
+import { FiArrowLeft, FiSave } from "react-icons/fi";
+
+const EmployeeAdd = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [formData, setFormData] = useState({
+    employee_code: "",
+    first_name: "",
+    last_name: "",
+    profile_photo: "",
+    gender: "",
+    dob: "",
+    blood_group: "",
+    marital_status: "",
+    nationality: "",
+    aadhaar_number: "",
+    pan_number: "",
+    mobile_number: "",
+    alternate_mobile: "",
+    personal_email: "",
+    permanent_address: "",
+    emergency_contact_person: "",
+    emergency_contact_number: "",
+    emergency_relationship: "",
+    designation: "",
+    team_lead: "",
+    joining_date: "",
+    confirmation_date: "",
+    employment_status: "Active",
+    role: "Employee",
+    salary_type: "",
+    basic_salary: "",
+    bank_name: "",
+    account_number: "",
+    ifsc_code: "",
+    upi_id: "",
+    resume_url: "",
+    aadhaar_url: "",
+    pan_url: "",
+    passport_url: "",
+    offer_letter_url: "",
+    appointment_letter_url: "",
+    nda_url: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5000/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create employee");
+      }
+
+      alert("Employee created successfully!");
+      navigate("/admin/employees");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputClass = "w-full rounded-md border border-gray-300 p-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary";
+  const labelClass = "mb-1 block text-sm font-medium text-gray-700";
+
+  return (
+    <div className="p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/admin/employees" className="text-gray-500 hover:text-gray-800">
+            <FiArrowLeft size={24} />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-800">Add New Employee</h1>
+        </div>
+      </div>
+
+      {error && <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-600">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-8 rounded-lg border border-gray-200 bg-white p-6 shadow">
+        
+        {/* Personal Details */}
+        <div>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Personal Details</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
+              <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Last Name</label>
+              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Employee Code</label>
+              <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Gender</label>
+              <select name="gender" value={formData.gender} onChange={handleChange} className={inputClass}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Date of Birth</label>
+              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Blood Group</label>
+              <input type="text" name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Marital Status</label>
+              <select name="marital_status" value={formData.marital_status} onChange={handleChange} className={inputClass}>
+                <option value="">Select Status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Nationality</label>
+              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Aadhaar Number</label>
+              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>PAN Number</label>
+              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
+              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Alternate Mobile</label>
+              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Personal Email</label>
+              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} />
+            </div>
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className={labelClass}>Permanent Address</label>
+              <textarea name="permanent_address" rows="2" value={formData.permanent_address} onChange={handleChange} className={inputClass}></textarea>
+            </div>
+          </div>
+        </div>
+
+        {/* Emergency Contact */}
+        <div>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Emergency Contact</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div>
+              <label className={labelClass}>Contact Person</label>
+              <input type="text" name="emergency_contact_person" value={formData.emergency_contact_person} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Contact Number</label>
+              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Relationship</label>
+              <input type="text" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange} className={inputClass} />
+            </div>
+          </div>
+        </div>
+
+        {/* Employment Details */}
+        <div>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Employment Details</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>Designation</label>
+              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Team Lead</label>
+              <input type="text" name="team_lead" value={formData.team_lead} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Joining Date</label>
+              <input type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Confirmation Date</label>
+              <input type="date" name="confirmation_date" value={formData.confirmation_date} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Employment Status <span className="text-red-500">*</span></label>
+              <select name="employment_status" required value={formData.employment_status} onChange={handleChange} className={inputClass}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Terminated">Terminated</option>
+                <option value="Resigned">Resigned</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Role <span className="text-red-500">*</span></label>
+              <select name="role" required value={formData.role} onChange={handleChange} className={inputClass}>
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+                <option value="HR">HR</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Banking Details */}
+        <div>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Banking Details</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div>
+              <label className={labelClass}>Salary Type</label>
+              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Basic Salary</label>
+              <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Bank Name</label>
+              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Account Number</label>
+              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>IFSC Code</label>
+              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>UPI ID</label>
+              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} />
+            </div>
+          </div>
+        </div>
+
+        {/* Documents */}
+        <div>
+          <h2 className="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">Documents (URL)</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>Resume URL</label>
+              <input type="url" name="resume_url" value={formData.resume_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Aadhaar URL</label>
+              <input type="url" name="aadhaar_url" value={formData.aadhaar_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>PAN URL</label>
+              <input type="url" name="pan_url" value={formData.pan_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Passport URL</label>
+              <input type="url" name="passport_url" value={formData.passport_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Offer Letter URL</label>
+              <input type="url" name="offer_letter_url" value={formData.offer_letter_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Appointment Letter URL</label>
+              <input type="url" name="appointment_letter_url" value={formData.appointment_letter_url} onChange={handleChange} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>NDA URL</label>
+              <input type="url" name="nda_url" value={formData.nda_url} onChange={handleChange} className={inputClass} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-end gap-4">
+          <Link
+            to="/admin/employees"
+            className="rounded-md border border-gray-300 px-6 py-2.5 font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center gap-2 rounded-md bg-primary px-6 py-2.5 font-medium text-white transition hover:bg-primary-dark disabled:opacity-70"
+          >
+            <FiSave />
+            {loading ? "Saving..." : "Save Employee"}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  );
+};
+
+export default EmployeeAdd;
