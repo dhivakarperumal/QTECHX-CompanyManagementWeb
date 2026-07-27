@@ -59,7 +59,7 @@ const EmployeeList = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-slate-900 text-slate-200">
+    <div className="p-6 min-h-screen bg-[#161C24] text-slate-200">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Employees</h1>
         <Link

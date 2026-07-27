@@ -208,7 +208,7 @@ const EmployeeAdd = () => {
   }
 
   return (
-    <div className="p-6 min-h-screen bg-slate-900 text-slate-200">
+    <div className="p-6 min-h-screen bg-[#161C24] text-slate-200">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/admin/employees" className="text-slate-400 hover:text-white">

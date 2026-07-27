@@ -69,7 +69,7 @@ const EmployeeView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 p-6">
+    <div className="min-h-screen bg-[#161C24] text-slate-200 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
