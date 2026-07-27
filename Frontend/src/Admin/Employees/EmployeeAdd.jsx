@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import { FiArrowLeft, FiSave } from "react-icons/fi";
+import { FiArrowLeft, FiSave, FiEye, FiEyeOff } from "react-icons/fi";
 
 const EmployeeAdd = () => {
   const navigate = useNavigate();
@@ -12,6 +12,8 @@ const EmployeeAdd = () => {
   const [fetching, setFetching] = useState(isEditMode);
   const [error, setError] = useState(null);
   const [existingFiles, setExistingFiles] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     employee_code: "",
@@ -126,6 +128,10 @@ const EmployeeAdd = () => {
             offer_letter_url: "",
             appointment_letter_url: "",
             nda_url: "",
+            username: "",
+            official_email: "",
+            password: "",
+            confirm_password: "",
           });
           setExistingFiles({
             profile_photo: emp.profile_photo || null,
@@ -153,7 +159,18 @@ const EmployeeAdd = () => {
     if (type === "file") {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => {
+        const newData = { ...prev, [name]: value };
+        if (name === "first_name" || name === "last_name") {
+          const first = name === "first_name" ? value : prev.first_name;
+          const last = name === "last_name" ? value : prev.last_name;
+          newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
+        }
+        if (name === "personal_email") {
+          newData.official_email = value;
+        }
+        return newData;
+      });
     }
   };
 
@@ -161,6 +178,18 @@ const EmployeeAdd = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    if (!isEditMode && formData.password !== formData.confirm_password) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+    
+    if (isEditMode && formData.password && formData.password !== formData.confirm_password) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -462,6 +491,36 @@ const EmployeeAdd = () => {
                   View Current NDA
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Login & Access */}
+        <div>
+          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Login & Access</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>Username <span className="text-red-500">*</span></label>
+              <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+            </div>
+            <div>
+              <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
+              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter email address" />
+            </div>
+            <div className="relative">
+              <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+              <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+              <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
+            </div>
+            <div className="relative">
+              <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+              <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
             </div>
           </div>
         </div>
