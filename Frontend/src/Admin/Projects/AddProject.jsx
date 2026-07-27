@@ -1,6 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle,
+  AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
+} from 'lucide-react';
 import api from '../../api';
 
 const BLANK = {
@@ -18,13 +21,6 @@ const BLANK = {
   testing_progress: '0', deployment_progress: '0',
   proposal_doc: '', quotation_doc: '', agreement_doc: '', nda_doc: '',
   api_documentation: '', database_schema: '', source_code_backup: '',
-};
-
-const generateProjectCode = () => {
-  const today = new Date();
-  const stamp = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-  const suffix = String(Math.floor(1000 + Math.random() * 9000));
-  return `PRJ-${stamp}-${suffix}`;
 };
 
 const toForm = (p) => ({
@@ -62,34 +58,150 @@ const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 p
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 
-export default function AddProject() {
-  const { id } = useParams();           // present on /admin/projects/edit/:id
-  const isEdit = Boolean(id);
-  const navigate = useNavigate();
+const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6'];
+const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '?';
+function EmpAvatar({ name, index, size = 8 }) {
+  const c = AVATAR_COLOURS[(index||0) % AVATAR_COLOURS.length];
+  return (
+    <div className={`w-${size} h-${size} rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0`}
+      style={{ background: c+'28', border:`1px solid ${c}44`, color: c }}>
+      {initials(name)}
+    </div>
+  );
+}
 
-  const [formData, setFormData]     = useState(() => (
-    isEdit ? BLANK : { ...BLANK, project_code: generateProjectCode() }
-  ));
-  const [clients, setClients]       = useState([]);
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [fetchLoading, setFetchLoading] = useState(isEdit);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
-  const [success, setSuccess]       = useState('');
+// ── Employee Picker Popup ─────────────────────────────────────────────────────
+function EmployeePicker({ role, onSelect, onClose }) {
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
 
-  // ── Load existing project when editing ──────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get('/clients?limit=500&page=1');
-        if (data?.success) {
-          setClients(data.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to load clients', err);
-      }
+        const { data } = await api.get('/employees?limit=200');
+        setEmployees(data.data || []);
+      } catch (_) { setEmployees([]); }
+      finally { setLoading(false); }
     })();
+  }, []);
 
+  const filtered = employees.filter(e => {
+    const full = `${e.first_name} ${e.last_name} ${e.designation || ''}`.toLowerCase();
+    return full.includes(search.toLowerCase());
+  });
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-white/8 shrink-0">
+          <div>
+            <h3 className="text-white font-bold text-base">Select Employee</h3>
+            <p className="text-white/40 text-xs mt-0.5">Assign as <span className="text-orange-400 font-semibold">{role}</span></p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
+            <X size={15} />
+          </button>
+        </div>
+        {/* Search */}
+        <div className="p-4 border-b border-white/[0.06] shrink-0">
+          <div className="relative">
+            <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or designation…"
+              className="w-full bg-white/[0.04] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
+          </div>
+        </div>
+        {/* List */}
+        <div className="overflow-y-auto flex-1 p-3">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 size={22} className="animate-spin text-orange-500/60" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-white/30 text-sm py-10">No employees found</p>
+          ) : (
+            <div className="space-y-1">
+              {filtered.map((e, i) => (
+                <button key={e.employee_id} onClick={() => onSelect(e)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-orange-500/10 hover:border-orange-500/20 border border-transparent transition text-left">
+                  <EmpAvatar name={`${e.first_name} ${e.last_name}`} index={i} />
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{e.first_name} {e.last_name}</p>
+                    <p className="text-white/40 text-xs truncate">{e.designation || 'No designation'}</p>
+                  </div>
+                  <div className="ml-auto shrink-0">
+                    <span className="text-[10px] font-bold text-orange-400 border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 rounded-full">Select</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Team Field with Picker ────────────────────────────────────────────────────
+function TeamField({ label, fieldName, value, onChange }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  const handleSelect = (emp) => {
+    const name = `${emp.first_name} ${emp.last_name}`;
+    // For multi-person roles, append; for single roles, replace
+    const isSingle = fieldName === 'project_manager' || fieldName === 'ui_ux_designer';
+    if (isSingle) {
+      onChange(fieldName, name);
+    } else {
+      const existing = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      if (!existing.includes(name)) existing.push(name);
+      onChange(fieldName, existing.join(', '));
+    }
+    setShowPicker(false);
+  };
+
+  const handleClear = () => onChange(fieldName, '');
+
+  return (
+    <>
+      {showPicker && <EmployeePicker role={label} onSelect={handleSelect} onClose={() => setShowPicker(false)} />}
+      <label className="text-sm text-white/60">
+        <span className="mb-1.5 block font-medium">{label}</span>
+        <div className="flex gap-2">
+          <input className={fieldClass} name={fieldName} value={value}
+            onChange={e => onChange(fieldName, e.target.value)}
+            placeholder={`Type or pick ${label.toLowerCase()}…`} />
+          <button type="button" onClick={() => setShowPicker(true)}
+            className="shrink-0 w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/25 text-orange-400 hover:bg-orange-500/25 flex items-center justify-center transition" title={`Pick ${label}`}>
+            <UserPlus size={15} />
+          </button>
+          {value && (
+            <button type="button" onClick={handleClear}
+              className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/30 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition" title="Clear">
+              <Trash2 size={13} />
+            </button>
+          )}
+        </div>
+      </label>
+    </>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+export default function AddProject() {
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+  const navigate = useNavigate();
+
+  const [formData, setFormData]         = useState(BLANK);
+  const [fetchLoading, setFetchLoading] = useState(isEdit);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
+  const [success, setSuccess]           = useState('');
+
+  useEffect(() => {
     if (!isEdit) return;
     (async () => {
       setFetchLoading(true);
@@ -108,19 +220,7 @@ export default function AddProject() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleClientSelect = (e) => {
-    const clientId = e.target.value;
-    const selectedClient = clients.find((client) => String(client.id ?? client.uuid) === String(clientId));
-    setSelectedClientId(clientId);
-    setFormData(prev => ({
-      ...prev,
-      client_name: selectedClient?.client_name || '',
-      company_name: selectedClient?.company_name || '',
-      contact_person: selectedClient?.contact_person || '',
-      email: selectedClient?.email || '',
-      phone_number: selectedClient?.phone_number || '',
-    }));
-  };
+  const handleTeamChange = (name, value) => setFormData(prev => ({ ...prev, [name]: value }));
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -129,7 +229,6 @@ export default function AddProject() {
     try {
       const payload = {
         ...formData,
-        project_code: formData.project_code?.trim() || generateProjectCode(),
         total_project_cost:  formData.total_project_cost  ? Number(formData.total_project_cost)  : null,
         overall_progress:    Number(formData.overall_progress)    || 0,
         ui_progress:         Number(formData.ui_progress)         || 0,
@@ -139,29 +238,17 @@ export default function AddProject() {
         deployment_progress: Number(formData.deployment_progress) || 0,
       };
       Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
-
-      let res;
-      if (isEdit) {
-        res = await api.put(`/projects/${id}`, payload);
-      } else {
-        res = await api.post('/projects', payload);
-      }
-
+      const res = isEdit
+        ? await api.put(`/projects/${id}`, payload)
+        : await api.post('/projects', payload);
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
-      setSuccess(isEdit ? 'Project updated successfully!' : 'Project created successfully!');
-      setTimeout(() => navigate('/admin/projects'), 1500);
+      setSuccess(isEdit ? 'Project updated!' : 'Project created!');
+      setTimeout(() => navigate('/admin/projects'), 1400);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to save project');
     } finally { setLoading(false); }
   };
 
-  const resetForm = () => {
-    setFormData(isEdit ? BLANK : { ...BLANK, project_code: generateProjectCode() });
-    setError('');
-    setSuccess('');
-  };
-
-  // ── Loading skeleton while fetching edit data ────────────────────────────────
   if (fetchLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -175,8 +262,6 @@ export default function AddProject() {
 
   return (
     <div className="space-y-6 text-white pb-10">
-
-      {/* Page Header */}
       <div className="flex items-start gap-4">
         <button onClick={() => navigate('/admin/projects')}
           className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
@@ -195,7 +280,6 @@ export default function AddProject() {
         </div>
       </div>
 
-      {/* Feedback */}
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
           <CheckCircle size={16} /> {success}
@@ -208,29 +292,14 @@ export default function AddProject() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-
-        {/* ── Basic Info ── */}
+        {/* Basic Info */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><Building2 size={15} className="text-orange-400" /></div>
             <h2 className="text-base font-bold text-white">Basic Information</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label key="project_code" className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Project Code</span>
-              <div className="flex gap-2">
-                <input className={`${fieldClass} flex-1`} type="text" name="project_code" value={formData.project_code} onChange={handleChange} placeholder="PRJ-001" readOnly />
-                <button type="button" onClick={() => setFormData(prev => ({ ...prev, project_code: generateProjectCode() }))} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10 hover:text-white" title="Generate project code">
-                  <RefreshCw size={15} />
-                </button>
-              </div>
-            </label>
-            {[
-              ['project_name',     'Project Name *', 'text',  'e.g. Client Portal'],
-              ['short_name',       'Short Name',     'text',  'CP'],
-              ['project_category', 'Category',       'text',  'Web Application'],
-              ['industry',         'Industry',       'text',  'Healthcare'],
-            ].map(([name, label, type, ph]) => (
+            {[['project_code','Project Code','text','PRJ-001'],['project_name','Project Name *','text','e.g. Client Portal'],['short_name','Short Name','text','CP'],['project_category','Category','text','Web Application'],['industry','Industry','text','Healthcare']].map(([name,label,type,ph]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={ph} />
@@ -265,31 +334,14 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Client Details ── */}
+        {/* Client Details */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><Users size={15} className="text-blue-400" /></div>
             <h2 className="text-base font-bold text-white">Client Details</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60 md:col-span-2">
-              <span className="mb-1.5 block font-medium">Select Existing Client</span>
-              <select className={fieldClass} value={selectedClientId} onChange={handleClientSelect}>
-                <option value="">Choose a client...</option>
-                {clients.map((client) => (
-                  <option key={client.id ?? client.uuid} value={client.id ?? client.uuid}>
-                    {client.client_name}{client.company_name ? ` - ${client.company_name}` : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {[
-              ['client_name',    'Client Name',    'text',  'Client company'],
-              ['company_name',   'Company Name',   'text',  'Q-Techx Solutions'],
-              ['contact_person', 'Contact Person', 'text',  'Full name'],
-              ['email',          'Email',          'email', 'name@example.com'],
-              ['phone_number',   'Phone Number',   'tel',   '+91 98765 43210'],
-            ].map(([name, label, type, ph]) => (
+            {[['client_name','Client Name','text','Client company'],['company_name','Company Name','text','Q-Techx Solutions'],['contact_person','Contact Person','text','Full name'],['email','Email','email','name@example.com'],['phone_number','Phone Number','tel','+91 98765 43210']].map(([name,label,type,ph]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={ph} />
@@ -310,21 +362,14 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Timeline ── */}
+        {/* Timeline */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center"><FileText size={15} className="text-violet-400" /></div>
             <h2 className="text-base font-bold text-white">Project Timeline</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[
-              ['proposal_date',             'Proposal Date'],
-              ['approval_date',             'Approval Date'],
-              ['project_start_date',        'Start Date'],
-              ['estimated_completion_date', 'Estimated Completion'],
-              ['project_end_date',          'End Date'],
-              ['go_live_date',              'Go Live Date'],
-            ].map(([name, label]) => (
+            {[['proposal_date','Proposal Date'],['approval_date','Approval Date'],['project_start_date','Start Date'],['estimated_completion_date','Estimated Completion'],['project_end_date','End Date'],['go_live_date','Go Live Date']].map(([name,label]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} type="date" name={name} value={formData[name]} onChange={handleChange} />
@@ -337,26 +382,14 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Tech Stack & Team ── */}
+        {/* Tech Stack */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center"><Code2 size={15} className="text-emerald-400" /></div>
-            <h2 className="text-base font-bold text-white">Tech Stack & Team</h2>
+            <h2 className="text-base font-bold text-white">Tech Stack</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[
-              ['frontend_tech',       'Frontend Technology',  'React, Next.js…'],
-              ['mobile_tech',         'Mobile Technology',    'React Native, Flutter…'],
-              ['backend_tech',        'Backend Technology',   'Node.js, Express…'],
-              ['database_tech',       'Database',             'MySQL, MongoDB…'],
-              ['github_link',         'GitHub Repository',    'https://github.com/…'],
-              ['domain_name',         'Domain Name',          'example.com'],
-              ['sub_domain_name',     'Sub-Domain',           'app.example.com'],
-              ['project_manager',     'Project Manager',      'Full name'],
-              ['ui_ux_designer',      'UI/UX Designer',       'Full name'],
-              ['frontend_developers', 'Frontend Developers',  'Name1, Name2…'],
-              ['backend_developers',  'Backend Developers',   'Name1, Name2…'],
-            ].map(([name, label, ph]) => (
+            {[['frontend_tech','Frontend Technology','React, Next.js…'],['mobile_tech','Mobile Technology','React Native, Flutter…'],['backend_tech','Backend Technology','Node.js, Express…'],['database_tech','Database','MySQL, MongoDB…'],['github_link','GitHub Repository','https://github.com/…'],['domain_name','Domain Name','example.com'],['sub_domain_name','Sub-Domain','app.example.com']].map(([name,label,ph]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} name={name} value={formData[name]} onChange={handleChange} placeholder={ph} />
@@ -365,20 +398,31 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Phase Progress ── */}
+        {/* Team Assignment with Employee Picker */}
+        <section className={sectionClass}>
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><Users size={15} className="text-pink-400" /></div>
+            <div>
+              <h2 className="text-base font-bold text-white">Team Assignment</h2>
+              <p className="text-white/35 text-xs mt-0.5">Click <UserPlus size={10} className="inline" /> to pick from employee list</p>
+            </div>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <TeamField label="Project Manager"     fieldName="project_manager"     value={formData.project_manager}     onChange={handleTeamChange} />
+            <TeamField label="UI/UX Designer"      fieldName="ui_ux_designer"      value={formData.ui_ux_designer}      onChange={handleTeamChange} />
+            <TeamField label="Frontend Developers" fieldName="frontend_developers" value={formData.frontend_developers} onChange={handleTeamChange} />
+            <TeamField label="Backend Developers"  fieldName="backend_developers"  value={formData.backend_developers}  onChange={handleTeamChange} />
+          </div>
+        </section>
+
+        {/* Phase Progress */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-cyan-500/15 flex items-center justify-center"><CheckCircle size={15} className="text-cyan-400" /></div>
             <h2 className="text-base font-bold text-white">Phase Progress</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              ['ui_progress',         'UI/UX (%)'],
-              ['frontend_progress',   'Frontend (%)'],
-              ['backend_progress',    'Backend (%)'],
-              ['testing_progress',    'Testing (%)'],
-              ['deployment_progress', 'Deployment (%)'],
-            ].map(([name, label]) => (
+            {[['ui_progress','UI/UX (%)'],['frontend_progress','Frontend (%)'],['backend_progress','Backend (%)'],['testing_progress','Testing (%)'],['deployment_progress','Deployment (%)']].map(([name,label]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} type="number" min="0" max="100" name={name} value={formData[name]} onChange={handleChange} />
@@ -387,22 +431,14 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Documents & Links ── */}
+        {/* Documents */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center"><FileText size={15} className="text-amber-400" /></div>
             <h2 className="text-base font-bold text-white">Documents & Links</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[
-              ['proposal_doc',       'Proposal Document'],
-              ['quotation_doc',      'Quotation'],
-              ['agreement_doc',      'Agreement'],
-              ['nda_doc',            'NDA'],
-              ['api_documentation',  'API Documentation'],
-              ['database_schema',    'Database Schema'],
-              ['source_code_backup', 'Source Code Backup'],
-            ].map(([name, label]) => (
+            {[['proposal_doc','Proposal'],['quotation_doc','Quotation'],['agreement_doc','Agreement'],['nda_doc','NDA'],['api_documentation','API Docs'],['database_schema','DB Schema'],['source_code_backup','Source Code Backup']].map(([name,label]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
                 <input className={fieldClass} name={name} value={formData[name]} onChange={handleChange} placeholder="Link or file name" />
@@ -411,7 +447,7 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* ── Action Buttons ── */}
+        {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-2">
           <button type="submit" disabled={loading}
             className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
@@ -420,7 +456,7 @@ export default function AddProject() {
             {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
           </button>
           {!isEdit && (
-            <button type="button" onClick={resetForm} disabled={loading}
+            <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
               className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
               <RefreshCw size={15} /> Reset
             </button>

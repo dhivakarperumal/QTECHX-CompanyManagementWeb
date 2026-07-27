@@ -12,6 +12,16 @@ function fail(res, message, code = 500, error = undefined) {
   return res.status(code).json({ success: false, message, ...(error ? { error } : {}) });
 }
 
+function getUploadedFiles(req) {
+  const uploadedFiles = {};
+  const fileFields = ['proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc', 'api_documentation', 'database_schema', 'source_code_backup'];
+  fileFields.forEach((field) => {
+    const file = req.files?.[field]?.[0];
+    if (file) uploadedFiles[field] = `/uploads/${file.filename}`;
+  });
+  return uploadedFiles;
+}
+
 /** POST /api/projects */
 async function createProjectHandler(req, res) {
   try {
@@ -21,12 +31,16 @@ async function createProjectHandler(req, res) {
     if (current_status && !PROJECT_STATUSES.includes(current_status)) {
       return fail(res, `Invalid status. Allowed: ${PROJECT_STATUSES.join(', ')}`, 400);
     }
+    const uploadedFiles = getUploadedFiles(req);
     const actor = req.user?.user_id || 'SYSTEM';
     const project = await createProject({
       uuid: uuidv4(),
       ...req.body,
+      ...uploadedFiles,
       project_name: trimmedProjectName,
       project_code: req.body.project_code?.toString().trim() || undefined,
+      agreement_uploaded: req.body.agreement_uploaded || 'No',
+      agreement_doc: uploadedFiles.agreement_doc || (req.body.agreement_doc?.toString().trim() || null),
       created_by: actor,
       updated_by: actor,
     });
@@ -74,6 +88,7 @@ async function updateProjectHandler(req, res) {
     if (req.body.current_status && !PROJECT_STATUSES.includes(req.body.current_status)) {
       return fail(res, `Invalid status. Allowed: ${PROJECT_STATUSES.join(', ')}`, 400);
     }
+    const uploadedFiles = getUploadedFiles(req);
     const allowed = [
       'project_code','project_name','short_name','project_category','industry',
       'description','objective','business_requirements',
@@ -90,6 +105,9 @@ async function updateProjectHandler(req, res) {
     ];
     const updates = {};
     allowed.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+    Object.entries(uploadedFiles).forEach(([field, value]) => { updates[field] = value; });
+    if (req.body.agreement_uploaded !== undefined) updates.agreement_uploaded = req.body.agreement_uploaded;
+    if (req.body.agreement_uploaded === 'No') updates.agreement_doc = null;
     updates.updated_by = req.user?.user_id || 'SYSTEM';
     const project = await updateProject(req.params.id, updates);
     return ok(res, { message: 'Project updated successfully', data: project });

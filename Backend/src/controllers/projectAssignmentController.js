@@ -15,7 +15,7 @@ async function assignHandler(req, res) {
 
     const { employee_id, role } = req.body;
     if (!employee_id) return fail(res, 'employee_id is required', 400);
-    if (!ROLES.includes(role)) return fail(res, Invalid role. Allowed: , 400);
+    if (!ROLES.includes(role)) return fail(res, `Invalid role. Allowed: ${ROLES.join(', ')}`, 400);
 
     // Verify employee exists
     const db = getDB();
