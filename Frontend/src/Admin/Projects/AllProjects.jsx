@@ -83,7 +83,7 @@ export default function AllProjects() {
   const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
   const [assignedLoading, setAssignedLoading] = useState(false);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
-  const limit = 15;
+  const [limit, setLimit] = useState(15);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
@@ -130,7 +130,7 @@ export default function AllProjects() {
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
   useEffect(() => { loadAssignmentProjects(); }, [loadAssignmentProjects]);
-  useEffect(() => { setPage(1); }, [search, statusFilter]);
+  useEffect(() => { setPage(1); }, [limit]);
   useEffect(() => {
     if (selectedProjectId) {
       loadAssignedEmployees(selectedProjectId);
@@ -493,7 +493,7 @@ export default function AllProjects() {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" placeholder="Search by project, client, manager…"
-            value={search} onChange={(e) => setSearch(e.target.value)}
+            value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
@@ -501,11 +501,19 @@ export default function AllProjects() {
             </button>
           )}
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50">
           <option value="">All Statuses</option>
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        <div className="flex items-center gap-2">
+          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}
+            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50">
+            {[10, 15, 25, 50].map((size) => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
+          </select>
+        </div>
         <div className="flex bg-[#111318] border border-white/10 rounded-xl p-1">
           <button onClick={() => setViewMode('table')}
             className={`p-1.5 rounded-lg transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}>
@@ -670,17 +678,43 @@ export default function AllProjects() {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
           <p className="text-xs text-white/40">Page {page} of {totalPages} · {total} total</p>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition disabled:opacity-30">
-              <ChevronLeft size={14} />
-            </button>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition disabled:opacity-30">
-              <ChevronRight size={14} />
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5">
+              {(() => {
+                const buttons = [];
+                const maxButtons = 7;
+                let startPage = Math.max(1, page - 3);
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage < maxButtons - 1) {
+                  startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+                for (let pg = startPage; pg <= endPage; pg += 1) {
+                  buttons.push(pg);
+                }
+                return buttons.map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setPage(pg)}
+                    className={`w-9 h-9 rounded-xl border text-sm font-semibold transition ${pg === page ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    {pg}
+                  </button>
+                ));
+              })()}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition disabled:opacity-30">
+                <ChevronLeft size={14} />
+              </button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition disabled:opacity-30">
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       )}
