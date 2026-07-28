@@ -1,0 +1,22 @@
+const express = require('express');
+const { authenticate, authorize } = require('../security/authMiddleware');
+const {
+  getAllTasksHandler,
+  getTaskByIdHandler,
+  createTaskHandler,
+  updateTaskHandler,
+  deleteTaskHandler,
+} = require('../controllers/taskController');
+
+const router = express.Router();
+
+const managers = authorize('Super Admin', 'Admin', 'Manager');
+const allStaff = authorize('Super Admin', 'Admin', 'Manager', 'Staff', 'Employee');
+
+router.get('/', authenticate, allStaff, getAllTasksHandler);
+router.post('/', authenticate, managers, createTaskHandler);
+router.get('/:id', authenticate, allStaff, getTaskByIdHandler);
+router.put('/:id', authenticate, managers, updateTaskHandler);
+router.delete('/:id', authenticate, managers, deleteTaskHandler);
+
+module.exports = router;
