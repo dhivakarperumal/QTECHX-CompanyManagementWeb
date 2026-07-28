@@ -57,6 +57,7 @@ const toForm = (p) => ({
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
+const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','agreement_doc','nda_doc','api_documentation','database_schema','source_code_backup'];
 
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '?';
@@ -86,6 +87,7 @@ export default function AddProject() {
   const [clients, setClients] = useState([]);
   const [clientFilter, setClientFilter] = useState('');
   const [selectedClientUuid, setSelectedClientUuid] = useState('');
+  const [documentFiles, setDocumentFiles] = useState({});
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -155,13 +157,22 @@ export default function AddProject() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (name, file) => {
+    setDocumentFiles(prev => ({ ...prev, [name]: file }));
+  };
+
   const handleTeamChange = (name, value) => setFormData(prev => ({ ...prev, [name]: value }));
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.project_name.trim()) { setError('Project name is required.'); return; }
+    if (formData.agreement_uploaded === 'Yes' && !documentFiles.agreement_doc && !formData.agreement_doc) {
+      setError('Agreement upload is required when Agreement Uploaded is set to Yes.');
+      return;
+    }
     setLoading(true); setError(''); setSuccess('');
     try {
+      const form = new FormData();
       const payload = {
         ...formData,
         total_project_cost:  formData.total_project_cost  ? Number(formData.total_project_cost)  : null,
@@ -172,10 +183,20 @@ export default function AddProject() {
         testing_progress:    Number(formData.testing_progress)    || 0,
         deployment_progress: Number(formData.deployment_progress) || 0,
       };
-      Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
+      Object.keys(payload).forEach((k) => {
+        const value = payload[k];
+        if (DOCUMENT_FIELDS.includes(k)) return;
+        if (value === '' || value === null || value === undefined) return;
+        form.append(k, value);
+      });
+      DOCUMENT_FIELDS.forEach((field) => {
+        if (documentFiles[field]) {
+          form.append(field, documentFiles[field]);
+        }
+      });
       const res = isEdit
-        ? await api.put(`/projects/${id}`, payload)
-        : await api.post('/projects', payload);
+        ? await api.put(`/projects/${id}`, form)
+        : await api.post('/projects', form);
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
       setSuccess(isEdit ? 'Project updated!' : 'Project created!');
       setTimeout(() => navigate('/admin/projects'), 1400);
@@ -365,6 +386,9 @@ export default function AddProject() {
               <select className={fieldClass} name="agreement_uploaded" value={formData.agreement_uploaded} onChange={handleChange}>
                 <option value="No">No</option><option value="Yes">Yes</option>
               </select>
+              {formData.agreement_uploaded === 'Yes' && (
+                <p className="mt-1 text-xs text-orange-300">Yes means you should upload the agreement file below.</p>
+              )}
             </label>
           </div>
         </section>
@@ -428,12 +452,32 @@ export default function AddProject() {
             <h2 className="text-base font-bold text-white">Documents & Links</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[['proposal_doc','Proposal'],['quotation_doc','Quotation'],['agreement_doc','Agreement'],['nda_doc','NDA'],['api_documentation','API Docs'],['database_schema','DB Schema'],['source_code_backup','Source Code Backup']].map(([name,label]) => (
-              <label key={name} className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">{label}</span>
-                <input className={fieldClass} name={name} value={formData[name]} onChange={handleChange} placeholder="Link or file name" />
-              </label>
-            ))}
+            {DOCUMENT_FIELDS.map((name) => {
+              const labels = {
+                proposal_doc: 'Proposal',
+                quotation_doc: 'Quotation',
+                agreement_doc: 'Agreement',
+                nda_doc: 'NDA',
+                api_documentation: 'API Docs',
+                database_schema: 'DB Schema',
+                source_code_backup: 'Source Code Backup',
+              };
+              const existingUrl = formData[name];
+              const selectedFile = documentFiles[name];
+              return (
+                <label key={name} className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">{labels[name]}</span>
+                  <input className={fieldClass} type="file" name={name} onChange={(e) => handleFileChange(name, e.target.files?.[0] || null)} />
+                  {selectedFile ? (
+                    <p className="mt-2 text-xs text-white/50">Selected: {selectedFile.name}</p>
+                  ) : existingUrl ? (
+                    <a href={existingUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                      {existingUrl.split('/').pop() || existingUrl}
+                    </a>
+                  ) : null}
+                </label>
+              );
+            })}
           </div>
         </section>
 

@@ -35,13 +35,15 @@ async function createProjectHandler(req, res) {
     }
     const uploadedFiles = getUploadedFiles(req);
     const actor = req.user?.user_id || 'SYSTEM';
+    const hasAgreementFile = Boolean(uploadedFiles.agreement_doc);
+    const agreementUploaded = hasAgreementFile || req.body.agreement_uploaded === 'Yes' ? 'Yes' : 'No';
     const project = await createProject({
       uuid: uuidv4(),
       ...req.body,
       ...uploadedFiles,
       project_name: trimmedProjectName,
       project_code: req.body.project_code?.toString().trim() || undefined,
-      agreement_uploaded: req.body.agreement_uploaded || 'No',
+      agreement_uploaded: agreementUploaded,
       agreement_doc: uploadedFiles.agreement_doc || (req.body.agreement_doc?.toString().trim() || null),
       created_by: actor,
       updated_by: actor,
@@ -119,7 +121,13 @@ async function updateProjectHandler(req, res) {
     const updates = {};
     allowed.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
     Object.entries(uploadedFiles).forEach(([field, value]) => { updates[field] = value; });
-    if (req.body.agreement_uploaded !== undefined) updates.agreement_uploaded = req.body.agreement_uploaded;
+    const hasAgreementFile = Boolean(uploadedFiles.agreement_doc);
+    if (req.body.agreement_uploaded !== undefined) {
+      updates.agreement_uploaded = req.body.agreement_uploaded;
+    }
+    if (hasAgreementFile) {
+      updates.agreement_uploaded = 'Yes';
+    }
     if (req.body.agreement_uploaded === 'No') updates.agreement_doc = null;
     updates.updated_by = req.user?.user_id || 'SYSTEM';
     const project = await updateProject(req.params.id, updates);
