@@ -1,7 +1,8 @@
+const path = require("path");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
 
 const dbConfig = {
   host: process.env.DB_HOST || "localhost",
@@ -15,6 +16,155 @@ const dbConfig = {
 };
 
 let pool;
+
+async function ensureProjectAssignmentsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'project_assignments'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS project_assignments (
+        id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        project_id  INT UNSIGNED NOT NULL,
+        employee_ids JSON NULL,
+        status      ENUM('Assigned','Active','Completed','Removed') NOT NULL DEFAULT 'Assigned',
+        assigned_date DATETIME NULL,
+        created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by  VARCHAR(36) NULL,
+        updated_by  VARCHAR(36) NULL,
+        assigned_by VARCHAR(36) NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_project_assignments_project (project_id),
+        INDEX idx_project_assignments_project (project_id),
+        CONSTRAINT fk_project_assignments_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM project_assignments");
+  const columnNames = new Set(columns.map((column) => column.Field));
+
+  const addColumnStatements = [];
+  if (!columnNames.has('employee_ids')) {
+    addColumnStatements.push('ADD COLUMN employee_ids JSON NULL AFTER project_id');
+  }
+  if (!columnNames.has('status')) {
+    addColumnStatements.push("ADD COLUMN status ENUM('Assigned','Active','Completed','Removed') NOT NULL DEFAULT 'Assigned' AFTER employee_ids");
+  }
+  if (!columnNames.has('assigned_date')) {
+    addColumnStatements.push('ADD COLUMN assigned_date DATETIME NULL AFTER status');
+  }
+  if (!columnNames.has('created_at')) {
+    addColumnStatements.push('ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER assigned_date');
+  }
+  if (!columnNames.has('updated_at')) {
+    addColumnStatements.push('ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at');
+  }
+  if (!columnNames.has('created_by')) {
+    addColumnStatements.push('ADD COLUMN created_by VARCHAR(36) NULL AFTER updated_at');
+  }
+  if (!columnNames.has('updated_by')) {
+    addColumnStatements.push('ADD COLUMN updated_by VARCHAR(36) NULL AFTER created_by');
+  }
+  if (!columnNames.has('assigned_by')) {
+    addColumnStatements.push('ADD COLUMN assigned_by VARCHAR(36) NULL AFTER updated_by');
+  }
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE project_assignments ${addColumnStatements.join(', ')}`);
+  }
+
+  if (columnNames.has('assigned_at') && !columnNames.has('assigned_date')) {
+    await pool.execute('UPDATE project_assignments SET assigned_date = assigned_at WHERE assigned_date IS NULL AND assigned_at IS NOT NULL');
+  }
+
+  const legacyRows = [];
+  if (columnNames.has('employee_id')) {
+    const [existingLegacyRows] = await pool.execute('SELECT id, project_id, employee_id FROM project_assignments WHERE project_id IS NOT NULL ORDER BY project_id, id');
+    legacyRows.push(...existingLegacyRows);
+
+    for (const row of existingLegacyRows) {
+      if (row.employee_id) {
+        await pool.execute('UPDATE project_assignments SET employee_ids = ? WHERE id = ?', [JSON.stringify([{ employee_id: String(row.employee_id) }]), row.id]);
+      }
+    }
+
+    try {
+      await pool.execute('ALTER TABLE project_assignments DROP FOREIGN KEY fk_project_assignments_employee');
+    } catch (error) {
+      // Ignore if the legacy foreign key is already absent.
+    }
+
+    try {
+      await pool.execute('ALTER TABLE project_assignments DROP INDEX idx_project_assignments_employee');
+    } catch (error) {
+      // Ignore if the legacy index is already absent.
+    }
+
+    try {
+      await pool.execute('ALTER TABLE project_assignments DROP COLUMN employee_id');
+    } catch (error) {
+      // Ignore if the legacy column is already absent.
+    }
+  }
+
+  const [indexes] = await pool.execute('SHOW INDEX FROM project_assignments');
+  const hasLegacyUniqueIndex = indexes.some((index) => index.Key_name === 'uq_project_assignments_project_employee');
+  const hasProjectUniqueIndex = indexes.some((index) => index.Key_name === 'uq_project_assignments_project');
+  const hasProjectIndex = indexes.some((index) => index.Key_name === 'idx_project_assignments_project');
+  const hasEmployeeIndex = indexes.some((index) => index.Key_name === 'idx_project_assignments_employee');
+
+  if (hasLegacyUniqueIndex) {
+    await pool.execute('ALTER TABLE project_assignments DROP INDEX uq_project_assignments_project_employee');
+  }
+
+  if (legacyRows.length) {
+    const groupedProjects = new Map();
+    legacyRows.forEach((row) => {
+      if (!groupedProjects.has(row.project_id)) groupedProjects.set(row.project_id, []);
+      groupedProjects.get(row.project_id).push(row);
+    });
+
+    for (const projectRows of groupedProjects.values()) {
+      if (projectRows.length <= 1) {
+        const [firstRow] = projectRows;
+        if (firstRow && firstRow.employee_id) {
+          await pool.execute('UPDATE project_assignments SET employee_ids = ? WHERE id = ?', [JSON.stringify([{ employee_id: String(firstRow.employee_id) }]), firstRow.id]);
+        }
+        continue;
+      }
+
+      const payload = [];
+      const seen = new Set();
+      projectRows.forEach((row) => {
+        const employeeId = row.employee_id ? String(row.employee_id).trim() : '';
+        if (!employeeId || seen.has(employeeId)) return;
+        seen.add(employeeId);
+        payload.push({ employee_id: employeeId });
+      });
+
+      const keepRow = projectRows[0];
+      await pool.execute('UPDATE project_assignments SET employee_ids = ? WHERE id = ?', [JSON.stringify(payload), keepRow.id]);
+
+      const duplicateIds = projectRows.filter((row) => row.id !== keepRow.id).map((row) => row.id);
+      if (duplicateIds.length) {
+        const placeholders = duplicateIds.map(() => '?').join(', ');
+        await pool.execute(`DELETE FROM project_assignments WHERE id IN (${placeholders})`, duplicateIds);
+      }
+    }
+  }
+
+  if (!hasProjectUniqueIndex) {
+    await pool.execute('ALTER TABLE project_assignments ADD UNIQUE KEY uq_project_assignments_project (project_id)');
+  }
+  if (!hasProjectIndex) {
+    await pool.execute('ALTER TABLE project_assignments ADD INDEX idx_project_assignments_project (project_id)');
+  }
+  if (!hasEmployeeIndex && columnNames.has('employee_id')) {
+    await pool.execute('ALTER TABLE project_assignments ADD INDEX idx_project_assignments_employee (employee_id)');
+  }
+}
 
 async function ensureSchema(pool) {
   // ── Users ────────────────────────────────────────────────────────────────
@@ -186,22 +336,7 @@ async function ensureSchema(pool) {
   );
 
   // ── Project Assignments ────────────────────────────────────────────────────
-  await pool.execute(
-    `CREATE TABLE IF NOT EXISTS project_assignments (
-      id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-      project_id  INT UNSIGNED NOT NULL,
-      employee_id VARCHAR(36)  NOT NULL,
-      role        ENUM('Project Manager','UI/UX Designer','Frontend Developer','Backend Developer','Tester','DevOps','QA') NOT NULL,
-      assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      assigned_by VARCHAR(36) NULL,
-      PRIMARY KEY (id),
-      UNIQUE KEY uq_proj_emp_role (project_id, employee_id, role),
-      INDEX idx_pa_project  (project_id),
-      INDEX idx_pa_employee (employee_id),
-      CONSTRAINT fk_pa_project  FOREIGN KEY (project_id)  REFERENCES projects  (id) ON DELETE CASCADE ON UPDATE CASCADE,
-      CONSTRAINT fk_pa_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-  );
+  await ensureProjectAssignmentsSchema(pool);
 
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_employees (

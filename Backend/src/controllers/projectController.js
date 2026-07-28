@@ -4,6 +4,7 @@ const {
   createProject, findProjectByUUID, listProjects, updateProject, deleteProject,
   generateProjectCode,
 } = require('../models/projectModel');
+const { listAssignmentsByProject } = require('../models/projectAssignmentModel');
 
 const PROJECT_STATUSES = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 
@@ -88,7 +89,22 @@ async function getProjectByIdHandler(req, res) {
   try {
     const project = await findProjectByUUID(req.params.id);
     if (!project) return fail(res, 'Project not found', 404);
-    return ok(res, { data: project });
+    const assignments = await listAssignmentsByProject(project.id);
+    const assignedEmployees = assignments.map((row) => ({
+      employee_id: row.employee_id,
+      employee_name: [row.first_name, row.last_name].filter(Boolean).join(' ').trim(),
+      designation: row.designation || null,
+      email: row.personal_email || row.official_email || null,
+      status: row.status || 'Assigned',
+    }));
+
+    return ok(res, {
+      project_id: project.id,
+      project_name: project.project_name,
+      assignedEmployeeCount: assignments.length,
+      assignedEmployees,
+      data: project,
+    });
   } catch (err) {
     console.error('getProjectByIdHandler:', err);
     return fail(res, 'Failed to retrieve project', 500, err.message);

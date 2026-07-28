@@ -143,11 +143,34 @@ export default function TasksPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data } = await api.get('/projects?limit=100&page=1');
-        const list = data.data || [];
-        setProjects(list);
+        const [projectsResponse, assignmentsResponse] = await Promise.all([
+          api.get('/projects?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+          api.get('/projects/assignments/all').catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const projectsFromApi = (projectsResponse?.data?.data || []).map((project) => ({
+          uuid: project.uuid,
+          project_name: project.project_name || project.short_name || project.project_code || project.name || project.uuid,
+        }));
+
+        const projectsFromAssignments = (assignmentsResponse?.data?.data || [])
+          .map((assignment) => {
+            if (!assignment?.project_uuid) return null;
+            return {
+              uuid: assignment.project_uuid,
+              project_name: assignment.project_name || assignment.project_uuid,
+            };
+          })
+          .filter(Boolean);
+
+        const mergedProjects = Array.from(
+          new Map([...projectsFromAssignments, ...projectsFromApi].map((project) => [project.uuid, project])).values()
+        );
+
+        setProjects(projectsFromAssignments.length ? projectsFromAssignments : mergedProjects);
       } catch (err) {
         console.error('Failed to load project options', err);
+        setProjects([]);
       }
     };
 
@@ -220,7 +243,7 @@ export default function TasksPage() {
       setProjectEmployeesLoading(true);
       try {
         const { data } = await api.get(`/projects/${projectUuid}/assignments`);
-        setAssignedEmployees(data.data || []);
+        setAssignedEmployees(data.assignedEmployees || data.project?.assignedEmployees || data.project?.employees || data.data || []);
       } catch (err) {
         console.error('Failed to load employees for project', err);
         setAssignedEmployees([]);
@@ -311,14 +334,11 @@ export default function TasksPage() {
   }, [pageKey, selectedProject, tasksList]);
 
   const availableTaskProjects = useMemo(() => {
-    const projectMap = new Map();
-    tasksList.forEach((task) => {
-      if (task.project_uuid) {
-        projectMap.set(task.project_uuid, task.project || task.project_id || task.project_uuid);
-      }
-    });
-    return Array.from(projectMap.entries()).map(([uuid, name]) => ({ uuid, name }));
-  }, [tasksList]);
+    return projects.map((project) => ({
+      uuid: project.uuid,
+      name: project.project_name || project.short_name || project.project_code || project.uuid,
+    }));
+  }, [projects]);
 
   const handleDeleteTask = async (taskUuid) => {
     if (!taskUuid) return;

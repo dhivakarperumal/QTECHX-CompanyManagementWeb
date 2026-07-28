@@ -74,7 +74,7 @@ export default function AllProjects() {
   const [selectedRole, setSelectedRole] = useState('');
   const [assignmentSearch, setAssignmentSearch] = useState('');
   const [assignmentEmployees, setAssignmentEmployees] = useState([]);
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [assignedEmployees, setAssignedEmployees] = useState([]);
   const [assignmentError, setAssignmentError] = useState('');
   const [assignmentSuccess, setAssignmentSuccess] = useState('');
@@ -102,7 +102,8 @@ export default function AllProjects() {
     try {
       setAssignedLoading(true);
       const { data } = await api.get(`/projects/${projectUuid}/assignments`);
-      setAssignedEmployees(data.data || []);
+      const assignments = data.assignedEmployees || data.project?.assignedEmployees || data.project?.employees || data.data || [];
+      setAssignedEmployees(assignments);
     } catch (err) {
       setAssignmentError(err?.response?.data?.message || 'Failed to load assigned employees');
     } finally {
@@ -170,12 +171,12 @@ export default function AllProjects() {
   };
 
   const toggleEmployeeSelection = (employee) => {
-    setSelectedEmployees((current) => {
-      const exists = current.some((item) => item.employee_id === employee.employee_id);
+    setSelectedEmployeeIds((current) => {
+      const exists = current.includes(employee.employee_id);
       if (exists) {
-        return current.filter((item) => item.employee_id !== employee.employee_id);
+        return current.filter((item) => item !== employee.employee_id);
       }
-      return [...current, employee];
+      return [...current, employee.employee_id];
     });
     setAssignmentError('');
     setAssignmentSuccess('');
@@ -186,11 +187,7 @@ export default function AllProjects() {
       setAssignmentError('Please select a project first.');
       return;
     }
-    if (!selectedRole) {
-      setAssignmentError('Select a role for the assignment.');
-      return;
-    }
-    if (!selectedEmployees.length) {
+    if (!selectedEmployeeIds.length) {
       setAssignmentError('Select at least one employee to assign.');
       return;
     }
@@ -198,11 +195,10 @@ export default function AllProjects() {
     try {
       setAssignmentSubmitting(true);
       const { data } = await api.post(`/projects/${selectedProjectId}/assignments`, {
-        employee_ids: selectedEmployees.map((employee) => employee.employee_id),
-        role: selectedRole,
+        employee_ids: selectedEmployeeIds,
       });
       setAssignmentSuccess(data.message || 'Employees assigned successfully');
-      setSelectedEmployees([]);
+      setSelectedEmployeeIds([]);
       setSelectedRole('');
       setAssignmentSearch('');
       setAssignmentEmployees([]);
@@ -217,7 +213,7 @@ export default function AllProjects() {
   const handleRemoveEmployee = async (employeeId, role) => {
     if (!selectedProjectId) return;
     try {
-      await api.delete(`/projects/${selectedProjectId}/assignments`, { data: { employee_id: employeeId, role } });
+      await api.delete(`/projects/${selectedProjectId}/assignments`, { data: { employee_id: employeeId } });
       setAssignmentSuccess('Employee removed from project');
       await loadAssignedEmployees(selectedProjectId);
     } catch (err) {
@@ -385,7 +381,7 @@ export default function AllProjects() {
                 ) : assignmentEmployees.length > 0 ? (
                   <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     {assignmentEmployees.map((employee) => {
-                      const isSelected = selectedEmployees.some((item) => item.employee_id === employee.employee_id);
+                      const isSelected = selectedEmployeeIds.includes(employee.employee_id);
                       return (
                         <button
                           key={employee.employee_id}
@@ -422,11 +418,11 @@ export default function AllProjects() {
                     ))}
                   </div>
                 </div>
-                {selectedEmployees.length > 0 && (
+                {selectedEmployeeIds.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Selected Employees</p>
                     <div className="flex flex-wrap gap-2">
-                      {selectedEmployees.map((employee) => (
+                      {assignmentEmployees.filter((employee) => selectedEmployeeIds.includes(employee.employee_id)).map((employee) => (
                         <span key={employee.employee_id} className="inline-flex items-center gap-2 rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-sm text-orange-300">
                           {employee.first_name} {employee.last_name}
                           <button type="button" onClick={() => toggleEmployeeSelection(employee)} className="text-orange-400 hover:text-white">×</button>
@@ -439,7 +435,7 @@ export default function AllProjects() {
                 <button
                   type="button"
                   onClick={handleAssignEmployees}
-                  disabled={assignmentSubmitting || !selectedProjectId || !selectedEmployees.length}
+                  disabled={assignmentSubmitting || !selectedProjectId || !selectedEmployeeIds.length}
                   className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {assignmentSubmitting ? 'Assigning…' : 'Assign Employees'}

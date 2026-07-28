@@ -40,7 +40,7 @@ function AssignModal({ onClose, onAssigned }) {
   const [employees, setEmployees]   = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedProject, setSelectedProject] = useState('');
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
   const [empSearch, setEmpSearch]   = useState('');
   const [saving, setSaving]         = useState(false);
@@ -61,28 +61,26 @@ function AssignModal({ onClose, onAssigned }) {
     return full.includes(empSearch.toLowerCase());
   });
 
-  const isSelectedEmployee = (employee) => selectedEmployees.some((item) => item.employee_id === employee.employee_id);
+  const isSelectedEmployee = (employee) => selectedEmployeeIds.includes(employee.employee_id);
 
   const toggleEmployeeSelection = (employee) => {
-    setSelectedEmployees((current) => {
-      const exists = current.some((item) => item.employee_id === employee.employee_id);
+    setSelectedEmployeeIds((current) => {
+      const exists = current.includes(employee.employee_id);
       if (exists) {
-        return current.filter((item) => item.employee_id !== employee.employee_id);
+        return current.filter((item) => item !== employee.employee_id);
       }
-      return [...current, employee];
+      return [...current, employee.employee_id];
     });
     setError('');
   };
 
   const handleAssign = async () => {
     if (!selectedProject) { setError('Select a project'); return; }
-    if (!selectedEmployees.length) { setError('Select one or more employees'); return; }
-    if (!selectedRole) { setError('Select a role'); return; }
+    if (!selectedEmployeeIds.length) { setError('Select one or more employees'); return; }
     setSaving(true); setError('');
     try {
       const { data } = await api.post(`/projects/${selectedProject}/assignments`, {
-        employee_ids: selectedEmployees.map((employee) => employee.employee_id),
-        role: selectedRole,
+        employee_ids: selectedEmployeeIds,
       });
       if (!data.success) throw new Error(data.message || 'Failed');
       onAssigned();
@@ -93,7 +91,7 @@ function AssignModal({ onClose, onAssigned }) {
   };
 
   const chosenProject  = projects.find(p => p.uuid === selectedProject);
-  const selectedCount = selectedEmployees.length;
+  const selectedCount = selectedEmployeeIds.length;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -201,7 +199,7 @@ function AssignModal({ onClose, onAssigned }) {
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition">
             Cancel
           </button>
-          <button onClick={handleAssign} disabled={saving || !selectedProject || !selectedEmployees.length || !selectedRole}
+          <button onClick={handleAssign} disabled={saving || !selectedProject || !selectedEmployeeIds.length}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition hover:opacity-90 disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
@@ -229,11 +227,21 @@ export default function ProjectAssignments() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
+  const flattenGroupedAssignments = (grouped = []) => grouped.flatMap((project) => {
+    return project.employees.map((employee) => ({
+      ...employee,
+      project_uuid: project.project_uuid,
+      project_name: project.project_name,
+      current_status: project.current_status,
+    }));
+  });
+
   const fetchAssignments = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const { data } = await api.get('/projects/assignments/all');
-      setAssignments(data.data || []);
+      const rows = data.data?.length ? data.data : (Array.isArray(data.grouped) ? flattenGroupedAssignments(data.grouped) : []);
+      setAssignments(rows);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load assignments');
     } finally { setLoading(false); }
@@ -246,7 +254,7 @@ export default function ProjectAssignments() {
     setRemoving(true);
     try {
       await api.delete(`/projects/${removeTarget.project_uuid}/assignments`, {
-        data: { employee_id: removeTarget.employee_id, role: removeTarget.role }
+        data: { employee_id: removeTarget.employee_id }
       });
       showToast('Assignment removed successfully');
       setRemoveTarget(null);
@@ -262,6 +270,7 @@ export default function ProjectAssignments() {
     setUpdating(true);
     try {
       await api.put(`/projects/${editTarget.project_uuid}/assignments/${editTarget.id}`, {
+        employee_id: editTarget.employee_id,
         role: editRole,
       });
       showToast('Assignment updated successfully');

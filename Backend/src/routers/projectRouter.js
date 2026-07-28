@@ -9,13 +9,10 @@ const {
   assignHandler,
   unassignHandler,
   updateAssignmentHandler,
+  updateAssignmentsHandler,
   getAssignmentsHandler,
   getAllAssignmentsHandler,
   searchEmployeesHandler,
-  getProjectEmployeesHandler,
-  assignEmployeesHandler,
-  unassignEmployeeHandler,
-  updateAssignmentStatusHandler,
 } = require('../controllers/projectAssignmentController');
 
 const router = express.Router();
@@ -43,6 +40,7 @@ router.get(   '/assignments/all', authenticate, allStaff, getAllAssignmentsHandl
 router.get(   '/employees/search', authenticate, allStaff, searchEmployeesHandler);
 router.get(   '/:id/assignments', authenticate, allStaff, getAssignmentsHandler);
 router.post(  '/:id/assignments', authenticate, managers, assignHandler);
+router.put(   '/:id/assignments', authenticate, managers, updateAssignmentsHandler);
 router.put(   '/:id/assignments/:assignmentId', authenticate, managers, updateAssignmentHandler);
 router.delete('/:id/assignments', authenticate, managers, unassignHandler);
 
