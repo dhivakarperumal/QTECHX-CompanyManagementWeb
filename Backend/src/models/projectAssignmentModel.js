@@ -30,7 +30,7 @@ async function listAssignmentsByProject(project_id) {
   const db = getDB();
   const [rows] = await db.execute(
     `SELECT pa.id, pa.role, pa.assigned_at, pa.assigned_by,
-            e.employee_id, e.first_name, e.last_name, e.designation,
+            e.employee_id, e.employee_code, e.first_name, e.last_name, e.designation,
             e.profile_photo, e.mobile_number, e.personal_email
      FROM project_assignments pa
      JOIN employees e ON pa.employee_id = e.employee_id

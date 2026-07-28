@@ -6,10 +6,6 @@ const {
   listAssignmentsByProject,
   listAllAssignments,
   searchEmployeesForProject,
-  listProjectEmployees,
-  assignEmployeesToProject,
-  removeProjectEmployee,
-  updateProjectEmployeeStatus,
 } = require('../models/projectAssignmentModel');
 const { getDB } = require('../config/db');
 
@@ -123,85 +119,6 @@ async function searchEmployeesHandler(req, res) {
   }
 }
 
-async function getProjectEmployeesHandler(req, res) {
-  try {
-    const project = await findProjectByUUID(req.params.id);
-    if (!project) return fail(res, 'Project not found', 404);
-    const data = await listProjectEmployees(project.id);
-    return ok(res, { data });
-  } catch (err) {
-    console.error('getProjectEmployeesHandler:', err);
-    return fail(res, err.message || 'Failed to fetch assigned employees');
-  }
-}
-
-async function assignEmployeesHandler(req, res) {
-  try {
-    const project = await findProjectByUUID(req.params.id);
-    if (!project) return fail(res, 'Project not found', 404);
-
-    const employee_ids = req.body.employee_ids || (req.body.employee_id ? [req.body.employee_id] : []);
-    if (!Array.isArray(employee_ids) || !employee_ids.length) return fail(res, 'employee_ids is required', 400);
-
-    const assigned_date = req.body.assigned_date || null;
-    const status = req.body.status || 'Active';
-    const created_by = req.user?.user_id || req.body.created_by || 'SYSTEM';
-
-    const db = getDB();
-    const [employeeRows] = await db.execute(
-      `SELECT employee_id FROM employees WHERE employee_id IN (${employee_ids.map(() => '?').join(', ')})`,
-      employee_ids
-    );
-    const existingEmployeeIds = new Set(employeeRows.map((row) => row.employee_id));
-    const invalidIds = employee_ids.filter((employeeId) => !existingEmployeeIds.has(employeeId));
-    if (invalidIds.length) return fail(res, 'One or more employees were not found', 404);
-
-    await assignEmployeesToProject({
-      project_id: project.id,
-      employee_ids,
-      assigned_date,
-      status,
-      created_by,
-    });
-
-    const data = await listProjectEmployees(project.id);
-    return ok(res, { message: 'Employees assigned successfully', data }, 201);
-  } catch (err) {
-    console.error('assignEmployeesHandler:', err);
-    if (err.message === 'Employee already assigned to this project.') {
-      return fail(res, err.message, 409);
-    }
-    return fail(res, err.message || 'Assignment failed');
-  }
-}
-
-async function unassignEmployeeHandler(req, res) {
-  try {
-    const project = await findProjectByUUID(req.params.id);
-    if (!project) return fail(res, 'Project not found', 404);
-    const { employee_id } = req.body;
-    if (!employee_id) return fail(res, 'employee_id is required', 400);
-    await removeProjectEmployee(project.id, employee_id);
-    return ok(res, { message: 'Employee removed from project' });
-  } catch (err) {
-    console.error('unassignEmployeeHandler:', err);
-    return fail(res, err.message || 'Failed to remove employee');
-  }
-}
-
-async function updateAssignmentStatusHandler(req, res) {
-  try {
-    const project = await findProjectByUUID(req.params.id);
-    if (!project) return fail(res, 'Project not found', 404);
-    const { status } = req.body;
-    if (!['Active', 'Inactive'].includes(status)) return fail(res, 'status must be Active or Inactive', 400);
-    await updateProjectEmployeeStatus(project.id, req.params.employeeId, status);
-    return ok(res, { message: 'Assignment status updated' });
-  } catch (err) {
-    console.error('updateAssignmentStatusHandler:', err);
-    return fail(res, err.message || 'Failed to update assignment status');
-  }
-}
 
 module.exports = {
   assignHandler,
@@ -210,8 +127,4 @@ module.exports = {
   getAssignmentsHandler,
   getAllAssignmentsHandler,
   searchEmployeesHandler,
-  getProjectEmployeesHandler,
-  assignEmployeesHandler,
-  unassignEmployeeHandler,
-  updateAssignmentStatusHandler,
 };

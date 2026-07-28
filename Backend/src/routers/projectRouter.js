@@ -41,10 +41,6 @@ router.get(   '/assignments/all', authenticate, allStaff, getAllAssignmentsHandl
 
 // ─── Assignments ───────────────────────────────────────────────────────────────
 router.get(   '/employees/search', authenticate, allStaff, searchEmployeesHandler);
-router.get(   '/:id/employees', authenticate, allStaff, getProjectEmployeesHandler);
-router.post(  '/:id/employees', authenticate, managers, assignEmployeesHandler);
-router.delete('/:id/employees', authenticate, managers, unassignEmployeeHandler);
-router.put(   '/:id/employees/:employeeId/status', authenticate, managers, updateAssignmentStatusHandler);
 router.get(   '/:id/assignments', authenticate, allStaff, getAssignmentsHandler);
 router.post(  '/:id/assignments', authenticate, managers, assignHandler);
 router.put(   '/:id/assignments/:assignmentId', authenticate, managers, updateAssignmentHandler);

@@ -53,6 +53,7 @@ function StatusPill({ status }) {
 }
 
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
+const ROLES = ['Project Manager','UI/UX Designer','Frontend Developer','Backend Developer','Tester','DevOps','QA'];
 
 export default function AllProjects() {
   const navigate = useNavigate();
@@ -70,6 +71,7 @@ export default function AllProjects() {
   const [toast, setToast]               = useState('');
   const [assignmentProjects, setAssignmentProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [assignmentSearch, setAssignmentSearch] = useState('');
   const [assignmentEmployees, setAssignmentEmployees] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -99,7 +101,7 @@ export default function AllProjects() {
     if (!projectUuid) return;
     try {
       setAssignedLoading(true);
-      const { data } = await api.get(`/projects/${projectUuid}/employees`);
+      const { data } = await api.get(`/projects/${projectUuid}/assignments`);
       setAssignedEmployees(data.data || []);
     } catch (err) {
       setAssignmentError(err?.response?.data?.message || 'Failed to load assigned employees');
@@ -184,6 +186,10 @@ export default function AllProjects() {
       setAssignmentError('Please select a project first.');
       return;
     }
+    if (!selectedRole) {
+      setAssignmentError('Select a role for the assignment.');
+      return;
+    }
     if (!selectedEmployees.length) {
       setAssignmentError('Select at least one employee to assign.');
       return;
@@ -191,13 +197,13 @@ export default function AllProjects() {
 
     try {
       setAssignmentSubmitting(true);
-      const { data } = await api.post(`/projects/${selectedProjectId}/employees`, {
+      const { data } = await api.post(`/projects/${selectedProjectId}/assignments`, {
         employee_ids: selectedEmployees.map((employee) => employee.employee_id),
-        status: 'Active',
-        assigned_date: new Date().toISOString().slice(0, 10),
+        role: selectedRole,
       });
       setAssignmentSuccess(data.message || 'Employees assigned successfully');
       setSelectedEmployees([]);
+      setSelectedRole('');
       setAssignmentSearch('');
       setAssignmentEmployees([]);
       await loadAssignedEmployees(selectedProjectId);
@@ -208,25 +214,14 @@ export default function AllProjects() {
     }
   };
 
-  const handleRemoveEmployee = async (employeeId) => {
+  const handleRemoveEmployee = async (employeeId, role) => {
     if (!selectedProjectId) return;
     try {
-      await api.delete(`/projects/${selectedProjectId}/employees`, { data: { employee_id: employeeId } });
+      await api.delete(`/projects/${selectedProjectId}/assignments`, { data: { employee_id: employeeId, role } });
       setAssignmentSuccess('Employee removed from project');
       await loadAssignedEmployees(selectedProjectId);
     } catch (err) {
       setAssignmentError(err?.response?.data?.message || 'Failed to remove employee');
-    }
-  };
-
-  const handleStatusUpdate = async (employeeId, status) => {
-    if (!selectedProjectId) return;
-    try {
-      await api.put(`/projects/${selectedProjectId}/employees/${employeeId}/status`, { status });
-      setAssignmentSuccess('Assignment status updated');
-      await loadAssignedEmployees(selectedProjectId);
-    } catch (err) {
-      setAssignmentError(err?.response?.data?.message || 'Failed to update assignment status');
     }
   };
 
@@ -413,7 +408,20 @@ export default function AllProjects() {
                 ) : assignmentSearch ? (
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">No matching employees found.</div>
                 ) : null}
-
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Assignment Role</label>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {ROLES.map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setSelectedRole(role)}
+                        className={`rounded-xl border px-3 py-2 text-left text-sm transition ${selectedRole === role ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/[0.05] hover:text-white'}`}>
+                        {role}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {selectedEmployees.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Selected Employees</p>
@@ -452,26 +460,19 @@ export default function AllProjects() {
                 ) : assignedEmployees.length > 0 ? (
                   <div className="space-y-2">
                     {assignedEmployees.map((employee) => (
-                      <div key={employee.employee_id} className="rounded-xl border border-white/10 bg-[#0d0f13] p-3">
-                        <div className="flex items-start justify-between gap-2">
+                      <div key={`${employee.employee_id}-${employee.id}`} className="rounded-xl border border-white/10 bg-[#0d0f13] p-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="text-sm font-semibold text-white">{employee.first_name} {employee.last_name}</p>
-                            <p className="text-xs text-white/45">{employee.employee_code} • {employee.designation || employee.role || 'Employee'}</p>
+                            <p className="text-xs text-white/45">{employee.employee_code || employee.employee_id} • {employee.designation || 'Employee'}</p>
                           </div>
-                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${employee.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-orange-500/15 text-orange-400'}`}>
-                            {employee.status || 'Active'}
-                          </span>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/45">
-                          <span>Assigned: {employee.assigned_date ? new Date(employee.assigned_date).toLocaleDateString('en-IN') : '—'}</span>
-                          <span>•</span>
-                          <span>{employee.mobile_number || 'No phone'}</span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-300">{employee.role}</span>
+                            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/60">Assigned {employee.assigned_at ? new Date(employee.assigned_at).toLocaleDateString('en-IN') : '—'}</span>
+                          </div>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => handleRemoveEmployee(employee.employee_id)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">Remove</button>
-                          <button type="button" onClick={() => handleStatusUpdate(employee.employee_id, employee.status === 'Active' ? 'Inactive' : 'Active')} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">
-                            {employee.status === 'Active' ? 'Set Inactive' : 'Set Active'}
-                          </button>
+                          <button type="button" onClick={() => handleRemoveEmployee(employee.employee_id, employee.role)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">Remove</button>
                           <button type="button" onClick={() => navigate(`/admin/employees/view/${employee.employee_id}`)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">View</button>
                         </div>
                       </div>
