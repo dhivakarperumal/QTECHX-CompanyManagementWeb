@@ -6,7 +6,6 @@ const TASKS = [
   {
     id: "TSK-001",
     project: "Client Portal",
-    milestone: "Sprint 8",
     module: "Auth",
     name: "Implement login retry logic",
     type: "Bug",
@@ -23,7 +22,6 @@ const TASKS = [
   {
     id: "TSK-002",
     project: "Mobile App",
-    milestone: "Sprint 9",
     module: "Payments",
     name: "Add refund support",
     type: "Feature",
@@ -40,7 +38,6 @@ const TASKS = [
   {
     id: "TSK-003",
     project: "Admin Panel",
-    milestone: "Sprint 7",
     module: "Dashboard",
     name: "Create task progress chart",
     type: "Enhancement",
@@ -87,12 +84,9 @@ export default function TasksPage() {
   const [tasksList, setTasksList] = useState([]);
   const [taskForm, setTaskForm] = useState({
     project_id: '',
-    milestone: '',
     module_name: '',
     task_name: '',
     description: '',
-    task_type: '',
-    category: '',
     assigned_to: '',
     assigned_by: '',
     start_date: '',
@@ -195,12 +189,9 @@ export default function TasksPage() {
       setSavingTask(true);
       const payload = {
         project_id: taskForm.project_id,
-        milestone: taskForm.milestone,
         module_name: taskForm.module_name,
         task_name: taskForm.task_name,
         description: taskForm.description,
-        task_type: taskForm.task_type,
-        category: taskForm.category,
         assigned_to: taskForm.assigned_to,
         assigned_by: taskForm.assigned_by,
         start_date: taskForm.start_date,
@@ -215,12 +206,9 @@ export default function TasksPage() {
         setTaskSuccess(data.message || 'Task saved successfully.');
         setTaskForm({
           project_id: '',
-          milestone: '',
           module_name: '',
           task_name: '',
           description: '',
-          task_type: '',
-          category: '',
           assigned_to: '',
           assigned_by: '',
           start_date: '',
@@ -337,16 +325,6 @@ export default function TasksPage() {
             </div>
 
             <div className="rounded-2xl bg-slate-900/80 p-4">
-              <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Milestone / Sprint</label>
-              <input
-                value={taskForm.milestone}
-                onChange={(e) => handleChange('milestone', e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
-                placeholder="Enter Milestone / Sprint"
-              />
-            </div>
-
-            <div className="rounded-2xl bg-slate-900/80 p-4">
               <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Module</label>
               <input
                 value={taskForm.module_name}
@@ -374,26 +352,6 @@ export default function TasksPage() {
                 rows={4}
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary resize-none"
                 placeholder="Enter task description"
-              />
-            </div>
-
-            <div className="rounded-2xl bg-slate-900/80 p-4">
-              <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Task Type</label>
-              <input
-                value={taskForm.task_type}
-                onChange={(e) => handleChange('task_type', e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
-                placeholder="Enter Task Type"
-              />
-            </div>
-
-            <div className="rounded-2xl bg-slate-900/80 p-4">
-              <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Category</label>
-              <input
-                value={taskForm.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
-                placeholder="Enter Category"
               />
             </div>
 
