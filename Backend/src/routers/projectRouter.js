@@ -8,6 +8,7 @@ const {
 const {
   assignHandler,
   unassignHandler,
+  updateAssignmentHandler,
   getAssignmentsHandler,
   getAllAssignmentsHandler,
   searchEmployeesHandler,
@@ -37,9 +38,6 @@ router.post(  '/',    authenticate, managers, uploadFields, createProjectHandler
 router.get(   '/next-code', authenticate, managers, getNextProjectCodeHandler);
 router.get(   '/',    authenticate, allStaff, getAllProjectsHandler);
 router.get(   '/assignments/all', authenticate, allStaff, getAllAssignmentsHandler);
-router.get(   '/:id', authenticate, allStaff, getProjectByIdHandler);
-router.put(   '/:id', authenticate, managers, uploadFields, updateProjectHandler);
-router.delete('/:id', authenticate, admins,   deleteProjectHandler);
 
 // ─── Assignments ───────────────────────────────────────────────────────────────
 router.get(   '/employees/search', authenticate, allStaff, searchEmployeesHandler);
@@ -49,6 +47,11 @@ router.delete('/:id/employees', authenticate, managers, unassignEmployeeHandler)
 router.put(   '/:id/employees/:employeeId/status', authenticate, managers, updateAssignmentStatusHandler);
 router.get(   '/:id/assignments', authenticate, allStaff, getAssignmentsHandler);
 router.post(  '/:id/assignments', authenticate, managers, assignHandler);
+router.put(   '/:id/assignments/:assignmentId', authenticate, managers, updateAssignmentHandler);
 router.delete('/:id/assignments', authenticate, managers, unassignHandler);
+
+router.get(   '/:id', authenticate, allStaff, getProjectByIdHandler);
+router.put(   '/:id', authenticate, managers, uploadFields, updateProjectHandler);
+router.delete('/:id', authenticate, admins,   deleteProjectHandler);
 
 module.exports = router;

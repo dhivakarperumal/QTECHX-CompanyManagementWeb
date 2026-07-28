@@ -18,6 +18,14 @@ async function removeAssignment(project_id, employee_id, role) {
   );
 }
 
+async function updateAssignmentRole(assignment_id, role) {
+  const db = getDB();
+  await db.execute(
+    'UPDATE project_assignments SET role = ? WHERE id = ?',
+    [role, assignment_id]
+  );
+}
+
 async function listAssignmentsByProject(project_id) {
   const db = getDB();
   const [rows] = await db.execute(

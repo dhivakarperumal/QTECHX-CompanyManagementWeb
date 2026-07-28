@@ -57,7 +57,7 @@ const toForm = (p) => ({
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
-const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','agreement_doc','nda_doc','api_documentation','database_schema','source_code_backup'];
+const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','agreement_doc','api_documentation','database_schema','source_code_backup'];
 
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '?';
@@ -162,6 +162,9 @@ export default function AddProject() {
     if (name === 'agreement_doc' && file) {
       setFormData(prev => ({ ...prev, agreement_uploaded: 'Yes' }));
     }
+    if (name === 'nda_doc' && file) {
+      setFormData(prev => ({ ...prev, nda_signed: 'Yes' }));
+    }
   };
 
   const handleTeamChange = (name, value) => setFormData(prev => ({ ...prev, [name]: value }));
@@ -188,7 +191,7 @@ export default function AddProject() {
       };
       Object.keys(payload).forEach((k) => {
         const value = payload[k];
-        if (DOCUMENT_FIELDS.includes(k)) return;
+        if (DOCUMENT_FIELDS.includes(k) || k === 'nda_doc') return;
         if (value === '' || value === null || value === undefined) return;
         form.append(k, value);
       });
@@ -197,6 +200,9 @@ export default function AddProject() {
           form.append(field, documentFiles[field]);
         }
       });
+      if (documentFiles.nda_doc) {
+        form.append('nda_doc', documentFiles.nda_doc);
+      }
       const res = isEdit
         ? await api.put(`/projects/${id}`, form)
         : await api.post('/projects', form);
@@ -385,6 +391,17 @@ export default function AddProject() {
               </select>
             </label>
             <label className="text-sm text-white/60">
+              <span className="mb-1.5 block font-medium">Upload NDA Document</span>
+              <input className={fieldClass} type="file" name="nda_doc" onChange={(e) => handleFileChange('nda_doc', e.target.files?.[0] || null)} />
+              {documentFiles.nda_doc ? (
+                <p className="mt-2 text-xs text-white/50">Selected NDA: {documentFiles.nda_doc.name}</p>
+              ) : formData.nda_doc ? (
+                <a href={formData.nda_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                  {formData.nda_doc.split('/').pop() || formData.nda_doc}
+                </a>
+              ) : null}
+            </label>
+            <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Agreement Uploaded</span>
               <select className={fieldClass} name="agreement_uploaded" value={formData.agreement_uploaded} onChange={handleChange}>
                 <option value="No">No</option><option value="Yes">Yes</option>
@@ -455,12 +472,22 @@ export default function AddProject() {
             <h2 className="text-base font-bold text-white">Documents & Links</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Upload Agreement</span>
+              <input className={fieldClass} type="file" name="agreement_doc" onChange={(e) => handleFileChange('agreement_doc', e.target.files?.[0] || null)} />
+              {documentFiles.agreement_doc ? (
+                <p className="mt-2 text-xs text-white/50">Selected: {documentFiles.agreement_doc.name}</p>
+              ) : formData.agreement_doc ? (
+                <a href={formData.agreement_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                  {formData.agreement_doc.split('/').pop() || formData.agreement_doc}
+                </a>
+              ) : null}
+            </label>
             {DOCUMENT_FIELDS.map((name) => {
               const labels = {
                 proposal_doc: 'Proposal',
                 quotation_doc: 'Quotation',
                 agreement_doc: 'Agreement',
-                nda_doc: 'NDA',
                 api_documentation: 'API Docs',
                 database_schema: 'DB Schema',
                 source_code_backup: 'Source Code Backup',

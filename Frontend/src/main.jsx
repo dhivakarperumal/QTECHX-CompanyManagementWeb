@@ -36,6 +36,7 @@ import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
 import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
+import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 
@@ -93,6 +94,10 @@ const router = createHashRouter([
           {
             path: 'projects',
             element: <AllProjects />,
+          },
+          {
+            path: 'projects/assignments',
+            element: <ProjectAssignments />,
           },
           {
             path: 'projects/add',

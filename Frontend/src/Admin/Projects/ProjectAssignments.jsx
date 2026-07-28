@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Search, Plus, Loader2, AlertCircle, Trash2, X,
-  FolderKanban, CheckCircle, RefreshCw, ChevronDown,
+  FolderKanban, CheckCircle, RefreshCw, ChevronDown, Edit3,
 } from 'lucide-react';
 import api from '../../api';
 
@@ -40,7 +40,7 @@ function AssignModal({ onClose, onAssigned }) {
   const [employees, setEmployees]   = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedProject, setSelectedProject] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
   const [empSearch, setEmpSearch]   = useState('');
   const [saving, setSaving]         = useState(false);
@@ -61,14 +61,27 @@ function AssignModal({ onClose, onAssigned }) {
     return full.includes(empSearch.toLowerCase());
   });
 
+  const isSelectedEmployee = (employee) => selectedEmployees.some((item) => item.employee_id === employee.employee_id);
+
+  const toggleEmployeeSelection = (employee) => {
+    setSelectedEmployees((current) => {
+      const exists = current.some((item) => item.employee_id === employee.employee_id);
+      if (exists) {
+        return current.filter((item) => item.employee_id !== employee.employee_id);
+      }
+      return [...current, employee];
+    });
+    setError('');
+  };
+
   const handleAssign = async () => {
     if (!selectedProject) { setError('Select a project'); return; }
-    if (!selectedEmployee) { setError('Select an employee'); return; }
+    if (!selectedEmployees.length) { setError('Select one or more employees'); return; }
     if (!selectedRole) { setError('Select a role'); return; }
     setSaving(true); setError('');
     try {
       const { data } = await api.post(`/projects/${selectedProject}/assignments`, {
-        employee_id: selectedEmployee,
+        employee_ids: selectedEmployees.map((employee) => employee.employee_id),
         role: selectedRole,
       });
       if (!data.success) throw new Error(data.message || 'Failed');
@@ -80,7 +93,7 @@ function AssignModal({ onClose, onAssigned }) {
   };
 
   const chosenProject  = projects.find(p => p.uuid === selectedProject);
-  const chosenEmployee = employees.find(e => e.employee_id === selectedEmployee);
+  const selectedCount = selectedEmployees.length;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -141,29 +154,35 @@ function AssignModal({ onClose, onAssigned }) {
 
               {/* Employee selector */}
               <div>
-                <label className="text-sm font-medium text-white/60 mb-1.5 block">Select Employee</label>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Select Employees</label>
                 <div className="relative mb-2">
                   <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
                   <input value={empSearch} onChange={e => setEmpSearch(e.target.value)} placeholder="Search employees…"
                     className="w-full bg-[#0e1118] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-orange-500/50 placeholder:text-white/20" />
                 </div>
+                {selectedCount > 0 && (
+                  <p className="text-xs text-white/50 mb-2">{selectedCount} employee{selectedCount !== 1 ? 's' : ''} selected</p>
+                )}
                 <div className="max-h-44 overflow-y-auto space-y-1 border border-white/8 rounded-xl p-2 bg-white/[0.02]">
                   {filteredEmps.length === 0 ? (
                     <p className="text-center text-white/25 text-xs py-4">No employees found</p>
-                  ) : filteredEmps.map((e, i) => (
-                    <button key={e.employee_id} type="button"
-                      onClick={() => setSelectedEmployee(e.employee_id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-left ${selectedEmployee === e.employee_id ? 'bg-orange-500/20 border border-orange-500/30' : 'hover:bg-white/[0.04] border border-transparent'}`}>
-                      <Avatar name={`${e.first_name} ${e.last_name}`} index={i} size={8} />
-                      <div className="min-w-0">
-                        <p className="text-white text-xs font-semibold truncate">{e.first_name} {e.last_name}</p>
-                        <p className="text-white/35 text-[10px] truncate">{e.designation || 'No designation'}</p>
-                      </div>
-                      {selectedEmployee === e.employee_id && (
-                        <CheckCircle size={14} className="ml-auto text-orange-400 shrink-0" />
-                      )}
-                    </button>
-                  ))}
+                  ) : filteredEmps.map((e, i) => {
+                    const selected = isSelectedEmployee(e);
+                    return (
+                      <button key={e.employee_id} type="button"
+                        onClick={() => toggleEmployeeSelection(e)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-left ${selected ? 'bg-orange-500/20 border border-orange-500/30' : 'hover:bg-white/[0.04] border border-transparent'}`}>
+                        <Avatar name={`${e.first_name} ${e.last_name}`} index={i} size={8} />
+                        <div className="min-w-0">
+                          <p className="text-white text-xs font-semibold truncate">{e.first_name} {e.last_name}</p>
+                          <p className="text-white/35 text-[10px] truncate">{e.designation || 'No designation'}</p>
+                        </div>
+                        {selected && (
+                          <CheckCircle size={14} className="ml-auto text-orange-400 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -182,7 +201,7 @@ function AssignModal({ onClose, onAssigned }) {
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition">
             Cancel
           </button>
-          <button onClick={handleAssign} disabled={saving || !selectedProject || !selectedEmployee || !selectedRole}
+          <button onClick={handleAssign} disabled={saving || !selectedProject || !selectedEmployees.length || !selectedRole}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition hover:opacity-90 disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
@@ -201,8 +220,10 @@ export default function ProjectAssignments() {
   const [error, setError]             = useState('');
   const [search, setSearch]           = useState('');
   const [roleFilter, setRoleFilter]   = useState('');
-  const [showAssign, setShowAssign]   = useState(false);
-  const [toast, setToast]             = useState('');
+  const [showAssign, setShowAssign]   = useState(false);  const [showEdit, setShowEdit] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editRole, setEditRole] = useState('');
+  const [updating, setUpdating] = useState(false);  const [toast, setToast]             = useState('');
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removing, setRemoving]       = useState(false);
 
@@ -234,6 +255,23 @@ export default function ProjectAssignments() {
       setError(err?.response?.data?.message || 'Remove failed');
       setRemoveTarget(null);
     } finally { setRemoving(false); }
+  };
+
+  const handleEdit = async () => {
+    if (!editTarget || !editRole) return;
+    setUpdating(true);
+    try {
+      await api.put(`/projects/${editTarget.project_uuid}/assignments/${editTarget.id}`, {
+        role: editRole,
+      });
+      showToast('Assignment updated successfully');
+      setShowEdit(false);
+      setEditTarget(null);
+      setEditRole('');
+      fetchAssignments();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Update failed');
+    } finally { setUpdating(false); }
   };
 
   const filtered = assignments.filter(a => {
@@ -292,6 +330,50 @@ export default function ProjectAssignments() {
       )}
 
       {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} />}
+      {showEdit && editTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
+          <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-white/8">
+              <div>
+                <h3 className="text-white font-bold text-lg">Edit Assignment</h3>
+                <p className="text-white/40 text-xs mt-0.5">Change role for {editTarget.first_name} {editTarget.last_name}</p>
+              </div>
+              <button onClick={() => setShowEdit(false)} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Project</label>
+                <div className="rounded-xl border border-white/10 bg-[#0e1118] px-4 py-3 text-sm text-white">{editTarget.project_name}</div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Employee</label>
+                <div className="rounded-xl border border-white/10 bg-[#0e1118] px-4 py-3 text-sm text-white">{editTarget.first_name} {editTarget.last_name}</div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Role</label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ROLES.map((role) => (
+                    <button key={role} type="button" onClick={() => setEditRole(role)}
+                      className={`text-sm rounded-xl px-3 py-2 text-left border transition ${editRole === role ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/[0.05] hover:text-white'}`}>
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowEdit(false)} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white transition">Cancel</button>
+                <button onClick={handleEdit} disabled={!editRole || updating}
+                  className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-semibold hover:opacity-90 transition disabled:opacity-50">
+                  {updating ? 'Updating…' : 'Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -424,10 +506,18 @@ export default function ProjectAssignments() {
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
-                          <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
-                            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition ml-auto" title="Remove">
-                            <Trash2 size={13} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
+                              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
+                              title="Edit">
+                              <Edit3 size={13} />
+                            </button>
+                            <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
+                              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                              title="Remove">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
