@@ -10,6 +10,13 @@ const ExpensesPage = () => {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
+  const [filters, setFilters] = useState({
+    expenseType: "",
+    paymentType: "",
+    paymentMethod: "",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   // Form states
   const [fundAmount, setFundAmount] = useState("");
@@ -136,7 +143,6 @@ const ExpensesPage = () => {
     }
   };
 
-  const totalSpent = expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
   const expenseTypeOptions = [
     "Salary",
     "Office Rent",
@@ -164,7 +170,51 @@ const ExpensesPage = () => {
     "Insurance",
     "Miscellaneous",
   ];
+  const paymentMethodOptions = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque"];
   const isSalaryExpense = expenseData.expense_type === "Salary";
+
+  const filteredExpenses = expenses.filter((exp) => {
+    const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
+    const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    const toDate = filters.dateTo ? new Date(filters.dateTo) : null;
+
+    if (filters.expenseType && exp.expense_type !== filters.expenseType) return false;
+    if (filters.paymentType && exp.payment_type !== filters.paymentType) return false;
+    if (filters.paymentMethod && exp.payment_type !== filters.paymentMethod) return false;
+    if (fromDate && expenseDate && expenseDate < fromDate) return false;
+    if (toDate && expenseDate && expenseDate > toDate) return false;
+    return true;
+  });
+
+  const totalSpent = filteredExpenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
+  const categoryBreakdown = Object.entries(
+    filteredExpenses.reduce((acc, exp) => {
+      const key = exp.expense_type || "Miscellaneous";
+      acc[key] = (acc[key] || 0) + parseFloat(exp.amount || 0);
+      return acc;
+    }, {})
+  )
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const pieSegments = categoryBreakdown.length > 0
+    ? categoryBreakdown.map((item, index) => {
+        const colors = ["#f97316", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+        return `${colors[index % colors.length]} ${index === 0 ? 0 : categoryBreakdown.slice(0, index).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}% ${index === categoryBreakdown.length - 1 ? 100 : categoryBreakdown.slice(0, index + 1).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}%`;
+      })
+    : ["#f97316 0% 100%"];
+
+  const monthlyTrend = Array.from({ length: 6 }, (_, index) => {
+    const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"][index];
+    const monthValue = filteredExpenses.reduce((sum, exp) => {
+      const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
+      if (!expenseDate) return sum;
+      return expenseDate.getMonth() === index ? sum + parseFloat(exp.amount || 0) : sum;
+    }, 0);
+    return { monthName, monthValue };
+  });
+
+  const maxMonthlyValue = Math.max(...monthlyTrend.map((item) => item.monthValue), 1);
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -352,6 +402,182 @@ const ExpensesPage = () => {
         </div>
       )}
 
+      {/* ── Filters + Reports ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-5">
+        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Expense Filters</h3>
+              <p className="text-xs text-white/40">Refine the list by category, payment mode, and date.</p>
+            </div>
+            <div className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
+              {filteredExpenses.length} matched
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
+              <select
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                value={filters.expenseType}
+                onChange={(e) => setFilters({ ...filters, expenseType: e.target.value })}
+              >
+                <option value="" className="bg-[#111318]">All Types</option>
+                {expenseTypeOptions.map((option) => (
+                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
+              <select
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                value={filters.paymentType}
+                onChange={(e) => setFilters({ ...filters, paymentType: e.target.value })}
+              >
+                <option value="" className="bg-[#111318]">All Types</option>
+                <option value="Cash" className="bg-[#111318]">Cash</option>
+                <option value="Bank Transfer" className="bg-[#111318]">Bank Transfer</option>
+                <option value="Credit Card" className="bg-[#111318]">Credit Card</option>
+                <option value="UPI" className="bg-[#111318]">UPI</option>
+                <option value="Cheque" className="bg-[#111318]">Cheque</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Method</label>
+              <select
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                value={filters.paymentMethod}
+                onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value })}
+              >
+                <option value="" className="bg-[#111318]">All Methods</option>
+                {paymentMethodOptions.map((option) => (
+                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+              <div>
+                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">From Date</label>
+                <input
+                  type="date"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">To Date</label>
+                <input
+                  type="date"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setFilters({ expenseType: "", paymentType: "", paymentMethod: "", dateFrom: "", dateTo: "" })}
+              className="text-sm text-white/60 hover:text-white transition"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Monthly Summary</h3>
+              <p className="text-xs text-white/40">Current view total and category breakdown.</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-wider text-white/35">Total</p>
+              <p className="text-xl font-bold text-rose-400">₹ {totalSpent.toFixed(2)}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-white/35">Entries</p>
+              <p className="text-lg font-semibold text-white">{filteredExpenses.length}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-[10px] uppercase tracking-wider text-white/35">Top Category</p>
+              <p className="text-lg font-semibold text-white">{categoryBreakdown[0]?.name || "None"}</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {categoryBreakdown.slice(0, 6).map((item) => (
+              <div key={item.name} className="flex items-center justify-between text-sm text-white/70">
+                <span>{item.name}</span>
+                <span className="font-semibold text-white">₹ {item.value.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-5">
+        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Expense Distribution</h3>
+              <p className="text-xs text-white/40">Category share by percentage.</p>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row gap-5 items-center">
+            <div
+              className="w-44 h-44 rounded-full shrink-0"
+              style={{ background: `conic-gradient(${pieSegments.join(", ")})` }}
+            />
+            <div className="flex-1 w-full space-y-2">
+              {categoryBreakdown.length > 0 ? categoryBreakdown.map((item, index) => {
+                const percent = totalSpent > 0 ? ((item.value / totalSpent) * 100).toFixed(1) : 0;
+                return (
+                  <div key={item.name} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ["#f97316", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"][index % 6] }} />
+                      <span className="text-white/70">{item.name}</span>
+                    </div>
+                    <span className="font-semibold text-white">{percent}%</span>
+                  </div>
+                );
+              }) : (
+                <div className="rounded-lg bg-white/5 px-3 py-2 text-sm text-white/70">No expense data for the current filters.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Monthly Expense Trend</h3>
+              <p className="text-xs text-white/40">Jan to Jun comparison.</p>
+            </div>
+          </div>
+          <div className="flex items-end gap-3 h-56 mt-3">
+            {monthlyTrend.map((item) => (
+              <div key={item.monthName} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full flex items-end justify-center h-44 rounded-2xl bg-white/5 p-2">
+                  <div
+                    className="w-full rounded-xl bg-gradient-to-t from-primary to-orange-400"
+                    style={{ height: `${Math.max((item.monthValue / maxMonthlyValue) * 100, 6)}%` }}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-[11px] text-white/40">{item.monthName}</p>
+                  <p className="text-sm font-semibold text-white">₹ {item.monthValue.toFixed(0)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── Table Mode ── */}
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
         {loading ? (
@@ -380,7 +606,7 @@ const ExpensesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((exp) => (
+                {filteredExpenses.map((exp) => (
                   <tr key={exp.expense_id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
                     <td className="px-5 py-4">
                       <p className="text-white/80 font-medium text-sm">
