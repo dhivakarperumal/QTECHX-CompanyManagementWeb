@@ -344,7 +344,7 @@ export default function TasksPage() {
               />
             </div>
 
-            <div className="rounded-2xl bg-slate-900/80 p-4 lg:col-span-2">
+            <div className="rounded-2xl bg-slate-900/80 p-4">
               <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Description</label>
               <textarea
                 value={taskForm.description}
