@@ -52,8 +52,11 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
 
-// Serve uploaded files from the backend uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploaded files from the backend uploads directory as inline browser content
+app.use("/uploads", (req, res, next) => {
+  res.setHeader("Content-Disposition", "inline");
+  next();
+}, express.static(path.join(__dirname, "uploads")));
 
 // ── Stub routes for features not yet implemented in this backend ──────────────
 // These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)

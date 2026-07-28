@@ -118,6 +118,19 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
   const reqInputRef = useRef(null);
   const quotInputRef = useRef(null);
 
+  const refreshExistingDocuments = async (clientUuid) => {
+    if (!clientUuid) return;
+    setLoadingDocs(true);
+    try {
+      const { data } = await api.get(`/clients/${clientUuid}/documents`);
+      setExistingDocs(data?.data || []);
+    } catch {
+      setExistingDocs([]);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
   // Hydrate form when modal opens or editClient changes
   useEffect(() => {
     if (isOpen) {
@@ -131,15 +144,7 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
       setQuotDesc('');
       setExistingDocs([]);
       if (editClient) {
-        setLoadingDocs(true);
-        api.get(`/clients/${editClient.uuid}/documents`)
-          .then(({ data }) => {
-            setExistingDocs(data?.data || []);
-          })
-          .catch(() => {
-            setExistingDocs([]);
-          })
-          .finally(() => setLoadingDocs(false));
+        refreshExistingDocuments(editClient.uuid);
         setForm({
           company_name:        editClient.company_name        || '',
           client_name:         editClient.client_name         || '',
@@ -213,6 +218,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
           fd.append('document_name', quotName || quotFile.name);
           if (quotDesc) fd.append('description', quotDesc);
           await api.post(`/clients/${clientUuid}/documents`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        }
+        if (editClient) {
+          await refreshExistingDocuments(clientUuid);
         }
       }
 
