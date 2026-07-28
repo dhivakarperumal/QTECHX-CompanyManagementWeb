@@ -7,6 +7,7 @@ const {
   listEmployees,
   updateEmployee,
   deleteEmployee,
+  generateEmployeeCode,
 } = require("../models/employeeModel");
 
 const duplicateMessage = (error) => {
@@ -18,6 +19,16 @@ const duplicateMessage = (error) => {
   return "Employee already exists";
 };
 
+async function generateEmployeeCodeHandler(req, res) {
+  try {
+    const employeeCode = await generateEmployeeCode();
+    return res.json({ employee_code: employeeCode });
+  } catch (error) {
+    console.error("Generate Employee Code Error:", error);
+    return res.status(500).json({ message: "Failed to generate employee code" });
+  }
+}
+
 async function create(req, res) {
   try {
     const actor = req.user?.user_id || "SYSTEM";
@@ -26,12 +37,17 @@ async function create(req, res) {
     // Process uploaded files
     if (req.files) {
       Object.keys(req.files).forEach(key => {
-        employeeData[key] = `/uploads/${req.files[key][0].filename}`;
+        const file = req.files[key][0];
+        const relativePath = `/uploads/employees/${file.filename}`;
+        employeeData[key] = relativePath;
       });
     }
     
     // Set auto-generated fields
     employeeData.employee_id = uuidv4();
+    if (!employeeData.employee_code || !String(employeeData.employee_code).trim()) {
+      employeeData.employee_code = await generateEmployeeCode();
+    }
     employeeData.created_by = actor;
     employeeData.updated_by = actor;
 
@@ -113,7 +129,8 @@ async function update(req, res) {
     // Process uploaded files
     if (req.files) {
       Object.keys(req.files).forEach(key => {
-        updates[key] = `/uploads/${req.files[key][0].filename}`;
+        const file = req.files[key][0];
+        updates[key] = `/uploads/employees/${file.filename}`;
       });
     }
 
@@ -166,4 +183,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove };
+module.exports = { create, getAll, getOne, update, remove, generateEmployeeCodeHandler };

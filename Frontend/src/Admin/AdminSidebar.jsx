@@ -55,13 +55,13 @@ const navItems = [
     icon: Handshake,
     children: [
       { path: "/admin/clients", label: "All Clients", icon: Users },
-      
+
       { path: "/admin/clients/followups", label: "Followups", icon: Clock },
     ],
   },
 
 
-    /* ---- WORK ---- */
+  /* ---- WORK ---- */
   {
     label: "Project Management",
     icon: FolderKanban,
@@ -80,7 +80,7 @@ const navItems = [
       { path: "/admin/employees", label: "All Employees", icon: Users },
       { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
       { path: "/admin/attendance", label: "Attendance", icon: ClipboardCheck },
-      { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
+      { path: "/admin/employees/leave", label: "Leave Management", icon: Briefcase },
     ],
   },
 
@@ -101,24 +101,24 @@ const navItems = [
   },
 
   {
-  label: "My Projects",
-  icon: FolderKanban,
-  children: [
-    { path: "/admin/myprojects", label: "Project List", icon: List },
-    { path: "/admin/myprojects/add", label: "Add Project", icon: FolderPlus },
+    label: "My Projects",
+    icon: FolderKanban,
+    children: [
+      { path: "/admin/myprojects", label: "Project List", icon: List },
+      { path: "/admin/myprojects/add", label: "Add Project", icon: FolderPlus },
 
-    { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
-    { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
+      { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
+      { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
 
-    { path: "/admin/myprojects/documents", label: "Project Documents", icon: FileText },
-    { path: "/admin/myprojects/images", label: "Project Images", icon: Image },
+      { path: "/admin/myprojects/documents", label: "Project Documents", icon: FileText },
+      { path: "/admin/myprojects/images", label: "Project Images", icon: Image },
 
-    { path: "/admin/myprojects/hosting", label: "Hosting Management", icon: Server },
-    { path: "/admin/myprojects/domains", label: "Domain Management", icon: Globe },
+      { path: "/admin/myprojects/hosting", label: "Hosting Management", icon: Server },
+      { path: "/admin/myprojects/domains", label: "Domain Management", icon: Globe },
 
-    { path: "/admin/myprojects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
-  ],
-},
+      { path: "/admin/myprojects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
+    ],
+  },
 
 
   /* ---- TRAINING ---- */
@@ -140,7 +140,7 @@ const navItems = [
     ],
   },
 
-  
+
   /* ---- FINANCE ---- */
   {
     label: "Expenses",
@@ -157,16 +157,6 @@ const navItems = [
     children: [
       { path: "/admin/payroll", label: "Payroll Overview", icon: DollarSign },
       { path: "/admin/payroll/run", label: "Run Payroll", icon: TrendingUp },
-    ],
-  },
-
-  /* ---- HR ---- */
-  {
-    label: "Leave Management",
-    icon: CalendarOff,
-    children: [
-      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
-      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
     ],
   },
 
@@ -222,9 +212,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       {/* ========== MOBILE OVERLAY ========== */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${
-          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
       />
 
       {/* ========== SIDEBAR ========== */}
@@ -295,9 +284,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       <>
                         <span className="flex-1 text-left font-medium text-white truncate">{item.label}</span>
                         <ChevronDown
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                            isMenuOpen ? "rotate-180" : ""
-                          }`}
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${isMenuOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </>
                     )}
@@ -306,9 +294,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-8 mt-1.5 space-y-1 overflow-hidden transition-all duration-200 ${
-                        isMenuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
-                      }`}
+                      className={`ml-8 mt-1.5 space-y-1 overflow-hidden transition-all duration-200 ${isMenuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
+                        }`}
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   UserRoundPen, Building2, Mail, Phone, User, Briefcase,
   FileText, Calendar, Clock, MessageSquare, Bell, BellOff,
-  CheckCircle2, AlertCircle, Loader2, X, ShieldCheck, Upload, Paperclip
+  CheckCircle2, AlertCircle, Loader2, X, ShieldCheck, Upload, Paperclip, Download
 } from 'lucide-react';
 import api from '../../api';
 
@@ -37,6 +37,20 @@ const selectCls = `
   text-sm text-white focus:outline-none focus:border-primary/60
   transition-all duration-200 cursor-pointer
 `;
+
+function buildDocumentUrl(filePath) {
+  if (!filePath) return null;
+  const value = `${filePath}`.replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/uploads/')) return `http://localhost:5000${value}`;
+  if (value.startsWith('uploads/')) return `http://localhost:5000/${value}`;
+
+  const match = value.match(/(?:^|\/)(uploads\/.+)$/i);
+  if (match) return `http://localhost:5000/${match[1]}`;
+
+  const fileName = value.split('/').pop();
+  return fileName ? `http://localhost:5000/uploads/clients/${fileName}` : null;
+}
 
 function SectionCard({ icon: Icon, title, children }) {
   return (
@@ -93,8 +107,29 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
   const [quotName, setQuotName] = useState('');
   const [quotDesc, setQuotDesc] = useState('');
 
+  const [existingDocs, setExistingDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+
+  const currentDocs = existingDocs.reduce((acc, doc) => {
+    if (doc.document_type) acc[doc.document_type] = doc;
+    return acc;
+  }, {});
+
   const reqInputRef = useRef(null);
   const quotInputRef = useRef(null);
+
+  const refreshExistingDocuments = async (clientUuid) => {
+    if (!clientUuid) return;
+    setLoadingDocs(true);
+    try {
+      const { data } = await api.get(`/clients/${clientUuid}/documents`);
+      setExistingDocs(data?.data || []);
+    } catch {
+      setExistingDocs([]);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
 
   // Hydrate form when modal opens or editClient changes
   useEffect(() => {
@@ -107,7 +142,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
       setQuotFile(null);
       setQuotName('');
       setQuotDesc('');
+      setExistingDocs([]);
       if (editClient) {
+        refreshExistingDocuments(editClient.uuid);
         setForm({
           company_name:        editClient.company_name        || '',
           client_name:         editClient.client_name         || '',
@@ -181,6 +218,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
           fd.append('document_name', quotName || quotFile.name);
           if (quotDesc) fd.append('description', quotDesc);
           await api.post(`/clients/${clientUuid}/documents`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        }
+        if (editClient) {
+          await refreshExistingDocuments(clientUuid);
         }
       }
 
@@ -351,11 +391,55 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
 
             {/* Section 3: Document Uploads (Optional) */}
             <SectionCard icon={Paperclip} title="Attach Documents (Optional)">
+              {/* {editClient && (
+                <div className="mb-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Existing Documents</p>
+                    {loadingDocs && <Loader2 size={14} className="animate-spin text-white/40" />}
+                  </div>
+                  {!loadingDocs && existingDocs.length > 0 ? (
+                    <div className="space-y-2">
+                      {existingDocs.map((doc) => {
+                        const documentUrl = buildDocumentUrl(doc.file_path);
+                        return (
+                          <div key={doc.uuid} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-white/40">{doc.document_type}</p>
+                            <p className="mt-1 text-sm font-medium text-white">{doc.document_name}</p>
+                            {documentUrl && (
+                              <a
+                                href={documentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-2 inline-flex text-sm font-medium text-primary hover:text-primary/80"
+                              >
+                                View Document
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : !loadingDocs ? (
+                    <p className="text-sm text-white/40">No documents uploaded yet.</p>
+                  ) : null}
+                </div>
+              )} */}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 {/* Requirement Document */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Requirement Document</p>
+                  {editClient && currentDocs['Requirement Document'] && (
+                    <a
+                      href={buildDocumentUrl(currentDocs['Requirement Document'].file_path)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-xs font-medium text-primary hover:text-primary/80"
+                    >
+                      View Current Requirement Document
+                    </a>
+                  )}
                   <div 
                     onClick={() => reqInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-white/[0.02] transition h-36"
@@ -364,7 +448,13 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       type="file" ref={reqInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
-                        if (file) { setReqFile(file); if (!reqName) setReqName(file.name.split('.')[0]); }
+                        if (file) {
+                          setReqFile(file);
+                          if (!reqName) {
+                            const currentDoc = currentDocs['Requirement Document'];
+                            setReqName(currentDoc?.document_name || file.name.split('.')[0]);
+                          }
+                        }
                       }}
                     />
                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
@@ -397,6 +487,16 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                 {/* Project Quotation */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Project Quotation</p>
+                  {editClient && currentDocs['Project Quotation'] && (
+                    <a
+                      href={buildDocumentUrl(currentDocs['Project Quotation'].file_path)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-xs font-medium text-primary hover:text-primary/80"
+                    >
+                      View Current Project Quotation
+                    </a>
+                  )}
                   <div 
                     onClick={() => quotInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/[0.02] transition h-36"
@@ -405,7 +505,13 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       type="file" ref={quotInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
-                        if (file) { setQuotFile(file); if (!quotName) setQuotName(file.name.split('.')[0]); }
+                        if (file) {
+                          setQuotFile(file);
+                          if (!quotName) {
+                            const currentDoc = currentDocs['Project Quotation'];
+                            setQuotName(currentDoc?.document_name || file.name.split('.')[0]);
+                          }
+                        }
                       }}
                     />
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">

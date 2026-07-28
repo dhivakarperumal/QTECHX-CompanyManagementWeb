@@ -14,6 +14,7 @@ const EmployeeAdd = () => {
   const [existingFiles, setExistingFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     employee_code: "",
@@ -69,6 +70,45 @@ const EmployeeAdd = () => {
     }
     return `http://localhost:5000/${cleanPath}`;
   };
+
+  useEffect(() => {
+    if (isEditMode) return;
+
+    let ignore = false;
+
+    const fetchEmployeeCode = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:5000/api/employees/generate-code", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate employee code");
+        }
+
+        const data = await response.json();
+        if (!ignore && data.employee_code) {
+          setFormData((prev) => ({ ...prev, employee_code: data.employee_code }));
+        }
+      } catch (err) {
+        console.error("Failed to generate employee code:", err);
+        if (!ignore) {
+          setFormData((prev) => ({
+            ...prev,
+            employee_code: `EMPQT${Date.now().toString().slice(-4)}`,
+          }));
+        }
+      }
+    };
+
+    fetchEmployeeCode();
+    return () => {
+      ignore = true;
+    };
+  }, [isEditMode]);
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -154,22 +194,148 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
+  const validateField = (name, value) => {
+    if (!value) return "";
+
+    switch (name) {
+      case "mobile_number":
+      case "alternate_mobile":
+      case "emergency_contact_number": {
+        if (!/^[6-9]\d{9}$/.test(value)) {
+          return "Must be 10 digits and start with 6, 7, 8, or 9.";
+        }
+        return "";
+      }
+      case "aadhaar_number": {
+        if (!/^\d{12}$/.test(value)) {
+          return "Aadhaar must be exactly 12 digits.";
+        }
+        return "";
+      }
+      case "pan_number": {
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(value)) {
+          return "PAN must be in format ABCDE1234F.";
+        }
+        return "";
+      }
+      case "account_number": {
+        if (!/^\d{6,20}$/.test(value)) {
+          return "Account number must contain only digits (6-20 digits).";
+        }
+        return "";
+      }
+      case "ifsc_code": {
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(value)) {
+          return "IFSC must be 11 characters like SBIN0001234.";
+        }
+        return "";
+      }
+      case "upi_id": {
+        if (!/^[A-Za-z0-9._-]{2,}@[A-Za-z0-9.-]{2,}$/.test(value)) {
+          return "UPI ID should look like name@bank.";
+        }
+        return "";
+      }
+      default:
+        return "";
+    }
+  };
+
+  const validateForm = (data) => {
+    const errors = {};
+
+    if (!data.mobile_number?.trim()) {
+      errors.mobile_number = "Mobile number is required.";
+    } else {
+      const mobileError = validateField("mobile_number", data.mobile_number);
+      if (mobileError) errors.mobile_number = mobileError;
+    }
+
+    if (data.alternate_mobile && validateField("alternate_mobile", data.alternate_mobile)) {
+      errors.alternate_mobile = validateField("alternate_mobile", data.alternate_mobile);
+    }
+
+    if (data.aadhaar_number && validateField("aadhaar_number", data.aadhaar_number)) {
+      errors.aadhaar_number = validateField("aadhaar_number", data.aadhaar_number);
+    }
+
+    if (data.pan_number && validateField("pan_number", data.pan_number)) {
+      errors.pan_number = validateField("pan_number", data.pan_number);
+    }
+
+    if (data.account_number && validateField("account_number", data.account_number)) {
+      errors.account_number = validateField("account_number", data.account_number);
+    }
+
+    if (data.ifsc_code && validateField("ifsc_code", data.ifsc_code)) {
+      errors.ifsc_code = validateField("ifsc_code", data.ifsc_code);
+    }
+
+    if (data.upi_id && validateField("upi_id", data.upi_id)) {
+      errors.upi_id = validateField("upi_id", data.upi_id);
+    }
+
+    if (data.emergency_contact_number && validateField("emergency_contact_number", data.emergency_contact_number)) {
+      errors.emergency_contact_number = validateField("emergency_contact_number", data.emergency_contact_number);
+    }
+
+    return errors;
+  };
+
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === "file") {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
     } else {
+      let sanitizedValue = value;
+
+      switch (name) {
+        case "mobile_number":
+        case "alternate_mobile":
+        case "emergency_contact_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
+          break;
+        case "aadhaar_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
+          break;
+        case "pan_number":
+          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
+          break;
+        case "account_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
+          break;
+        case "ifsc_code":
+          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
+          break;
+        case "upi_id":
+          sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
+          break;
+        default:
+          break;
+      }
+
       setFormData((prev) => {
-        const newData = { ...prev, [name]: value };
+        const newData = { ...prev, [name]: sanitizedValue };
         if (name === "first_name" || name === "last_name") {
-          const first = name === "first_name" ? value : prev.first_name;
-          const last = name === "last_name" ? value : prev.last_name;
+          const first = name === "first_name" ? sanitizedValue : prev.first_name;
+          const last = name === "last_name" ? sanitizedValue : prev.last_name;
           newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
         }
         if (name === "personal_email") {
-          newData.official_email = value;
+          newData.official_email = sanitizedValue;
         }
         return newData;
+      });
+
+      setFieldErrors((prev) => {
+        const nextErrors = { ...prev };
+        const error = validateField(name, sanitizedValue);
+        if (error) {
+          nextErrors[name] = error;
+        } else {
+          delete nextErrors[name];
+        }
+        return nextErrors;
       });
     }
   };
@@ -190,6 +356,16 @@ const EmployeeAdd = () => {
       setLoading(false);
       return;
     }
+
+    const validationErrors = validateForm(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setError("Please correct the highlighted fields before saving.");
+      setLoading(false);
+      return;
+    }
+
+    setFieldErrors({});
 
     try {
       const token = localStorage.getItem("token");
@@ -266,15 +442,15 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Employee Code</label>
-              <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
+              <input type="text" name="employee_code" readOnly value={formData.employee_code} onChange={handleChange} className={`${inputClass} cursor-not-allowed bg-slate-900/70`} placeholder="Auto-generated employee code" />
             </div>
             <div>
               <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-              <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} placeholder="Enter first name" />
             </div>
             <div>
               <label className={labelClass}>Last Name</label>
-              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} placeholder="Enter last name" />
             </div>
             <div>
               <label className={labelClass}>Gender</label>
@@ -291,7 +467,18 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
-              <input type="text" name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass} />
+              <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass}>
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="Unknown">Unknown</option>
+              </select>
             </div>
             <div>
               <label className={labelClass}>Marital Status</label>
@@ -305,31 +492,35 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} />
+              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} placeholder="Enter nationality" />
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
-              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} placeholder="12 digits only" />
+              {fieldErrors.aadhaar_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.aadhaar_number}</p>}
             </div>
             <div>
               <label className={labelClass}>PAN Number</label>
-              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} placeholder="ABCDE1234F" />
+              {fieldErrors.pan_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.pan_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
-              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Alternate Mobile</label>
-              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} />
+              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.alternate_mobile && <p className="mt-1 text-xs text-red-400">{fieldErrors.alternate_mobile}</p>}
             </div>
             <div>
               <label className={labelClass}>Personal Email</label>
-              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} />
+              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelClass}>Permanent Address</label>
-              <textarea name="permanent_address" rows="2" value={formData.permanent_address} onChange={handleChange} className={inputClass}></textarea>
+              <textarea name="permanent_address" rows="2" value={formData.permanent_address} onChange={handleChange} className={inputClass} placeholder="Enter permanent address"></textarea>
             </div>
           </div>
         </div>
@@ -340,15 +531,16 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Contact Person</label>
-              <input type="text" name="emergency_contact_person" value={formData.emergency_contact_person} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_contact_person" value={formData.emergency_contact_person} onChange={handleChange} className={inputClass} placeholder="Enter emergency contact person" />
             </div>
             <div>
               <label className={labelClass}>Contact Number</label>
-              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.emergency_contact_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.emergency_contact_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Relationship</label>
-              <input type="text" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange} className={inputClass} placeholder="Enter relationship" />
             </div>
           </div>
         </div>
@@ -359,11 +551,11 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Designation</label>
-              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} />
+              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} placeholder="Enter designation" />
             </div>
             <div>
               <label className={labelClass}>Team Lead</label>
-              <input type="text" name="team_lead" value={formData.team_lead} onChange={handleChange} className={inputClass} />
+              <input type="text" name="team_lead" value={formData.team_lead} onChange={handleChange} className={inputClass} placeholder="Enter team lead name" />
             </div>
             <div>
               <label className={labelClass}>Joining Date</label>
@@ -400,27 +592,30 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Salary Type</label>
-              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} />
+              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} placeholder="Enter salary type" />
             </div>
             <div>
               <label className={labelClass}>Basic Salary</label>
-              <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} />
+              <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} placeholder="Enter basic salary" />
             </div>
             <div>
               <label className={labelClass}>Bank Name</label>
-              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
             </div>
             <div>
               <label className={labelClass}>Account Number</label>
-              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
+              {fieldErrors.account_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.account_number}</p>}
             </div>
             <div>
               <label className={labelClass}>IFSC Code</label>
-              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} />
+              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
+              {fieldErrors.ifsc_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.ifsc_code}</p>}
             </div>
             <div>
               <label className={labelClass}>UPI ID</label>
-              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} />
+              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
+              {fieldErrors.upi_id && <p className="mt-1 text-xs text-red-400">{fieldErrors.upi_id}</p>}
             </div>
           </div>
         </div>
@@ -505,7 +700,7 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter email address" />
+              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
             </div>
             <div className="relative">
               <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>

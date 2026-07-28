@@ -36,6 +36,15 @@ const EmployeeList = () => {
     fetchEmployees();
   }, []);
 
+  const getProfilePhotoUrl = (photo) => {
+    if (!photo) return "";
+    let cleanPath = photo.replace(/\\/g, "/");
+    if (cleanPath.startsWith("/")) {
+      return `http://localhost:5000${cleanPath}`;
+    }
+    return `http://localhost:5000/${cleanPath}`;
+  };
+
   const handleDelete = async (employeeId) => {
     if (!window.confirm("Are you sure you want to delete this employee?")) return;
     try {
@@ -76,6 +85,7 @@ const EmployeeList = () => {
         <table className="w-full text-left text-sm text-slate-300">
           <thead className="bg-slate-900/50 text-xs uppercase text-slate-400">
             <tr>
+              <th className="px-4 py-4 font-medium">Photo</th>
               <th className="px-6 py-4 font-medium">Employee Code</th>
               <th className="px-6 py-4 font-medium">Name</th>
               <th className="px-6 py-4 font-medium">Email</th>
@@ -88,19 +98,32 @@ const EmployeeList = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-slate-400">
+                <td colSpan="8" className="px-6 py-8 text-center text-slate-400">
                   Loading employees...
                 </td>
               </tr>
             ) : employees.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-slate-400">
+                <td colSpan="8" className="px-6 py-8 text-center text-slate-400">
                   No employees found.
                 </td>
               </tr>
             ) : (
               employees.map((emp) => (
                 <tr key={emp.employee_id} className="border-t border-slate-700 hover:bg-slate-700/50">
+                  <td className="px-4 py-4">
+                    {emp.profile_photo ? (
+                      <img
+                        src={getProfilePhotoUrl(emp.profile_photo)}
+                        alt={`${emp.first_name} ${emp.last_name || ""}`.trim()}
+                        className="h-10 w-10 rounded-full object-cover border border-slate-600"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-sm font-semibold text-slate-300">
+                        {`${emp.first_name?.[0] || ""}${emp.last_name?.[0] || ""}`.toUpperCase()}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 font-medium text-slate-100">{emp.employee_code || "N/A"}</td>
                   <td className="px-6 py-4">{`${emp.first_name} ${emp.last_name || ""}`}</td>
                   <td className="px-6 py-4">{emp.personal_email || "N/A"}</td>

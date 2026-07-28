@@ -53,8 +53,11 @@ app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/tasks", taskRouter);
 
-// Serve static uploads
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// Serve uploaded files from the backend uploads directory as inline browser content
+app.use("/uploads", (req, res, next) => {
+  res.setHeader("Content-Disposition", "inline");
+  next();
+}, express.static(path.join(__dirname, "uploads")));
 
 // ── Stub routes for features not yet implemented in this backend ──────────────
 // These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
@@ -67,9 +70,6 @@ app.put("/api/cart/:id",               (req, res) => res.json({ success: true })
 app.delete("/api/cart/clear/:userId",  (req, res) => res.json({ success: true }));
 app.delete("/api/wishlist/:uid/:pid",  (req, res) => res.json({ success: true }));
 
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Global Context Middleware for tracking created_by / updated_by
 app.use((req, res, next) => {

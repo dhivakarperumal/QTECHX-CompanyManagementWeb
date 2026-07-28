@@ -18,7 +18,9 @@ const {
 } = require("../models/clientModel");
 
 // ─── Multer Upload Configuration ─────────────────────────────────────────────
-const UPLOAD_DIR = path.join(__dirname, "../../../uploads/client_documents");
+const UPLOAD_ROOT = path.join(__dirname, "../../uploads");
+const CLIENT_UPLOAD_DIR = path.join(UPLOAD_ROOT, "clients");
+const CLIENT_PUBLIC_BASE = "/uploads/clients";
 const ALLOWED_MIME = [
   "application/pdf",
   "application/msword",
@@ -28,10 +30,59 @@ const ALLOWED_MIME = [
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
+if (!fs.existsSync(UPLOAD_ROOT)) {
+  fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
+}
+if (!fs.existsSync(CLIENT_UPLOAD_DIR)) {
+  fs.mkdirSync(CLIENT_UPLOAD_DIR, { recursive: true });
+}
+
+function getStoredFilePath(filePath) {
+  if (!filePath) return null;
+  const normalized = filePath.replace(/\\/g, "/");
+  if (normalized.startsWith("/uploads/")) {
+    return path.join(UPLOAD_ROOT, normalized.replace(/^\/uploads\//, ""));
+  }
+  if (normalized.startsWith("uploads/")) {
+    return path.join(UPLOAD_ROOT, normalized.replace(/^uploads\//, ""));
+  }
+  return path.isAbsolute(filePath) ? filePath : path.resolve(UPLOAD_ROOT, filePath);
+}
+
+function getPublicFilePath(filePath) {
+  if (!filePath) return null;
+  const normalized = filePath.replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith("/uploads/")) return normalized;
+  if (normalized.startsWith("uploads/")) return `/${normalized}`;
+
+  const resolved = getStoredFilePath(filePath);
+  if (!resolved) return null;
+  const relative = path.relative(UPLOAD_ROOT, resolved);
+  return relative && !relative.startsWith("..")
+    ? `/${path.join("uploads", relative).replace(/\\/g, "/")}`
+    : null;
+}
+
+function normalizeDocumentPath(filePath) {
+  if (!filePath) return null;
+  const normalized = `${filePath}`.replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith("/uploads/")) return normalized;
+  if (normalized.startsWith("uploads/")) return `/${normalized}`;
+
+  const match = normalized.match(/(?:^|\/)(uploads\/.+)$/i);
+  if (match) return `/${match[1]}`;
+
+  const fileName = normalized.split("/").pop();
+  if (!fileName) return null;
+  return `/uploads/clients/${fileName}`;
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    cb(null, UPLOAD_DIR);
+    if (!fs.existsSync(CLIENT_UPLOAD_DIR)) fs.mkdirSync(CLIENT_UPLOAD_DIR, { recursive: true });
+    cb(null, CLIENT_UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -140,7 +191,10 @@ async function getClientByIdHandler(req, res) {
   try {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
-    const documents = await listDocumentsByClientId(client.id);
+    const documents = (await listDocumentsByClientId(client.id)).map((doc) => ({
+      ...doc,
+      file_path: normalizeDocumentPath(doc.file_path),
+    }));
     let history = await listHistoryByClientId(client.id);
     
     // Inject synthetic "Client Created" event for old clients missing it
@@ -229,8 +283,9 @@ async function deleteClientHandler(req, res) {
     // Delete associated documents from disk
     const docs = await listDocumentsByClientId(existing.id);
     for (const doc of docs) {
-      if (doc.file_path && fs.existsSync(doc.file_path)) {
-        fs.unlinkSync(doc.file_path);
+      const absolutePath = getStoredFilePath(doc.file_path);
+      if (absolutePath && fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
       }
     }
     await deleteClient(req.params.id);
@@ -324,13 +379,24 @@ function uploadDocumentHandler(req, res) {
       }
 
       const actor = req.user?.user_id || "SYSTEM";
+      const existingDocuments = await listDocumentsByClientId(client.id);
+      const existingDocument = existingDocuments.find((doc) => doc.document_type === document_type);
+
+      if (existingDocument) {
+        const existingFilePath = getStoredFilePath(existingDocument.file_path);
+        if (existingFilePath && fs.existsSync(existingFilePath)) {
+          fs.unlinkSync(existingFilePath);
+        }
+        await deleteDocument(existingDocument.uuid);
+      }
+
       const doc = await createDocument({
         uuid: uuidv4(),
         client_id: client.id,
         document_type,
         document_name: document_name.trim(),
         file_name: req.file.originalname,
-        file_path: req.file.path,
+        file_path: getPublicFilePath(req.file.path) || `${CLIENT_PUBLIC_BASE}/${req.file.filename}`,
         file_size: req.file.size,
         mime_type: req.file.mimetype,
         description: description || null,
@@ -352,7 +418,10 @@ async function getDocumentsHandler(req, res) {
   try {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
-    const documents = await listDocumentsByClientId(client.id);
+    const documents = (await listDocumentsByClientId(client.id)).map((doc) => ({
+      ...doc,
+      file_path: normalizeDocumentPath(doc.file_path),
+    }));
     return ok(res, { data: documents });
   } catch (err) {
     console.error("getDocumentsHandler:", err);
@@ -365,8 +434,9 @@ async function deleteDocumentHandler(req, res) {
   try {
     const doc = await findDocumentByUUID(req.params.docId);
     if (!doc) return fail(res, "Document not found", 404);
-    if (doc.file_path && fs.existsSync(doc.file_path)) {
-      fs.unlinkSync(doc.file_path);
+    const absolutePath = getStoredFilePath(doc.file_path);
+    if (absolutePath && fs.existsSync(absolutePath)) {
+      fs.unlinkSync(absolutePath);
     }
     await deleteDocument(req.params.docId);
     return ok(res, { message: "Document deleted successfully" });

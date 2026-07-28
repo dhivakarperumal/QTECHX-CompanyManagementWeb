@@ -330,12 +330,24 @@ function ViewDrawer({ client, index, onClose, onEdit, onStatusClick }) {
                           {doc.description && <p className="text-xs text-white/60 mt-1.5">{doc.description}</p>}
                         </div>
                       </div>
-                      {doc.file_path && (
-                        <a href={`http://localhost:5000/uploads/client_documents/${doc.file_path.split('\\').pop().split('/').pop()}`} target="_blank" rel="noreferrer"
-                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition shrink-0">
-                          <Download size={14} />
-                        </a>
-                      )}
+                      {doc.file_path && (() => {
+                        const documentUrl = (() => {
+                          const value = `${doc.file_path}`.replace(/\\/g, '/');
+                          if (/^https?:\/\//i.test(value)) return value;
+                          if (value.startsWith('/uploads/')) return `http://localhost:5000${value}`;
+                          if (value.startsWith('uploads/')) return `http://localhost:5000/${value}`;
+                          const match = value.match(/(?:^|\/)(uploads\/.+)$/i);
+                          if (match) return `http://localhost:5000/${match[1]}`;
+                          const fileName = value.split('/').pop();
+                          return fileName ? `http://localhost:5000/uploads/clients/${fileName}` : null;
+                        })();
+                        return documentUrl ? (
+                          <a href={documentUrl} target="_blank" rel="noreferrer"
+                             className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition shrink-0">
+                            <Download size={14} />
+                          </a>
+                        ) : null;
+                      })()}
                     </div>
                   ))}
                 </div>
