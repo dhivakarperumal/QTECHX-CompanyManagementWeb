@@ -3,7 +3,6 @@ const { createTask, findTaskByUUID, listTasks, updateTask, deleteTask } = requir
 const { findProjectByUUID, findProjectById } = require('../models/projectModel');
 const { getDB } = require('../config/db');
 
-const TASK_TYPES = ['Bug','Feature','Enhancement','Support','Testing','Documentation','Research'];
 const PRIORITIES = ['Low','Medium','High','Critical'];
 const STATUSES = ['Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled'];
 
@@ -52,8 +51,8 @@ async function getTaskByIdHandler(req, res) {
 async function createTaskHandler(req, res) {
   try {
     const {
-      project_id, milestone, module_name, task_name, description,
-      task_type, category, parent_task_uuid, assigned_to, assigned_by,
+      project_id, module_name, task_name, description,
+      category, parent_task_uuid, assigned_to, assigned_by,
       team, assignment_date, start_date, due_date, completion_date,
       estimated_hours, actual_hours, time_spent, remaining_hours,
       priority, status, progress, attachments, comments, internal_notes,
@@ -63,9 +62,6 @@ async function createTaskHandler(req, res) {
     const trimmedName = task_name?.toString().trim();
     if (!trimmedName) return fail(res, 'Task name is required', 400);
     if (!project_id) return fail(res, 'Project is required', 400);
-    if (task_type && !TASK_TYPES.includes(task_type)) {
-      return fail(res, `Invalid task_type. Allowed: ${TASK_TYPES.join(', ')}`, 400);
-    }
     if (priority && !PRIORITIES.includes(priority)) {
       return fail(res, `Invalid priority. Allowed: ${PRIORITIES.join(', ')}`, 400);
     }
@@ -79,11 +75,9 @@ async function createTaskHandler(req, res) {
     const task = await createTask({
       uuid: uuidv4(),
       project_id: project.id,
-      milestone: milestone || null,
       module_name: module_name || null,
       task_name: trimmedName,
       description: description || null,
-      task_type: task_type || 'Feature',
       category: category || null,
       parent_task_uuid: parent_task_uuid || null,
       assigned_to: assigned_to || null,
@@ -121,10 +115,14 @@ async function updateTaskHandler(req, res) {
     const task = await findTaskByUUID(req.params.id);
     if (!task) return fail(res, 'Task not found', 404);
     const updates = { ...req.body };
-    if (updates.task_name) updates.task_name = updates.task_name.toString().trim();
-    if (updates.task_type && !TASK_TYPES.includes(updates.task_type)) {
-      return fail(res, `Invalid task_type. Allowed: ${TASK_TYPES.join(', ')}`, 400);
+
+    if (updates.project_id) {
+      const project = await findProjectByUUID(updates.project_id);
+      if (!project) return fail(res, 'Project not found', 404);
+      updates.project_id = project.id;
     }
+
+    if (updates.task_name) updates.task_name = updates.task_name.toString().trim();
     if (updates.priority && !PRIORITIES.includes(updates.priority)) {
       return fail(res, `Invalid priority. Allowed: ${PRIORITIES.join(', ')}`, 400);
     }
