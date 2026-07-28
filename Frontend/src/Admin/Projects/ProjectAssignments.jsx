@@ -1,17 +1,28 @@
-﻿import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Search, Plus, Loader2, AlertCircle, Trash2, X,
   FolderKanban, CheckCircle, RefreshCw, ChevronDown, Edit3,
 } from 'lucide-react';
 import api from '../../api';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const ROLES = ['Project Manager','UI/UX Designer','Frontend Developer','Backend Developer','Tester','DevOps','QA'];
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6','#ef4444','#22c55e'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 
-function Avatar({ name, index, size = 9 }) {
+function Avatar({ name, image, index, size = 9 }) {
   const c = AVATAR_COLOURS[(index||0) % AVATAR_COLOURS.length];
   const sz = `w-${size} h-${size}`;
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt={name || 'Avatar'}
+        className={`${sz} rounded-xl object-cover shrink-0`}
+        onError={(e) => { e.target.onerror = null; e.target.src = ''; }}
+      />
+    );
+  }
   return (
     <div className={`${sz} rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0`}
       style={{ background: c+'28', border:`1.5px solid ${c}44`, color: c }}>
@@ -94,6 +105,7 @@ function AssignModal({ onClose, onAssigned }) {
   const selectedCount = selectedEmployeeIds.length;
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
@@ -208,6 +220,7 @@ function AssignModal({ onClose, onAssigned }) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -312,6 +325,7 @@ export default function ProjectAssignments() {
 
       {/* Remove confirm */}
       {removeTarget && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setRemoveTarget(null)} />
           <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
@@ -336,10 +350,12 @@ export default function ProjectAssignments() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} />}
       {showEdit && editTarget && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
           <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
@@ -382,6 +398,7 @@ export default function ProjectAssignments() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Header */}
@@ -486,7 +503,9 @@ export default function ProjectAssignments() {
                 <table className="w-full min-w-[600px] text-sm">
                   <thead>
                     <tr className="border-b border-white/[0.05]">
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">Employee</th>
+                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
+                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
+                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Designation</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Role in Project</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Assigned On</th>
@@ -497,21 +516,51 @@ export default function ProjectAssignments() {
                     {members.map((m, i) => (
                       <tr key={`${m.employee_id}-${m.role}`} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition">
                         <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar name={`${m.first_name} ${m.last_name}`} index={i} />
-                            <div>
-                              <p className="text-white font-semibold text-sm">{m.first_name} {m.last_name}</p>
-                              {m.personal_email && <p className="text-white/30 text-[10px]">{m.personal_email}</p>}
+                          <div className="text-white font-semibold text-sm truncate">{m.employee_id || '—'}</div>
+                          {m.employee_code && <div className="text-[10px] text-white/40 mt-1">{m.employee_code}</div>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-start gap-3">
+                            <Avatar
+                              name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
+                              image={m.profile_photo}
+                              index={i}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-white font-semibold text-sm truncate">
+                                {m.full_name ||
+                                  [m.first_name, m.last_name].filter(Boolean).join(' ') ||
+                                  m.employee_name ||
+                                  m.employee_code ||
+                                  '—'}
+                              </p>
+                              {(m.designation || m.role) && (
+                                <p className="text-white/40 text-[10px] truncate">{m.designation || m.role}</p>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-white/50 text-xs">{m.designation || '—'}</span>
+                          <div className="space-y-1 text-[10px] text-white/40">
+                            {m.personal_email || m.email || m.official_email ? (
+                              <div>{m.personal_email || m.email || m.official_email}</div>
+                            ) : (
+                              <div>No email</div>
+                            )}
+                            {m.mobile_number || m.phone_number || m.alternate_mobile ? (
+                              <div>{m.mobile_number || m.phone_number || m.alternate_mobile}</div>
+                            ) : (
+                              <div>No phone</div>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3"><RoleBadge role={m.role} /></td>
+                        <td className="px-4 py-3">
+                          <span className="text-white/50 text-xs">{m.designation || m.role || '—'}</span>
+                        </td>
+                        <td className="px-4 py-3"><RoleBadge role={m.role || m.designation || 'Assigned'} /></td>
                         <td className="px-4 py-3">
                           <span className="text-white/35 text-xs">
-                            {m.assigned_at ? new Date(m.assigned_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
+                            {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">

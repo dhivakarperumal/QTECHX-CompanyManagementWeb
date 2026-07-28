@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FolderKanban, Search, TrendingUp, RefreshCw, Plus,
@@ -6,6 +6,7 @@ import {
   Eye, Edit2, Trash2, Building2, User, X, Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import api from '../../api';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const formatCurrency = (value) => {
   if (!value) return '—';
@@ -244,6 +245,7 @@ export default function AllProjects() {
 
       {/* Delete Modal */}
       {deleteTarget && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
           <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
@@ -272,6 +274,7 @@ export default function AllProjects() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Header */}
@@ -327,6 +330,7 @@ export default function AllProjects() {
       </div>
 
       {showAssignmentModal && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
           <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
             <button
@@ -481,6 +485,7 @@ export default function AllProjects() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Toolbar */}

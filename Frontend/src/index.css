@@ -412,3 +412,19 @@ html, body, #root {
 .pl__dot:before { background-color: black; }
 .pl__dot:after { background-color: black; }
 
+/* ═══════════════════════════════════════════
+   MODAL PORTAL ROOT
+   Sits above sidebar (z-50) and all content.
+   Portals render here via ReactDOM.createPortal.
+═══════════════════════════════════════════ */
+#modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none; /* passthrough when empty */
+}
+/* When a modal is rendered, its backdrop captures pointer events */
+#modal-root > * {
+  pointer-events: auto;
+}
+

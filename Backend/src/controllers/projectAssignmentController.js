@@ -43,7 +43,7 @@ function normalizeEmployeeAssignments(body = {}) {
         const parsedValue = JSON.parse(trimmed);
         addValue(parsedValue);
         return;
-      } catch {
+      } catch (err) {
         trimmed.split(',').forEach((item) => {
           const part = item.trim();
           if (!part || seen.has(part)) return;
@@ -99,7 +99,7 @@ async function resolveEmployeeAssignments(db, employeeAssignments = []) {
     seen.add(normalizedEmployeeId);
 
     const [rows] = await db.execute(
-      'SELECT employee_id, employee_code, first_name, last_name, designation, role, personal_email, official_email FROM employees WHERE employee_id = ? OR CAST(id AS CHAR) = ? LIMIT 1',
+      'SELECT employee_id, employee_code, first_name, last_name, profile_photo, designation, role, personal_email, official_email, mobile_number, alternate_mobile FROM employees WHERE employee_id = ? OR CAST(id AS CHAR) = ? LIMIT 1',
       [normalizedEmployeeId, normalizedEmployeeId]
     );
 
@@ -108,9 +108,15 @@ async function resolveEmployeeAssignments(db, employeeAssignments = []) {
       resolvedEmployeeAssignments.push({
         employee_id: String(employee.employee_id),
         employee_name: assignment?.employee_name || assignment?.employeeName || [employee.first_name, employee.last_name].filter(Boolean).join(' ').trim() || null,
+        employee_code: assignment?.employee_code || assignment?.employeeCode || employee.employee_code || null,
+        first_name: assignment?.first_name || employee.first_name || null,
+        last_name: assignment?.last_name || employee.last_name || null,
+        profile_photo: assignment?.profile_photo || assignment?.profilePhoto || employee.profile_photo || null,
         designation: assignment?.designation || assignment?.role || employee.designation || employee.role || null,
         email: assignment?.email || assignment?.personal_email || assignment?.official_email || employee.personal_email || employee.official_email || null,
-        employee_code: assignment?.employee_code || assignment?.employeeCode || employee.employee_code || null,
+        mobile_number: assignment?.mobile_number || assignment?.mobileNumber || employee.mobile_number || null,
+        alternate_mobile: assignment?.alternate_mobile || assignment?.alternateMobile || employee.alternate_mobile || null,
+        assigned_date: assignment?.assigned_date || assignment?.assignedDate || null,
         status: assignment?.status || 'Assigned',
       });
     } else {
@@ -155,8 +161,7 @@ function buildAssignmentEnvelope(project, assignments = []) {
     employment_status: row.employment_status || 'Active',
     role: row.role || null,
     status: row.status || 'Assigned',
-    assigned_date: row.assigned_date || row.created_at || null,
-    assigned_by: row.assigned_by || null,
+    assigned_date: row.assigned_date || row.created_at || new Date().toISOString(),
   }));
 
   return {
@@ -198,7 +203,6 @@ async function assignHandler(req, res) {
       assigned_date: req.body.assigned_date || null,
       created_by: actor,
       updated_by: actor,
-      assigned_by: actor,
     });
 
     const assignments = await listAssignmentsByProject(project.id);
@@ -229,7 +233,7 @@ async function unassignHandler(req, res) {
     if (invalidIds.length) return fail(res, 'One or more employees were not found', 404);
 
     const actor = getActor(req);
-    const removed = await removeProjectAssignments(project.id, resolvedEmployeeAssignments, actor, actor);
+    const removed = await removeProjectAssignments(project.id, resolvedEmployeeAssignments, actor);
     const assignments = await listAssignmentsByProject(project.id);
     const payload = buildAssignmentEnvelope(project, assignments);
     return ok(res, { message: 'Assignment removed', ...payload, removed, data: assignments });
@@ -256,7 +260,6 @@ async function updateAssignmentsHandler(req, res) {
       status: req.body.status || 'Assigned',
       assigned_date: req.body.assigned_date || null,
       updated_by: actor,
-      assigned_by: actor,
     });
 
     const assignments = await listAssignmentsByProject(project.id);
@@ -288,9 +291,8 @@ async function updateAssignmentHandler(req, res) {
     const actor = getActor(req);
     if (status !== undefined) {
       const db = getDB();
-      await db.execute('UPDATE project_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?, assigned_by = ? WHERE id = ?', [status, actor, actor, assignmentId]);
+      await db.execute('UPDATE project_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?', [status, actor, assignmentId]);
     }
-
     let updatedEmployee = null;
     if (targetEmployeeId) {
       updatedEmployee = await updateProjectAssignmentEntry({
@@ -299,7 +301,6 @@ async function updateAssignmentHandler(req, res) {
         employee_id: targetEmployeeId,
         updates: role !== undefined ? { role } : {},
         updated_by: actor,
-        assigned_by: actor,
       });
       if (!updatedEmployee) return fail(res, 'Employee assignment not found', 404);
     }
@@ -337,7 +338,6 @@ function groupAssignmentsByProject(assignments = []) {
       personal_email: assignment.personal_email,
       status: assignment.status,
       assigned_date: assignment.assigned_date,
-      assigned_by: assignment.assigned_by,
     });
     return groups;
   }, {});

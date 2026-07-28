@@ -1,4 +1,8 @@
-﻿const { getDB } = require('../config/db');
+const { getDB } = require('../config/db');
+
+function getCurrentDateTimeString() {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+}
 
 function normalizeAssignmentEntry(item = {}) {
   if (!item || typeof item !== 'object') return { employee_id: null };
@@ -28,8 +32,7 @@ function normalizeAssignmentEntry(item = {}) {
     employment_status: item.employment_status ?? item.employmentStatus ?? 'Active',
     role: item.role ?? null,
     status: item.status ?? 'Assigned',
-    assigned_date: item.assigned_date ?? null,
-    assigned_by: item.assigned_by ?? null,
+    assigned_date: item.assigned_date ?? item.assignedDate ?? null,
   };
 }
 
@@ -70,7 +73,7 @@ function parseEmployeeAssignments(value) {
       if (Array.isArray(parsed)) {
         return parsed.map(normalizeAssignmentEntry).filter((item) => item.employee_id);
       }
-    } catch {
+    } catch (err) {
       return [];
     }
   }
@@ -78,67 +81,158 @@ function parseEmployeeAssignments(value) {
   return [];
 }
 
-async function assignEmployeesToProject({ project_id, employee_ids = [], status = 'Assigned', assigned_date = null, created_by = null, updated_by = null, assigned_by = null }) {
+async function hydrateEmployeeAssignments(assignments = [], rowAssignedDate = null, rowCreatedAt = null) {
+  const db = getDB();
+  const normalizedAssignments = Array.isArray(assignments)
+    ? assignments.map(normalizeAssignmentEntry).filter((item) => item.employee_id)
+    : [];
+  const employeeIds = [...new Set(normalizedAssignments.map((item) => String(item.employee_id).trim()).filter(Boolean))];
+  if (!employeeIds.length) return normalizedAssignments;
+
+  const placeholders = employeeIds.map(() => '?').join(', ');
+  const [employeeRows] = await db.execute(
+    `SELECT employee_id, employee_code, first_name, last_name, profile_photo,
+            designation, role, personal_email, official_email,
+            mobile_number, alternate_mobile, employment_status
+     FROM employees
+     WHERE employee_id IN (${placeholders})`,
+    employeeIds
+  );
+
+  const employeeMap = new Map(employeeRows.map((row) => [String(row.employee_id), row]));
+
+  return normalizedAssignments.map((employee) => {
+    const employeeId = String(employee.employee_id).trim();
+    // Always prefer LIVE DB data over potentially-stale JSON blob data
+    const dbEmployee = employeeMap.get(employeeId) || {};
+    const first_name   = dbEmployee.first_name   ?? employee.first_name   ?? null;
+    const last_name    = dbEmployee.last_name    ?? employee.last_name    ?? null;
+    const profile_photo   = dbEmployee.profile_photo   ?? employee.profile_photo   ?? null;
+    const mobile_number   = dbEmployee.mobile_number   ?? employee.mobile_number   ?? null;
+    const alternate_mobile = dbEmployee.alternate_mobile ?? employee.alternate_mobile ?? null;
+    const designation  = dbEmployee.designation  ?? dbEmployee.role ?? employee.designation ?? employee.role ?? null;
+    const employee_code = dbEmployee.employee_code ?? employee.employee_code ?? null;
+    const employment_status = dbEmployee.employment_status ?? employee.employment_status ?? 'Active';
+    const email = dbEmployee.personal_email ?? dbEmployee.official_email ?? employee.personal_email ?? employee.email ?? null;
+    const full_name = [first_name, last_name].filter(Boolean).join(' ').trim() || null;
+
+    // For assigned_date: prefer blob value, then fall back to the parent row timestamps
+    const assigned_date = employee.assigned_date || rowAssignedDate || rowCreatedAt || null;
+
+    return {
+      ...employee,
+      employee_id: employeeId,
+      employee_code,
+      first_name,
+      last_name,
+      full_name,
+      employee_name: full_name || employee.employee_name || null,
+      profile_photo,
+      personal_email: email,
+      email,
+      mobile_number,
+      alternate_mobile,
+      designation,
+      role: employee.role ?? designation ?? null,
+      employment_status,
+      status: employee.status || 'Assigned',
+      assigned_date,
+    };
+  });
+}
+
+async function assignEmployeesToProject({ project_id, employee_ids = [], status = 'Assigned', assigned_date = null, created_by = null, updated_by = null }) {
   const db = getDB();
   const payloads = serializeEmployeeAssignments(employee_ids);
   if (!payloads.length) throw new Error('No employees selected');
 
-  const actor = created_by || updated_by || assigned_by || null;
-  const finalAssignedDate = assigned_date || new Date().toISOString().split('T')[0];
+  const actor = created_by || updated_by || null;
+  const finalAssignedDate = assigned_date || getCurrentDateTimeString();
   const [existingRows] = await db.execute('SELECT id, employee_ids, status, assigned_date FROM project_assignments WHERE project_id = ? LIMIT 1', [project_id]);
 
-  const enrichedPayloads = payloads.map(emp => ({
-    ...emp,
-    assigned_date: emp.assigned_date || finalAssignedDate,
-    assigned_by: emp.assigned_by || assigned_by || actor || null,
-  }));
+  // ── Enrich payloads with LIVE DB employee data before storing ──────────────
+  // This prevents saving null names into the blob when the frontend only sends employee_id
+  const uniqueIds = [...new Set(payloads.map(p => p.employee_id).filter(Boolean))];
+  let dbEmployeeMap = new Map();
+  if (uniqueIds.length) {
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const [empRows] = await db.execute(
+      `SELECT employee_id, employee_code, first_name, last_name, profile_photo,
+              designation, role, personal_email, official_email,
+              mobile_number, alternate_mobile, employment_status
+       FROM employees WHERE employee_id IN (${placeholders})`,
+      uniqueIds
+    );
+    dbEmployeeMap = new Map(empRows.map(r => [String(r.employee_id), r]));
+  }
+
+  const enrichedPayloads = payloads.map(emp => {
+    const db_emp = dbEmployeeMap.get(String(emp.employee_id)) || {};
+    const first_name  = db_emp.first_name  || emp.first_name  || null;
+    const last_name   = db_emp.last_name   || emp.last_name   || null;
+    const full_name   = [first_name, last_name].filter(Boolean).join(' ').trim() || null;
+    return {
+      ...emp,
+      employee_code:  db_emp.employee_code  || emp.employee_code  || null,
+      first_name,
+      last_name,
+      full_name,
+      profile_photo:  db_emp.profile_photo  || emp.profile_photo  || null,
+      mobile_number:  db_emp.mobile_number  || emp.mobile_number  || null,
+      alternate_mobile: db_emp.alternate_mobile || emp.alternate_mobile || null,
+      personal_email: db_emp.personal_email || db_emp.official_email || emp.personal_email || null,
+      designation:    db_emp.designation    || db_emp.role || emp.designation || null,
+      employment_status: db_emp.employment_status || emp.employment_status || 'Active',
+      assigned_date:  emp.assigned_date || finalAssignedDate,
+    };
+  });
 
   if (existingRows[0]) {
     await db.execute(
-      'UPDATE project_assignments SET employee_ids = ?, status = ?, assigned_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?, assigned_by = ? WHERE project_id = ?',
-      [JSON.stringify(enrichedPayloads), status || existingRows[0].status || 'Assigned', finalAssignedDate, actor, assigned_by || actor || null, project_id]
+      'UPDATE project_assignments SET employee_ids = ?, status = ?, assigned_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE project_id = ?',
+      [JSON.stringify(enrichedPayloads), status || existingRows[0].status || 'Assigned', finalAssignedDate, actor, project_id]
     );
     return { inserted: 0, existing: 1, employeeCount: enrichedPayloads.length, employees: enrichedPayloads };
   }
 
   await db.execute(
-    'INSERT INTO project_assignments (project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by, assigned_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?)',
-    [project_id, JSON.stringify(enrichedPayloads), status || 'Assigned', finalAssignedDate, actor, actor, assigned_by || actor || null]
+    'INSERT INTO project_assignments (project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)',
+    [project_id, JSON.stringify(enrichedPayloads), status || 'Assigned', finalAssignedDate, actor, actor]
   );
 
   return { inserted: 1, existing: 0, employeeCount: enrichedPayloads.length, employees: enrichedPayloads };
 }
 
-async function syncProjectAssignments({ project_id, employee_ids = [], status = 'Assigned', assigned_date = null, updated_by = null, assigned_by = null }) {
+async function syncProjectAssignments({ project_id, employee_ids = [], status = 'Assigned', assigned_date = null, updated_by = null }) {
   const db = getDB();
   const payloads = serializeEmployeeAssignments(employee_ids);
-  const actor = updated_by || assigned_by || null;
-  const finalAssignedDate = assigned_date || new Date().toISOString().split('T')[0];
+  const actor = updated_by || null;
+  const finalAssignedDate = assigned_date || getCurrentDateTimeString();
   const [existingRows] = await db.execute('SELECT id, assigned_date FROM project_assignments WHERE project_id = ? LIMIT 1', [project_id]);
 
   const enrichedPayloads = payloads.map(emp => ({
     ...emp,
     assigned_date: emp.assigned_date || existingRows[0]?.assigned_date || finalAssignedDate,
-    assigned_by: emp.assigned_by || assigned_by || actor || null,
   }));
 
   if (existingRows[0]) {
+    const updatedAssignedDate = assigned_date ?? existingRows[0].assigned_date ?? finalAssignedDate;
     await db.execute(
-      'UPDATE project_assignments SET employee_ids = ?, status = ?, assigned_date = COALESCE(?, assigned_date), updated_at = CURRENT_TIMESTAMP, updated_by = ?, assigned_by = ? WHERE project_id = ?',
-      [JSON.stringify(enrichedPayloads), status || 'Assigned', assigned_date || null, actor, assigned_by || actor || null, project_id]
+      'UPDATE project_assignments SET employee_ids = ?, status = ?, assigned_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE project_id = ?',
+      [JSON.stringify(enrichedPayloads), status || 'Assigned', updatedAssignedDate, actor, project_id]
     );
     return { updated: true, employeeCount: enrichedPayloads.length, employees: enrichedPayloads };
   }
 
   await db.execute(
-    'INSERT INTO project_assignments (project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by, assigned_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?)',
-    [project_id, JSON.stringify(enrichedPayloads), status || 'Assigned', finalAssignedDate, actor, actor, assigned_by || actor || null]
+    'INSERT INTO project_assignments (project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)',
+    [project_id, JSON.stringify(enrichedPayloads), status || 'Assigned', finalAssignedDate, actor, actor]
   );
 
   return { updated: true, employeeCount: enrichedPayloads.length, employees: enrichedPayloads };
 }
 
-async function removeProjectAssignments(project_id, employee_ids = [], updated_by = null, assigned_by = null) {
+async function removeProjectAssignments(project_id, employee_ids = [], updated_by = null) {
   const db = getDB();
   const payloads = serializeEmployeeAssignments(employee_ids);
   const idsToRemove = new Set(payloads.map((emp) => emp.employee_id).filter(Boolean));
@@ -153,13 +247,13 @@ async function removeProjectAssignments(project_id, employee_ids = [], updated_b
 
   const newStatus = remainingAssignments.length === 0 ? 'Removed' : existingRows[0].status || 'Assigned';
   await db.execute(
-    'UPDATE project_assignments SET employee_ids = ?, status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?, assigned_by = ? WHERE project_id = ?',
-    [JSON.stringify(remainingAssignments), newStatus, updated_by, assigned_by, project_id]
+    'UPDATE project_assignments SET employee_ids = ?, status = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE project_id = ?',
+    [JSON.stringify(remainingAssignments), newStatus, updated_by, project_id]
   );
   return removedCount;
 }
 
-async function updateProjectAssignmentEntry({ project_id, assignment_id, employee_id, updates = {}, updated_by = null, assigned_by = null }) {
+async function updateProjectAssignmentEntry({ project_id, assignment_id, employee_id, updates = {}, updated_by = null }) {
   const db = getDB();
   const [rows] = await db.execute('SELECT employee_ids FROM project_assignments WHERE id = ? AND project_id = ? LIMIT 1', [assignment_id, project_id]);
   const assignmentRow = rows[0];
@@ -182,8 +276,8 @@ async function updateProjectAssignmentEntry({ project_id, assignment_id, employe
   if (!updated) return null;
 
   await db.execute(
-    'UPDATE project_assignments SET employee_ids = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?, assigned_by = ? WHERE id = ?',
-    [JSON.stringify(updatedAssignments), updated_by, assigned_by, assignment_id]
+    'UPDATE project_assignments SET employee_ids = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
+    [JSON.stringify(updatedAssignments), updated_by, assignment_id]
   );
 
   return updatedAssignments.find((employee) => employee.employee_id === normalizedEmployeeId) || null;
@@ -192,7 +286,7 @@ async function updateProjectAssignmentEntry({ project_id, assignment_id, employe
 async function listAssignmentsByProject(project_id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by, assigned_by
+    `SELECT id, project_id, employee_ids, status, assigned_date, created_at, updated_at, created_by, updated_by
      FROM project_assignments
      WHERE project_id = ?
      ORDER BY created_at DESC
@@ -203,19 +297,26 @@ async function listAssignmentsByProject(project_id) {
   const assignmentRow = rows[0];
   if (!assignmentRow) return [];
 
-  return parseEmployeeAssignments(assignmentRow.employee_ids).map((employee) => ({
+  // Pass the row-level assigned_date and created_at so hydrateEmployeeAssignments
+  // can use them as fallback when the individual employee blob entry lacks assigned_date
+  const employees = await hydrateEmployeeAssignments(
+    parseEmployeeAssignments(assignmentRow.employee_ids),
+    assignmentRow.assigned_date,
+    assignmentRow.created_at
+  );
+
+  return employees.map((employee) => ({
     ...employee,
     employee_id: employee.employee_id,
     status: employee.status || assignmentRow.status || 'Assigned',
     assigned_date: employee.assigned_date || assignmentRow.assigned_date || assignmentRow.created_at || null,
-    assigned_by: employee.assigned_by || assignmentRow.assigned_by || null,
   }));
 }
 
 async function listAllAssignments() {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT pa.id, pa.project_id, pa.employee_ids, pa.status, pa.assigned_date, pa.created_at, pa.updated_at, pa.assigned_by,
+    `SELECT pa.id, pa.project_id, pa.employee_ids, pa.status, pa.assigned_date, pa.created_at, pa.updated_at,
             p.uuid AS project_uuid, p.project_name, p.current_status
      FROM project_assignments pa
      JOIN projects p ON pa.project_id = p.id
@@ -223,24 +324,37 @@ async function listAllAssignments() {
      LIMIT 200`
   );
 
-  return rows.flatMap((row) => parseEmployeeAssignments(row.employee_ids).map((employee) => ({
-    ...row,
-    employee_id: employee.employee_id,
-    employee_name: employee.employee_name || null,
-    designation: employee.designation || null,
-    email: employee.email || null,
-    employee_code: employee.employee_code || null,
-    status: employee.status || row.status || 'Assigned',
-    assigned_date: employee.assigned_date || row.assigned_date || row.created_at || null,
-    assigned_by: employee.assigned_by || row.assigned_by || null,
-  })));
+  const resolvedRows = await Promise.all(rows.map(async (row) => {
+    // Pass row-level timestamps as fallback for assigned_date
+    const employees = await hydrateEmployeeAssignments(
+      parseEmployeeAssignments(row.employee_ids),
+      row.assigned_date,
+      row.created_at
+    );
+    return employees.map((employee) => ({
+      ...row,
+      ...employee,
+      employee_id: employee.employee_id,
+      employee_name: employee.employee_name || employee.full_name || null,
+      full_name: employee.full_name || null,
+      first_name: employee.first_name || null,
+      last_name: employee.last_name || null,
+      designation: employee.designation || null,
+      email: employee.email || null,
+      employee_code: employee.employee_code || null,
+      status: employee.status || row.status || 'Assigned',
+      assigned_date: employee.assigned_date || row.assigned_date || row.created_at || null,
+    }));
+  }));
+
+  return resolvedRows.flat();
 }
 
 async function searchEmployeesForProject({ search = '', status = 'Active' }) {
   const db = getDB();
   const term = `%${(search || '').trim()}%`;
   const [rows] = await db.execute(
-    `SELECT employee_id, employee_code, first_name, last_name, designation, role, personal_email, official_email, mobile_number, employment_status
+    `SELECT employee_id, employee_code, first_name, last_name, profile_photo, designation, role, personal_email, official_email, mobile_number, alternate_mobile, employment_status
      FROM employees
      WHERE employment_status = ?
        AND (
