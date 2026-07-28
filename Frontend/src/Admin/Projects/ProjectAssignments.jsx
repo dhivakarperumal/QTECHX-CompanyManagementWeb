@@ -238,6 +238,8 @@ export default function ProjectAssignments() {
   const [updating, setUpdating] = useState(false);  const [toast, setToast]             = useState('');
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removing, setRemoving]       = useState(false);
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(false);
   const [viewMode, setViewMode] = useState('table');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
@@ -278,6 +280,20 @@ export default function ProjectAssignments() {
       setError(err?.response?.data?.message || 'Remove failed');
       setRemoveTarget(null);
     } finally { setRemoving(false); }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!deleteProjectTarget) return;
+    setDeletingProject(true);
+    try {
+      await api.delete(`/projects/${deleteProjectTarget.project_uuid}`);
+      showToast('Project deleted successfully');
+      setDeleteProjectTarget(null);
+      fetchAssignments();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Delete failed');
+      setDeleteProjectTarget(null);
+    } finally { setDeletingProject(false); }
   };
 
   const handleEdit = async () => {
@@ -348,6 +364,35 @@ export default function ProjectAssignments() {
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition flex items-center justify-center gap-2">
                 {removing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 {removing ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {deleteProjectTarget && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setDeleteProjectTarget(null)} />
+          <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center"><Trash2 size={18} className="text-rose-400" /></div>
+              <div>
+                <h3 className="text-white font-bold">Delete Project</h3>
+                <p className="text-white/40 text-xs">This will permanently remove the project and its assignments</p>
+              </div>
+            </div>
+            <p className="text-white/60 text-sm mb-6">
+              Delete <span className="text-white font-semibold">"{deleteProjectTarget.project_name}"</span> and all its assignment data?
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteProjectTarget(null)} disabled={deletingProject}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/60 hover:text-white transition">Cancel</button>
+              <button onClick={handleDeleteProject} disabled={deletingProject}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition flex items-center justify-center gap-2">
+                {deletingProject ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {deletingProject ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>
@@ -518,7 +563,16 @@ export default function ProjectAssignments() {
                     <p className="text-white/35 text-xs">{members.length} member{members.length !== 1 ? 's' : ''} assigned</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold border px-2.5 py-1 rounded-full bg-white/5 text-white/40 border-white/10">{status}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold border px-2.5 py-1 rounded-full bg-white/5 text-white/40 border-white/10">{status}</span>
+                  <button
+                    onClick={() => setDeleteProjectTarget({ project_uuid: projectUuid, project_name })}
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                    title="Delete project"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
 
               {viewMode === 'table' ? (
