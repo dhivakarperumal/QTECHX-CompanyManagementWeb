@@ -4,6 +4,7 @@ const taskFields = [
   't.id',
   't.uuid',
   't.project_id',
+  'p.uuid AS project_uuid',
   'p.project_name',
   't.module_name',
   't.task_name',

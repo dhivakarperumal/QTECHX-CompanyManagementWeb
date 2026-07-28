@@ -115,6 +115,13 @@ async function updateTaskHandler(req, res) {
     const task = await findTaskByUUID(req.params.id);
     if (!task) return fail(res, 'Task not found', 404);
     const updates = { ...req.body };
+
+    if (updates.project_id) {
+      const project = await findProjectByUUID(updates.project_id);
+      if (!project) return fail(res, 'Project not found', 404);
+      updates.project_id = project.id;
+    }
+
     if (updates.task_name) updates.task_name = updates.task_name.toString().trim();
     if (updates.priority && !PRIORITIES.includes(updates.priority)) {
       return fail(res, `Invalid priority. Allowed: ${PRIORITIES.join(', ')}`, 400);

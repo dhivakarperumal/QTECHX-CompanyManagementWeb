@@ -1,57 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import api from '../../api';
-
-const TASKS = [
-  {
-    id: "TSK-001",
-    project: "Client Portal",
-    module: "Auth",
-    name: "Implement login retry logic",
-    type: "Bug",
-    assignedTo: "Amina Khan",
-    assignedBy: "Ravi Sharma",
-    startDate: "2026-07-21",
-    dueDate: "2026-07-30",
-    estimatedHours: 12,
-    actualHours: 6,
-    progress: 50,
-    status: "In Progress",
-    priority: "High",
-  },
-  {
-    id: "TSK-002",
-    project: "Mobile App",
-    module: "Payments",
-    name: "Add refund support",
-    type: "Feature",
-    assignedTo: "Neha Patel",
-    assignedBy: "Priya Verma",
-    startDate: "2026-07-18",
-    dueDate: "2026-08-05",
-    estimatedHours: 18,
-    actualHours: 4,
-    progress: 22,
-    status: "Pending",
-    priority: "Medium",
-  },
-  {
-    id: "TSK-003",
-    project: "Admin Panel",
-    module: "Dashboard",
-    name: "Create task progress chart",
-    type: "Enhancement",
-    assignedTo: "Rahul Singh",
-    assignedBy: "Ravi Sharma",
-    startDate: "2026-07-15",
-    dueDate: "2026-07-28",
-    estimatedHours: 10,
-    actualHours: 10,
-    progress: 100,
-    status: "Completed",
-    priority: "Low",
-  },
-];
 
 const tabs = [
   { key: "overview", label: "All Tasks" },
@@ -77,11 +26,42 @@ const statusStyles = {
   "Cancelled": "bg-red-100 text-red-700",
 };
 
+const normalizeTaskStatus = (status) => {
+  if (!status) return "Pending";
+  const value = status.toString().trim();
+  if (["Pending", "To Do"].includes(value)) return "Pending";
+  if (["In Progress", "Progress"].includes(value)) return "In Progress";
+  if (["Completed", "Done"].includes(value)) return "Completed";
+  return value;
+};
+
+const mapTaskToViewModel = (task) => ({
+  id: task.uuid,
+  uuid: task.uuid,
+  name: task.task_name || task.module_name || task.uuid,
+  module: task.module_name || "—",
+  project: task.project_name || task.project_id || "—",
+  assignedTo: task.assigned_to_name || "Unassigned",
+  assignedBy: task.assigned_by_name || "—",
+  status: normalizeTaskStatus(task.status),
+  progress: Number(task.progress || 0),
+  dueDate: task.due_date || "—",
+  priority: task.priority || "Medium",
+  description: task.description || "",
+  project_id: task.project_id,
+});
+
 export default function TasksPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const pageKey = getPageKey(location.pathname);
   const [projects, setProjects] = useState([]);
   const [tasksList, setTasksList] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('project') || params.get('project_id') || '';
+  });
   const [taskForm, setTaskForm] = useState({
     project_id: '',
     module_name: '',
@@ -111,6 +91,36 @@ export default function TasksPage() {
   const [assignError, setAssignError] = useState('');
   const [assignSuccess, setAssignSuccess] = useState('');
 
+  const fetchTasks = async (projectUuid = selectedProject) => {
+    setTasksLoading(true);
+    try {
+      const params = { limit: 100, page: 1 };
+      if (projectUuid) params.project_id = projectUuid;
+      const { data } = await api.get('/tasks', { params });
+      const list = (data.data || []).map(mapTaskToViewModel);
+      setTasksList(list);
+      if (pageKey === 'assign' && projectUuid && list.length) {
+        setAssignForm((prev) => ({
+          ...prev,
+          task_uuid: prev.project_id === projectUuid && prev.task_uuid ? prev.task_uuid : list[0].uuid,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load task options', err);
+      setTasksList([]);
+    } finally {
+      setTasksLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const projectFromUrl = params.get('project') || params.get('project_id') || '';
+    if (projectFromUrl) {
+      setSelectedProject(projectFromUrl);
+    }
+  }, [location.search]);
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -120,37 +130,21 @@ export default function TasksPage() {
         if (pageKey === 'assign' && list.length && !assignForm.project_id) {
           setAssignForm((prev) => ({ ...prev, project_id: list[0].uuid }));
         }
-      } catch (err) {
-        console.error('Failed to load project options', err);
-      }
-    };
-
-    const fetchTasks = async (projectUuid = '') => {
-      try {
-        const params = { limit: 100, page: 1 };
-        if (projectUuid) params.project_id = projectUuid;
-        const { data } = await api.get('/tasks', { params });
-        const list = data.data || [];
-        setTasksList(list);
-        if (pageKey === 'assign' && projectUuid && list.length) {
-          setAssignForm((prev) => ({
-            ...prev,
-            task_uuid: prev.project_id === projectUuid && prev.task_uuid ? prev.task_uuid : list[0].uuid,
-          }));
+        if (pageKey === 'add' && list.length && !taskForm.project_id && selectedProject) {
+          setTaskForm((prev) => ({ ...prev, project_id: selectedProject }));
         }
       } catch (err) {
-        console.error('Failed to load task options', err);
-        setTasksList([]);
+        console.error('Failed to load project options', err);
       }
     };
 
     if (['add', 'assign'].includes(pageKey)) {
       fetchProjects();
     }
-    if (pageKey === 'assign') {
-      fetchTasks(assignForm.project_id);
+    if (['overview', 'board', 'completed', 'assign'].includes(pageKey)) {
+      fetchTasks(pageKey === 'assign' ? assignForm.project_id : selectedProject);
     }
-  }, [pageKey, assignForm.project_id]);
+  }, [pageKey, assignForm.project_id, selectedProject, location.search]);
 
   useEffect(() => {
     const loadProjectEmployees = async (projectUuid) => {
@@ -179,6 +173,14 @@ export default function TasksPage() {
     setTaskForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleProjectChange = (projectUuid) => {
+    setSelectedProject(projectUuid);
+    if (['overview', 'board', 'completed'].includes(pageKey)) {
+      const nextPath = `/admin/tasks${projectUuid ? `?project=${encodeURIComponent(projectUuid)}` : ''}`;
+      navigate(nextPath, { replace: true });
+    }
+  };
+
   const handleSaveTask = async () => {
     setTaskError('');
     setTaskSuccess('');
@@ -204,6 +206,7 @@ export default function TasksPage() {
         setTaskError(data.message || 'Failed to save task.');
       } else {
         setTaskSuccess(data.message || 'Task saved successfully.');
+        await fetchTasks(taskForm.project_id || '');
         setTaskForm({
           project_id: '',
           module_name: '',
@@ -224,12 +227,16 @@ export default function TasksPage() {
     }
   };
 
-  const filteredTasks = useMemo(() => {
-    if (pageKey === "completed") return TASKS.filter((task) => task.status === "Completed");
-    if (pageKey === "overview") return TASKS;
-    if (pageKey === "board") return TASKS;
-    return TASKS;
-  }, [pageKey]);
+  const visibleTasks = useMemo(() => {
+    const baseTasks = selectedProject
+      ? tasksList.filter((task) => task.project_uuid === selectedProject)
+      : tasksList;
+
+    if (pageKey === "completed") return baseTasks.filter((task) => task.status === "Completed");
+    if (pageKey === "overview") return baseTasks;
+    if (pageKey === "board") return baseTasks;
+    return baseTasks;
+  }, [pageKey, selectedProject, tasksList]);
 
   const handleAssignTask = async () => {
     setAssignError('');
@@ -252,6 +259,7 @@ export default function TasksPage() {
         setAssignError(data.message || 'Failed to assign task.');
       } else {
         setAssignSuccess(data.message || 'Task assigned successfully.');
+        await fetchTasks(assignForm.project_id || '');
       }
     } catch (err) {
       setAssignError(err?.response?.data?.message || err.message || 'Failed to assign task.');
@@ -273,19 +281,19 @@ export default function TasksPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <p className="text-sm text-slate-400">Total Tasks</p>
-          <p className="mt-3 text-3xl font-semibold">{TASKS.length}</p>
+          <p className="mt-3 text-3xl font-semibold">{visibleTasks.length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <p className="text-sm text-slate-400">Completed</p>
-          <p className="mt-3 text-3xl font-semibold">{TASKS.filter((task) => task.status === "Completed").length}</p>
+          <p className="mt-3 text-3xl font-semibold">{visibleTasks.filter((task) => task.status === "Completed").length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <p className="text-sm text-slate-400">Pending</p>
-          <p className="mt-3 text-3xl font-semibold">{TASKS.filter((task) => task.status === "Pending").length}</p>
+          <p className="mt-3 text-3xl font-semibold">{visibleTasks.filter((task) => task.status === "Pending").length}</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
           <p className="text-sm text-slate-400">In Progress</p>
-          <p className="mt-3 text-3xl font-semibold">{TASKS.filter((task) => task.status === "In Progress").length}</p>
+          <p className="mt-3 text-3xl font-semibold">{visibleTasks.filter((task) => task.status === "In Progress").length}</p>
         </div>
       </div>
 
@@ -303,6 +311,23 @@ export default function TasksPage() {
             </NavLink>
           ))}
         </div>
+        {['overview', 'board', 'completed'].includes(pageKey) && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 px-4 pb-4 pt-2">
+            <label className="text-sm font-medium text-slate-400">Project</label>
+            <select
+              value={selectedProject}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              className="rounded-2xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary"
+            >
+              <option value="">All Projects</option>
+              {projects.map((project) => (
+                <option key={project.uuid} value={project.uuid}>
+                  {project.project_name || project.short_name || project.project_code}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {pageKey === "add" && (
@@ -466,7 +491,7 @@ export default function TasksPage() {
               >
                 <option value="" disabled>Select task</option>
                 {tasksList.map((task) => (
-                  <option key={task.uuid} value={task.uuid}>{task.task_name || task.module_name || task.uuid}</option>
+                  <option key={task.uuid} value={task.uuid}>{task.name || task.module || task.uuid}</option>
                 ))}
               </select>
             </div>
@@ -550,7 +575,7 @@ export default function TasksPage() {
               <div key={status} className="rounded-3xl border border-white/10 bg-slate-900/80 p-5">
                 <h3 className="font-semibold text-white">{status}</h3>
                 <div className="mt-4 space-y-4">
-                  {TASKS.filter((task) => status === "To Do" ? task.status === "Pending" : status === "In Progress" ? task.status === "In Progress" : task.status === "Completed").map((task) => (
+                  {visibleTasks.filter((task) => status === "To Do" ? task.status === "Pending" : status === "In Progress" ? task.status === "In Progress" : task.status === "Completed").map((task) => (
                     <div key={task.id} className="rounded-3xl border border-white/10 bg-slate-950 p-4">
                       <p className="font-semibold">{task.name}</p>
                       <p className="mt-1 text-sm text-slate-400">{task.project} · {task.assignedTo}</p>
@@ -575,11 +600,11 @@ export default function TasksPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTasks.map((task) => (
+                {visibleTasks.map((task) => (
                   <tr key={task.id} className="border-t border-white/5">
                     <td className="px-4 py-4">
                       <div className="font-semibold">{task.name}</div>
-                      <div className="mt-1 text-xs text-slate-400">{task.module} · {task.type}</div>
+                      <div className="mt-1 text-xs text-slate-400">{task.module}</div>
                     </td>
                     <td className="px-4 py-4">{task.project}</td>
                     <td className="px-4 py-4">{task.assignedTo}</td>
