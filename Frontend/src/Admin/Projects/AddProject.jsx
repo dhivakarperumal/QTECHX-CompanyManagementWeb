@@ -406,7 +406,7 @@ export default function AddProject() {
                 <p className="mt-2 text-xs text-white/50">Selected NDA: {documentFiles.nda_doc.name}</p>
               ) : formData.nda_doc ? (
                 <a href={buildUploadUrl(formData.nda_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                  {formData.nda_doc.split('/').pop() || formData.nda_doc}
+                  View current NDA
                 </a>
               ) : null}
             </label>
@@ -487,8 +487,8 @@ export default function AddProject() {
               {documentFiles.agreement_doc ? (
                 <p className="mt-2 text-xs text-white/50">Selected: {documentFiles.agreement_doc.name}</p>
               ) : formData.agreement_doc ? (
-                <a href={formData.agreement_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                  {formData.agreement_doc.split('/').pop() || formData.agreement_doc}
+                <a href={buildUploadUrl(formData.agreement_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                  View current agreement
                 </a>
               ) : null}
             </label>
@@ -511,7 +511,7 @@ export default function AddProject() {
                     <p className="mt-2 text-xs text-white/50">Selected: {selectedFile.name}</p>
                   ) : existingUrl ? (
                     <a href={buildUploadUrl(existingUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                      {existingUrl.split('/').pop() || existingUrl}
+                      View current {labels[name].toLowerCase()}
                     </a>
                   ) : null}
                 </label>
