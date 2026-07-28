@@ -9,6 +9,7 @@ const ExpensesPage = () => {
   const [showFundForm, setShowFundForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
 
   // Form states
   const [fundAmount, setFundAmount] = useState("");
@@ -52,9 +53,23 @@ const ExpensesPage = () => {
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/employees", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (data?.data) {
+        setEmployees(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching employees", error);
+    }
+  };
+
   useEffect(() => {
     fetchFund();
     fetchExpenses();
+    fetchEmployees();
   }, []);
 
   const handleUpdateFund = async (e) => {
@@ -121,7 +136,35 @@ const ExpensesPage = () => {
     }
   };
 
-  const totalSpent = expenses.reduce((acc, exp) => acc + parseFloat(exp.amount), 0);
+  const totalSpent = expenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
+  const expenseTypeOptions = [
+    "Salary",
+    "Office Rent",
+    "Electricity Bill",
+    "Water Bill",
+    "Internet Bill",
+    "Phone Bill",
+    "Office Maintenance",
+    "Office Supplies",
+    "Stationery",
+    "Snacks & Tea",
+    "Travel Expense",
+    "Fuel Expense",
+    "Software Subscription",
+    "Cloud Hosting",
+    "Domain & SSL",
+    "Marketing",
+    "Advertising",
+    "Courier & Shipping",
+    "Furniture",
+    "Computer & Accessories",
+    "Employee Welfare",
+    "Training",
+    "Taxes",
+    "Insurance",
+    "Miscellaneous",
+  ];
+  const isSalaryExpense = expenseData.expense_type === "Salary";
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -215,17 +258,38 @@ const ExpensesPage = () => {
           <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
-              <input type="text" required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition" 
-                placeholder="e.g. Server Hosting, Office Supplies"
-                value={expenseData.expense_type} onChange={(e) => setExpenseData({...expenseData, expense_type: e.target.value})} />
+              <select required
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
+                value={expenseData.expense_type} onChange={(e) => setExpenseData({...expenseData, expense_type: e.target.value, paid_to: e.target.value === "Salary" ? expenseData.paid_to : ""})}>
+                <option value="" className="bg-[#111318]">Select Expense Type</option>
+                {expenseTypeOptions.map((option) => (
+                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Paid To</label>
-              <input type="text" required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                placeholder="e.g. Amazon Web Services"
-                value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
+              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
+              {isSalaryExpense ? (
+                <select required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
+                  value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})}>
+                  <option value="" className="bg-[#111318]">Select Employee</option>
+                  {employees.map((employee) => {
+                    const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
+                    const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
+                    return (
+                      <option key={employee.employee_id} value={displayValue} className="bg-[#111318]">
+                        {displayValue}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <input type="text" required 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+                  placeholder="e.g. Amazon Web Services"
+                  value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
+              )}
             </div>
             <div>
               <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>

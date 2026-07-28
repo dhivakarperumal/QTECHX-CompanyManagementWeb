@@ -7,6 +7,7 @@ exports.createExpense = async (req, res) => {
   try {
     await connection.beginTransaction();
 
+    const actor = req.user?.user_id || req.body.created_by || null;
     const {
       expense_type,
       date_of_payment,
@@ -14,8 +15,7 @@ exports.createExpense = async (req, res) => {
       payment_type,
       paid_to,
       description,
-      invoice_number,
-      created_by
+      invoice_number
     } = req.body;
 
     if (!amount || isNaN(amount)) {
@@ -36,13 +36,12 @@ exports.createExpense = async (req, res) => {
     const new_fund = current_fund - expenseAmount;
     await connection.query(
       "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
-      [new_fund, created_by || null]
+      [new_fund, actor]
     );
 
     const expense_id = uuidv4();
     let upload_bill = null;
     if (req.file) {
-      // req.file is from multer
       upload_bill = req.file.filename;
     }
 
@@ -53,8 +52,8 @@ exports.createExpense = async (req, res) => {
       [
         expense_id,
         expense_type || '',
-        created_by || null,
-        created_by || null,
+        actor,
+        actor,
         date_of_payment || null,
         expenseAmount,
         payment_type || '',
