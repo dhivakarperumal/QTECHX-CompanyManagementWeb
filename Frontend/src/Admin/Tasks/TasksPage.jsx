@@ -257,6 +257,7 @@ export default function TasksPage() {
     };
 
     loadProjectEmployees(assignForm.project_id);
+    fetchTasks(assignForm.project_id);
   }, [pageKey, assignForm.project_id, projects]);
 
   const handleChange = (field, value) => {
