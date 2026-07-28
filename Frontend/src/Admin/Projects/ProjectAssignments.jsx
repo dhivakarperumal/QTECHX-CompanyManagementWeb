@@ -506,8 +506,6 @@ export default function ProjectAssignments() {
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Designation</th>
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Role in Project</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Assigned On</th>
                       <th className="text-right text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">Action</th>
                     </tr>
@@ -553,10 +551,6 @@ export default function ProjectAssignments() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-white/50 text-xs">{m.designation || m.role || '—'}</span>
-                        </td>
-                        <td className="px-4 py-3"><RoleBadge role={m.role || m.designation || 'Assigned'} /></td>
                         <td className="px-4 py-3">
                           <span className="text-white/35 text-xs">
                             {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
