@@ -146,22 +146,16 @@ export default function TasksPage() {
         const { data } = await api.get('/projects?limit=100&page=1');
         const list = data.data || [];
         setProjects(list);
-            if (pageKey === 'assign' && list.length && !assignForm.project_id) {
-          setAssignForm((prev) => ({ ...prev, project_id: list[0].uuid }));
-        }
-        if (pageKey === 'add' && list.length && !taskForm.project_id && selectedProject) {
-          setTaskForm((prev) => ({ ...prev, project_id: selectedProject }));
-        }
       } catch (err) {
         console.error('Failed to load project options', err);
       }
     };
 
     fetchProjects();
-    if (['overview', 'board', 'completed', 'assign'].includes(pageKey)) {
-      fetchTasks(pageKey === 'assign' ? assignForm.project_id : selectedProject);
+    if (['overview', 'board', 'completed'].includes(pageKey)) {
+      fetchTasks(selectedProject);
     }
-  }, [pageKey, assignForm.project_id, selectedProject, location.search]);
+  }, [pageKey, selectedProject, location.search]);
 
   useEffect(() => {
     if (pageKey !== 'update') {
@@ -210,6 +204,14 @@ export default function TasksPage() {
   }, [pageKey, currentTaskUuid]);
 
   useEffect(() => {
+    if (pageKey !== 'assign') return;
+    if (!projects.length) return;
+
+    if (!assignForm.project_id) {
+      setAssignForm((prev) => ({ ...prev, project_id: projects[0].uuid, task_uuid: '', assigned_to: '' }));
+      return;
+    }
+
     const loadProjectEmployees = async (projectUuid) => {
       if (!projectUuid) {
         setAssignedEmployees([]);
@@ -227,10 +229,8 @@ export default function TasksPage() {
       }
     };
 
-    if (pageKey === 'assign') {
-      loadProjectEmployees(assignForm.project_id);
-    }
-  }, [pageKey, assignForm.project_id]);
+    loadProjectEmployees(assignForm.project_id);
+  }, [pageKey, assignForm.project_id, projects]);
 
   const handleChange = (field, value) => {
     setTaskForm((prev) => ({ ...prev, [field]: value }));
@@ -309,6 +309,16 @@ export default function TasksPage() {
     if (pageKey === "board") return baseTasks;
     return baseTasks;
   }, [pageKey, selectedProject, tasksList]);
+
+  const availableTaskProjects = useMemo(() => {
+    const projectMap = new Map();
+    tasksList.forEach((task) => {
+      if (task.project_uuid) {
+        projectMap.set(task.project_uuid, task.project || task.project_id || task.project_uuid);
+      }
+    });
+    return Array.from(projectMap.entries()).map(([uuid, name]) => ({ uuid, name }));
+  }, [tasksList]);
 
   const handleDeleteTask = async (taskUuid) => {
     if (!taskUuid) return;
@@ -505,9 +515,9 @@ export default function TasksPage() {
               className="rounded-2xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary"
             >
               <option value="">All Projects</option>
-              {projects.map((project) => (
+              {availableTaskProjects.map((project) => (
                 <option key={project.uuid} value={project.uuid}>
-                  {project.project_name || project.short_name || project.project_code}
+                  {project.name}
                 </option>
               ))}
             </select>
