@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Eye, Edit3, Trash2 } from 'lucide-react';
 import api from '../../api';
 
 const tabs = [
@@ -135,12 +136,8 @@ export default function TasksPage() {
     const params = new URLSearchParams(location.search);
     const projectFromUrl = params.get('project') || params.get('project_id') || '';
     const taskFromUrl = params.get('task') || '';
-    if (projectFromUrl) {
-      setSelectedProject(projectFromUrl);
-    }
-    if (taskFromUrl) {
-      setCurrentTaskUuid(taskFromUrl);
-    }
+    setSelectedProject(projectFromUrl);
+    setCurrentTaskUuid(taskFromUrl);
   }, [location.search]);
 
   useEffect(() => {
@@ -155,24 +152,6 @@ export default function TasksPage() {
         if (pageKey === 'add' && list.length && !taskForm.project_id && selectedProject) {
           setTaskForm((prev) => ({ ...prev, project_id: selectedProject }));
         }
-        if (pageKey === 'update' && currentTaskUuid && !selectedTaskDetails) {
-          const task = await fetchTaskById(currentTaskUuid);
-          if (task) {
-            setSelectedTaskDetails(task);
-            setTaskForm({
-              project_id: task.project_uuid || '',
-              module_name: task.module,
-              task_name: task.name,
-              description: task.description,
-              assigned_to: task.assignedTo,
-              assigned_by: task.assignedBy,
-              start_date: task.startDate || '',
-              due_date: task.dueDate || '',
-              estimated_hours: task.estimatedHours || '',
-              priority: task.priority || '',
-            });
-          }
-        }
       } catch (err) {
         console.error('Failed to load project options', err);
       }
@@ -183,6 +162,52 @@ export default function TasksPage() {
       fetchTasks(pageKey === 'assign' ? assignForm.project_id : selectedProject);
     }
   }, [pageKey, assignForm.project_id, selectedProject, location.search]);
+
+  useEffect(() => {
+    if (pageKey !== 'update') {
+      setSelectedTaskDetails(null);
+      return;
+    }
+
+    if (!currentTaskUuid) {
+      setSelectedTaskDetails(null);
+      setTaskForm({
+        project_id: '',
+        module_name: '',
+        task_name: '',
+        description: '',
+        assigned_to: '',
+        assigned_by: '',
+        start_date: '',
+        due_date: '',
+        estimated_hours: '',
+        priority: '',
+      });
+      return;
+    }
+
+    setSelectedTaskDetails(null);
+    const loadTask = async () => {
+      const task = await fetchTaskById(currentTaskUuid);
+      if (task) {
+        setSelectedTaskDetails(task);
+        setTaskForm({
+          project_id: task.project_uuid || '',
+          module_name: task.module,
+          task_name: task.name,
+          description: task.description,
+          assigned_to: task.assignedTo,
+          assigned_by: task.assignedBy,
+          start_date: task.startDate || '',
+          due_date: task.dueDate || '',
+          estimated_hours: task.estimatedHours || '',
+          priority: task.priority || '',
+        });
+      }
+    };
+
+    loadTask();
+  }, [pageKey, currentTaskUuid]);
 
   useEffect(() => {
     const loadProjectEmployees = async (projectUuid) => {
@@ -929,23 +954,29 @@ export default function TasksPage() {
                       <button
                         type="button"
                         onClick={() => handleViewTask(task.uuid)}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:border-white/20"
+                        title="View task"
+                        aria-label="View task"
+                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-slate-200 hover:border-white/20"
                       >
-                        View
+                        <Eye size={14} />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleEditTask(task.uuid)}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:border-white/20"
+                        title="Edit task"
+                        aria-label="Edit task"
+                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-slate-200 hover:border-white/20"
                       >
-                        Edit
+                        <Edit3 size={14} />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteTask(task.uuid)}
-                        className="rounded-full border border-rose-500 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 hover:bg-rose-500/20"
+                        title="Delete task"
+                        aria-label="Delete task"
+                        className="inline-flex items-center justify-center rounded-full border border-rose-500 bg-rose-500/10 p-2 text-rose-200 hover:bg-rose-500/20"
                       >
-                        Delete
+                        <Trash2 size={14} />
                       </button>
                     </td>
                   </tr>
