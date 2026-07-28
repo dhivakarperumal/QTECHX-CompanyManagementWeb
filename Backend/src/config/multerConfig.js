@@ -5,6 +5,7 @@ const fs = require("fs");
 const uploadDir = path.join(__dirname, "../../uploads");
 const employeeUploadDir = path.join(uploadDir, "employees");
 const clientUploadDir = path.join(uploadDir, "clients");
+const projectUploadDir = path.join(uploadDir, "projects");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -15,10 +16,17 @@ if (!fs.existsSync(employeeUploadDir)) {
 if (!fs.existsSync(clientUploadDir)) {
   fs.mkdirSync(clientUploadDir, { recursive: true });
 }
+if (!fs.existsSync(projectUploadDir)) {
+  fs.mkdirSync(projectUploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const destinationDir = req.baseUrl?.includes("/clients") ? clientUploadDir : employeeUploadDir;
+    const destinationDir = req.baseUrl?.includes("/clients")
+      ? clientUploadDir
+      : req.baseUrl?.includes("/projects")
+        ? projectUploadDir
+        : employeeUploadDir;
     if (!fs.existsSync(destinationDir)) {
       fs.mkdirSync(destinationDir, { recursive: true });
     }

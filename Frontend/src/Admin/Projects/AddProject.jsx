@@ -4,7 +4,18 @@ import {
   Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle,
   AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
 } from 'lucide-react';
-import api from '../../api';
+import api, { API_URL } from '../../api';
+
+const BACKEND_BASE_URL = API_URL.replace(/\/api$/, '');
+
+function buildUploadUrl(filePath) {
+  if (!filePath) return null;
+  const normalized = `${filePath}`.replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith('/uploads/')) return `${BACKEND_BASE_URL}${normalized}`;
+  if (normalized.startsWith('uploads/')) return `${BACKEND_BASE_URL}/${normalized}`;
+  return `${BACKEND_BASE_URL}/uploads/${normalized}`;
+}
 
 const BLANK = {
   project_code: '', project_name: '', short_name: '', project_category: '', industry: '',
@@ -57,7 +68,7 @@ const toForm = (p) => ({
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
-const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','agreement_doc','api_documentation','database_schema','source_code_backup'];
+const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','api_documentation','database_schema','source_code_backup'];
 
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '?';
@@ -191,18 +202,16 @@ export default function AddProject() {
       };
       Object.keys(payload).forEach((k) => {
         const value = payload[k];
-        if (DOCUMENT_FIELDS.includes(k) || k === 'nda_doc') return;
+        if (DOCUMENT_FIELDS.includes(k) || k === 'nda_doc' || k === 'agreement_doc') return;
         if (value === '' || value === null || value === undefined) return;
         form.append(k, value);
       });
-      DOCUMENT_FIELDS.forEach((field) => {
+      const documentFieldsToSend = [...DOCUMENT_FIELDS, 'nda_doc'];
+      documentFieldsToSend.forEach((field) => {
         if (documentFiles[field]) {
           form.append(field, documentFiles[field]);
         }
       });
-      if (documentFiles.nda_doc) {
-        form.append('nda_doc', documentFiles.nda_doc);
-      }
       const res = isEdit
         ? await api.put(`/projects/${id}`, form)
         : await api.post('/projects', form);
@@ -396,8 +405,8 @@ export default function AddProject() {
               {documentFiles.nda_doc ? (
                 <p className="mt-2 text-xs text-white/50">Selected NDA: {documentFiles.nda_doc.name}</p>
               ) : formData.nda_doc ? (
-                <a href={formData.nda_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                  {formData.nda_doc.split('/').pop() || formData.nda_doc}
+                <a href={buildUploadUrl(formData.nda_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                  View current NDA
                 </a>
               ) : null}
             </label>
@@ -478,8 +487,8 @@ export default function AddProject() {
               {documentFiles.agreement_doc ? (
                 <p className="mt-2 text-xs text-white/50">Selected: {documentFiles.agreement_doc.name}</p>
               ) : formData.agreement_doc ? (
-                <a href={formData.agreement_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                  {formData.agreement_doc.split('/').pop() || formData.agreement_doc}
+                <a href={buildUploadUrl(formData.agreement_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                  View current agreement
                 </a>
               ) : null}
             </label>
@@ -501,8 +510,8 @@ export default function AddProject() {
                   {selectedFile ? (
                     <p className="mt-2 text-xs text-white/50">Selected: {selectedFile.name}</p>
                   ) : existingUrl ? (
-                    <a href={existingUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
-                      {existingUrl.split('/').pop() || existingUrl}
+                    <a href={buildUploadUrl(existingUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                      View current {labels[name].toLowerCase()}
                     </a>
                   ) : null}
                 </label>
