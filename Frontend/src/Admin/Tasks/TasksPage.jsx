@@ -90,6 +90,7 @@ export default function TasksPage() {
     milestone: '',
     module_name: '',
     task_name: '',
+    description: '',
     task_type: '',
     category: '',
     assigned_to: '',
@@ -197,6 +198,7 @@ export default function TasksPage() {
         milestone: taskForm.milestone,
         module_name: taskForm.module_name,
         task_name: taskForm.task_name,
+        description: taskForm.description,
         task_type: taskForm.task_type,
         category: taskForm.category,
         assigned_to: taskForm.assigned_to,
@@ -216,6 +218,7 @@ export default function TasksPage() {
           milestone: '',
           module_name: '',
           task_name: '',
+          description: '',
           task_type: '',
           category: '',
           assigned_to: '',
@@ -360,6 +363,17 @@ export default function TasksPage() {
                 onChange={(e) => handleChange('task_name', e.target.value)}
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
                 placeholder="Enter Task Name"
+              />
+            </div>
+
+            <div className="rounded-2xl bg-slate-900/80 p-4 lg:col-span-2">
+              <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Description</label>
+              <textarea
+                value={taskForm.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                rows={4}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary resize-none"
+                placeholder="Enter task description"
               />
             </div>
 
