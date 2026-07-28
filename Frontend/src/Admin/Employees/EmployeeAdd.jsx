@@ -316,13 +316,15 @@ const EmployeeAdd = () => {
 
       setFormData((prev) => {
         const newData = { ...prev, [name]: sanitizedValue };
-        if (name === "first_name" || name === "last_name") {
-          const first = name === "first_name" ? sanitizedValue : prev.first_name;
-          const last = name === "last_name" ? sanitizedValue : prev.last_name;
-          newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
-        }
-        if (name === "personal_email") {
-          newData.official_email = sanitizedValue;
+        if (!isEditMode) {
+          if (name === "first_name" || name === "last_name") {
+            const first = name === "first_name" ? sanitizedValue : prev.first_name;
+            const last = name === "last_name" ? sanitizedValue : prev.last_name;
+            newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
+          }
+          if (name === "personal_email") {
+            newData.official_email = sanitizedValue;
+          }
         }
         return newData;
       });
@@ -690,35 +692,39 @@ const EmployeeAdd = () => {
           </div>
         </div>
 
-        {/* Login & Access */}
-        <div>
-          <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Login & Access</h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {!isEditMode && (
+          <div>
+            {/* Login & Access */}
             <div>
-              <label className={labelClass}>Username <span className="text-red-500">*</span></label>
-              <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
-            </div>
-            <div>
-              <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
-            </div>
-            <div className="relative">
-              <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-              <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
-                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-              </button>
-              <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
-            </div>
-            <div className="relative">
-              <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-              <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
-                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-              </button>
+              <h2 className="mb-4 border-b border-slate-700 pb-2 text-lg font-semibold text-slate-200">Login & Access</h2>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Username <span className="text-red-500">*</span></label>
+                  <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+                </div>
+                <div>
+                  <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
+                  <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+                </div>
+                <div className="relative">
+                  <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+                  <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                  <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
+                </div>
+                <div className="relative">
+                  <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+                  <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-8 flex justify-end gap-4">
           <Link
