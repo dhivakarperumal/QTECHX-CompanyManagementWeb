@@ -92,7 +92,7 @@ function EmployeePicker({ role, onSelect, onClose }) {
   });
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh]">
         {/* Header */}
@@ -106,11 +106,11 @@ function EmployeePicker({ role, onSelect, onClose }) {
           </button>
         </div>
         {/* Search */}
-        <div className="p-4 border-b border-white/[0.06] shrink-0">
+        <div className="p-4 border-b border-white/6 shrink-0">
           <div className="relative">
             <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or designation…"
-              className="w-full bg-white/[0.04] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
+              className="w-full bg-white/4 border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
           </div>
         </div>
         {/* List */}
@@ -408,15 +408,15 @@ export default function AddProject() {
             </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Description</span>
-              <textarea className={`${fieldClass} min-h-[80px] resize-y`} name="description" value={formData.description} onChange={handleChange} placeholder="Describe the project scope…" />
+              <textarea className={`${fieldClass} min-h-20 resize-y`} name="description" value={formData.description} onChange={handleChange} placeholder="Describe the project scope…" />
             </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Objective</span>
-              <textarea className={`${fieldClass} min-h-[70px] resize-y`} name="objective" value={formData.objective} onChange={handleChange} placeholder="Expected business outcome…" />
+              <textarea className={`${fieldClass} min-h-17.5 resize-y`} name="objective" value={formData.objective} onChange={handleChange} placeholder="Expected business outcome…" />
             </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Business Requirements</span>
-              <textarea className={`${fieldClass} min-h-[70px] resize-y`} name="business_requirements" value={formData.business_requirements} onChange={handleChange} placeholder="Key business needs…" />
+              <textarea className={`${fieldClass} min-h-17.5 resize-y`} name="business_requirements" value={formData.business_requirements} onChange={handleChange} placeholder="Key business needs…" />
             </label>
           </div>
         </section>
