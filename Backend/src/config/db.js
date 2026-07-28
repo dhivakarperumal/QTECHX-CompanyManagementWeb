@@ -337,6 +337,7 @@ async function ensureSchema(pool) {
 
   // ── Project Assignments ────────────────────────────────────────────────────
   await ensureProjectAssignmentsSchema(pool);
+  await require('../models/employeeTaskAssignmentModel').ensureEmployeeTaskAssignmentsSchema(pool);
 
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_employees (

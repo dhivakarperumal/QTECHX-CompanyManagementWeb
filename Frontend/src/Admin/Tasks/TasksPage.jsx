@@ -374,17 +374,18 @@ export default function TasksPage() {
 
     if (!assignForm.project_id) return setAssignError('Please select a project.');
     if (!assignForm.task_uuid) return setAssignError('Please select a task.');
+    if (!assignForm.assigned_to) return setAssignError('Please select an employee.');
 
     try {
       setAssigningTask(true);
       const payload = {
         project_id: assignForm.project_id,
-        assigned_to: assignForm.assigned_to,
-        team: assignForm.team,
-        assignment_date: assignForm.assignment_date,
+        employee_id: assignForm.assigned_to,
+        task_id: assignForm.task_uuid,
+        assigned_date: assignForm.assignment_date,
         status: assignForm.status,
       };
-      const { data } = await api.put(`/tasks/${assignForm.task_uuid}`, payload);
+      const { data } = await api.post('/tasks/assign', payload);
       if (data.success === false) {
         setAssignError(data.message || 'Failed to assign task.');
       } else {
