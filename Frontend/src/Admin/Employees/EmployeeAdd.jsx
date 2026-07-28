@@ -709,7 +709,7 @@ const EmployeeAdd = () => {
                 <div className="relative">
                   <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
                   <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                   <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
@@ -717,7 +717,7 @@ const EmployeeAdd = () => {
                 <div className="relative">
                   <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
                   <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute bottom-2.5 right-3 text-slate-400 hover:text-slate-200">
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
                     {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
