@@ -71,123 +71,7 @@ function EmpAvatar({ name, index, size = 8 }) {
 }
 
 // ── Employee Picker Popup ─────────────────────────────────────────────────────
-function EmployeePicker({ role, onSelect, onClose }) {
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [search, setSearch]       = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get('/employees?limit=200');
-        setEmployees(data.data || []);
-      } catch (_) { setEmployees([]); }
-      finally { setLoading(false); }
-    })();
-  }, []);
-
-  const filtered = employees.filter(e => {
-    const full = `${e.first_name} ${e.last_name} ${e.designation || ''}`.toLowerCase();
-    return full.includes(search.toLowerCase());
-  });
-
-  return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/8 shrink-0">
-          <div>
-            <h3 className="text-white font-bold text-base">Select Employee</h3>
-            <p className="text-white/40 text-xs mt-0.5">Assign as <span className="text-orange-400 font-semibold">{role}</span></p>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
-            <X size={15} />
-          </button>
-        </div>
-        {/* Search */}
-        <div className="p-4 border-b border-white/6 shrink-0">
-          <div className="relative">
-            <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or designation…"
-              className="w-full bg-white/4 border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
-          </div>
-        </div>
-        {/* List */}
-        <div className="overflow-y-auto flex-1 p-3">
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 size={22} className="animate-spin text-orange-500/60" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-white/30 text-sm py-10">No employees found</p>
-          ) : (
-            <div className="space-y-1">
-              {filtered.map((e, i) => (
-                <button key={e.employee_id} onClick={() => onSelect(e)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-orange-500/10 hover:border-orange-500/20 border border-transparent transition text-left">
-                  <EmpAvatar name={`${e.first_name} ${e.last_name}`} index={i} />
-                  <div className="min-w-0">
-                    <p className="text-white text-sm font-semibold truncate">{e.first_name} {e.last_name}</p>
-                    <p className="text-white/40 text-xs truncate">{e.designation || 'No designation'}</p>
-                  </div>
-                  <div className="ml-auto shrink-0">
-                    <span className="text-[10px] font-bold text-orange-400 border border-orange-500/25 bg-orange-500/10 px-2 py-0.5 rounded-full">Select</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Team Field with Picker ────────────────────────────────────────────────────
-function TeamField({ label, fieldName, value, onChange }) {
-  const [showPicker, setShowPicker] = useState(false);
-
-  const handleSelect = (emp) => {
-    const name = `${emp.first_name} ${emp.last_name}`;
-    // For multi-person roles, append; for single roles, replace
-    const isSingle = fieldName === 'project_manager' || fieldName === 'ui_ux_designer';
-    if (isSingle) {
-      onChange(fieldName, name);
-    } else {
-      const existing = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
-      if (!existing.includes(name)) existing.push(name);
-      onChange(fieldName, existing.join(', '));
-    }
-    setShowPicker(false);
-  };
-
-  const handleClear = () => onChange(fieldName, '');
-
-  return (
-    <>
-      {showPicker && <EmployeePicker role={label} onSelect={handleSelect} onClose={() => setShowPicker(false)} />}
-      <label className="text-sm text-white/60">
-        <span className="mb-1.5 block font-medium">{label}</span>
-        <div className="flex gap-2">
-          <input className={fieldClass} name={fieldName} value={value}
-            onChange={e => onChange(fieldName, e.target.value)}
-            placeholder={`Type or pick ${label.toLowerCase()}…`} />
-          <button type="button" onClick={() => setShowPicker(true)}
-            className="shrink-0 w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/25 text-orange-400 hover:bg-orange-500/25 flex items-center justify-center transition" title={`Pick ${label}`}>
-            <UserPlus size={15} />
-          </button>
-          {value && (
-            <button type="button" onClick={handleClear}
-              className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/30 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition" title="Clear">
-              <Trash2 size={13} />
-            </button>
-          )}
-        </div>
-      </label>
-    </>
-  );
-}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AddProject() {
@@ -518,23 +402,6 @@ export default function AddProject() {
                 <input className={fieldClass} name={name} value={formData[name]} onChange={handleChange} placeholder={ph} />
               </label>
             ))}
-          </div>
-        </section>
-
-        {/* Team Assignment with Employee Picker */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><Users size={15} className="text-pink-400" /></div>
-            <div>
-              <h2 className="text-base font-bold text-white">Team Assignment</h2>
-              <p className="text-white/35 text-xs mt-0.5">Click <UserPlus size={10} className="inline" /> to pick from employee list</p>
-            </div>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            <TeamField label="Project Manager"     fieldName="project_manager"     value={formData.project_manager}     onChange={handleTeamChange} />
-            <TeamField label="UI/UX Designer"      fieldName="ui_ux_designer"      value={formData.ui_ux_designer}      onChange={handleTeamChange} />
-            <TeamField label="Frontend Developers" fieldName="frontend_developers" value={formData.frontend_developers} onChange={handleTeamChange} />
-            <TeamField label="Backend Developers"  fieldName="backend_developers"  value={formData.backend_developers}  onChange={handleTeamChange} />
           </div>
         </section>
 
