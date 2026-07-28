@@ -503,8 +503,8 @@ export default function ProjectAssignments() {
                 <table className="w-full min-w-[600px] text-sm">
                   <thead>
                     <tr className="border-b border-white/[0.05]">
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
+                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Designation</th>
                       <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Role in Project</th>
@@ -515,10 +515,6 @@ export default function ProjectAssignments() {
                   <tbody>
                     {members.map((m, i) => (
                       <tr key={`${m.employee_id}-${m.role}`} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition">
-                        <td className="px-5 py-3">
-                          <div className="text-white font-semibold text-sm truncate">{m.employee_id || '—'}</div>
-                          {m.employee_code && <div className="text-[10px] text-white/40 mt-1">{m.employee_code}</div>}
-                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-start gap-3">
                             <Avatar
@@ -539,6 +535,9 @@ export default function ProjectAssignments() {
                               )}
                             </div>
                           </div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="text-white font-semibold text-sm truncate">{m.employee_code || '—'}</div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="space-y-1 text-[10px] text-white/40">
