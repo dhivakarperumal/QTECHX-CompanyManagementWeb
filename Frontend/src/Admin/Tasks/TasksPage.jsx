@@ -130,16 +130,22 @@ export default function TasksPage() {
       }
     };
 
-    const fetchTasks = async () => {
+    const fetchTasks = async (projectUuid = '') => {
       try {
-        const { data } = await api.get('/tasks?limit=100&page=1');
+        const params = { limit: 100, page: 1 };
+        if (projectUuid) params.project_id = projectUuid;
+        const { data } = await api.get('/tasks', { params });
         const list = data.data || [];
         setTasksList(list);
-        if (pageKey === 'assign' && list.length && !assignForm.task_uuid) {
-          setAssignForm((prev) => ({ ...prev, task_uuid: list[0].uuid }));
+        if (pageKey === 'assign' && projectUuid && list.length) {
+          setAssignForm((prev) => ({
+            ...prev,
+            task_uuid: prev.project_id === projectUuid && prev.task_uuid ? prev.task_uuid : list[0].uuid,
+          }));
         }
       } catch (err) {
         console.error('Failed to load task options', err);
+        setTasksList([]);
       }
     };
 
@@ -147,9 +153,9 @@ export default function TasksPage() {
       fetchProjects();
     }
     if (pageKey === 'assign') {
-      fetchTasks();
+      fetchTasks(assignForm.project_id);
     }
-  }, [pageKey, assignForm.project_id, assignForm.task_uuid]);
+  }, [pageKey, assignForm.project_id]);
 
   useEffect(() => {
     const loadProjectEmployees = async (projectUuid) => {
@@ -467,7 +473,7 @@ export default function TasksPage() {
               <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Project</label>
               <select
                 value={assignForm.project_id}
-                onChange={(e) => setAssignForm((prev) => ({ ...prev, project_id: e.target.value }))}
+                onChange={(e) => setAssignForm((prev) => ({ ...prev, project_id: e.target.value, task_uuid: '', assigned_to: '' }))}
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
               >
                 <option value="" disabled>Select project</option>

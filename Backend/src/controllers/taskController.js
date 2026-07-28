@@ -18,7 +18,15 @@ async function getAllTasksHandler(req, res) {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const { search, status, project_id, assigned_to } = req.query;
+    const { search, status, assigned_to } = req.query;
+    let { project_id } = req.query;
+
+    if (project_id && typeof project_id === 'string' && project_id.length === 36) {
+      const project = await findProjectByUUID(project_id);
+      if (!project) return fail(res, 'Project not found', 404);
+      project_id = project.id;
+    }
+
     const result = await listTasks({ page, limit, search, status, project_id, assigned_to });
     return ok(res, {
       data: result.rows,
