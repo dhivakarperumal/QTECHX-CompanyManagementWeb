@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const { initDB } = require("./src/config/db");
-const usersRouter  = require("./src/routers/usersRouter");
+ const usersRouter  = require("./src/routers/usersRouter");
 const employeesRouter = require("./src/routers/employeesRouter");
 const attendanceRouter = require("./src/routers/attendanceRouter");
 const clientRouter = require("./src/routers/clientRouter");
