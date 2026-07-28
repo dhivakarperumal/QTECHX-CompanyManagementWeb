@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   UserRoundPen, Building2, Mail, Phone, User, Briefcase,
   FileText, Calendar, Clock, MessageSquare, Bell, BellOff,
-  CheckCircle2, AlertCircle, Loader2, X, ShieldCheck, Upload, Paperclip
+  CheckCircle2, AlertCircle, Loader2, X, ShieldCheck, Upload, Paperclip, Download
 } from 'lucide-react';
 import api from '../../api';
 
@@ -93,6 +93,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
   const [quotName, setQuotName] = useState('');
   const [quotDesc, setQuotDesc] = useState('');
 
+  const [existingDocs, setExistingDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+
   const reqInputRef = useRef(null);
   const quotInputRef = useRef(null);
 
@@ -107,7 +110,17 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
       setQuotFile(null);
       setQuotName('');
       setQuotDesc('');
+      setExistingDocs([]);
       if (editClient) {
+        setLoadingDocs(true);
+        api.get(`/clients/${editClient.uuid}/documents`)
+          .then(({ data }) => {
+            setExistingDocs(data?.data || []);
+          })
+          .catch(() => {
+            setExistingDocs([]);
+          })
+          .finally(() => setLoadingDocs(false));
         setForm({
           company_name:        editClient.company_name        || '',
           client_name:         editClient.client_name         || '',
@@ -351,6 +364,35 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
 
             {/* Section 3: Document Uploads (Optional) */}
             <SectionCard icon={Paperclip} title="Attach Documents (Optional)">
+              {editClient && (
+                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Existing Documents</p>
+                    {loadingDocs && <Loader2 size={14} className="animate-spin text-white/40" />}
+                  </div>
+                  {!loadingDocs && existingDocs.length > 0 ? (
+                    <div className="space-y-2">
+                      {existingDocs.map((doc) => (
+                        <div key={doc.uuid} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-white/40">{doc.document_type}</p>
+                          <p className="mt-1 text-sm font-medium text-white">{doc.document_name}</p>
+                          <a
+                            href={`http://localhost:5000${doc.file_path?.startsWith('/') ? doc.file_path : `/${doc.file_path || ''}`}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex text-sm font-medium text-primary hover:text-primary/80"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : !loadingDocs ? (
+                    <p className="text-sm text-white/40">No documents uploaded yet.</p>
+                  ) : null}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 {/* Requirement Document */}
