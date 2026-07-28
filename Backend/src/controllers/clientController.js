@@ -379,6 +379,17 @@ function uploadDocumentHandler(req, res) {
       }
 
       const actor = req.user?.user_id || "SYSTEM";
+      const existingDocuments = await listDocumentsByClientId(client.id);
+      const existingDocument = existingDocuments.find((doc) => doc.document_type === document_type);
+
+      if (existingDocument) {
+        const existingFilePath = getStoredFilePath(existingDocument.file_path);
+        if (existingFilePath && fs.existsSync(existingFilePath)) {
+          fs.unlinkSync(existingFilePath);
+        }
+        await deleteDocument(existingDocument.uuid);
+      }
+
       const doc = await createDocument({
         uuid: uuidv4(),
         client_id: client.id,

@@ -110,6 +110,11 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
   const [existingDocs, setExistingDocs] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
 
+  const currentDocs = existingDocs.reduce((acc, doc) => {
+    if (doc.document_type) acc[doc.document_type] = doc;
+    return acc;
+  }, {});
+
   const reqInputRef = useRef(null);
   const quotInputRef = useRef(null);
 
@@ -378,7 +383,7 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
 
             {/* Section 3: Document Uploads (Optional) */}
             <SectionCard icon={Paperclip} title="Attach Documents (Optional)">
-              {editClient && (
+              {/* {editClient && (
                 <div className="mb-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Existing Documents</p>
@@ -410,13 +415,23 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                     <p className="text-sm text-white/40">No documents uploaded yet.</p>
                   ) : null}
                 </div>
-              )}
+              )} */}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
                 {/* Requirement Document */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Requirement Document</p>
+                  {editClient && currentDocs['Requirement Document'] && (
+                    <a
+                      href={buildDocumentUrl(currentDocs['Requirement Document'].file_path)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-xs font-medium text-primary hover:text-primary/80"
+                    >
+                      View Current Requirement Document
+                    </a>
+                  )}
                   <div 
                     onClick={() => reqInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-white/[0.02] transition h-36"
@@ -425,7 +440,13 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       type="file" ref={reqInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
-                        if (file) { setReqFile(file); if (!reqName) setReqName(file.name.split('.')[0]); }
+                        if (file) {
+                          setReqFile(file);
+                          if (!reqName) {
+                            const currentDoc = currentDocs['Requirement Document'];
+                            setReqName(currentDoc?.document_name || file.name.split('.')[0]);
+                          }
+                        }
                       }}
                     />
                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
@@ -458,6 +479,16 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                 {/* Project Quotation */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Project Quotation</p>
+                  {editClient && currentDocs['Project Quotation'] && (
+                    <a
+                      href={buildDocumentUrl(currentDocs['Project Quotation'].file_path)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-xs font-medium text-primary hover:text-primary/80"
+                    >
+                      View Current Project Quotation
+                    </a>
+                  )}
                   <div 
                     onClick={() => quotInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/[0.02] transition h-36"
@@ -466,7 +497,13 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       type="file" ref={quotInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
-                        if (file) { setQuotFile(file); if (!quotName) setQuotName(file.name.split('.')[0]); }
+                        if (file) {
+                          setQuotFile(file);
+                          if (!quotName) {
+                            const currentDoc = currentDocs['Project Quotation'];
+                            setQuotName(currentDoc?.document_name || file.name.split('.')[0]);
+                          }
+                        }
                       }}
                     />
                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
