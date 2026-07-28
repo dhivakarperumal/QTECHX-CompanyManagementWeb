@@ -19,7 +19,7 @@ function getUploadedFiles(req) {
   const fileFields = ['proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc', 'api_documentation', 'database_schema', 'source_code_backup'];
   fileFields.forEach((field) => {
     const file = req.files?.[field]?.[0];
-    if (file) uploadedFiles[field] = `/uploads/${file.filename}`;
+    if (file) uploadedFiles[field] = `/uploads/projects/${file.filename}`;
   });
   return uploadedFiles;
 }

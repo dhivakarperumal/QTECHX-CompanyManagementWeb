@@ -195,14 +195,14 @@ export default function AddProject() {
         if (value === '' || value === null || value === undefined) return;
         form.append(k, value);
       });
-      DOCUMENT_FIELDS.forEach((field) => {
+      const documentFieldsToSend = [...DOCUMENT_FIELDS, 'nda_doc'];
+      documentFieldsToSend.forEach((field) => {
         if (documentFiles[field]) {
           form.append(field, documentFiles[field]);
+        } else if (isEdit && formData[field]) {
+          form.append(field, formData[field]);
         }
       });
-      if (documentFiles.nda_doc) {
-        form.append('nda_doc', documentFiles.nda_doc);
-      }
       const res = isEdit
         ? await api.put(`/projects/${id}`, form)
         : await api.post('/projects', form);
