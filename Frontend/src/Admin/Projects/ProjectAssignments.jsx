@@ -246,6 +246,10 @@ export default function ProjectAssignments() {
   const [error, setError]             = useState('');
   const [search, setSearch]           = useState('');
   const [roleFilter, setRoleFilter]   = useState('');
+  const [page, setPage]               = useState(1);
+  const [limit, setLimit]             = useState(15);
+  const [total, setTotal]             = useState(0);
+  const [totalPages, setTotalPages]   = useState(1);
   const [showAssign, setShowAssign]   = useState(false);  const [showEdit, setShowEdit] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [editRole, setEditRole] = useState('');
@@ -270,15 +274,21 @@ export default function ProjectAssignments() {
   const fetchAssignments = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const { data } = await api.get('/projects/assignments/all');
-      const rows = data.data?.length ? data.data : (Array.isArray(data.grouped) ? flattenGroupedAssignments(data.grouped) : []);
+      const params = new URLSearchParams({ page, limit });
+      if (search) params.append('search', search);
+      if (roleFilter) params.append('role', roleFilter);
+      const { data } = await api.get(`/projects/assignments/all?${params}`);
+      const rows = data.data || [];
       setAssignments(rows);
+      setTotal(data.pagination?.total ?? rows.length);
+      setTotalPages(data.pagination?.pages ?? 1);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load assignments');
     } finally { setLoading(false); }
-  }, []);
+  }, [page, limit, search, roleFilter]);
 
   useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
+  useEffect(() => { setPage(1); }, [search, roleFilter, limit]);
 
   const handleRemove = async () => {
     if (!removeTarget) return;
@@ -328,15 +338,7 @@ export default function ProjectAssignments() {
     } finally { setUpdating(false); }
   };
 
-  const filtered = assignments.filter(a => {
-    const fullName = `${a.first_name} ${a.last_name}`;
-    const matchSearch = !search ||
-      fullName.toLowerCase().includes(search.toLowerCase()) ||
-      a.project_name.toLowerCase().includes(search.toLowerCase()) ||
-      (a.designation||'').toLowerCase().includes(search.toLowerCase());
-    const matchRole = !roleFilter || a.role === roleFilter;
-    return matchSearch && matchRole;
-  });
+  const filtered = assignments;
 
   // Group by project
   const grouped = filtered.reduce((acc, a) => {
@@ -494,15 +496,25 @@ export default function ProjectAssignments() {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" placeholder="Search by employee, project, designation…"
-            value={search} onChange={e => setSearch(e.target.value)}
+            value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="w-1/2 bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
-          {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
+          {search && <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
         </div>
         <div className="relative">
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+          <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
             className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
             <option value="">All Roles</option>
             {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+        </div>
+
+        <div className="relative">
+          <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
+            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
+            {[15, 25, 50].map((size) => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
           </select>
           <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
         </div>
@@ -730,6 +742,37 @@ export default function ProjectAssignments() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {!loading && !error && totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-xs text-white/40">Page {page} of {totalPages} · {total} total</p>
+          <div className="flex items-center gap-1.5">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+              const pg = Math.max(1, Math.min(page - 2, totalPages - 4)) + idx;
+              return (
+                <button key={pg} onClick={() => setPage(pg)}
+                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${pg === page ? 'bg-orange-500 text-white shadow-md' : 'bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10'}`}>
+                  {pg}
+                </button>
+              );
+            })}
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
     </div>

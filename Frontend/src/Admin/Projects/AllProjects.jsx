@@ -83,6 +83,11 @@ export default function AllProjects() {
   const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
   const [assignedLoading, setAssignedLoading] = useState(false);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusModalProject, setStatusModalProject] = useState(null);
+  const [statusModalSelection, setStatusModalSelection] = useState('Planning');
+  const [statusModalLoading, setStatusModalLoading] = useState(false);
+  const [statusModalError, setStatusModalError] = useState('');
   const [limit, setLimit] = useState(15);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
@@ -149,6 +154,38 @@ export default function AllProjects() {
       setError(err?.response?.data?.message || 'Delete failed');
       setDeleteTarget(null);
     } finally { setDeleting(false); }
+  };
+
+  const openStatusModal = (project) => {
+    setStatusModalProject(project);
+    setStatusModalSelection(project.current_status || 'Planning');
+    setStatusModalError('');
+    setShowStatusModal(true);
+  };
+
+  const closeStatusModal = () => {
+    setShowStatusModal(false);
+    setStatusModalProject(null);
+    setStatusModalError('');
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!statusModalProject) return;
+    setStatusModalLoading(true);
+    setStatusModalError('');
+    try {
+      const { data } = await api.put(`/projects/${statusModalProject.uuid}`, {
+        current_status: statusModalSelection,
+      });
+      if (data.success === false) throw new Error(data.message || 'Failed to update status');
+      showToast(`Status updated to ${statusModalSelection}`);
+      closeStatusModal();
+      fetchProjects();
+    } catch (err) {
+      setStatusModalError(err?.response?.data?.message || err.message || 'Failed to update status');
+    } finally {
+      setStatusModalLoading(false);
+    }
   };
 
   const handleEmployeeSearch = async (value) => {
@@ -580,7 +617,12 @@ export default function AllProjects() {
               </thead>
               <tbody>
                 {projects.map((p, i) => (
-                  <tr key={p.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                  <tr
+                    key={p.uuid}
+                    className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer"
+                    onDoubleClick={() => openStatusModal(p)}
+                    title="Double click to update project status"
+                  >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={p.project_name} index={i} />
@@ -641,7 +683,12 @@ export default function AllProjects() {
       {!loading && !error && projects.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {projects.map((p, i) => (
-            <div key={p.uuid} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
+            <div
+              key={p.uuid}
+              className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+              onDoubleClick={() => openStatusModal(p)}
+              title="Double click to update project status"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar name={p.project_name} index={i} />
@@ -674,6 +721,68 @@ export default function AllProjects() {
             </div>
           ))}
         </div>
+      )}
+
+      {showStatusModal && statusModalProject && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeStatusModal} />
+            <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
+              <button
+                type="button"
+                onClick={closeStatusModal}
+                className="absolute right-4 top-4 text-white/40 hover:text-white"
+              >
+                ×
+              </button>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-lg font-semibold text-white">Update Project Status</p>
+                  <p className="text-sm text-white/45">Double clicked on <span className="font-semibold text-white">{statusModalProject.project_name}</span>.</p>
+                </div>
+                {statusModalError && (
+                  <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">{statusModalError}</div>
+                )}
+                <div className="space-y-3">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-white/35">Current Status</div>
+                  <StatusPill status={statusModalProject.current_status} />
+                </div>
+                <div className="space-y-3">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-white/35">Choose New Status</div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {STATUS_OPTIONS.map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setStatusModalSelection(status)}
+                        className={`rounded-2xl border px-3 py-2 text-sm font-semibold transition ${statusModalSelection === status ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleStatusUpdate}
+                    disabled={statusModalLoading}
+                    className="inline-flex items-center justify-center rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {statusModalLoading ? 'Saving…' : 'Save Status'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeStatusModal}
+                    className="inline-flex items-center justify-center rounded-2xl bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Pagination */}

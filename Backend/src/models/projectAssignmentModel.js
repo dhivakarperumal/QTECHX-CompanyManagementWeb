@@ -323,19 +323,17 @@ async function listAssignmentsByProject(project_id) {
   }));
 }
 
-async function listAllAssignments() {
+async function listAllAssignments({ page = 1, limit = 15, search = '', role = '' } = {}) {
   const db = getDB();
   const [rows] = await db.execute(
     `SELECT pa.id, pa.project_id, pa.employee_ids, pa.status, pa.assigned_date, pa.created_at, pa.updated_at,
             p.uuid AS project_uuid, p.project_name, p.current_status
      FROM project_assignments pa
      JOIN projects p ON pa.project_id = p.id
-     ORDER BY pa.created_at DESC
-     LIMIT 200`
+     ORDER BY pa.created_at DESC`
   );
 
   const resolvedRows = await Promise.all(rows.map(async (row) => {
-    // Pass row-level timestamps as fallback for assigned_date
     const employees = await hydrateEmployeeAssignments(
       parseEmployeeAssignments(row.employee_ids),
       row.assigned_date,
@@ -357,7 +355,36 @@ async function listAllAssignments() {
     }));
   }));
 
-  return resolvedRows.flat();
+  const assignments = resolvedRows.flat();
+  const normalizedSearch = (search || '').trim().toLowerCase();
+  const normalizedRole = (role || '').trim();
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (normalizedRole && assignment.role !== normalizedRole) {
+      return false;
+    }
+    if (!normalizedSearch) {
+      return true;
+    }
+    const haystack = [
+      assignment.project_name,
+      assignment.first_name,
+      assignment.last_name,
+      assignment.full_name,
+      assignment.employee_code,
+      assignment.employee_name,
+      assignment.email,
+      assignment.personal_email,
+      assignment.designation,
+      assignment.role,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(normalizedSearch);
+  });
+
+  const total = filteredAssignments.length;
+  const start = (page - 1) * limit;
+  const rowsPage = filteredAssignments.slice(start, start + limit);
+  return { rows: rowsPage, total };
 }
 
 async function searchEmployeesForProject({ search = '', status = 'Active' }) {

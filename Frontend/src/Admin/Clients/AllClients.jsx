@@ -770,7 +770,12 @@ export default function AllClients({ defaultFuFilter = '' }) {
               </thead>
               <tbody>
                 {clients.map((c, i) => (
-                  <tr key={c.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                  <tr
+                    key={c.uuid}
+                    className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer"
+                    onDoubleClick={() => setStatusUpdateTarget(c)}
+                    title="Double click to update client status"
+                  >
                     {/* Client */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
@@ -879,8 +884,12 @@ export default function AllClients({ defaultFuFilter = '' }) {
           {clients.map((c, i) => {
             const colour = AVATAR_COLOURS[i % AVATAR_COLOURS.length];
             return (
-              <div key={c.uuid}
-                className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200">
+              <div
+                key={c.uuid}
+                className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+                onDoubleClick={() => setStatusUpdateTarget(c)}
+                title="Double click to update client status"
+              >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">

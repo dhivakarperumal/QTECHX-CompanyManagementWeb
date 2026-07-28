@@ -358,9 +358,17 @@ async function getAssignmentsHandler(req, res) {
 
 async function getAllAssignmentsHandler(req, res) {
   try {
-    const data = await listAllAssignments();
-    const grouped = Object.values(groupAssignmentsByProject(data));
-    return ok(res, { data, grouped });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 15));
+    const search = req.query.search?.toString().trim() || '';
+    const role = req.query.role?.toString().trim() || '';
+    const result = await listAllAssignments({ page, limit, search, role });
+    const grouped = Object.values(groupAssignmentsByProject(result.rows));
+    return ok(res, {
+      data: result.rows,
+      grouped,
+      pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) },
+    });
   } catch (err) {
     console.error('getAllAssignmentsHandler:', err);
     return fail(res, err.message || 'Failed');
