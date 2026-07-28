@@ -331,7 +331,7 @@ function ViewDrawer({ client, index, onClose, onEdit, onStatusClick }) {
                         </div>
                       </div>
                       {doc.file_path && (
-                        <a href={`http://localhost:5000/uploads/client_documents/${doc.file_path.split('\\').pop().split('/').pop()}`} target="_blank" rel="noreferrer"
+                        <a href={`http://localhost:5000${doc.file_path.startsWith('/') ? doc.file_path : `/${doc.file_path}`}`} target="_blank" rel="noreferrer"
                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition shrink-0">
                           <Download size={14} />
                         </a>

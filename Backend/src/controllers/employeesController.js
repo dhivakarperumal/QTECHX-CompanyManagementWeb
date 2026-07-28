@@ -37,7 +37,9 @@ async function create(req, res) {
     // Process uploaded files
     if (req.files) {
       Object.keys(req.files).forEach(key => {
-        employeeData[key] = `/uploads/${req.files[key][0].filename}`;
+        const file = req.files[key][0];
+        const relativePath = `/uploads/employees/${file.filename}`;
+        employeeData[key] = relativePath;
       });
     }
     
@@ -127,7 +129,8 @@ async function update(req, res) {
     // Process uploaded files
     if (req.files) {
       Object.keys(req.files).forEach(key => {
-        updates[key] = `/uploads/${req.files[key][0].filename}`;
+        const file = req.files[key][0];
+        updates[key] = `/uploads/employees/${file.filename}`;
       });
     }
 

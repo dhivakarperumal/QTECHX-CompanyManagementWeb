@@ -18,7 +18,7 @@ const {
 } = require("../models/clientModel");
 
 // ─── Multer Upload Configuration ─────────────────────────────────────────────
-const UPLOAD_DIR = path.join(__dirname, "../../../uploads/client_documents");
+const UPLOAD_DIR = path.join(__dirname, "../../../uploads/clients");
 const ALLOWED_MIME = [
   "application/pdf",
   "application/msword",
