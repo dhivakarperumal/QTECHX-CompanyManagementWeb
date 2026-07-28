@@ -38,6 +38,20 @@ const selectCls = `
   transition-all duration-200 cursor-pointer
 `;
 
+function buildDocumentUrl(filePath) {
+  if (!filePath) return null;
+  const value = `${filePath}`.replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/uploads/')) return `http://localhost:5000${value}`;
+  if (value.startsWith('uploads/')) return `http://localhost:5000/${value}`;
+
+  const match = value.match(/(?:^|\/)(uploads\/.+)$/i);
+  if (match) return `http://localhost:5000/${match[1]}`;
+
+  const fileName = value.split('/').pop();
+  return fileName ? `http://localhost:5000/uploads/clients/${fileName}` : null;
+}
+
 function SectionCard({ icon: Icon, title, children }) {
   return (
     <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 space-y-4">
@@ -365,27 +379,32 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
             {/* Section 3: Document Uploads (Optional) */}
             <SectionCard icon={Paperclip} title="Attach Documents (Optional)">
               {editClient && (
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="mb-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Existing Documents</p>
                     {loadingDocs && <Loader2 size={14} className="animate-spin text-white/40" />}
                   </div>
                   {!loadingDocs && existingDocs.length > 0 ? (
                     <div className="space-y-2">
-                      {existingDocs.map((doc) => (
-                        <div key={doc.uuid} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
-                          <p className="text-xs font-semibold uppercase tracking-widest text-white/40">{doc.document_type}</p>
-                          <p className="mt-1 text-sm font-medium text-white">{doc.document_name}</p>
-                          <a
-                            href={`http://localhost:5000${doc.file_path?.startsWith('/') ? doc.file_path : `/${doc.file_path || ''}`}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-2 inline-flex text-sm font-medium text-primary hover:text-primary/80"
-                          >
-                            View Document
-                          </a>
-                        </div>
-                      ))}
+                      {existingDocs.map((doc) => {
+                        const documentUrl = buildDocumentUrl(doc.file_path);
+                        return (
+                          <div key={doc.uuid} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-white/40">{doc.document_type}</p>
+                            <p className="mt-1 text-sm font-medium text-white">{doc.document_name}</p>
+                            {documentUrl && (
+                              <a
+                                href={documentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-2 inline-flex text-sm font-medium text-primary hover:text-primary/80"
+                              >
+                                View Document
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : !loadingDocs ? (
                     <p className="text-sm text-white/40">No documents uploaded yet.</p>

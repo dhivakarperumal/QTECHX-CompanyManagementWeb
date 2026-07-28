@@ -52,6 +52,7 @@ function getStoredFilePath(filePath) {
 function getPublicFilePath(filePath) {
   if (!filePath) return null;
   const normalized = filePath.replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(normalized)) return normalized;
   if (normalized.startsWith("/uploads/")) return normalized;
   if (normalized.startsWith("uploads/")) return `/${normalized}`;
 
@@ -61,6 +62,21 @@ function getPublicFilePath(filePath) {
   return relative && !relative.startsWith("..")
     ? `/${path.join("uploads", relative).replace(/\\/g, "/")}`
     : null;
+}
+
+function normalizeDocumentPath(filePath) {
+  if (!filePath) return null;
+  const normalized = `${filePath}`.replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith("/uploads/")) return normalized;
+  if (normalized.startsWith("uploads/")) return `/${normalized}`;
+
+  const match = normalized.match(/(?:^|\/)(uploads\/.+)$/i);
+  if (match) return `/${match[1]}`;
+
+  const fileName = normalized.split("/").pop();
+  if (!fileName) return null;
+  return `/uploads/clients/${fileName}`;
 }
 
 const storage = multer.diskStorage({
@@ -175,7 +191,10 @@ async function getClientByIdHandler(req, res) {
   try {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
-    const documents = await listDocumentsByClientId(client.id);
+    const documents = (await listDocumentsByClientId(client.id)).map((doc) => ({
+      ...doc,
+      file_path: normalizeDocumentPath(doc.file_path),
+    }));
     let history = await listHistoryByClientId(client.id);
     
     // Inject synthetic "Client Created" event for old clients missing it
@@ -388,7 +407,10 @@ async function getDocumentsHandler(req, res) {
   try {
     const client = await findClientByUUID(req.params.id);
     if (!client) return fail(res, "Client not found", 404);
-    const documents = await listDocumentsByClientId(client.id);
+    const documents = (await listDocumentsByClientId(client.id)).map((doc) => ({
+      ...doc,
+      file_path: normalizeDocumentPath(doc.file_path),
+    }));
     return ok(res, { data: documents });
   } catch (err) {
     console.error("getDocumentsHandler:", err);
