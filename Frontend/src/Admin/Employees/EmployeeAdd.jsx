@@ -14,6 +14,7 @@ const EmployeeAdd = () => {
   const [existingFiles, setExistingFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     employee_code: "",
@@ -193,22 +194,148 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
+  const validateField = (name, value) => {
+    if (!value) return "";
+
+    switch (name) {
+      case "mobile_number":
+      case "alternate_mobile":
+      case "emergency_contact_number": {
+        if (!/^[6-9]\d{9}$/.test(value)) {
+          return "Must be 10 digits and start with 6, 7, 8, or 9.";
+        }
+        return "";
+      }
+      case "aadhaar_number": {
+        if (!/^\d{12}$/.test(value)) {
+          return "Aadhaar must be exactly 12 digits.";
+        }
+        return "";
+      }
+      case "pan_number": {
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(value)) {
+          return "PAN must be in format ABCDE1234F.";
+        }
+        return "";
+      }
+      case "account_number": {
+        if (!/^\d{6,20}$/.test(value)) {
+          return "Account number must contain only digits (6-20 digits).";
+        }
+        return "";
+      }
+      case "ifsc_code": {
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(value)) {
+          return "IFSC must be 11 characters like SBIN0001234.";
+        }
+        return "";
+      }
+      case "upi_id": {
+        if (!/^[A-Za-z0-9._-]{2,}@[A-Za-z0-9.-]{2,}$/.test(value)) {
+          return "UPI ID should look like name@bank.";
+        }
+        return "";
+      }
+      default:
+        return "";
+    }
+  };
+
+  const validateForm = (data) => {
+    const errors = {};
+
+    if (!data.mobile_number?.trim()) {
+      errors.mobile_number = "Mobile number is required.";
+    } else {
+      const mobileError = validateField("mobile_number", data.mobile_number);
+      if (mobileError) errors.mobile_number = mobileError;
+    }
+
+    if (data.alternate_mobile && validateField("alternate_mobile", data.alternate_mobile)) {
+      errors.alternate_mobile = validateField("alternate_mobile", data.alternate_mobile);
+    }
+
+    if (data.aadhaar_number && validateField("aadhaar_number", data.aadhaar_number)) {
+      errors.aadhaar_number = validateField("aadhaar_number", data.aadhaar_number);
+    }
+
+    if (data.pan_number && validateField("pan_number", data.pan_number)) {
+      errors.pan_number = validateField("pan_number", data.pan_number);
+    }
+
+    if (data.account_number && validateField("account_number", data.account_number)) {
+      errors.account_number = validateField("account_number", data.account_number);
+    }
+
+    if (data.ifsc_code && validateField("ifsc_code", data.ifsc_code)) {
+      errors.ifsc_code = validateField("ifsc_code", data.ifsc_code);
+    }
+
+    if (data.upi_id && validateField("upi_id", data.upi_id)) {
+      errors.upi_id = validateField("upi_id", data.upi_id);
+    }
+
+    if (data.emergency_contact_number && validateField("emergency_contact_number", data.emergency_contact_number)) {
+      errors.emergency_contact_number = validateField("emergency_contact_number", data.emergency_contact_number);
+    }
+
+    return errors;
+  };
+
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === "file") {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
     } else {
+      let sanitizedValue = value;
+
+      switch (name) {
+        case "mobile_number":
+        case "alternate_mobile":
+        case "emergency_contact_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
+          break;
+        case "aadhaar_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
+          break;
+        case "pan_number":
+          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
+          break;
+        case "account_number":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
+          break;
+        case "ifsc_code":
+          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
+          break;
+        case "upi_id":
+          sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
+          break;
+        default:
+          break;
+      }
+
       setFormData((prev) => {
-        const newData = { ...prev, [name]: value };
+        const newData = { ...prev, [name]: sanitizedValue };
         if (name === "first_name" || name === "last_name") {
-          const first = name === "first_name" ? value : prev.first_name;
-          const last = name === "last_name" ? value : prev.last_name;
+          const first = name === "first_name" ? sanitizedValue : prev.first_name;
+          const last = name === "last_name" ? sanitizedValue : prev.last_name;
           newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
         }
         if (name === "personal_email") {
-          newData.official_email = value;
+          newData.official_email = sanitizedValue;
         }
         return newData;
+      });
+
+      setFieldErrors((prev) => {
+        const nextErrors = { ...prev };
+        const error = validateField(name, sanitizedValue);
+        if (error) {
+          nextErrors[name] = error;
+        } else {
+          delete nextErrors[name];
+        }
+        return nextErrors;
       });
     }
   };
@@ -229,6 +356,16 @@ const EmployeeAdd = () => {
       setLoading(false);
       return;
     }
+
+    const validationErrors = validateForm(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setError("Please correct the highlighted fields before saving.");
+      setLoading(false);
+      return;
+    }
+
+    setFieldErrors({});
 
     try {
       const token = localStorage.getItem("token");
@@ -359,19 +496,23 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
-              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} placeholder="Enter Aadhaar number" />
+              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} placeholder="12 digits only" />
+              {fieldErrors.aadhaar_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.aadhaar_number}</p>}
             </div>
             <div>
               <label className={labelClass}>PAN Number</label>
-              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} placeholder="Enter PAN number" />
+              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} placeholder="ABCDE1234F" />
+              {fieldErrors.pan_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.pan_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
-              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Enter mobile number" />
+              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Alternate Mobile</label>
-              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} placeholder="Enter alternate mobile" />
+              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.alternate_mobile && <p className="mt-1 text-xs text-red-400">{fieldErrors.alternate_mobile}</p>}
             </div>
             <div>
               <label className={labelClass}>Personal Email</label>
@@ -394,7 +535,8 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Contact Number</label>
-              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} placeholder="Enter emergency contact number" />
+              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} placeholder="Start with 6-9, 10 digits" />
+              {fieldErrors.emergency_contact_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.emergency_contact_number}</p>}
             </div>
             <div>
               <label className={labelClass}>Relationship</label>
@@ -462,15 +604,18 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Account Number</label>
-              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Enter account number" />
+              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
+              {fieldErrors.account_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.account_number}</p>}
             </div>
             <div>
               <label className={labelClass}>IFSC Code</label>
-              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="Enter IFSC code" />
+              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
+              {fieldErrors.ifsc_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.ifsc_code}</p>}
             </div>
             <div>
               <label className={labelClass}>UPI ID</label>
-              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="Enter UPI ID" />
+              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
+              {fieldErrors.upi_id && <p className="mt-1 text-xs text-red-400">{fieldErrors.upi_id}</p>}
             </div>
           </div>
         </div>
