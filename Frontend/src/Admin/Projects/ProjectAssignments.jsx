@@ -46,6 +46,20 @@ function RoleBadge({ role }) {
   return <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${cls}`}>{role}</span>;
 }
 
+const PROJECT_STATUS_STYLES = {
+  Planning:    'bg-blue-500/10 text-blue-300 border border-blue-500/20',
+  'In Progress': 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20',
+  Testing:     'bg-violet-500/10 text-violet-300 border border-violet-500/20',
+  'On Hold':   'bg-orange-500/10 text-orange-300 border border-orange-500/20',
+  Live:        'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20',
+  Completed:   'bg-purple-500/10 text-purple-300 border border-purple-500/20',
+  Cancelled:   'bg-rose-500/10 text-rose-300 border border-rose-500/20',
+};
+function ProjectStatusPill({ status }) {
+  const cls = PROJECT_STATUS_STYLES[status] || 'bg-white/10 text-white/60 border border-white/15';
+  return <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls}`}>{status || 'Unknown'}</span>;
+}
+
 // ── Assign Modal ──────────────────────────────────────────────────────────────
 function AssignModal({ onClose, onAssigned }) {
   const [projects, setProjects]     = useState([]);
@@ -249,7 +263,7 @@ export default function ProjectAssignments() {
       ...employee,
       project_uuid: project.project_uuid,
       project_name: project.project_name,
-      current_status: project.current_status,
+      current_status: project.current_status || project.status || 'Planning',
     }));
   });
 
@@ -327,7 +341,8 @@ export default function ProjectAssignments() {
   // Group by project
   const grouped = filtered.reduce((acc, a) => {
     const key = a.project_uuid;
-    if (!acc[key]) acc[key] = { project_name: a.project_name, status: a.current_status, members: [] };
+    const projectStatus = a.current_status || a.status || 'Planning';
+    if (!acc[key]) acc[key] = { project_name: a.project_name, status: projectStatus, members: [] };
     acc[key].members.push(a);
     return acc;
   }, {});
@@ -564,7 +579,7 @@ export default function ProjectAssignments() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold border px-2.5 py-1 rounded-full bg-white/5 text-white/40 border-white/10">{status}</span>
+                  <ProjectStatusPill status={status} />
                   <button
                     onClick={() => setDeleteProjectTarget({ project_uuid: projectUuid, project_name })}
                     className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
