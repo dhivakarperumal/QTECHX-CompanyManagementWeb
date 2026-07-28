@@ -5,21 +5,22 @@ export const API_URL = rawApiUrl.endsWith("/") ? rawApiUrl.slice(0, -1) : rawApi
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
   withCredentials: true,
 });
 
-// Add token automatically
+// Add token automatically and preserve FormData headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
+    if (config.data instanceof FormData) {
+      // Let axios set the multipart/form-data boundary header automatically
+      delete config.headers["Content-Type"];
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
     return config;
   },
   (error) => Promise.reject(error)

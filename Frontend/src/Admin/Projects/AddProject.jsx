@@ -57,7 +57,7 @@ const toForm = (p) => ({
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
-const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','agreement_doc','api_documentation','database_schema','source_code_backup'];
+const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','api_documentation','database_schema','source_code_backup'];
 
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '?';
@@ -191,7 +191,7 @@ export default function AddProject() {
       };
       Object.keys(payload).forEach((k) => {
         const value = payload[k];
-        if (DOCUMENT_FIELDS.includes(k) || k === 'nda_doc') return;
+        if (DOCUMENT_FIELDS.includes(k) || k === 'nda_doc' || k === 'agreement_doc') return;
         if (value === '' || value === null || value === undefined) return;
         form.append(k, value);
       });
@@ -199,8 +199,6 @@ export default function AddProject() {
       documentFieldsToSend.forEach((field) => {
         if (documentFiles[field]) {
           form.append(field, documentFiles[field]);
-        } else if (isEdit && formData[field]) {
-          form.append(field, formData[field]);
         }
       });
       const res = isEdit
