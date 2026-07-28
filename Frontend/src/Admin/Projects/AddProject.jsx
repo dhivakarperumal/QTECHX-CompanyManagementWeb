@@ -198,6 +198,10 @@ export default function AddProject() {
   const [formData, setFormData]         = useState(BLANK);
   const [fetchLoading, setFetchLoading] = useState(isEdit);
   const [projectCodeLoading, setProjectCodeLoading] = useState(false);
+  const [clientLoading, setClientLoading] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [clientFilter, setClientFilter] = useState('');
+  const [selectedClientUuid, setSelectedClientUuid] = useState('');
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -215,6 +219,38 @@ export default function AddProject() {
       } finally { setFetchLoading(false); }
     })();
   }, [id, isEdit]);
+
+  useEffect(() => {
+    (async () => {
+      setClientLoading(true);
+      try {
+        const { data } = await api.get('/clients?limit=500&page=1');
+        if (data.success && Array.isArray(data.data)) {
+          setClients(data.data);
+        } else if (data.success && data.data?.rows) {
+          setClients(data.data.rows);
+        }
+      } catch (err) {
+        console.warn('Failed to load clients for project form:', err?.message || err);
+      } finally {
+        setClientLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleSelectClient = (uuid) => {
+    setSelectedClientUuid(uuid);
+    const client = clients.find((c) => c.uuid === uuid || c.id === uuid);
+    if (!client) return;
+    setFormData((prev) => ({
+      ...prev,
+      client_name: client.client_name || prev.client_name,
+      company_name: client.company_name || prev.company_name,
+      contact_person: client.contact_person || prev.contact_person,
+      email: client.email || prev.email,
+      phone_number: client.phone_number || prev.phone_number,
+    }));
+  };
 
   useEffect(() => {
     if (isEdit || formData.project_code.trim()) return;
@@ -392,6 +428,42 @@ export default function AddProject() {
             <h2 className="text-base font-bold text-white">Client Details</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Select Existing Client</span>
+              <div className="flex gap-2">
+                <select className={fieldClass} value={selectedClientUuid} onChange={(e) => handleSelectClient(e.target.value)}>
+                  <option value="">Choose a client to auto-fill details</option>
+                  {clientLoading ? (
+                    <option value="">Loading clients...</option>
+                  ) : clients.length === 0 ? (
+                    <option value="">No clients available</option>
+                  ) : (
+                    clients
+                      .filter((client) => {
+                        if (!clientFilter.trim()) return true;
+                        const term = clientFilter.toLowerCase();
+                        return [client.client_name, client.company_name, client.email, client.phone_number]
+                          .filter(Boolean)
+                          .some((value) => value.toLowerCase().includes(term));
+                      })
+                      .map((client) => (
+                        <option key={client.uuid || client.id} value={client.uuid || client.id}>
+                          {client.client_name || 'Unnamed client'}{client.company_name ? ` — ${client.company_name}` : ''}
+                        </option>
+                      ))
+                  )}
+                </select>
+                <button type="button" onClick={() => setSelectedClientUuid('')}
+                  className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition"
+                  title="Clear client selection">
+                  <X size={18} />
+                </button>
+              </div>
+            </label>
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Search clients</span>
+              <input className={fieldClass} value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} placeholder="Filter client list…" />
+            </label>
             {[['client_name','Client Name','text','Client company'],['company_name','Company Name','text','Q-Techx Solutions'],['contact_person','Contact Person','text','Full name'],['email','Email','email','name@example.com'],['phone_number','Phone Number','tel','+91 98765 43210']].map(([name,label,type,ph]) => (
               <label key={name} className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">{label}</span>
