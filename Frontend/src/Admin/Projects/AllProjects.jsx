@@ -68,9 +68,45 @@ export default function AllProjects() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]         = useState(false);
   const [toast, setToast]               = useState('');
+  const [assignmentProjects, setAssignmentProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [assignmentSearch, setAssignmentSearch] = useState('');
+  const [assignmentEmployees, setAssignmentEmployees] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [assignedEmployees, setAssignedEmployees] = useState([]);
+  const [assignmentError, setAssignmentError] = useState('');
+  const [assignmentSuccess, setAssignmentSuccess] = useState('');
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
+  const [assignedLoading, setAssignedLoading] = useState(false);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const limit = 15;
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
+
+  const loadAssignmentProjects = useCallback(async () => {
+    try {
+      const { data } = await api.get('/projects?limit=100&page=1');
+      const list = (data.data || []).filter((project) => project.current_status !== 'Cancelled');
+      setAssignmentProjects(list);
+      setSelectedProjectId((current) => current || list[0]?.uuid || '');
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const loadAssignedEmployees = useCallback(async (projectUuid) => {
+    if (!projectUuid) return;
+    try {
+      setAssignedLoading(true);
+      const { data } = await api.get(`/projects/${projectUuid}/employees`);
+      setAssignedEmployees(data.data || []);
+    } catch (err) {
+      setAssignmentError(err?.response?.data?.message || 'Failed to load assigned employees');
+    } finally {
+      setAssignedLoading(false);
+    }
+  }, []);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true); setError('');
@@ -89,7 +125,13 @@ export default function AllProjects() {
   }, [page, limit, search, statusFilter]);
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
+  useEffect(() => { loadAssignmentProjects(); }, [loadAssignmentProjects]);
   useEffect(() => { setPage(1); }, [search, statusFilter]);
+  useEffect(() => {
+    if (selectedProjectId) {
+      loadAssignedEmployees(selectedProjectId);
+    }
+  }, [selectedProjectId, loadAssignedEmployees]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -103,6 +145,89 @@ export default function AllProjects() {
       setError(err?.response?.data?.message || 'Delete failed');
       setDeleteTarget(null);
     } finally { setDeleting(false); }
+  };
+
+  const handleEmployeeSearch = async (value) => {
+    const term = value.trim();
+    setAssignmentSearch(value);
+    setAssignmentError('');
+    if (!term) {
+      setAssignmentEmployees([]);
+      return;
+    }
+    try {
+      setAssignmentLoading(true);
+      const { data } = await api.get('/projects/employees/search', { params: { search: term, status: 'Active' } });
+      setAssignmentEmployees(data.data || []);
+    } catch (err) {
+      setAssignmentError(err?.response?.data?.message || 'Unable to search employees');
+      setAssignmentEmployees([]);
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
+
+  const toggleEmployeeSelection = (employee) => {
+    setSelectedEmployees((current) => {
+      const exists = current.some((item) => item.employee_id === employee.employee_id);
+      if (exists) {
+        return current.filter((item) => item.employee_id !== employee.employee_id);
+      }
+      return [...current, employee];
+    });
+    setAssignmentError('');
+    setAssignmentSuccess('');
+  };
+
+  const handleAssignEmployees = async () => {
+    if (!selectedProjectId) {
+      setAssignmentError('Please select a project first.');
+      return;
+    }
+    if (!selectedEmployees.length) {
+      setAssignmentError('Select at least one employee to assign.');
+      return;
+    }
+
+    try {
+      setAssignmentSubmitting(true);
+      const { data } = await api.post(`/projects/${selectedProjectId}/employees`, {
+        employee_ids: selectedEmployees.map((employee) => employee.employee_id),
+        status: 'Active',
+        assigned_date: new Date().toISOString().slice(0, 10),
+      });
+      setAssignmentSuccess(data.message || 'Employees assigned successfully');
+      setSelectedEmployees([]);
+      setAssignmentSearch('');
+      setAssignmentEmployees([]);
+      await loadAssignedEmployees(selectedProjectId);
+    } catch (err) {
+      setAssignmentError(err?.response?.data?.message || 'Failed to assign employees');
+    } finally {
+      setAssignmentSubmitting(false);
+    }
+  };
+
+  const handleRemoveEmployee = async (employeeId) => {
+    if (!selectedProjectId) return;
+    try {
+      await api.delete(`/projects/${selectedProjectId}/employees`, { data: { employee_id: employeeId } });
+      setAssignmentSuccess('Employee removed from project');
+      await loadAssignedEmployees(selectedProjectId);
+    } catch (err) {
+      setAssignmentError(err?.response?.data?.message || 'Failed to remove employee');
+    }
+  };
+
+  const handleStatusUpdate = async (employeeId, status) => {
+    if (!selectedProjectId) return;
+    try {
+      await api.put(`/projects/${selectedProjectId}/employees/${employeeId}/status`, { status });
+      setAssignmentSuccess('Assignment status updated');
+      await loadAssignedEmployees(selectedProjectId);
+    } catch (err) {
+      setAssignmentError(err?.response?.data?.message || 'Failed to update assignment status');
+    }
   };
 
   const inProgress = projects.filter(p => p.current_status === 'In Progress').length;
@@ -174,6 +299,16 @@ export default function AllProjects() {
             className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
             <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
           </button>
+          <button
+            onClick={() => {
+              setShowAssignmentModal(true);
+              setAssignmentError('');
+              setAssignmentSuccess('');
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
+          >
+            <User size={15} /> Assign Employees
+          </button>
           <button onClick={() => navigate('/admin/projects/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
@@ -199,6 +334,157 @@ export default function AllProjects() {
           );
         })}
       </div>
+
+      {showAssignmentModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
+          <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setShowAssignmentModal(false)}
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-lg text-white/60 transition hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Assign Employees to Project</h2>
+                <p className="mt-1 text-sm text-white/45">Select a project, search active employees, and assign one or many people to it.</p>
+              </div>
+              <div className="w-full max-w-xs">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Select Project</label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
+                >
+                  <option value="">Choose a project</option>
+                  {assignmentProjects.map((project) => (
+                    <option key={project.uuid} value={project.uuid}>{project.project_name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Search Employee</label>
+                  <input
+                    type="text"
+                    value={assignmentSearch}
+                    onChange={(e) => handleEmployeeSearch(e.target.value)}
+                    placeholder="Search by name, ID, email, phone, designation"
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
+                  />
+                </div>
+
+                {assignmentError && (
+                  <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">{assignmentError}</div>
+                )}
+                {assignmentSuccess && (
+                  <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">{assignmentSuccess}</div>
+                )}
+
+                {assignmentLoading ? (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">Searching active employees…</div>
+                ) : assignmentEmployees.length > 0 ? (
+                  <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    {assignmentEmployees.map((employee) => {
+                      const isSelected = selectedEmployees.some((item) => item.employee_id === employee.employee_id);
+                      return (
+                        <button
+                          key={employee.employee_id}
+                          type="button"
+                          onClick={() => toggleEmployeeSelection(employee)}
+                          className={`flex w-full items-start justify-between rounded-xl border px-3 py-3 text-left transition ${isSelected ? 'border-orange-500/30 bg-orange-500/10' : 'border-transparent bg-white/[0.02] hover:border-white/10'}`}
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-white">{employee.first_name} {employee.last_name}</p>
+                            <p className="text-xs text-white/45">ID: {employee.employee_id} • {employee.designation || employee.role || 'Employee'}</p>
+                            <p className="text-xs text-white/35">{employee.personal_email || employee.official_email || 'No email provided'}</p>
+                          </div>
+                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'bg-orange-500/20 text-orange-400' : 'bg-white/10 text-white/55'}`}>
+                            {isSelected ? 'Selected' : 'Select'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : assignmentSearch ? (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">No matching employees found.</div>
+                ) : null}
+
+                {selectedEmployees.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Selected Employees</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEmployees.map((employee) => (
+                        <span key={employee.employee_id} className="inline-flex items-center gap-2 rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-sm text-orange-300">
+                          {employee.first_name} {employee.last_name}
+                          <button type="button" onClick={() => toggleEmployeeSelection(employee)} className="text-orange-400 hover:text-white">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAssignEmployees}
+                  disabled={assignmentSubmitting || !selectedProjectId || !selectedEmployees.length}
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {assignmentSubmitting ? 'Assigning…' : 'Assign Employees'}
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Assigned Employees</p>
+                    <p className="text-xs text-white/40">Current project members</p>
+                  </div>
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/60">{assignedLoading ? 'Loading…' : assignedEmployees.length}</span>
+                </div>
+
+                {assignedLoading ? (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm text-white/45">Loading assigned employees…</div>
+                ) : assignedEmployees.length > 0 ? (
+                  <div className="space-y-2">
+                    {assignedEmployees.map((employee) => (
+                      <div key={employee.employee_id} className="rounded-xl border border-white/10 bg-[#0d0f13] p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-white">{employee.first_name} {employee.last_name}</p>
+                            <p className="text-xs text-white/45">{employee.employee_code} • {employee.designation || employee.role || 'Employee'}</p>
+                          </div>
+                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${employee.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-orange-500/15 text-orange-400'}`}>
+                            {employee.status || 'Active'}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/45">
+                          <span>Assigned: {employee.assigned_date ? new Date(employee.assigned_date).toLocaleDateString('en-IN') : '—'}</span>
+                          <span>•</span>
+                          <span>{employee.mobile_number || 'No phone'}</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button type="button" onClick={() => handleRemoveEmployee(employee.employee_id)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">Remove</button>
+                          <button type="button" onClick={() => handleStatusUpdate(employee.employee_id, employee.status === 'Active' ? 'Inactive' : 'Active')} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">
+                            {employee.status === 'Active' ? 'Set Inactive' : 'Set Active'}
+                          </button>
+                          <button type="button" onClick={() => navigate(`/admin/employees/view/${employee.employee_id}`)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">View</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-3 text-sm text-white/40">No employees assigned yet.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3">

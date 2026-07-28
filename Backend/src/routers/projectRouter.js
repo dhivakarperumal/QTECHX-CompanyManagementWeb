@@ -2,11 +2,19 @@
 const { authenticate, authorize } = require('../security/authMiddleware');
 const { upload } = require('../config/multerConfig');
 const {
-  createProjectHandler, getAllProjectsHandler, getProjectByIdHandler,
+  createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler, getProjectByIdHandler,
   updateProjectHandler, deleteProjectHandler,
 } = require('../controllers/projectController');
 const {
-  assignHandler, unassignHandler, getAssignmentsHandler, getAllAssignmentsHandler,
+  assignHandler,
+  unassignHandler,
+  getAssignmentsHandler,
+  getAllAssignmentsHandler,
+  searchEmployeesHandler,
+  getProjectEmployeesHandler,
+  assignEmployeesHandler,
+  unassignEmployeeHandler,
+  updateAssignmentStatusHandler,
 } = require('../controllers/projectAssignmentController');
 
 const router = express.Router();
@@ -26,6 +34,7 @@ const uploadFields = upload.fields([
 
 // ─── Project CRUD ──────────────────────────────────────────────────────────────
 router.post(  '/',    authenticate, managers, uploadFields, createProjectHandler);
+router.get(   '/next-code', authenticate, managers, getNextProjectCodeHandler);
 router.get(   '/',    authenticate, allStaff, getAllProjectsHandler);
 router.get(   '/assignments/all', authenticate, allStaff, getAllAssignmentsHandler);
 router.get(   '/:id', authenticate, allStaff, getProjectByIdHandler);
@@ -33,6 +42,11 @@ router.put(   '/:id', authenticate, managers, uploadFields, updateProjectHandler
 router.delete('/:id', authenticate, admins,   deleteProjectHandler);
 
 // ─── Assignments ───────────────────────────────────────────────────────────────
+router.get(   '/employees/search', authenticate, allStaff, searchEmployeesHandler);
+router.get(   '/:id/employees', authenticate, allStaff, getProjectEmployeesHandler);
+router.post(  '/:id/employees', authenticate, managers, assignEmployeesHandler);
+router.delete('/:id/employees', authenticate, managers, unassignEmployeeHandler);
+router.put(   '/:id/employees/:employeeId/status', authenticate, managers, updateAssignmentStatusHandler);
 router.get(   '/:id/assignments', authenticate, allStaff, getAssignmentsHandler);
 router.post(  '/:id/assignments', authenticate, managers, assignHandler);
 router.delete('/:id/assignments', authenticate, managers, unassignHandler);

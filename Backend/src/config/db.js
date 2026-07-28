@@ -202,6 +202,25 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_pa_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS project_employees (
+      id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      project_id    INT UNSIGNED NOT NULL,
+      employee_id   VARCHAR(36)  NOT NULL,
+      assigned_date DATE NULL,
+      status        ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+      created_by    VARCHAR(36) NULL,
+      created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_project_employee (project_id, employee_id),
+      INDEX idx_pe_project (project_id),
+      INDEX idx_pe_employee (employee_id),
+      CONSTRAINT fk_pe_project  FOREIGN KEY (project_id)  REFERENCES projects  (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_pe_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {

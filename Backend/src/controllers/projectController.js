@@ -1,6 +1,8 @@
 ﻿const { v4: uuidv4 } = require('uuid');
+const { getDB } = require('../config/db');
 const {
   createProject, findProjectByUUID, listProjects, updateProject, deleteProject,
+  generateProjectCode,
 } = require('../models/projectModel');
 
 const PROJECT_STATUSES = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
@@ -68,6 +70,17 @@ async function getAllProjectsHandler(req, res) {
   }
 }
 
+/** GET /api/projects/next-code */
+async function getNextProjectCodeHandler(req, res) {
+  try {
+    const code = await generateProjectCode(getDB());
+    return ok(res, { code });
+  } catch (err) {
+    console.error('getNextProjectCodeHandler:', err);
+    return fail(res, 'Failed to generate next project code', 500, err.message);
+  }
+}
+
 /** GET /api/projects/:id */
 async function getProjectByIdHandler(req, res) {
   try {
@@ -130,4 +143,7 @@ async function deleteProjectHandler(req, res) {
   }
 }
 
-module.exports = { createProjectHandler, getAllProjectsHandler, getProjectByIdHandler, updateProjectHandler, deleteProjectHandler };
+module.exports = {
+  createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler,
+  getProjectByIdHandler, updateProjectHandler, deleteProjectHandler,
+};

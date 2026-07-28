@@ -1,9 +1,7 @@
 ﻿const { getDB } = require('../config/db');
 
-// ─── Create Assignment ────────────────────────────────────────────────────────
 async function assignEmployee(data) {
   const db = getDB();
-  // Upsert: if same project+employee+role exists, update assigned_at
   await db.execute(
     `INSERT INTO project_assignments (project_id, employee_id, role, assigned_by)
      VALUES (?, ?, ?, ?)
@@ -12,7 +10,6 @@ async function assignEmployee(data) {
   );
 }
 
-// ─── Remove Assignment ────────────────────────────────────────────────────────
 async function removeAssignment(project_id, employee_id, role) {
   const db = getDB();
   await db.execute(
@@ -21,7 +18,6 @@ async function removeAssignment(project_id, employee_id, role) {
   );
 }
 
-// ─── List Assignments for a Project ──────────────────────────────────────────
 async function listAssignmentsByProject(project_id) {
   const db = getDB();
   const [rows] = await db.execute(
@@ -37,7 +33,6 @@ async function listAssignmentsByProject(project_id) {
   return rows;
 }
 
-// ─── List All Assignments (for overview) ─────────────────────────────────────
 async function listAllAssignments() {
   const db = getDB();
   const [rows] = await db.execute(
@@ -53,4 +48,93 @@ async function listAllAssignments() {
   return rows;
 }
 
-module.exports = { assignEmployee, removeAssignment, listAssignmentsByProject, listAllAssignments };
+async function searchEmployeesForProject({ search = '', status = 'Active' }) {
+  const db = getDB();
+  const term = `%${(search || '').trim()}%`;
+  const [rows] = await db.execute(
+    `SELECT employee_id, employee_code, first_name, last_name, designation, role, personal_email, official_email, mobile_number, employment_status
+     FROM employees
+     WHERE employment_status = ?
+       AND (
+         LOWER(CONCAT(first_name, ' ', COALESCE(last_name, ''))) LIKE LOWER(?) OR
+         LOWER(employee_id) LIKE LOWER(?) OR
+         LOWER(employee_code) LIKE LOWER(?) OR
+         LOWER(personal_email) LIKE LOWER(?) OR
+         LOWER(official_email) LIKE LOWER(?) OR
+         LOWER(mobile_number) LIKE LOWER(?) OR
+         LOWER(designation) LIKE LOWER(?) OR
+         LOWER(role) LIKE LOWER(?)
+       )
+     ORDER BY first_name, last_name
+     LIMIT 50`,
+    [status, term, term, term, term, term, term, term, term]
+  );
+  return rows;
+}
+
+async function listProjectEmployees(project_id) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT pe.id, pe.project_id, pe.employee_id, pe.assigned_date, pe.status, pe.created_at, pe.updated_at,
+            e.employee_code, e.first_name, e.last_name, e.designation, e.role, e.personal_email, e.official_email, e.mobile_number
+     FROM project_employees pe
+     JOIN employees e ON e.employee_id = pe.employee_id
+     WHERE pe.project_id = ?
+     ORDER BY pe.created_at DESC`,
+    [project_id]
+  );
+  return rows;
+}
+
+async function assignEmployeesToProject({ project_id, employee_ids = [], assigned_date = null, status = 'Active', created_by = null }) {
+  const db = getDB();
+  const ids = Array.isArray(employee_ids) ? employee_ids.filter(Boolean) : [];
+  if (!ids.length) throw new Error('No employees selected');
+
+  const placeholders = ids.map(() => '?').join(', ');
+  const [existingRows] = await db.execute(
+    `SELECT employee_id FROM project_employees WHERE project_id = ? AND employee_id IN (${placeholders})`,
+    [project_id, ...ids]
+  );
+  const existingIds = new Set(existingRows.map((row) => row.employee_id));
+  const newIds = ids.filter((employeeId) => !existingIds.has(employeeId));
+
+  if (!newIds.length) {
+    throw new Error('Employee already assigned to this project.');
+  }
+
+  const values = [];
+  const insertPlaceholders = newIds.map(() => '(?, ?, ?, ?, ?)').join(', ');
+  newIds.forEach((employeeId) => {
+    values.push(project_id, employeeId, assigned_date || null, status || 'Active', created_by || null);
+  });
+
+  await db.execute(
+    `INSERT INTO project_employees (project_id, employee_id, assigned_date, status, created_by) VALUES ${insertPlaceholders}`,
+    values
+  );
+
+  return newIds;
+}
+
+async function removeProjectEmployee(project_id, employee_id) {
+  const db = getDB();
+  await db.execute('DELETE FROM project_employees WHERE project_id = ? AND employee_id = ?', [project_id, employee_id]);
+}
+
+async function updateProjectEmployeeStatus(project_id, employee_id, status) {
+  const db = getDB();
+  await db.execute('UPDATE project_employees SET status = ? WHERE project_id = ? AND employee_id = ?', [status, project_id, employee_id]);
+}
+
+module.exports = {
+  assignEmployee,
+  removeAssignment,
+  listAssignmentsByProject,
+  listAllAssignments,
+  searchEmployeesForProject,
+  listProjectEmployees,
+  assignEmployeesToProject,
+  removeProjectEmployee,
+  updateProjectEmployeeStatus,
+};

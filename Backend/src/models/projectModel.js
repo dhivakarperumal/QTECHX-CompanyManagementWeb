@@ -169,4 +169,5 @@ async function deleteProject(uuid) {
 module.exports = {
   createProject, findProjectById, findProjectByUUID,
   listProjects, updateProject, deleteProject,
+  generateProjectCode,
 };

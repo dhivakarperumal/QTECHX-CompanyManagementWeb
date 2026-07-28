@@ -197,6 +197,7 @@ export default function AddProject() {
 
   const [formData, setFormData]         = useState(BLANK);
   const [fetchLoading, setFetchLoading] = useState(isEdit);
+  const [projectCodeLoading, setProjectCodeLoading] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -214,6 +215,20 @@ export default function AddProject() {
       } finally { setFetchLoading(false); }
     })();
   }, [id, isEdit]);
+
+  useEffect(() => {
+    if (isEdit || formData.project_code.trim()) return;
+    (async () => {
+      setProjectCodeLoading(true);
+      try {
+        const { data } = await api.get('/projects/next-code');
+        if (!data.success) throw new Error(data.message || 'Failed to generate project code');
+        setFormData(prev => ({ ...prev, project_code: data.code || '' }));
+      } catch (err) {
+        console.warn('Project code generation failed:', err?.message || err);
+      } finally { setProjectCodeLoading(false); }
+    })();
+  }, [isEdit, formData.project_code]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -299,12 +314,48 @@ export default function AddProject() {
             <h2 className="text-base font-bold text-white">Basic Information</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {[['project_code','Project Code','text','PRJ-001'],['project_name','Project Name *','text','e.g. Client Portal'],['short_name','Short Name','text','CP'],['project_category','Category','text','Web Application'],['industry','Industry','text','Healthcare']].map(([name,label,type,ph]) => (
-              <label key={name} className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">{label}</span>
-                <input className={fieldClass} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={ph} />
-              </label>
-            ))}
+            {['project_code','project_name','short_name','project_category','industry'].map((name) => {
+              const labels = {
+                project_code: 'Project Code',
+                project_name: 'Project Name *',
+                short_name: 'Short Name',
+                project_category: 'Category',
+                industry: 'Industry',
+              };
+              const placeholders = {
+                project_code: 'PRJ-001',
+                project_name: 'e.g. Client Portal',
+                short_name: 'CP',
+                project_category: 'Web Application',
+                industry: 'Healthcare',
+              };
+              const type = name === 'project_code' ? 'text' : 'text';
+              return (
+                <label key={name} className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">{labels[name]}</span>
+                  <div className="flex gap-2">
+                    <input className={fieldClass} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={placeholders[name]} />
+                    {name === 'project_code' && (
+                      <button type="button" onClick={async () => {
+                        setProjectCodeLoading(true);
+                        try {
+                          const { data } = await api.get('/projects/next-code');
+                          if (data.success) setFormData(prev => ({ ...prev, project_code: data.code || '' }));
+                        } catch (err) {
+                          console.warn('Failed to regenerate project code', err);
+                        } finally {
+                          setProjectCodeLoading(false);
+                        }
+                      }}
+                      className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition flex items-center justify-center"
+                      title="Regenerate project code">
+                        {projectCodeLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                      </button>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Current Status</span>
               <select className={fieldClass} name="current_status" value={formData.current_status} onChange={handleChange}>
