@@ -221,6 +221,94 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_pe_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS tasks (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      project_id INT UNSIGNED NOT NULL,
+      milestone VARCHAR(255) NULL,
+      module_name VARCHAR(255) NULL,
+      task_name VARCHAR(255) NOT NULL,
+      description TEXT NULL,
+      task_type ENUM('Bug','Feature','Enhancement','Support','Testing','Documentation','Research') NOT NULL DEFAULT 'Feature',
+      category VARCHAR(100) NULL,
+      parent_task_uuid VARCHAR(36) NULL,
+      assigned_to VARCHAR(36) NULL,
+      assigned_by VARCHAR(36) NULL,
+      team VARCHAR(100) NULL,
+      assignment_date DATE NULL,
+      start_date DATE NULL,
+      due_date DATE NULL,
+      completion_date DATE NULL,
+      estimated_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
+      actual_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
+      time_spent DECIMAL(10,2) NOT NULL DEFAULT 0,
+      remaining_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
+      priority ENUM('Low','Medium','High','Critical') NOT NULL DEFAULT 'Medium',
+      status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled') NOT NULL DEFAULT 'Pending',
+      progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      is_overdue TINYINT(1) NOT NULL DEFAULT 0,
+      attachments TEXT NULL,
+      comments TEXT NULL,
+      internal_notes TEXT NULL,
+      client_notes TEXT NULL,
+      deleted TINYINT(1) NOT NULL DEFAULT 0,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_tasks_uuid (uuid),
+      INDEX idx_tasks_project (project_id),
+      INDEX idx_tasks_assigned_to (assigned_to),
+      INDEX idx_tasks_status (status),
+      CONSTRAINT fk_tasks_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_tasks_assigned_to FOREIGN KEY (assigned_to) REFERENCES employees (employee_id) ON DELETE SET NULL ON UPDATE CASCADE,
+      CONSTRAINT fk_tasks_assigned_by FOREIGN KEY (assigned_by) REFERENCES employees (employee_id) ON DELETE SET NULL ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS timesheets (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      employee_id VARCHAR(36) NOT NULL,
+      project_id INT UNSIGNED NULL,
+      module_name VARCHAR(255) NULL,
+      task_uuid VARCHAR(36) NULL,
+      entry_date DATE NOT NULL,
+      start_time TIME NULL,
+      end_time TIME NULL,
+      break_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+      total_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
+      overtime_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
+      description TEXT NULL,
+      work_type ENUM('Development','Testing','Meeting','Support','Documentation','Research') NOT NULL DEFAULT 'Development',
+      task_status ENUM('Pending','In Progress','Review','Testing','Completed','On Hold','Cancelled') NOT NULL DEFAULT 'Pending',
+      progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      submitted_by VARCHAR(36) NULL,
+      submitted_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      approved_by VARCHAR(36) NULL,
+      approved_date DATETIME NULL,
+      approval_status ENUM('Pending','Approved','Rejected') NOT NULL DEFAULT 'Pending',
+      rejection_reason TEXT NULL,
+      attachments TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      deleted TINYINT(1) NOT NULL DEFAULT 0,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_timesheets_uuid (uuid),
+      INDEX idx_timesheets_employee (employee_id),
+      INDEX idx_timesheets_project (project_id),
+      INDEX idx_timesheets_date (entry_date),
+      CONSTRAINT fk_timesheets_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_timesheets_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {

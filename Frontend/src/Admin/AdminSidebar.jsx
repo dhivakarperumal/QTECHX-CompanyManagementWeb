@@ -67,6 +67,7 @@ const navItems = [
     icon: FolderKanban,
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
+      { path: "/admin/projects/assignments", label: "Assigned Projects", icon: UserCheck },
       { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
     ],
   },

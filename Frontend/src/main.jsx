@@ -36,6 +36,8 @@ import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
 import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
+import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
+import TasksPage from './Admin/Tasks/TasksPage.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 
@@ -93,6 +95,38 @@ const router = createHashRouter([
           {
             path: 'projects',
             element: <AllProjects />,
+          },
+          {
+            path: 'projects/assignments',
+            element: <ProjectAssignments />,
+          },
+          {
+            path: 'tasks',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/add',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/assign',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/update',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/board',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/graph',
+            element: <TasksPage />,
+          },
+          {
+            path: 'tasks/completed',
+            element: <TasksPage />,
           },
           {
             path: 'projects/add',
