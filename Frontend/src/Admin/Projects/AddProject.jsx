@@ -159,6 +159,9 @@ export default function AddProject() {
 
   const handleFileChange = (name, file) => {
     setDocumentFiles(prev => ({ ...prev, [name]: file }));
+    if (name === 'agreement_doc' && file) {
+      setFormData(prev => ({ ...prev, agreement_uploaded: 'Yes' }));
+    }
   };
 
   const handleTeamChange = (name, value) => setFormData(prev => ({ ...prev, [name]: value }));
