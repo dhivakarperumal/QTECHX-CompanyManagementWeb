@@ -5,12 +5,13 @@ const publicFields = "id, employee_id, employee_code, first_name, last_name, pro
 async function generateEmployeeCode() {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT employee_code FROM employees WHERE employee_code IS NOT NULL AND employee_code REGEXP '^EMPQT[0-9]+$'`
+    `SELECT employee_code FROM employees WHERE employee_code IS NOT NULL AND LOWER(employee_code) REGEXP '^empqt[0-9]+$'`
   );
 
   let highest = 0;
   rows.forEach((row) => {
-    const match = row.employee_code?.match(/^EMPQT(\d+)$/i);
+    const valueText = String(row.employee_code || "").trim().toUpperCase();
+    const match = valueText.match(/^EMPQT(\d+)$/);
     if (match) {
       const value = parseInt(match[1], 10);
       if (value > highest) highest = value;
@@ -32,6 +33,8 @@ async function createEmployee(employee) {
   const db = getDB();
   if (!employee.employee_code || !String(employee.employee_code).trim()) {
     employee.employee_code = await generateEmployeeCode();
+  } else {
+    employee.employee_code = String(employee.employee_code).trim().toUpperCase();
   }
 
   const fields = Object.keys(employee).filter(key => employee[key] !== undefined);
