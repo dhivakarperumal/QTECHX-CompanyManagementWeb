@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Search, Plus, Loader2, AlertCircle, Trash2, X,
   FolderKanban, CheckCircle, RefreshCw, ChevronDown, Edit3,
+  LayoutGrid, Table2,
 } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
@@ -237,6 +238,7 @@ export default function ProjectAssignments() {
   const [updating, setUpdating] = useState(false);  const [toast, setToast]             = useState('');
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removing, setRemoving]       = useState(false);
+  const [viewMode, setViewMode] = useState('table');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -433,7 +435,7 @@ export default function ProjectAssignments() {
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" placeholder="Search by employee, project, designation…"
             value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
+            className="w-1/2 bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
         </div>
         <div className="relative">
@@ -444,7 +446,28 @@ export default function ProjectAssignments() {
           </select>
           <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
         </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.04] p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
+          >
+            <Table2 size={14} /> 
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('card')}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
+          >
+            <LayoutGrid size={14} /> 
+          </button>
+        </div>
       </div>
+      </div>
+
+      
 
       {/* Error */}
       {error && (
@@ -498,83 +521,144 @@ export default function ProjectAssignments() {
                 <span className="text-[10px] font-bold border px-2.5 py-1 rounded-full bg-white/5 text-white/40 border-white/10">{status}</span>
               </div>
 
-              {/* Members table */}
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px] text-sm">
-                  <thead>
-                    <tr className="border-b border-white/[0.05]">
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
-                      <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Assigned On</th>
-                      <th className="text-right text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map((m, i) => (
-                      <tr key={`${m.employee_id}-${m.role}`} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition">
-                        <td className="px-4 py-3">
-                          <div className="flex items-start gap-3">
-                            <Avatar
-                              name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
-                              image={m.profile_photo}
-                              index={i}
-                            />
-                            <div className="min-w-0">
-                              <p className="text-white font-semibold text-sm truncate">
-                                {m.full_name ||
-                                  [m.first_name, m.last_name].filter(Boolean).join(' ') ||
-                                  m.employee_name ||
-                                  m.employee_code ||
-                                  '—'}
-                              </p>
-                              {(m.designation || m.role) && (
-                                <p className="text-white/40 text-[10px] truncate">{m.designation || m.role}</p>
+              {viewMode === 'table' ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px] text-sm">
+                    <thead>
+                      <tr className="border-b border-white/[0.05]">
+                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
+                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
+                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
+                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Assigned On</th>
+                        <th className="text-right text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((m, i) => (
+                        <tr key={`${m.employee_id}-${m.role}`} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition">
+                          <td className="px-4 py-3">
+                            <div className="flex items-start gap-3">
+                              <Avatar
+                                name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
+                                image={m.profile_photo}
+                                index={i}
+                              />
+                              <div className="min-w-0">
+                                <p className="text-white font-semibold text-sm truncate">
+                                  {m.full_name ||
+                                    [m.first_name, m.last_name].filter(Boolean).join(' ') ||
+                                    m.employee_name ||
+                                    m.employee_code ||
+                                    '—'}
+                                </p>
+                                {(m.designation || m.role) && (
+                                  <p className="text-white/40 text-[10px] truncate">{m.designation || m.role}</p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3">
+                            <div className="text-white font-semibold text-sm truncate">{m.employee_code || '—'}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1 text-[10px] text-white/40">
+                              {m.personal_email || m.email || m.official_email ? (
+                                <div>{m.personal_email || m.email || m.official_email}</div>
+                              ) : (
+                                <div>No email</div>
+                              )}
+                              {m.mobile_number || m.phone_number || m.alternate_mobile ? (
+                                <div>{m.mobile_number || m.phone_number || m.alternate_mobile}</div>
+                              ) : (
+                                <div>No phone</div>
                               )}
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="text-white font-semibold text-sm truncate">{m.employee_code || '—'}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="space-y-1 text-[10px] text-white/40">
-                            {m.personal_email || m.email || m.official_email ? (
-                              <div>{m.personal_email || m.email || m.official_email}</div>
-                            ) : (
-                              <div>No email</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-white/35 text-xs">
+                              {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
+                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
+                                title="Edit">
+                                <Edit3 size={13} />
+                              </button>
+                              <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
+                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                                title="Remove">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="grid gap-4 p-4 xl:grid-cols-2">
+                  {members.map((m, i) => (
+                    <div key={`${m.employee_id}-${m.role}-${projectUuid}`} className="rounded-2xl border border-white/10 bg-[#0e1118]/70 p-4 shadow-lg shadow-black/20">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <Avatar
+                            name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
+                            image={m.profile_photo}
+                            index={i}
+                            size={10}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-white font-semibold text-sm truncate">
+                              {m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_name || m.employee_code || '—'}
+                            </p>
+                            {(m.designation || m.role) && (
+                              <p className="text-white/40 text-[10px] mt-0.5 truncate">{m.designation || m.role}</p>
                             )}
-                            {m.mobile_number || m.phone_number || m.alternate_mobile ? (
-                              <div>{m.mobile_number || m.phone_number || m.alternate_mobile}</div>
-                            ) : (
-                              <div>No phone</div>
-                            )}
                           </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-white/35 text-xs">
+                        </div>
+                        {m.role && <RoleBadge role={m.role} />}
+                      </div>
+
+                      <div className="mt-4 space-y-2 text-sm text-white/60">
+                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Employee ID</span>
+                          <span className="font-semibold text-white/80">{m.employee_code || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Email</span>
+                          <span className="font-semibold text-white/80 truncate">{m.personal_email || m.email || m.official_email || 'No email'}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Phone</span>
+                          <span className="font-semibold text-white/80">{m.mobile_number || m.phone_number || m.alternate_mobile || 'No phone'}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Assigned On</span>
+                          <span className="font-semibold text-white/80">
                             {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
                           </span>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
-                              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
-                              title="Edit">
-                              <Edit3 size={13} />
-                            </button>
-                            <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
-                              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
-                              title="Remove">
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
+                          title="Edit">
+                          <Edit3 size={14} />
+                        </button>
+                        <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                          title="Remove">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

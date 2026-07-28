@@ -188,11 +188,21 @@ async function assignEmployeesToProject({ project_id, employee_ids = [], status 
   });
 
   if (existingRows[0]) {
+    const existingAssignments = parseEmployeeAssignments(existingRows[0].employee_ids);
+    const existingIds = new Set(existingAssignments.map(e => String(e.employee_id)));
+    
+    // Add new employees if they aren't already there
+    enrichedPayloads.forEach(emp => {
+      if (!existingIds.has(String(emp.employee_id))) {
+        existingAssignments.push(emp);
+      }
+    });
+
     await db.execute(
       'UPDATE project_assignments SET employee_ids = ?, status = ?, assigned_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE project_id = ?',
-      [JSON.stringify(enrichedPayloads), status || existingRows[0].status || 'Assigned', finalAssignedDate, actor, project_id]
+      [JSON.stringify(existingAssignments), status || existingRows[0].status || 'Assigned', finalAssignedDate, actor, project_id]
     );
-    return { inserted: 0, existing: 1, employeeCount: enrichedPayloads.length, employees: enrichedPayloads };
+    return { inserted: enrichedPayloads.length, existing: existingRows.length, employeeCount: existingAssignments.length, employees: existingAssignments };
   }
 
   await db.execute(

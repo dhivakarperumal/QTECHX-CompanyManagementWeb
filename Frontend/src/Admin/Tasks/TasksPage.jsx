@@ -163,11 +163,15 @@ export default function TasksPage() {
           })
           .filter(Boolean);
 
+        const uniqueAssignedProjects = Array.from(
+          new Map(projectsFromAssignments.map((project) => [project.uuid, project])).values()
+        );
+
         const mergedProjects = Array.from(
           new Map([...projectsFromAssignments, ...projectsFromApi].map((project) => [project.uuid, project])).values()
         );
 
-        setProjects(projectsFromAssignments.length ? projectsFromAssignments : mergedProjects);
+        setProjects(uniqueAssignedProjects.length > 0 ? uniqueAssignedProjects : mergedProjects);
       } catch (err) {
         console.error('Failed to load project options', err);
         setProjects([]);
