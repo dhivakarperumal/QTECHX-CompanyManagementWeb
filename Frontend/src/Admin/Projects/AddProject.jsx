@@ -4,7 +4,18 @@ import {
   Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle,
   AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
 } from 'lucide-react';
-import api from '../../api';
+import api, { API_URL } from '../../api';
+
+const BACKEND_BASE_URL = API_URL.replace(/\/api$/, '');
+
+function buildUploadUrl(filePath) {
+  if (!filePath) return null;
+  const normalized = `${filePath}`.replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith('/uploads/')) return `${BACKEND_BASE_URL}${normalized}`;
+  if (normalized.startsWith('uploads/')) return `${BACKEND_BASE_URL}/${normalized}`;
+  return `${BACKEND_BASE_URL}/uploads/${normalized}`;
+}
 
 const BLANK = {
   project_code: '', project_name: '', short_name: '', project_category: '', industry: '',
@@ -394,7 +405,7 @@ export default function AddProject() {
               {documentFiles.nda_doc ? (
                 <p className="mt-2 text-xs text-white/50">Selected NDA: {documentFiles.nda_doc.name}</p>
               ) : formData.nda_doc ? (
-                <a href={formData.nda_doc} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                <a href={buildUploadUrl(formData.nda_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
                   {formData.nda_doc.split('/').pop() || formData.nda_doc}
                 </a>
               ) : null}
@@ -499,7 +510,7 @@ export default function AddProject() {
                   {selectedFile ? (
                     <p className="mt-2 text-xs text-white/50">Selected: {selectedFile.name}</p>
                   ) : existingUrl ? (
-                    <a href={existingUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
+                    <a href={buildUploadUrl(existingUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">
                       {existingUrl.split('/').pop() || existingUrl}
                     </a>
                   ) : null}
