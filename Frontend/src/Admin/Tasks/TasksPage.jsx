@@ -45,10 +45,13 @@ const mapTaskToViewModel = (task) => ({
   assignedBy: task.assigned_by_name || "—",
   status: normalizeTaskStatus(task.status),
   progress: Number(task.progress || 0),
+  startDate: task.start_date || "",
   dueDate: task.due_date || "—",
   priority: task.priority || "Medium",
   description: task.description || "",
+  estimatedHours: task.estimated_hours || "",
   project_id: task.project_id,
+  project_uuid: task.project_uuid,
 });
 
 export default function TasksPage() {
@@ -62,6 +65,10 @@ export default function TasksPage() {
     const params = new URLSearchParams(location.search);
     return params.get('project') || params.get('project_id') || '';
   });
+  const [currentTaskUuid, setCurrentTaskUuid] = useState('');
+  const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskActionMessage, setTaskActionMessage] = useState('');
   const [taskForm, setTaskForm] = useState({
     project_id: '',
     module_name: '',
@@ -91,6 +98,17 @@ export default function TasksPage() {
   const [assignError, setAssignError] = useState('');
   const [assignSuccess, setAssignSuccess] = useState('');
 
+  const fetchTaskById = async (taskUuid) => {
+    if (!taskUuid) return null;
+    try {
+      const { data } = await api.get(`/tasks/${taskUuid}`);
+      return mapTaskToViewModel(data.data);
+    } catch (err) {
+      console.error('Failed to load task details', err);
+      return null;
+    }
+  };
+
   const fetchTasks = async (projectUuid = selectedProject) => {
     setTasksLoading(true);
     try {
@@ -116,8 +134,12 @@ export default function TasksPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const projectFromUrl = params.get('project') || params.get('project_id') || '';
+    const taskFromUrl = params.get('task') || '';
     if (projectFromUrl) {
       setSelectedProject(projectFromUrl);
+    }
+    if (taskFromUrl) {
+      setCurrentTaskUuid(taskFromUrl);
     }
   }, [location.search]);
 
@@ -127,20 +149,36 @@ export default function TasksPage() {
         const { data } = await api.get('/projects?limit=100&page=1');
         const list = data.data || [];
         setProjects(list);
-        if (pageKey === 'assign' && list.length && !assignForm.project_id) {
+            if (pageKey === 'assign' && list.length && !assignForm.project_id) {
           setAssignForm((prev) => ({ ...prev, project_id: list[0].uuid }));
         }
         if (pageKey === 'add' && list.length && !taskForm.project_id && selectedProject) {
           setTaskForm((prev) => ({ ...prev, project_id: selectedProject }));
+        }
+        if (pageKey === 'update' && currentTaskUuid && !selectedTaskDetails) {
+          const task = await fetchTaskById(currentTaskUuid);
+          if (task) {
+            setSelectedTaskDetails(task);
+            setTaskForm({
+              project_id: task.project_uuid || '',
+              module_name: task.module,
+              task_name: task.name,
+              description: task.description,
+              assigned_to: task.assignedTo,
+              assigned_by: task.assignedBy,
+              start_date: task.startDate || '',
+              due_date: task.dueDate || '',
+              estimated_hours: task.estimatedHours || '',
+              priority: task.priority || '',
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to load project options', err);
       }
     };
 
-    if (['add', 'assign'].includes(pageKey)) {
-      fetchProjects();
-    }
+    fetchProjects();
     if (['overview', 'board', 'completed', 'assign'].includes(pageKey)) {
       fetchTasks(pageKey === 'assign' ? assignForm.project_id : selectedProject);
     }
@@ -201,27 +239,36 @@ export default function TasksPage() {
         estimated_hours: taskForm.estimated_hours,
         priority: taskForm.priority,
       };
-      const { data } = await api.post('/tasks', payload);
+      const isUpdate = pageKey === 'update' && currentTaskUuid;
+      const response = isUpdate
+        ? await api.put(`/tasks/${currentTaskUuid}`, payload)
+        : await api.post('/tasks', payload);
+      const { data } = response;
       if (data.success === false) {
-        setTaskError(data.message || 'Failed to save task.');
+        setTaskError(data.message || `Failed to ${isUpdate ? 'update' : 'save'} task.`);
       } else {
-        setTaskSuccess(data.message || 'Task saved successfully.');
-        await fetchTasks(taskForm.project_id || '');
-        setTaskForm({
-          project_id: '',
-          module_name: '',
-          task_name: '',
-          description: '',
-          assigned_to: '',
-          assigned_by: '',
-          start_date: '',
-          due_date: '',
-          estimated_hours: '',
-          priority: '',
-        });
+        setTaskSuccess(data.message || `Task ${isUpdate ? 'updated' : 'saved'} successfully.`);
+        if (isUpdate) {
+          const updated = mapTaskToViewModel(data.data);
+          setSelectedTaskDetails(updated);
+        } else {
+          setTaskForm({
+            project_id: '',
+            module_name: '',
+            task_name: '',
+            description: '',
+            assigned_to: '',
+            assigned_by: '',
+            start_date: '',
+            due_date: '',
+            estimated_hours: '',
+            priority: '',
+          });
+        }
+        await fetchTasks(selectedProject || '');
       }
     } catch (err) {
-      setTaskError(err?.response?.data?.message || err.message || 'Failed to save task.');
+      setTaskError(err?.response?.data?.message || err.message || `Failed to ${pageKey === 'update' ? 'update' : 'save'} task.`);
     } finally {
       setSavingTask(false);
     }
@@ -237,6 +284,29 @@ export default function TasksPage() {
     if (pageKey === "board") return baseTasks;
     return baseTasks;
   }, [pageKey, selectedProject, tasksList]);
+
+  const handleDeleteTask = async (taskUuid) => {
+    if (!taskUuid) return;
+    try {
+      await api.delete(`/tasks/${taskUuid}`);
+      setTaskActionMessage('Task deleted successfully.');
+      fetchTasks(selectedProject || '');
+    } catch (err) {
+      setTaskActionMessage(err?.response?.data?.message || 'Failed to delete task.');
+    }
+  };
+
+  const handleViewTask = async (taskUuid) => {
+    const task = await fetchTaskById(taskUuid);
+    if (task) {
+      setSelectedTaskDetails(task);
+      setIsTaskModalOpen(true);
+    }
+  };
+
+  const handleEditTask = (taskUuid) => {
+    navigate(`/admin/tasks/update?task=${encodeURIComponent(taskUuid)}${selectedProject ? `&project=${encodeURIComponent(selectedProject)}` : ''}`);
+  };
 
   const handleAssignTask = async () => {
     setAssignError('');
@@ -296,6 +366,96 @@ export default function TasksPage() {
           <p className="mt-3 text-3xl font-semibold">{visibleTasks.filter((task) => task.status === "In Progress").length}</p>
         </div>
       </div>
+
+      {taskActionMessage && (
+        <div className="rounded-3xl border border-white/10 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+          {taskActionMessage}
+        </div>
+      )}
+
+      {isTaskModalOpen && selectedTaskDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Task Details</h2>
+                <p className="mt-1 text-sm text-slate-400">Review task information and use the action buttons below.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTaskModalOpen(false)}
+                className="rounded-full border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-200 hover:border-white/20"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3 rounded-3xl border border-white/10 bg-slate-900/80 p-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Name</p>
+                  <p className="mt-1 text-base font-semibold text-white">{selectedTaskDetails.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Project</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.project}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Status</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.status}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Due Date</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.dueDate}</p>
+                </div>
+              </div>
+              <div className="space-y-3 rounded-3xl border border-white/10 bg-slate-900/80 p-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assigned To</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.assignedTo}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assigned By</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.assignedBy}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Priority</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.priority}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Progress</p>
+                  <p className="mt-1 text-base text-slate-200">{selectedTaskDetails.progress}%</p>
+                </div>
+              </div>
+              <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Description</p>
+                <p className="mt-2 text-sm text-slate-200 whitespace-pre-line">{selectedTaskDetails.description || 'No description provided.'}</p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTaskModalOpen(false);
+                  handleEditTask(selectedTaskDetails.uuid);
+                }}
+                className="rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600"
+              >
+                Edit Task
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDeleteTask(selectedTaskDetails.uuid);
+                  setIsTaskModalOpen(false);
+                }}
+                className="rounded-2xl border border-rose-500 bg-rose-500/10 px-5 py-3 text-sm font-semibold text-rose-200 hover:bg-rose-500/20"
+              >
+                Delete Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/70">
         <div className="flex flex-wrap gap-2 p-4">
@@ -461,6 +621,149 @@ export default function TasksPage() {
         </div>
       )}
 
+      {pageKey === "update" && (
+        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+          <h2 className="text-xl font-semibold">Update Task</h2>
+          <p className="mt-2 text-sm text-slate-400">Modify task details and save your updates.</p>
+          {!currentTaskUuid ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
+              No task selected for editing. Choose a task from the list and click Edit.
+            </div>
+          ) : !selectedTaskDetails ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
+              Loading task details...
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Project</label>
+                  <select
+                    value={taskForm.project_id}
+                    onChange={(e) => handleChange('project_id', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                  >
+                    <option value="" disabled>Select project</option>
+                    {projects.map((project) => (
+                      <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Module</label>
+                  <input
+                    value={taskForm.module_name}
+                    onChange={(e) => handleChange('module_name', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                    placeholder="Enter Module"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Task Name</label>
+                  <input
+                    value={taskForm.task_name}
+                    onChange={(e) => handleChange('task_name', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                    placeholder="Enter Task Name"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Description</label>
+                  <textarea
+                    value={taskForm.description}
+                    onChange={(e) => handleChange('description', e.target.value)}
+                    rows={4}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary resize-none"
+                    placeholder="Enter task description"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Assigned To</label>
+                  <input
+                    value={taskForm.assigned_to}
+                    onChange={(e) => handleChange('assigned_to', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                    placeholder="Enter Assigned To"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Assigned By</label>
+                  <input
+                    value={taskForm.assigned_by}
+                    onChange={(e) => handleChange('assigned_by', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                    placeholder="Enter Assigned By"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Start Date</label>
+                  <input
+                    type="date"
+                    value={taskForm.start_date}
+                    onChange={(e) => handleChange('start_date', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Due Date</label>
+                  <input
+                    type="date"
+                    value={taskForm.due_date}
+                    onChange={(e) => handleChange('due_date', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Estimated Hours</label>
+                  <input
+                    type="number"
+                    value={taskForm.estimated_hours}
+                    onChange={(e) => handleChange('estimated_hours', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                    placeholder="Enter Estimated Hours"
+                  />
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/80 p-4">
+                  <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">Priority</label>
+                  <select
+                    value={taskForm.priority}
+                    onChange={(e) => handleChange('priority', e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-primary"
+                  >
+                    <option value="" disabled>Select priority</option>
+                    {['Low','Medium','High','Critical'].map((value) => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleSaveTask}
+                  disabled={savingTask}
+                  className="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingTask ? 'Updating...' : 'Update Task'}
+                </button>
+                <p className="text-sm text-slate-400">Edit the selected task and save your updates.</p>
+              </div>
+              {taskError && <p className="mt-3 text-sm text-rose-400">{taskError}</p>}
+              {taskSuccess && <p className="mt-3 text-sm text-emerald-400">{taskSuccess}</p>}
+            </>
+          )}
+        </div>
+      )}
+
       {pageKey === "assign" && (
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
           <h2 className="text-xl font-semibold">Assign Task to Employee</h2>
@@ -589,12 +892,13 @@ export default function TasksPage() {
       )}
 
       {pageKey !== "add" && pageKey !== "assign" && pageKey !== "board" && (
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/70">
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-slate-200">
+        <>
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/70">
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-slate-200">
               <thead className="bg-slate-900 text-slate-400">
                 <tr>
-                  {['Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority'].map((heading) => (
+                  {['Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
                     <th key={heading} className="px-4 py-4 font-medium">{heading}</th>
                   ))}
                 </tr>
@@ -621,12 +925,36 @@ export default function TasksPage() {
                     </td>
                     <td className="px-4 py-4">{task.dueDate}</td>
                     <td className="px-4 py-4">{task.priority}</td>
+                    <td className="flex flex-wrap gap-2 px-4 py-4">
+                      <button
+                        type="button"
+                        onClick={() => handleViewTask(task.uuid)}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:border-white/20"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditTask(task.uuid)}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:border-white/20"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTask(task.uuid)}
+                        className="rounded-full border border-rose-500 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 hover:bg-rose-500/20"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+      </>
       )}
     </div>
   );
