@@ -2,8 +2,38 @@ const { getDB } = require("../config/db");
 
 const publicFields = "id, employee_id, employee_code, first_name, last_name, profile_photo, gender, dob, blood_group, marital_status, nationality, aadhaar_number, pan_number, mobile_number, alternate_mobile, personal_email, permanent_address, emergency_contact_person, emergency_contact_number, emergency_relationship, designation, team_lead, joining_date, confirmation_date, employment_status, role, salary_type, basic_salary, bank_name, account_number, ifsc_code, upi_id, resume_url, aadhaar_url, pan_url, passport_url, offer_letter_url, appointment_letter_url, nda_url, created_at, updated_at, created_by, updated_by";
 
+async function generateEmployeeCode() {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT employee_code FROM employees WHERE employee_code IS NOT NULL AND employee_code REGEXP '^EMPQT[0-9]+$'`
+  );
+
+  let highest = 0;
+  rows.forEach((row) => {
+    const match = row.employee_code?.match(/^EMPQT(\d+)$/i);
+    if (match) {
+      const value = parseInt(match[1], 10);
+      if (value > highest) highest = value;
+    }
+  });
+
+  let next = highest + 1;
+  let code = `EMPQT${next}`;
+
+  while (true) {
+    const [existing] = await db.execute("SELECT id FROM employees WHERE employee_code = ? LIMIT 1", [code]);
+    if (!existing.length) return code;
+    next += 1;
+    code = `EMPQT${next}`;
+  }
+}
+
 async function createEmployee(employee) {
   const db = getDB();
+  if (!employee.employee_code || !String(employee.employee_code).trim()) {
+    employee.employee_code = await generateEmployeeCode();
+  }
+
   const fields = Object.keys(employee).filter(key => employee[key] !== undefined);
   const values = fields.map(key => employee[key]);
   const placeholders = fields.map(() => "?").join(", ");
@@ -70,4 +100,4 @@ async function deleteEmployee(employeeId) {
   return true;
 }
 
-module.exports = { createEmployee, findByEmployeeId, listEmployees, updateEmployee, deleteEmployee };
+module.exports = { createEmployee, findByEmployeeId, listEmployees, updateEmployee, deleteEmployee, generateEmployeeCode };

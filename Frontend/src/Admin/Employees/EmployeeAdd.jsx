@@ -71,6 +71,45 @@ const EmployeeAdd = () => {
   };
 
   useEffect(() => {
+    if (isEditMode) return;
+
+    let ignore = false;
+
+    const fetchEmployeeCode = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:5000/api/employees/generate-code", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate employee code");
+        }
+
+        const data = await response.json();
+        if (!ignore && data.employee_code) {
+          setFormData((prev) => ({ ...prev, employee_code: data.employee_code }));
+        }
+      } catch (err) {
+        console.error("Failed to generate employee code:", err);
+        if (!ignore) {
+          setFormData((prev) => ({
+            ...prev,
+            employee_code: `EMPQT${Date.now().toString().slice(-4)}`,
+          }));
+        }
+      }
+    };
+
+    fetchEmployeeCode();
+    return () => {
+      ignore = true;
+    };
+  }, [isEditMode]);
+
+  useEffect(() => {
     if (!isEditMode) return;
 
     const fetchEmployee = async () => {
@@ -266,15 +305,15 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Employee Code</label>
-              <input type="text" name="employee_code" value={formData.employee_code} onChange={handleChange} className={inputClass} />
+              <input type="text" name="employee_code" readOnly value={formData.employee_code} onChange={handleChange} className={`${inputClass} cursor-not-allowed bg-slate-900/70`} placeholder="Auto-generated employee code" />
             </div>
             <div>
               <label className={labelClass}>First Name <span className="text-red-500">*</span></label>
-              <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="first_name" required value={formData.first_name} onChange={handleChange} className={inputClass} placeholder="Enter first name" />
             </div>
             <div>
               <label className={labelClass}>Last Name</label>
-              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} placeholder="Enter last name" />
             </div>
             <div>
               <label className={labelClass}>Gender</label>
@@ -291,7 +330,18 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
-              <input type="text" name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass} />
+              <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass}>
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="Unknown">Unknown</option>
+              </select>
             </div>
             <div>
               <label className={labelClass}>Marital Status</label>
@@ -305,31 +355,31 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} />
+              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} placeholder="Enter nationality" />
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
-              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} className={inputClass} placeholder="Enter Aadhaar number" />
             </div>
             <div>
               <label className={labelClass}>PAN Number</label>
-              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="pan_number" value={formData.pan_number} onChange={handleChange} className={inputClass} placeholder="Enter PAN number" />
             </div>
             <div>
               <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
-              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="mobile_number" required value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Enter mobile number" />
             </div>
             <div>
               <label className={labelClass}>Alternate Mobile</label>
-              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} />
+              <input type="text" name="alternate_mobile" value={formData.alternate_mobile} onChange={handleChange} className={inputClass} placeholder="Enter alternate mobile" />
             </div>
             <div>
               <label className={labelClass}>Personal Email</label>
-              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} />
+              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelClass}>Permanent Address</label>
-              <textarea name="permanent_address" rows="2" value={formData.permanent_address} onChange={handleChange} className={inputClass}></textarea>
+              <textarea name="permanent_address" rows="2" value={formData.permanent_address} onChange={handleChange} className={inputClass} placeholder="Enter permanent address"></textarea>
             </div>
           </div>
         </div>
@@ -340,15 +390,15 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Contact Person</label>
-              <input type="text" name="emergency_contact_person" value={formData.emergency_contact_person} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_contact_person" value={formData.emergency_contact_person} onChange={handleChange} className={inputClass} placeholder="Enter emergency contact person" />
             </div>
             <div>
               <label className={labelClass}>Contact Number</label>
-              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} className={inputClass} placeholder="Enter emergency contact number" />
             </div>
             <div>
               <label className={labelClass}>Relationship</label>
-              <input type="text" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange} className={inputClass} />
+              <input type="text" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange} className={inputClass} placeholder="Enter relationship" />
             </div>
           </div>
         </div>
@@ -359,11 +409,11 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Designation</label>
-              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} />
+              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} placeholder="Enter designation" />
             </div>
             <div>
               <label className={labelClass}>Team Lead</label>
-              <input type="text" name="team_lead" value={formData.team_lead} onChange={handleChange} className={inputClass} />
+              <input type="text" name="team_lead" value={formData.team_lead} onChange={handleChange} className={inputClass} placeholder="Enter team lead name" />
             </div>
             <div>
               <label className={labelClass}>Joining Date</label>
@@ -400,27 +450,27 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Salary Type</label>
-              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} />
+              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} placeholder="Enter salary type" />
             </div>
             <div>
               <label className={labelClass}>Basic Salary</label>
-              <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} />
+              <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} placeholder="Enter basic salary" />
             </div>
             <div>
               <label className={labelClass}>Bank Name</label>
-              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} />
+              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
             </div>
             <div>
               <label className={labelClass}>Account Number</label>
-              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} />
+              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Enter account number" />
             </div>
             <div>
               <label className={labelClass}>IFSC Code</label>
-              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} />
+              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="Enter IFSC code" />
             </div>
             <div>
               <label className={labelClass}>UPI ID</label>
-              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} />
+              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="Enter UPI ID" />
             </div>
           </div>
         </div>
@@ -505,7 +555,7 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter email address" />
+              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
             </div>
             <div className="relative">
               <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>

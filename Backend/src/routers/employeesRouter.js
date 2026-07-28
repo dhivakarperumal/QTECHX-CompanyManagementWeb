@@ -22,6 +22,7 @@ const uploadFields = upload.fields([
 
 router.post("/", authenticate, hrManagers, uploadFields, controller.create);
 router.get("/", authenticate, hrManagers, controller.getAll);
+router.get("/generate-code", authenticate, hrManagers, controller.generateEmployeeCodeHandler);
 router.get("/:employeeId", authenticate, hrManagers, controller.getOne);
 router.put("/:employeeId", authenticate, administrators, uploadFields, controller.update);
 router.delete("/:employeeId", authenticate, administrators, controller.remove);

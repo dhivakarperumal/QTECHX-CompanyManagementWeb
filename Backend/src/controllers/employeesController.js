@@ -7,6 +7,7 @@ const {
   listEmployees,
   updateEmployee,
   deleteEmployee,
+  generateEmployeeCode,
 } = require("../models/employeeModel");
 
 const duplicateMessage = (error) => {
@@ -17,6 +18,16 @@ const duplicateMessage = (error) => {
   if (error.message.includes("mobile_number")) return "Mobile number is already registered";
   return "Employee already exists";
 };
+
+async function generateEmployeeCodeHandler(req, res) {
+  try {
+    const employeeCode = await generateEmployeeCode();
+    return res.json({ employee_code: employeeCode });
+  } catch (error) {
+    console.error("Generate Employee Code Error:", error);
+    return res.status(500).json({ message: "Failed to generate employee code" });
+  }
+}
 
 async function create(req, res) {
   try {
@@ -32,6 +43,9 @@ async function create(req, res) {
     
     // Set auto-generated fields
     employeeData.employee_id = uuidv4();
+    if (!employeeData.employee_code || !String(employeeData.employee_code).trim()) {
+      employeeData.employee_code = await generateEmployeeCode();
+    }
     employeeData.created_by = actor;
     employeeData.updated_by = actor;
 
@@ -166,4 +180,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove };
+module.exports = { create, getAll, getOne, update, remove, generateEmployeeCodeHandler };
