@@ -14,6 +14,8 @@ import EmployeeList from './Admin/Employees/EmployeeList.jsx'
 import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
 // import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
+import AttendancePage from './Admin/AttendancePage.jsx'
+import AttendanceView from './Admin/AttendanceView.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
@@ -119,6 +121,18 @@ const router = createHashRouter([
           {
             path: 'employees/view/:id',
             element: <EmployeeView />,
+          },
+          {
+            path: 'attendance',
+            element: <AttendancePage />,
+          },
+          {
+            path: 'attendance/view/:id',
+            element: <AttendanceView />,
+          },
+          {
+            path: 'attendance/summary',
+            element: <AttendancePage />,
           },
         ],
       },

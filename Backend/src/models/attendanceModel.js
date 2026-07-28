@@ -1,0 +1,77 @@
+const { getDB } = require("../config/db");
+
+async function createAttendance(record) {
+  const db = getDB();
+  const [existing] = await db.execute(
+    "SELECT id FROM attendance WHERE employee_id = ? AND attendance_date = ? LIMIT 1",
+    [record.employee_id, record.attendance_date]
+  );
+
+  if (existing.length > 0) {
+    return { exists: true };
+  }
+
+  const fields = Object.keys(record).filter((key) => record[key] !== undefined);
+  const values = fields.map((key) => record[key]);
+  const placeholders = fields.map(() => "?").join(", ");
+
+  const [result] = await db.execute(
+    `INSERT INTO attendance (${fields.join(", ")}) VALUES (${placeholders})`,
+    values
+  );
+
+  return findById(result.insertId);
+}
+
+async function findById(id) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT a.*, e.first_name, e.last_name, e.employee_code
+     FROM attendance a
+     LEFT JOIN employees e ON e.employee_id = a.employee_id
+     WHERE a.id = ? LIMIT 1`,
+    [id]
+  );
+  return rows[0] || null;
+}
+
+async function getAttendanceSummary({ month, year }) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT
+       e.employee_id,
+       e.employee_code,
+       CONCAT(e.first_name, ' ', COALESCE(e.last_name, '')) AS employee_name,
+       SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_days,
+       SUM(CASE WHEN a.attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_days
+     FROM employees e
+     LEFT JOIN attendance a
+       ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?
+     WHERE e.employment_status = 'Active'
+     GROUP BY e.employee_id, e.employee_code, e.first_name, e.last_name
+     ORDER BY e.first_name, e.last_name`,
+    [month, year]
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    present_days: Number(row.present_days || 0),
+    absent_days: Number(row.absent_days || 0),
+  }));
+}
+
+async function getEmployeeAttendance({ employeeId, month, year }) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT a.*, e.first_name, e.last_name, e.employee_code
+     FROM attendance a
+     LEFT JOIN employees e ON e.employee_id = a.employee_id
+     WHERE a.employee_id = ? AND a.month = ? AND a.year = ?
+     ORDER BY a.attendance_date DESC`,
+    [employeeId, month, year]
+  );
+
+  return rows;
+}
+
+module.exports = { createAttendance, getAttendanceSummary, getEmployeeAttendance };

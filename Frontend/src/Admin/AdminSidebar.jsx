@@ -78,6 +78,7 @@ const navItems = [
     children: [
       { path: "/admin/employees", label: "All Employees", icon: Users },
       { path: "/admin/employees/add", label: "Add Employee", icon: UserCog },
+      { path: "/admin/attendance", label: "Attendance", icon: ClipboardCheck },
       { path: "/admin/employees/departments", label: "Departments", icon: Briefcase },
     ],
   },
@@ -155,6 +156,16 @@ const navItems = [
     children: [
       { path: "/admin/payroll", label: "Payroll Overview", icon: DollarSign },
       { path: "/admin/payroll/run", label: "Run Payroll", icon: TrendingUp },
+    ],
+  },
+
+  /* ---- HR ---- */
+  {
+    label: "Leave Management",
+    icon: CalendarOff,
+    children: [
+      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
+      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
     ],
   },
 

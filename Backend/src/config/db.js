@@ -314,6 +314,34 @@ async function ensureEmployeesSchema(pool) {
   );
 }
 
+async function ensureAttendanceSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS attendance (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      employee_id VARCHAR(36) NOT NULL,
+      attendance_date DATE NOT NULL,
+      month INT NOT NULL,
+      year INT NOT NULL,
+      check_in_time VARCHAR(20) NULL,
+      check_out_time VARCHAR(20) NULL,
+      working_hours VARCHAR(20) NULL,
+      late_entry VARCHAR(20) NULL,
+      early_exit VARCHAR(20) NULL,
+      overtime VARCHAR(20) NULL,
+      attendance_status VARCHAR(20) NOT NULL DEFAULT 'Present',
+      location VARCHAR(255) NULL,
+      notes TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_attendance_employee_date (employee_id, attendance_date),
+      KEY idx_attendance_month_year (month, year)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -325,6 +353,7 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
+    await ensureAttendanceSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;
