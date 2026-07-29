@@ -110,11 +110,10 @@ const navItems = [
       { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
       { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
 
-      { path: "/admin/myprojects/documents", label: "Project Documents", icon: FileText },
+      
       { path: "/admin/myprojects/images", label: "Project Images", icon: Image },
 
-      { path: "/admin/myprojects/hosting", label: "Hosting Management", icon: Server },
-      { path: "/admin/myprojects/domains", label: "Domain Management", icon: Globe },
+     
 
       { path: "/admin/myprojects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
     ],
