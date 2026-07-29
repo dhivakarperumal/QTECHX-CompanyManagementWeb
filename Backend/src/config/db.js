@@ -597,14 +597,17 @@ async function ensureSalarySchema(pool) {
 }
 
 async function ensureProjectPaymentSchema(pool) {
+  await pool.execute('DROP TABLE IF EXISTS project_payments');
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_payments (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       uuid VARCHAR(36) NOT NULL,
       project_id INT UNSIGNED NOT NULL,
+      project_name VARCHAR(255) NULL,
       client_name VARCHAR(255) NULL,
       paid_to VARCHAR(255) NULL,
       amount_paid DECIMAL(15,2) NOT NULL,
+      payment_mode VARCHAR(50) NULL,
       reason_for_payment VARCHAR(255) NULL,
       date_of_payment DATE NOT NULL,
       time_of_payment TIME NOT NULL,

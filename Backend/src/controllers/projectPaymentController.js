@@ -11,7 +11,7 @@ const projectModel = require('../models/projectModel');
 
 async function createProjectPayment(req, res) {
   try {
-    const { project_id, client_name, paid_to, amount_paid, reason_for_payment, date_of_payment, time_of_payment } = req.body;
+    const { project_id, payment_mode, created_by, client_name, paid_to, amount_paid, reason_for_payment, date_of_payment, time_of_payment } = req.body;
     
     if (!project_id || !amount_paid || !date_of_payment || !time_of_payment) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -25,17 +25,30 @@ async function createProjectPayment(req, res) {
 
     const paymentData = {
       project_id,
+      project_name: project.project_name,
       client_name: client_name || project.client_name,
       paid_to,
       amount_paid,
+      payment_mode,
       reason_for_payment,
       date_of_payment,
       time_of_payment,
-      created_by: paid_to // or extract from token
+      created_by // this will be userProfile.user_id
     };
 
     const newPayment = await projectPaymentModel.createProjectPayment(paymentData);
     
+    // Add amount_paid to company_funds
+    const db = require('../config/db').getDB();
+    const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+    const currentFund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+    const newFundTotal = currentFund + parseFloat(amount_paid);
+    
+    await db.query(
+      "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+      [newFundTotal, created_by]
+    );
+
     // Get updated summary
     const summary = await projectPaymentModel.getProjectPaymentSummary(project_id);
 

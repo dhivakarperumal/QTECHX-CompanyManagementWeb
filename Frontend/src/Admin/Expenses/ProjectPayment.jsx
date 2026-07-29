@@ -15,6 +15,7 @@ const readOnlyFieldClass = 'w-full rounded-xl border border-white/5 bg-[#0a0c10]
 const BLANK = {
   project_id: '',
   amount_paid: '',
+  payment_mode: '',
   reason_for_payment: '',
   date_of_payment: new Date().toISOString().split('T')[0],
   time_of_payment: new Date().toTimeString().split(' ')[0].slice(0, 5)
@@ -22,7 +23,7 @@ const BLANK = {
 
 export default function ProjectPayment() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState(BLANK);
   const [projects, setProjects] = useState([]);
@@ -127,11 +128,13 @@ export default function ProjectPayment() {
       const payload = {
         project_id: formData.project_id,
         client_name: selectedProjectDetails?.client_name,
-        paid_to: userProfile?.displayName || 'Admin',
+        paid_to: user?.username || user?.name || 'Admin',
         amount_paid: parseFloat(formData.amount_paid),
+        payment_mode: formData.payment_mode,
         reason_for_payment: formData.reason_for_payment,
         date_of_payment: formData.date_of_payment,
-        time_of_payment: formData.time_of_payment
+        time_of_payment: formData.time_of_payment,
+        created_by: user?.user_id // Send the UUID of the user
       };
 
       const res = await api.post('/project-payments', payload);
@@ -218,8 +221,8 @@ export default function ProjectPayment() {
                 <span className="font-semibold">{selectedProjectDetails.project_name}</span>
               </div>
               <div>
-                <span className="block text-xs text-white/50 mb-1">Project ID</span>
-                <span className="font-semibold">{selectedProjectDetails.project_code}</span>
+                <span className="block text-xs text-white/50 mb-1">Project UUID</span>
+                <span className="font-semibold">{selectedProjectDetails.uuid}</span>
               </div>
               <div>
                 <span className="block text-xs text-white/50 mb-1">Client Name</span>
@@ -259,7 +262,19 @@ export default function ProjectPayment() {
               <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" value={formData.amount_paid} onChange={handleChange} required />
             </label>
             
-            <label className="text-sm text-white/60 lg:col-span-3">
+            <label className="text-sm text-white/60">
+              <span className="mb-1.5 block font-medium">Payment Mode *</span>
+              <select className={fieldClass} name="payment_mode" value={formData.payment_mode} onChange={handleChange} required>
+                <option value="">Select Mode</option>
+                <option value="UPI">UPI</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <label className="text-sm text-white/60 lg:col-span-2">
               <span className="mb-1.5 block font-medium">Reason for Payment</span>
               <input className={fieldClass} type="text" name="reason_for_payment" placeholder="e.g. Advance, Milestone 1, Final Settlement" value={formData.reason_for_payment} onChange={handleChange} />
             </label>
@@ -271,7 +286,7 @@ export default function ProjectPayment() {
 
             <label className="text-sm text-white/60 lg:col-span-2">
               <span className="mb-1.5 block font-medium">To (Admin)</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={userProfile?.displayName || 'Admin'} />
+              <input className={readOnlyFieldClass} type="text" readOnly value={user?.username || user?.name || 'Admin'} />
             </label>
 
             <label className="text-sm text-white/60 lg:col-span-2">
@@ -311,7 +326,7 @@ export default function ProjectPayment() {
                 <th className="px-4 py-3 rounded-l-lg font-medium">Project</th>
                 <th className="px-4 py-3 font-medium">Client</th>
                 <th className="px-4 py-3 font-medium">Amount (₹)</th>
-                <th className="px-4 py-3 font-medium">Reason</th>
+                <th className="px-4 py-3 font-medium">Mode</th>
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
               </tr>
@@ -326,11 +341,11 @@ export default function ProjectPayment() {
                   <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-white">{record.project_name}</div>
-                      <div className="text-xs opacity-60">{record.project_code}</div>
+                      <div className="text-xs opacity-60">{record.uuid}</div>
                     </td>
                     <td className="px-4 py-3">{record.client_name || 'N/A'}</td>
                     <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.amount_paid).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{record.reason_for_payment || '-'}</td>
+                    <td className="px-4 py-3">{record.payment_mode || '-'}</td>
                     <td className="px-4 py-3">{new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}</td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -401,10 +416,14 @@ export default function ProjectPayment() {
                   <span className="font-semibold">{selectedReceipt.project_name}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500 block mb-1">Project ID</span>
-                  <span className="font-semibold">{selectedReceipt.project_code}</span>
+                  <span className="text-gray-500 block mb-1">Project UUID</span>
+                  <span className="font-semibold">{selectedReceipt.uuid}</span>
                 </div>
-                <div className="col-span-2">
+                <div>
+                  <span className="text-gray-500 block mb-1">Payment Mode</span>
+                  <span className="font-semibold">{selectedReceipt.payment_mode || '-'}</span>
+                </div>
+                <div>
                   <span className="text-gray-500 block mb-1">Reason for Payment</span>
                   <span className="font-semibold">{selectedReceipt.reason_for_payment || '-'}</span>
                 </div>
