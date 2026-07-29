@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
 const { AsyncLocalStorage } = require("async_hooks");
 const jwt = require("jsonwebtoken");
@@ -10,8 +11,7 @@ const { initDB } = require("./src/config/db");
 const employeesRouter = require("./src/routers/employeesRouter");
 const attendanceRouter = require("./src/routers/attendanceRouter");
 const clientRouter = require("./src/routers/clientRouter");
-const projectRouter = require("./src/routers/projectRouter");
-const taskRouter = require("./src/routers/taskRouter");
+const projectRouter = require("./src/routers/projectRouter");const projectPlanRouter = require('./src/routers/projectPlanRouter');const taskRouter = require("./src/routers/taskRouter");
 
 const app = express();
 const als = new AsyncLocalStorage();
@@ -51,11 +51,32 @@ app.use("/api/employees", employeesRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
+app.use("/api/project-plans", projectPlanRouter);
 app.use("/api/tasks", taskRouter);
 
 // Serve uploaded files from the backend uploads directory as inline browser content
-app.use("/uploads", (req, res, next) => {
+app.use(["/uploads", "/api/uploads"], (req, res, next) => {
   res.setHeader("Content-Disposition", "inline");
+
+  const requestedPath = req.path.replace(/^\/+/, "");
+  const absoluteRequestedPath = path.join(__dirname, "uploads", requestedPath);
+
+  if (fs.existsSync(absoluteRequestedPath)) {
+    return next();
+  }
+
+  const fileName = path.basename(requestedPath);
+  const fallbackCandidates = [
+    path.join(__dirname, "uploads", "projects", "source_code_backup", fileName),
+    path.join(__dirname, "uploads", "projects", "ProjectImageZip", fileName),
+    path.join(__dirname, "uploads", "projects", "images", fileName),
+  ];
+
+  const resolvedFile = fallbackCandidates.find((candidate) => fs.existsSync(candidate));
+  if (resolvedFile) {
+    return res.sendFile(resolvedFile);
+  }
+
   next();
 }, express.static(path.join(__dirname, "uploads")));
 

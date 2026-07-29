@@ -33,59 +33,76 @@ const buildAssetEntriesFromProject = (project, createId) => {
   const createdBy = project.created_by || project.updated_by || 'System';
   const updatedBy = project.updated_by || project.created_by || 'System';
 
-  const projectImages = [];
-  if (project.project_images) {
-    if (typeof project.project_images === 'string') {
-      try {
-        const parsed = JSON.parse(project.project_images);
-        if (Array.isArray(parsed)) projectImages.push(...parsed);
-      } catch {
-        // ignore invalid JSON
+  const parseJsonField = (field) => {
+    if (!field) return [];
+    if (typeof field === 'string') {
+      try { 
+        const parsed = JSON.parse(field);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch { 
+        return [field]; 
       }
-    } else if (Array.isArray(project.project_images)) {
-      projectImages.push(...project.project_images);
     }
-  }
+    if (Array.isArray(field)) return field;
+    return [field];
+  };
 
-  projectImages.forEach((item) => {
-    const path = item?.file_path || item?.path || null;
-    const name = item?.original_name || item?.originalname || path?.split('/').pop() || 'Project image ZIP';
+  const processItem = (item, defaultLabel) => {
+    let actualItem = item;
+
+    // Unwrap string items that are still JSON
+    if (typeof actualItem === 'string') {
+      try { actualItem = JSON.parse(actualItem); } catch { /* not JSON, use as-is */ }
+    }
+
+    // Now extract the path — backend returns {original_name, file_path, asset_type}
+    let filePath = null;
+    let fileName = null;
+
+    if (typeof actualItem === 'object' && actualItem !== null) {
+      filePath = actualItem.file_path || actualItem.path || actualItem.url || null;
+      fileName = actualItem.original_name || actualItem.originalname || actualItem.name || null;
+    } else if (typeof actualItem === 'string' && actualItem.length > 0) {
+      // Plain string path like "/uploads/..."
+      filePath = actualItem;
+    }
+
+    if (!filePath && !fileName) return; // nothing useful
+
+    // If only a filename was found (no path), try constructing from uploads
+    if (!filePath && fileName) {
+      filePath = `/uploads/${fileName}`;
+    }
+
+    // Derive file name from path if still missing
+    if (!fileName && filePath) {
+      fileName = filePath.split('/').pop();
+    }
+
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath || fileName || '');
+
     entries.push({
       id: createId(),
       projectId,
       projectName,
-      assetType: 'zip',
-      fileName: name,
+      assetType: isImage ? 'image' : 'zip',
+      fileName: fileName || defaultLabel,
       fileSize: 0,
-      mimeType: 'application/zip',
-      uploadedPath: path,
+      mimeType: isImage ? 'image/jpeg' : 'application/zip',
+      uploadedPath: filePath,
       createdAt,
       updatedAt,
       createdBy,
       updatedBy,
-      kindLabel: 'Project image ZIP',
+      kindLabel: defaultLabel,
     });
-  });
+  };
 
-  if (project.source_code_backup) {
-    const path = project.source_code_backup?.file_path || project.source_code_backup?.path || project.source_code_backup;
-    const name = project.source_code_backup?.original_name || project.source_code_backup?.originalname || path?.split('/').pop() || 'Document ZIP';
-    entries.push({
-      id: createId(),
-      projectId,
-      projectName,
-      assetType: 'zip',
-      fileName: name,
-      fileSize: 0,
-      mimeType: 'application/zip',
-      uploadedPath: path,
-      createdAt,
-      updatedAt,
-      createdBy,
-      updatedBy,
-      kindLabel: 'Document ZIP',
-    });
-  }
+  const projectImages = parseJsonField(project.project_images);
+  projectImages.forEach(item => processItem(item, 'Project Image'));
+
+  const backups = parseJsonField(project.source_code_backup);
+  backups.forEach(item => processItem(item, 'Document ZIP'));
 
   return entries;
 };
@@ -102,6 +119,20 @@ const createId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
+const parseJsonField = (field) => {
+  if (!field) return [];
+  if (typeof field === 'string') {
+    try {
+      const parsed = JSON.parse(field);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [field];
+    }
+  }
+  if (Array.isArray(field)) return field;
+  return [field];
+};
+
 function ProjectAssetsPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState([]);
@@ -112,7 +143,7 @@ function ProjectAssetsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showPopup, setShowPopup] = useState(null);
-  const [viewMode, setViewMode] = useState('card');
+  const [viewMode, setViewMode] = useState('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
@@ -164,8 +195,8 @@ function ProjectAssetsPage() {
   const filteredAssets = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
 
-    return selectedProjectAssets.filter((entry) => {
-      const matchesProject = filterProject === 'all' || entry.projectId === (filterProject || selectedProject?.uuid || selectedProject?.id?.toString());
+    return assetEntries.filter((entry) => {
+      const matchesProject = filterProject === 'all' || entry.projectId === filterProject;
       const matchesType =
         filterType === 'all' ||
         (filterType === 'image' && entry.assetType === 'image') ||
@@ -178,7 +209,7 @@ function ProjectAssetsPage() {
 
       return matchesProject && matchesType && matchesSearch;
     });
-  }, [selectedProjectAssets, searchQuery, filterType, filterProject, selectedProject]);
+  }, [assetEntries, searchQuery, filterType, filterProject]);
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files || []);
@@ -305,63 +336,159 @@ function ProjectAssetsPage() {
       setTimeout(() => setStatusMessage(''), 3000);
       return;
     }
-    
-    let rawPath = asset.uploadedPath;
-    
-    // Handle cases where the backend returns a JSON string like `[{"file":"...zip"}]`
+
+    const apiUrl = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+    const backendBase = apiUrl.startsWith('http') ? apiUrl.replace(/\/api$/, '') : '';
+    const cleanPath = String(asset.uploadedPath).replace(/^\/*/, '/');
+    const url = cleanPath.startsWith('http')
+      ? cleanPath
+      : cleanPath.startsWith('/api/')
+      ? `${apiUrl}${cleanPath}`
+      : backendBase
+        ? `${backendBase}${cleanPath}`
+        : cleanPath;
+
     try {
-      if (typeof rawPath === 'string' && rawPath.startsWith('[')) {
-        const parsed = JSON.parse(rawPath);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-           const first = parsed[0];
-           rawPath = typeof first === 'string' ? first : (first.file || first.path || Object.keys(first)[0]);
-        }
-      }
-    } catch(e) {
-      // If parsing fails, extract anything that looks like a filename
-      const match = rawPath.match(/([a-zA-Z0-9_.-]+\.(zip|rar|7z|png|jpg|jpeg|gif|webp))/i);
-      if (match) {
-        rawPath = match[1];
-      }
-    }
-    
-    // Ensure URL is correctly formatted
-    const path = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
-    const url = rawPath.startsWith('http') ? rawPath : `http://localhost:5000${path}`;
-    
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Network response was not ok');
-      
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Server returned ${response.status}`);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = asset.fileName || 'download';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const anchor = document.createElement('a');
+      anchor.href = blobUrl;
+      anchor.download = asset.fileName || cleanPath.split('/').pop() || 'download';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Download failed via fetch, falling back to open:', error);
+    } catch (err) {
+      console.error('Download failed:', err, '→', url);
+      setStatusMessage(`Download failed: ${err.message}. Opening in new tab...`);
+      setTimeout(() => setStatusMessage(''), 4000);
       window.open(url, '_blank');
     }
   };
 
-  const handleDelete = (assetId) => {
-    if (!window.confirm('Are you sure you want to delete this asset?')) return;
-    setAssetEntries((prev) => prev.filter((a) => a.id !== assetId));
-    setStatusMessage('Asset deleted locally.');
-    setTimeout(() => setStatusMessage(''), 3000);
+  const handleDelete = async (assetId) => {
+    const asset = assetEntries.find((a) => a.id === assetId);
+    if (!asset) return;
+    if (!window.confirm(`Are you sure you want to delete "${asset.fileName}"?`)) return;
+
+    const project = projects.find((item) => item.uuid === asset.projectId || item.id?.toString() === asset.projectId);
+    if (!project) {
+      setStatusMessage('Unable to find the project for this asset.');
+      setTimeout(() => setStatusMessage(''), 3000);
+      return;
+    }
+
+    const normalizePath = (item) => {
+      if (!item) return '';
+      if (typeof item === 'string') return item;
+      if (typeof item === 'object') return item.file_path || item.path || item.url || item.original_name || JSON.stringify(item);
+      return String(item);
+    };
+
+    const payload = {};
+    const projectIdentifier = asset.projectId;
+    const assetPath = normalizePath(asset.uploadedPath);
+    const existingImages = parseJsonField(project.project_images);
+
+    if (asset.kindLabel?.toLowerCase().includes('document')) {
+      payload.source_code_backup = null;
+    }
+
+    if (asset.kindLabel?.toLowerCase().includes('project image') || asset.kindLabel?.toLowerCase().includes('image')) {
+      const remainingImages = existingImages.filter((item) => {
+        const itemPath = normalizePath(item);
+        if (!itemPath) return true;
+        return itemPath !== assetPath && itemPath !== asset.fileName && !itemPath.endsWith(`/${asset.fileName}`);
+      });
+      if (remainingImages.length !== existingImages.length) {
+        payload.project_images = remainingImages.length ? JSON.stringify(remainingImages) : null;
+      }
+    }
+
+    if (!Object.keys(payload).length) {
+      setAssetEntries((prev) => prev.filter((a) => a.id !== assetId));
+      setStatusMessage('Asset removed locally.');
+      setTimeout(() => setStatusMessage(''), 3000);
+      return;
+    }
+
+    try {
+      const response = await api.put(`/projects/${projectIdentifier}`, payload);
+      const updatedProject = response?.data?.data || project;
+      setProjects((prev) => prev.map((p) => (p.uuid === projectIdentifier || p.id?.toString() === projectIdentifier ? { ...p, ...updatedProject } : p)));
+      setAssetEntries((prev) => prev.filter((a) => a.id !== assetId));
+      setStatusMessage('Asset deleted successfully.');
+    } catch (error) {
+      console.error('Failed to delete asset', error);
+      setStatusMessage('Unable to delete asset right now. Please try again.');
+    } finally {
+      setTimeout(() => setStatusMessage(''), 3000);
+    }
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     if (filteredAssets.length === 0) return;
     if (!window.confirm(`Are you sure you want to delete all ${filteredAssets.length} displayed assets?`)) return;
+
+    const assetsByProject = filteredAssets.reduce((grouped, asset) => {
+      const projectId = asset.projectId;
+      if (!grouped[projectId]) grouped[projectId] = [];
+      grouped[projectId].push(asset);
+      return grouped;
+    }, {});
+
     const idsToDelete = new Set(filteredAssets.map((a) => a.id));
+    let hasFailed = false;
+
+    for (const [projectId, assets] of Object.entries(assetsByProject)) {
+      const project = projects.find((item) => item.uuid === projectId || item.id?.toString() === projectId);
+      if (!project) continue;
+
+      const payload = {};
+      const existingImages = parseJsonField(project.project_images);
+      const imageAssets = assets.filter((asset) => asset.kindLabel?.toLowerCase().includes('image'));
+      const documentAssets = assets.filter((asset) => asset.kindLabel?.toLowerCase().includes('document') || asset.kindLabel?.toLowerCase().includes('zip'));
+
+      const normalizePath = (item) => {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        if (typeof item === 'object') return item.file_path || item.path || item.url || item.original_name || JSON.stringify(item);
+        return String(item);
+      };
+
+      if (documentAssets.length > 0) {
+        payload.source_code_backup = null;
+      }
+
+      const imagePathsToRemove = new Set(imageAssets.map((asset) => normalizePath(asset.uploadedPath) || asset.fileName));
+      const remainingImages = existingImages.filter((item) => {
+        const path = normalizePath(item);
+        if (!path) return true;
+        return !Array.from(imagePathsToRemove).some((removePath) => path === removePath || path.endsWith(`/${removePath}`) || removePath.endsWith(`/${path}`));
+      });
+
+      if (remainingImages.length !== existingImages.length) {
+        payload.project_images = remainingImages.length ? JSON.stringify(remainingImages) : null;
+      }
+
+      if (Object.keys(payload).length) {
+        try {
+          const response = await api.put(`/projects/${projectId}`, payload);
+          const updatedProject = response?.data?.data;
+          if (updatedProject) {
+            setProjects((prev) => prev.map((p) => (p.uuid === projectId || p.id?.toString() === projectId ? { ...p, ...updatedProject } : p)));
+          }
+        } catch (error) {
+          console.error('Failed to delete project assets', error);
+          hasFailed = true;
+        }
+      }
+    }
+
     setAssetEntries((prev) => prev.filter((a) => !idsToDelete.has(a.id)));
-    setStatusMessage('Assets deleted locally.');
+    setStatusMessage(hasFailed ? 'Some assets could not be deleted. Please refresh and try again.' : 'Assets deleted successfully.');
     setTimeout(() => setStatusMessage(''), 3000);
   };
   

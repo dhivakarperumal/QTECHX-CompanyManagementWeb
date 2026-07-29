@@ -88,8 +88,8 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
   const inp = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition";
   
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       <div 
         className="relative w-full max-w-md bg-[#0d0f14] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         style={{ animation: 'scaleIn 0.2s cubic-bezier(0.16,1,0.3,1)' }}

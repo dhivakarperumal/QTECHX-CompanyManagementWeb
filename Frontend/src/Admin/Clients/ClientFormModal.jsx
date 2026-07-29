@@ -237,9 +237,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex justify-end">
+    <div className="fixed inset-0 z-[9999] flex justify-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
       
       {/* Drawer */}
       <div 

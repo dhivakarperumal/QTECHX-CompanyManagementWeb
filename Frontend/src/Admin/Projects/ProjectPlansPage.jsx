@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import api from '../../api';
 import {
   Box,
   Building2,
@@ -10,8 +12,10 @@ import {
   FileText,
   Filter,
   Layers,
+  Users,
   Plus,
   Search,
+  Server,
   Sparkles,
   Trash2,
   TrendingUp,
@@ -376,6 +380,7 @@ function ProjectPlansPage() {
       return initialPlans;
     }
   });
+  const [backendAvailable, setBackendAvailable] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
@@ -396,6 +401,24 @@ function ProjectPlansPage() {
   useEffect(() => {
     window.localStorage.setItem('qtechx-project-plans', JSON.stringify(plans));
   }, [plans]);
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const response = await api.get('/project-plans');
+        const fetchedPlans = Array.isArray(response?.data?.data) ? response.data.data : [];
+        if (fetchedPlans.length) {
+          setPlans(fetchedPlans);
+        }
+        setBackendAvailable(true);
+      } catch (error) {
+        console.warn('Project plans API unavailable, using local cache', error);
+        setBackendAvailable(false);
+      }
+    };
+
+    loadPlans();
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -600,7 +623,7 @@ function ProjectPlansPage() {
     return true;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
 
@@ -634,24 +657,67 @@ function ProjectPlansPage() {
     };
 
     if (currentPlan) {
-      setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? planPayload : plan)));
-      setToast('Plan updated successfully.');
+      if (backendAvailable) {
+        try {
+          const response = await api.put(`/project-plans/${currentPlan.id}`, planPayload);
+          const updatedPlan = response?.data?.data || planPayload;
+          setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
+          setToast('Plan updated successfully.');
+        } catch (error) {
+          console.error('Project plan update failed:', error);
+          setBackendAvailable(false);
+          setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? planPayload : plan)));
+          setToast('Plan updated locally. Backend unavailable.');
+        }
+      } else {
+        setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? planPayload : plan)));
+        setToast('Plan updated locally. Backend unavailable.');
+      }
     } else {
-      setPlans((prev) => [planPayload, ...prev]);
-      setToast('Plan created successfully.');
+      if (backendAvailable) {
+        try {
+          const response = await api.post('/project-plans', planPayload);
+          const createdPlan = response?.data?.data || planPayload;
+          setPlans((prev) => [createdPlan, ...prev]);
+          setToast('Plan created successfully.');
+        } catch (error) {
+          console.error('Project plan creation failed:', error);
+          setBackendAvailable(false);
+          setPlans((prev) => [planPayload, ...prev]);
+          setToast('Plan created locally. Backend unavailable.');
+        }
+      } else {
+        setPlans((prev) => [planPayload, ...prev]);
+        setToast('Plan created locally. Backend unavailable.');
+      }
     }
+
     closeDrawer();
   };
 
-  const handleDelete = (plan) => {
+  const handleDelete = async (plan) => {
     if (plan.activeProjectsUsingPlan > 0) {
       setToast('This plan is linked to active projects and cannot be deleted.');
       return;
     }
     const confirmed = window.confirm(`Delete ${plan.planName}?`);
     if (!confirmed) return;
-    setPlans((prev) => prev.filter((item) => item.id !== plan.id));
-    setToast('Plan deleted.');
+
+    if (backendAvailable) {
+      try {
+        await api.delete(`/project-plans/${plan.id}`);
+        setPlans((prev) => prev.filter((item) => item.id !== plan.id));
+        setToast('Plan deleted.');
+      } catch (error) {
+        console.error('Project plan deletion failed:', error);
+        setBackendAvailable(false);
+        setPlans((prev) => prev.filter((item) => item.id !== plan.id));
+        setToast('Plan deleted locally. Backend unavailable.');
+      }
+    } else {
+      setPlans((prev) => prev.filter((item) => item.id !== plan.id));
+      setToast('Plan deleted locally. Backend unavailable.');
+    }
   };
 
   const toggleStatus = (plan) => {
@@ -982,8 +1048,9 @@ function ProjectPlansPage() {
         </div>
       </div>
 
-      <div className={`fixed inset-0 z-50 ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-        <div className={`absolute inset-0 bg-black/60 transition ${drawerOpen ? 'opacity-100' : 'opacity-0'}`} onClick={closeDrawer} />
+      {createPortal(
+      <div className={`fixed inset-0 z-[9999] ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`absolute inset-0 bg-black/80 backdrop-blur-md transition ${drawerOpen ? 'opacity-100' : 'opacity-0'}`} onClick={closeDrawer} />
         <aside className={`absolute right-0 top-0 h-full w-full max-w-4xl overflow-y-auto border-l border-white/10 bg-[#090c12] p-4 shadow-2xl shadow-black/40 transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -1283,7 +1350,9 @@ function ProjectPlansPage() {
             ) : null}
           </form>
         </aside>
-      </div>
+      </div>,
+      document.body
+      )}
     </div>
   );
 }
