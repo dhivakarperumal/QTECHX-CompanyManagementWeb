@@ -44,8 +44,9 @@ import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
 import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
 
-import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx'
-import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx'
+import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
+import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
+import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -204,6 +205,10 @@ const router = createHashRouter([
           {
             path: 'trainees/tasks/assign',
             element: <TraineeTaskAssign />,
+          },
+          {
+            path: 'trainees/tasks/view/:uuid',
+            element: <TraineeTaskDetails />,
           },
           {
             path: 'attendance',
