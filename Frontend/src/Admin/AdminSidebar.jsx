@@ -104,8 +104,8 @@ const navItems = [
     label: "My Projects",
     icon: FolderKanban,
     children: [
-      { path: "/admin/myprojects", label: "Completed Projects", icon: List },
-      { path: "/admin/myprojects/assets", label: "Project Assets", icon: FolderKanban },
+      { path: "/admin/myprojects", label: "Projects Completed", icon: List },
+     
       { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
       { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
 

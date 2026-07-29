@@ -580,15 +580,15 @@ const ProjectQuotationsPage = () => {
                 <Search className="h-4 w-4 text-slate-400" />
                 <input value={filters.search} onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))} placeholder="Search quotation" className="w-full bg-transparent outline-none placeholder:text-slate-500" />
               </label>
-              <select value={filters.client} onChange={(event) => setFilters((prev) => ({ ...prev, client: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
+              <select value={filters.client} onChange={(event) => setFilters((prev) => ({ ...prev, client: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none [&>option]:bg-[#111318]">
                 <option value="">All clients</option>
                 {clientOptions.map((client) => <option key={client} value={client}>{client}</option>)}
               </select>
-              <select value={filters.project} onChange={(event) => setFilters((prev) => ({ ...prev, project: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
+              <select value={filters.project} onChange={(event) => setFilters((prev) => ({ ...prev, project: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none [&>option]:bg-[#111318]">
                 <option value="">All projects</option>
                 {projectOptions.map((project) => <option key={project} value={project}>{project}</option>)}
               </select>
-              <select value={filters.service_type} onChange={(event) => setFilters((prev) => ({ ...prev, service_type: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
+              <select value={filters.service_type} onChange={(event) => setFilters((prev) => ({ ...prev, service_type: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none [&>option]:bg-[#111318]">
                 <option value="">Service type</option>
                 <option value="Website Development">Website Development</option>
                 <option value="Mobile App Development">Mobile App Development</option>
@@ -597,20 +597,12 @@ const ProjectQuotationsPage = () => {
               </select>
             </div>
             <div className="flex flex-wrap gap-2">
-              <select value={filters.status} onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
+              <select value={filters.status} onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none [&>option]:bg-[#111318]">
                 <option value="">Status</option>
                 {Object.keys(statusStyles).map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
-              <select value={filters.approval_status} onChange={(event) => setFilters((prev) => ({ ...prev, approval_status: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
-                <option value="">Approval</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-              <select value={filters.created_by} onChange={(event) => setFilters((prev) => ({ ...prev, created_by: event.target.value }))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-100 outline-none">
-                <option value="">Created by</option>
-                {createdByOptions.map((name) => <option key={name} value={name}>{name}</option>)}
-              </select>
+             
+             
             </div>
           </div>
 
@@ -785,7 +777,7 @@ const ProjectQuotationsPage = () => {
                       </label>
                       <label className="text-sm text-slate-300">
                         <span className="mb-2 block">Select existing client</span>
-                        <select value={selectedClientUuid} onChange={(event) => handleSelectClient(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                        <select value={selectedClientUuid} onChange={(event) => handleSelectClient(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                           <option value="">Choose a client to auto-fill details</option>
                           {clientLoading ? (
                             <option value="">Loading clients...</option>
@@ -822,7 +814,7 @@ const ProjectQuotationsPage = () => {
                       </label>
                       <label className="text-sm text-slate-300">
                         <span className="mb-2 block">Service type</span>
-                        <select value={formData.service_type} onChange={(event) => updateField("service_type", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                        <select value={formData.service_type} onChange={(event) => updateField("service_type", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                           <option value="Website Development">Website Development</option>
                           <option value="Mobile App Development">Mobile App Development</option>
                           <option value="ERP Development">ERP Development</option>
@@ -839,7 +831,7 @@ const ProjectQuotationsPage = () => {
                       </label>
                       <label className="text-sm text-slate-300">
                         <span className="mb-2 block">Currency</span>
-                        <select value={formData.currency} onChange={(event) => updateField("currency", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                        <select value={formData.currency} onChange={(event) => updateField("currency", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                           <option value="INR">INR</option>
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
@@ -854,7 +846,7 @@ const ProjectQuotationsPage = () => {
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <label className="text-sm text-slate-300">
                         <span className="mb-2 block">Project type</span>
-                        <select value={formData.project_type} onChange={(event) => updateField("project_type", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                        <select value={formData.project_type} onChange={(event) => updateField("project_type", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                           <option value="Website">Website</option>
                           <option value="Web Application">Web Application</option>
                           <option value="Mobile App">Mobile App</option>
@@ -1037,7 +1029,7 @@ const ProjectQuotationsPage = () => {
                       <div className="grid gap-3 md:grid-cols-2">
                         <label className="text-sm text-slate-300">
                           <span className="mb-2 block">Status</span>
-                          <select value={formData.status} onChange={(event) => updateField("status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                          <select value={formData.status} onChange={(event) => updateField("status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                             <option value="Draft">Draft</option>
                             <option value="Sent">Sent</option>
                             <option value="Viewed">Viewed</option>
@@ -1050,7 +1042,7 @@ const ProjectQuotationsPage = () => {
                         </label>
                         <label className="text-sm text-slate-300">
                           <span className="mb-2 block">Approval status</span>
-                          <select value={formData.approval_status} onChange={(event) => updateField("approval_status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                          <select value={formData.approval_status} onChange={(event) => updateField("approval_status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                             <option value="Pending">Pending</option>
                             <option value="Approved">Approved</option>
                             <option value="Rejected">Rejected</option>
@@ -1058,7 +1050,7 @@ const ProjectQuotationsPage = () => {
                         </label>
                         <label className="text-sm text-slate-300">
                           <span className="mb-2 block">Payment status</span>
-                          <select value={formData.payment_status} onChange={(event) => updateField("payment_status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                          <select value={formData.payment_status} onChange={(event) => updateField("payment_status", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                             <option value="Pending">Pending</option>
                             <option value="Advance Paid">Advance Paid</option>
                             <option value="Partial">Partial</option>
@@ -1067,7 +1059,7 @@ const ProjectQuotationsPage = () => {
                         </label>
                         <label className="text-sm text-slate-300">
                           <span className="mb-2 block">Payment terms</span>
-                          <select value={formData.payment_terms} onChange={(event) => updateField("payment_terms", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none">
+                          <select value={formData.payment_terms} onChange={(event) => updateField("payment_terms", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none [&>option]:bg-[#111318]">
                             <option value="100% Advance">100% Advance</option>
                             <option value="50%-50%">50%-50%</option>
                             <option value="40%-40%-20%">40%-40%-20%</option>

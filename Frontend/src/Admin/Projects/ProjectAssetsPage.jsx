@@ -715,7 +715,7 @@ function ProjectAssetsPage() {
             <label className="block text-sm text-white/70">
               <span className="mb-2 block">Select project</span>
               <select
-                className="w-full rounded-2xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70"
+                className="w-full rounded-2xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 [&>option]:bg-[#111318]"
                 value={selectedProjectId}
                 onChange={(event) => setSelectedProjectId(event.target.value)}
               >
