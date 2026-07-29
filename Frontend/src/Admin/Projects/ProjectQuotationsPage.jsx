@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Plus,
   Search,
@@ -680,8 +681,8 @@ const ProjectQuotationsPage = () => {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-120 overflow-y-auto bg-black/80 px-3 py-4 backdrop-blur-sm sm:px-6">
+      {showModal && createPortal(
+        <div className="fixed inset-0 z-[120] w-full h-full overflow-y-auto bg-black/80 px-3 py-4 backdrop-blur-sm sm:px-6">
           <div className="mx-auto max-w-6xl rounded-[28px] border border-white/10 bg-[#0f1119] p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] sm:p-6">
             <div className="flex flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -1114,7 +1115,8 @@ const ProjectQuotationsPage = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
