@@ -69,15 +69,25 @@ exports.deleteTraineeTask = async (req, res) => {
 
 exports.getAssignments = async (req, res) => {
   try {
+    const { trainee_id } = req.query;
     const db = getDB();
-    const query = `
-      SELECT tta.*, tt.task_name, tt.description, ti.full_name as trainee_name
+    
+    let query = `
+      SELECT tta.*, tt.task_name, tt.description, ti.full_name as trainee_name, ti.type as trainee_type
       FROM trainee_task_assignments tta
       JOIN trainee_tasks tt ON tta.trainee_task_id = tt.id
       JOIN trainee_intern ti ON tta.trainee_intern_id = ti.uuid
-      ORDER BY tta.created_at DESC
     `;
-    const [rows] = await db.execute(query);
+    
+    const params = [];
+    if (trainee_id) {
+      query += ` WHERE tta.trainee_intern_id = ? `;
+      params.push(trainee_id);
+    }
+    
+    query += ` ORDER BY tta.created_at DESC `;
+    
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching assignments:", error);

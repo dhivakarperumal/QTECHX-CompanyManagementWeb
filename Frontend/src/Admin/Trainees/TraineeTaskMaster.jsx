@@ -11,10 +11,23 @@ const TraineeTaskMaster = () => {
   const [description, setDescription] = useState('');
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('All');
+
+  const [trainees, setTrainees] = useState([]);
 
   useEffect(() => {
     fetchTasks();
+    fetchTrainees();
   }, []);
+
+  const fetchTrainees = async () => {
+    try {
+      const response = await api.get('/trainee-intern');
+      setTrainees(response.data.data || response.data);
+    } catch (error) {
+      console.error('Error fetching trainees:', error);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -104,6 +117,56 @@ const TraineeTaskMaster = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Trainee Cards Section */}
+      <div className="mb-8 mt-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
+          <select 
+            value={typeFilter} 
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+          >
+            <option value="All" className="text-black">All Types</option>
+            <option value="Trainee" className="text-black">Trainee</option>
+            <option value="Intern" className="text-black">Intern</option>
+          </select>
+        </div>
+        
+        {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
+          <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
+              <a 
+                key={trainee.uuid} 
+                href={`#/admin/trainees/tasks/view/${trainee.uuid}`}
+                className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30 cursor-pointer"
+              >
+                {trainee.profile_photo ? (
+                  <img 
+                    src={`http://localhost:5000/${trainee.profile_photo.replace(/\\/g, '/')}`} 
+                    alt={trainee.full_name} 
+                    className="w-12 h-12 rounded-full object-cover border border-white/10 group-hover:border-orange-500/50 transition-colors" 
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sm font-semibold text-white/70 group-hover:border-orange-500/50 transition-colors">
+                    {trainee.full_name?.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="overflow-hidden">
+                  <h3 className="font-semibold text-white truncate group-hover:text-orange-400 transition-colors">{trainee.full_name}</h3>
+                  <p className="text-xs text-white/50">{trainee.type || 'Trainee'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
       </div>
 
       {showForm && (

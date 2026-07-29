@@ -1087,6 +1087,61 @@ async function ensureExpenseSchema(pool) {
   );
 }
 
+async function ensureSalarySchema(pool) {
+  await pool.execute('DROP TABLE IF EXISTS employee_salaries');
+  await pool.execute(
+    `CREATE TABLE employee_salaries (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      employee_id VARCHAR(36) NOT NULL,
+      salary_month INT NOT NULL,
+      salary_year INT NOT NULL,
+      basic_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      present_days INT NOT NULL DEFAULT 0,
+      leave_days INT NOT NULL DEFAULT 0,
+      leave_deduction DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      incentive_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+      incentive_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      additional_deduction DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      total_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      expense_id VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE,
+      CONSTRAINT fk_employee_salaries_expense FOREIGN KEY (expense_id) REFERENCES expenses (expense_id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
+async function ensureProjectPaymentSchema(pool) {
+  await pool.execute('DROP TABLE IF EXISTS project_payments');
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS project_payments (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      project_id INT UNSIGNED NOT NULL,
+      project_name VARCHAR(255) NULL,
+      client_name VARCHAR(255) NULL,
+      paid_to VARCHAR(255) NULL,
+      amount_paid DECIMAL(15,2) NOT NULL,
+      payment_mode VARCHAR(50) NULL,
+      reason_for_payment VARCHAR(255) NULL,
+      date_of_payment DATE NOT NULL,
+      time_of_payment TIME NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_project_payments_uuid (uuid),
+      INDEX idx_project_payments_project (project_id),
+      CONSTRAINT fk_project_payments_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -1102,6 +1157,8 @@ async function initDB() {
     await ensureExpenseSchema(pool);
     await ensureProjectPlanSchema(pool);
     await ensureQuotationsSchema(pool);
+    await ensureSalarySchema(pool);
+    await ensureProjectPaymentSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;
