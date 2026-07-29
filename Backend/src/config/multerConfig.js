@@ -20,13 +20,40 @@ if (!fs.existsSync(projectUploadDir)) {
   fs.mkdirSync(projectUploadDir, { recursive: true });
 }
 
+const projectImagesDir = path.join(projectUploadDir, "images");
+const projectImagesZipDir = path.join(projectUploadDir, "ProjectImageZip");
+const projectSourceBackupDir = path.join(projectUploadDir, "source_code_backup");
+
+if (!fs.existsSync(projectImagesDir)) {
+  fs.mkdirSync(projectImagesDir, { recursive: true });
+}
+if (!fs.existsSync(projectImagesZipDir)) {
+  fs.mkdirSync(projectImagesZipDir, { recursive: true });
+}
+if (!fs.existsSync(projectSourceBackupDir)) {
+  fs.mkdirSync(projectSourceBackupDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const destinationDir = req.baseUrl?.includes("/clients")
-      ? clientUploadDir
-      : req.baseUrl?.includes("/projects")
-        ? projectUploadDir
-        : employeeUploadDir;
+    let destinationDir;
+
+    if (req.baseUrl?.includes("/clients")) {
+      destinationDir = clientUploadDir;
+    } else if (req.baseUrl?.includes("/projects")) {
+      if (file.fieldname === 'project_images' && path.extname(file.originalname).toLowerCase() === '.zip') {
+        destinationDir = projectImagesZipDir;
+      } else if (file.fieldname === 'project_images') {
+        destinationDir = projectImagesDir;
+      } else if (file.fieldname === 'source_code_backup') {
+        destinationDir = projectSourceBackupDir;
+      } else {
+        destinationDir = projectUploadDir;
+      }
+    } else {
+      destinationDir = employeeUploadDir;
+    }
+
     if (!fs.existsSync(destinationDir)) {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
@@ -40,7 +67,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for ZIP and large assets
   fileFilter: (req, file, cb) => {
     // allow images and documents
     const allowedTypes = [

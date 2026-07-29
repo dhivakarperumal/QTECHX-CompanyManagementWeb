@@ -166,6 +166,148 @@ async function ensureProjectAssignmentsSchema(pool) {
   }
 }
 
+async function ensureProjectsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'projects'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS projects (
+        id                        INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        uuid                      VARCHAR(36) NOT NULL,
+        project_code              VARCHAR(50) NULL,
+        project_name              VARCHAR(255) NOT NULL,
+        short_name                VARCHAR(100) NULL,
+        project_category          VARCHAR(100) NULL,
+        industry                  VARCHAR(100) NULL,
+        description               TEXT NULL,
+        objective                 TEXT NULL,
+        business_requirements     TEXT NULL,
+        client_name               VARCHAR(255) NULL,
+        company_name              VARCHAR(255) NULL,
+        contact_person            VARCHAR(255) NULL,
+        email                     VARCHAR(255) NULL,
+        phone_number              VARCHAR(20) NULL,
+        nda_signed                ENUM('Yes','No') NOT NULL DEFAULT 'No',
+        agreement_uploaded        ENUM('Yes','No') NOT NULL DEFAULT 'No',
+        total_project_cost        DECIMAL(15,2) NULL,
+        current_status            ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') NOT NULL DEFAULT 'Planning',
+        overall_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        proposal_date             DATE NULL,
+        approval_date             DATE NULL,
+        project_start_date        DATE NULL,
+        estimated_completion_date DATE NULL,
+        project_end_date          DATE NULL,
+        go_live_date              DATE NULL,
+        support_period            VARCHAR(100) NULL,
+        frontend_tech             VARCHAR(255) NULL,
+        mobile_tech               VARCHAR(255) NULL,
+        backend_tech              VARCHAR(255) NULL,
+        database_tech             VARCHAR(255) NULL,
+        github_link               VARCHAR(500) NULL,
+        domain_name               VARCHAR(255) NULL,
+        sub_domain_name           VARCHAR(255) NULL,
+        project_manager           VARCHAR(255) NULL,
+        ui_ux_designer            VARCHAR(255) NULL,
+        frontend_developers       TEXT NULL,
+        backend_developers        TEXT NULL,
+        ui_progress               TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        frontend_progress         TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        backend_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        testing_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        deployment_progress       TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        proposal_doc              VARCHAR(500) NULL,
+        quotation_doc             VARCHAR(500) NULL,
+        agreement_doc             VARCHAR(500) NULL,
+        nda_doc                   VARCHAR(500) NULL,
+        api_documentation         VARCHAR(500) NULL,
+        database_schema           VARCHAR(500) NULL,
+        source_code_backup        VARCHAR(500) NULL,
+        project_images            TEXT NULL,
+        created_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by                VARCHAR(36) NULL,
+        updated_by                VARCHAR(36) NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_projects_uuid (uuid),
+        INDEX idx_projects_status (current_status),
+        INDEX idx_projects_manager (project_manager(100))
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM projects");
+  const columnNames = new Set(columns.map((column) => column.Field));
+
+  const addColumnStatements = [];
+  const columnDefinitions = [
+    ['uuid', 'VARCHAR(36) NOT NULL'],
+    ['project_code', 'VARCHAR(50) NULL'],
+    ['project_name', 'VARCHAR(255) NOT NULL'],
+    ['short_name', 'VARCHAR(100) NULL'],
+    ['project_category', 'VARCHAR(100) NULL'],
+    ['industry', 'VARCHAR(100) NULL'],
+    ['description', 'TEXT NULL'],
+    ['objective', 'TEXT NULL'],
+    ['business_requirements', 'TEXT NULL'],
+    ['client_name', 'VARCHAR(255) NULL'],
+    ['company_name', 'VARCHAR(255) NULL'],
+    ['contact_person', 'VARCHAR(255) NULL'],
+    ['email', 'VARCHAR(255) NULL'],
+    ['phone_number', 'VARCHAR(20) NULL'],
+    ['nda_signed', "ENUM('Yes','No') NOT NULL DEFAULT 'No'"],
+    ['agreement_uploaded', "ENUM('Yes','No') NOT NULL DEFAULT 'No'"],
+    ['total_project_cost', 'DECIMAL(15,2) NULL'],
+    ['current_status', "ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') NOT NULL DEFAULT 'Planning'"],
+    ['overall_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['proposal_date', 'DATE NULL'],
+    ['approval_date', 'DATE NULL'],
+    ['project_start_date', 'DATE NULL'],
+    ['estimated_completion_date', 'DATE NULL'],
+    ['project_end_date', 'DATE NULL'],
+    ['go_live_date', 'DATE NULL'],
+    ['support_period', 'VARCHAR(100) NULL'],
+    ['frontend_tech', 'VARCHAR(255) NULL'],
+    ['mobile_tech', 'VARCHAR(255) NULL'],
+    ['backend_tech', 'VARCHAR(255) NULL'],
+    ['database_tech', 'VARCHAR(255) NULL'],
+    ['github_link', 'VARCHAR(500) NULL'],
+    ['domain_name', 'VARCHAR(255) NULL'],
+    ['sub_domain_name', 'VARCHAR(255) NULL'],
+    ['project_manager', 'VARCHAR(255) NULL'],
+    ['ui_ux_designer', 'VARCHAR(255) NULL'],
+    ['frontend_developers', 'TEXT NULL'],
+    ['backend_developers', 'TEXT NULL'],
+    ['ui_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['frontend_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['backend_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['testing_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['deployment_progress', 'TINYINT UNSIGNED NOT NULL DEFAULT 0'],
+    ['proposal_doc', 'VARCHAR(500) NULL'],
+    ['quotation_doc', 'VARCHAR(500) NULL'],
+    ['agreement_doc', 'VARCHAR(500) NULL'],
+    ['nda_doc', 'VARCHAR(500) NULL'],
+    ['api_documentation', 'VARCHAR(500) NULL'],
+    ['database_schema', 'VARCHAR(500) NULL'],
+    ['source_code_backup', 'VARCHAR(500) NULL'],
+    ['project_images', 'TEXT NULL'],
+    ['created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'],
+    ['updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'],
+    ['created_by', 'VARCHAR(36) NULL'],
+    ['updated_by', 'VARCHAR(36) NULL'],
+  ];
+
+  columnDefinitions.forEach(([columnName, definition]) => {
+    if (!columnNames.has(columnName)) {
+      addColumnStatements.push(`ADD COLUMN ${columnName} ${definition}`);
+    }
+  });
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE projects ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureSchema(pool) {
   // ── Users ────────────────────────────────────────────────────────────────
   await pool.execute(
@@ -272,68 +414,7 @@ async function ensureSchema(pool) {
   );
 
   // ── Projects ──────────────────────────────────────────────────────────────
-  await pool.execute(
-    `CREATE TABLE IF NOT EXISTS projects (
-      id                        INT UNSIGNED NOT NULL AUTO_INCREMENT,
-      uuid                      VARCHAR(36) NOT NULL,
-      project_code              VARCHAR(50) NULL,
-      project_name              VARCHAR(255) NOT NULL,
-      short_name                VARCHAR(100) NULL,
-      project_category          VARCHAR(100) NULL,
-      industry                  VARCHAR(100) NULL,
-      description               TEXT NULL,
-      objective                 TEXT NULL,
-      business_requirements     TEXT NULL,
-      client_name               VARCHAR(255) NULL,
-      company_name              VARCHAR(255) NULL,
-      contact_person            VARCHAR(255) NULL,
-      email                     VARCHAR(255) NULL,
-      phone_number              VARCHAR(20) NULL,
-      nda_signed                ENUM('Yes','No') NOT NULL DEFAULT 'No',
-      agreement_uploaded        ENUM('Yes','No') NOT NULL DEFAULT 'No',
-      total_project_cost        DECIMAL(15,2) NULL,
-      current_status            ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') NOT NULL DEFAULT 'Planning',
-      overall_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      proposal_date             DATE NULL,
-      approval_date             DATE NULL,
-      project_start_date        DATE NULL,
-      estimated_completion_date DATE NULL,
-      project_end_date          DATE NULL,
-      go_live_date              DATE NULL,
-      support_period            VARCHAR(100) NULL,
-      frontend_tech             VARCHAR(255) NULL,
-      mobile_tech               VARCHAR(255) NULL,
-      backend_tech              VARCHAR(255) NULL,
-      database_tech             VARCHAR(255) NULL,
-      github_link               VARCHAR(500) NULL,
-      domain_name               VARCHAR(255) NULL,
-      sub_domain_name           VARCHAR(255) NULL,
-      project_manager           VARCHAR(255) NULL,
-      ui_ux_designer            VARCHAR(255) NULL,
-      frontend_developers       TEXT NULL,
-      backend_developers        TEXT NULL,
-      ui_progress               TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      frontend_progress         TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      backend_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      testing_progress          TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      deployment_progress       TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      proposal_doc              VARCHAR(500) NULL,
-      quotation_doc             VARCHAR(500) NULL,
-      agreement_doc             VARCHAR(500) NULL,
-      nda_doc                   VARCHAR(500) NULL,
-      api_documentation         VARCHAR(500) NULL,
-      database_schema           VARCHAR(500) NULL,
-      source_code_backup        VARCHAR(500) NULL,
-      created_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      created_by                VARCHAR(36) NULL,
-      updated_by                VARCHAR(36) NULL,
-      PRIMARY KEY (id),
-      UNIQUE KEY uq_projects_uuid (uuid),
-      INDEX idx_projects_status (current_status),
-      INDEX idx_projects_manager (project_manager(100))
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-  );
+  await ensureProjectsSchema(pool);
 
   // ── Project Assignments ────────────────────────────────────────────────────
   await ensureProjectAssignmentsSchema(pool);
@@ -401,6 +482,25 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_tasks_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT fk_tasks_assigned_to FOREIGN KEY (assigned_to) REFERENCES employees (employee_id) ON DELETE SET NULL ON UPDATE CASCADE,
       CONSTRAINT fk_tasks_assigned_by FOREIGN KEY (assigned_by) REFERENCES employees (employee_id) ON DELETE SET NULL ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS project_assets (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      project_id INT UNSIGNED NOT NULL,
+      asset_type ENUM('image','zip','document') NOT NULL DEFAULT 'image',
+      original_name VARCHAR(255) NULL,
+      file_path VARCHAR(500) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_project_assets_uuid (uuid),
+      INDEX idx_project_assets_project (project_id),
+      CONSTRAINT fk_project_assets_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 

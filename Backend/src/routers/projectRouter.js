@@ -28,6 +28,7 @@ const uploadFields = upload.fields([
   { name: 'api_documentation', maxCount: 1 },
   { name: 'database_schema', maxCount: 1 },
   { name: 'source_code_backup', maxCount: 1 },
+  { name: 'project_images', maxCount: 20 },
 ]);
 
 // ─── Project CRUD ──────────────────────────────────────────────────────────────

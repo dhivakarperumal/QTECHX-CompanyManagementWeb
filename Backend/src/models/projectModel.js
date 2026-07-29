@@ -14,7 +14,7 @@ const projectFields = [
   'project_manager', 'ui_ux_designer', 'frontend_developers', 'backend_developers',
   'ui_progress', 'frontend_progress', 'backend_progress', 'testing_progress', 'deployment_progress',
   'proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc',
-  'api_documentation', 'database_schema', 'source_code_backup',
+  'api_documentation', 'database_schema', 'source_code_backup', 'project_images',
   'created_at', 'updated_at', 'created_by', 'updated_by',
 ].join(', ');
 
@@ -41,9 +41,9 @@ async function createProject(data) {
       project_manager, ui_ux_designer, frontend_developers, backend_developers,
       ui_progress, frontend_progress, backend_progress, testing_progress, deployment_progress,
       proposal_doc, quotation_doc, agreement_doc, nda_doc,
-      api_documentation, database_schema, source_code_backup,
+      api_documentation, database_schema, source_code_backup, project_images,
       created_by, updated_by
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       data.uuid,
       projectCode,
@@ -94,6 +94,7 @@ async function createProject(data) {
       data.api_documentation || null,
       data.database_schema || null,
       data.source_code_backup || null,
+      data.project_images || null,
       data.created_by || null,
       data.updated_by || null,
     ]
