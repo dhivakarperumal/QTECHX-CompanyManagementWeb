@@ -26,18 +26,23 @@ exports.getEmployeeSalaryDetails = async (req, res) => {
 
     // Fetch absent days
     const [attRows] = await pool.query(
-      `SELECT COUNT(*) as leave_days FROM attendance
-       WHERE employee_id = ? AND month = ? AND year = ? AND attendance_status = 'Absent'`,
+      `SELECT 
+        SUM(CASE WHEN attendance_status = 'Absent' THEN 1 ELSE 0 END) as leave_days,
+        SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) as present_days
+       FROM attendance
+       WHERE employee_id = ? AND month = ? AND year = ?`,
       [employee_id, month, year]
     );
 
-    const leave_days = attRows[0].leave_days;
+    const leave_days = attRows[0].leave_days || 0;
+    const present_days = attRows[0].present_days || 0;
 
     res.status(200).json({
       success: true,
       data: {
         ...employee,
-        leave_days
+        leave_days,
+        present_days
       }
     });
   } catch (error) {
@@ -59,6 +64,7 @@ exports.paySalary = async (req, res) => {
       month,
       year,
       basic_salary,
+      present_days,
       leave_days,
       leave_deduction,
       incentive_percentage,
@@ -115,13 +121,14 @@ exports.paySalary = async (req, res) => {
     // Record into employee_salaries table
     await connection.query(
       `INSERT INTO employee_salaries 
-       (employee_id, salary_month, salary_year, basic_salary, leave_days, leave_deduction, incentive_percentage, incentive_amount, additional_deduction, total_salary, expense_id, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (employee_id, salary_month, salary_year, basic_salary, present_days, leave_days, leave_deduction, incentive_percentage, incentive_amount, additional_deduction, total_salary, expense_id, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         employee_id,
         month,
         year,
         basic_salary || 0,
+        present_days || 0,
         leave_days || 0,
         leave_deduction || 0,
         incentive_percentage || 0,
@@ -129,6 +136,7 @@ exports.paySalary = async (req, res) => {
         additional_deduction || 0,
         tSalary,
         expense_id,
+        actor,
         actor
       ]
     );
@@ -141,5 +149,21 @@ exports.paySalary = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   } finally {
     connection.release();
+  }
+};
+
+exports.getSalaryHistory = async (req, res) => {
+  try {
+    const pool = getDB();
+    const [rows] = await pool.query(
+      `SELECT s.*, e.first_name, e.last_name, e.employee_code
+       FROM employee_salaries s
+       JOIN employees e ON s.employee_id = e.employee_id
+       ORDER BY s.created_at DESC`
+    );
+    res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    console.error("Error fetching salary history:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };

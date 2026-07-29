@@ -9,4 +9,7 @@ router.get("/details", authenticate, salaryController.getEmployeeSalaryDetails);
 // Pay Salary route
 router.post("/pay", authenticate, salaryController.paySalary);
 
+// Salary History route
+router.get("/history", authenticate, salaryController.getSalaryHistory);
+
 module.exports = router;

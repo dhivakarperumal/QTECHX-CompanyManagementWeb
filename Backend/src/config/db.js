@@ -569,13 +569,15 @@ async function ensureExpenseSchema(pool) {
 }
 
 async function ensureSalarySchema(pool) {
+  await pool.execute('DROP TABLE IF EXISTS employee_salaries');
   await pool.execute(
-    `CREATE TABLE IF NOT EXISTS employee_salaries (
+    `CREATE TABLE employee_salaries (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       employee_id VARCHAR(36) NOT NULL,
       salary_month INT NOT NULL,
       salary_year INT NOT NULL,
       basic_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      present_days INT NOT NULL DEFAULT 0,
       leave_days INT NOT NULL DEFAULT 0,
       leave_deduction DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       incentive_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
@@ -584,7 +586,9 @@ async function ensureSalarySchema(pool) {
       total_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       expense_id VARCHAR(36) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
       PRIMARY KEY (id),
       CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE,
       CONSTRAINT fk_employee_salaries_expense FOREIGN KEY (expense_id) REFERENCES expenses (expense_id) ON DELETE SET NULL

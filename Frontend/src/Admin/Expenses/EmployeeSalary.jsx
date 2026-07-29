@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
-  AlertCircle, CheckCircle, DollarSign, Users, Briefcase
+  AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
+  History, Printer, X
 } from 'lucide-react';
 import api from '../../api';
+import ReactToPrint from 'react-to-print';
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -15,6 +17,7 @@ const BLANK = {
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
   basic_salary: '',
+  present_days: 0,
   leave_days: 0,
   leave_deduction: 0,
   incentive_percentage: '',
@@ -31,32 +34,48 @@ export default function EmployeeSalary() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState(BLANK);
   const [employees, setEmployees] = useState([]);
+  const [history, setHistory] = useState([]);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Fetch employees
+  const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const payslipRef = useRef();
+
+  // Fetch employees & history on mount
   useEffect(() => {
     (async () => {
       setEmployeeLoading(true);
       try {
         const { data } = await api.get('/employees?limit=500&page=1');
-        if (data.data && Array.isArray(data.data)) {
-          setEmployees(data.data);
-        } else if (data.data?.rows) {
-          setEmployees(data.data.rows);
-        } else if (Array.isArray(data)) {
-          setEmployees(data);
-        }
+        if (data.data && Array.isArray(data.data)) setEmployees(data.data);
+        else if (data.data?.rows) setEmployees(data.data.rows);
+        else if (Array.isArray(data)) setEmployees(data);
       } catch (err) {
         console.warn('Failed to load employees:', err);
       } finally {
         setEmployeeLoading(false);
       }
     })();
+    fetchHistory();
   }, []);
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data } = await api.get('/salary/history');
+      if (data.success) {
+        setHistory(data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch salary history", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   // Fetch salary details when employee, month or year changes
   useEffect(() => {
@@ -72,11 +91,10 @@ export default function EmployeeSalary() {
           
           const basic = parseFloat(emp.basic_salary) || 0;
           const leaveDays = parseInt(emp.leave_days) || 0;
+          const presentDays = parseInt(emp.present_days) || 0;
           
-          // Days in the selected month
           const daysInMonth = new Date(formData.year, formData.month, 0).getDate();
           
-          // Calculate leave deduction based on days in month
           let lDeduct = 0;
           if (basic > 0 && leaveDays > 0) {
             lDeduct = parseFloat(((basic / daysInMonth) * leaveDays).toFixed(2));
@@ -86,14 +104,13 @@ export default function EmployeeSalary() {
             ...prev,
             basic_salary: basic,
             leave_days: leaveDays,
+            present_days: presentDays,
             leave_deduction: lDeduct,
             bank_name: emp.bank_name || '',
             account_number: emp.account_number || '',
             ifsc_code: emp.ifsc_code || '',
             upi_id: emp.upi_id || ''
           }));
-        } else {
-          throw new Error(data.message || 'Failed to fetch details');
         }
       } catch (err) {
         setError(err?.response?.data?.message || err.message || 'Error fetching employee details');
@@ -109,6 +126,8 @@ export default function EmployeeSalary() {
   useEffect(() => {
     const basic = parseFloat(formData.basic_salary) || 0;
     const lDeduct = parseFloat(formData.leave_deduction) || 0;
+    const pDays = parseInt(formData.present_days) || 0;
+    const lDays = parseInt(formData.leave_days) || 0;
     
     const incPercent = parseFloat(formData.incentive_percentage) || 0;
     let incAmount = 0;
@@ -118,14 +137,20 @@ export default function EmployeeSalary() {
     
     const addDeduct = parseFloat(formData.additional_deduction) || 0;
     
-    const total = parseFloat((basic - lDeduct + incAmount - addDeduct).toFixed(2));
+    // Core logic for 0 attendance:
+    let earnedBasic = basic;
+    if (pDays === 0 && lDays === 0) {
+      earnedBasic = 0; // Attendance not marked
+    }
+    
+    const total = parseFloat((earnedBasic - lDeduct + incAmount - addDeduct).toFixed(2));
     
     setFormData(prev => ({
       ...prev,
       incentive_amount: incAmount,
       total_salary: total > 0 ? total : 0
     }));
-  }, [formData.basic_salary, formData.leave_deduction, formData.incentive_percentage, formData.additional_deduction]);
+  }, [formData.basic_salary, formData.leave_deduction, formData.present_days, formData.leave_days, formData.incentive_percentage, formData.additional_deduction]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -144,6 +169,7 @@ export default function EmployeeSalary() {
         month: parseInt(formData.month),
         year: parseInt(formData.year),
         basic_salary: parseFloat(formData.basic_salary) || 0,
+        present_days: parseInt(formData.present_days) || 0,
         leave_days: parseInt(formData.leave_days) || 0,
         leave_deduction: parseFloat(formData.leave_deduction) || 0,
         incentive_percentage: parseFloat(formData.incentive_percentage) || 0,
@@ -155,8 +181,11 @@ export default function EmployeeSalary() {
       const res = await api.post('/salary/pay', payload);
       if (!res.data.success) throw new Error(res.data.message || 'Payment failed');
       
-      setSuccess('Salary paid successfully and recorded in expenses!');
-      setTimeout(() => navigate('/admin/expenses'), 2000);
+      setSuccess('Salary paid successfully!');
+      fetchHistory(); // refresh table
+      setFormData(BLANK); // reset form
+      
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to pay salary');
     } finally { setLoading(false); }
@@ -175,7 +204,7 @@ export default function EmployeeSalary() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Employee Salary</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            Calculate and process monthly salary for an employee.
+            Calculate, process monthly salaries, and print payslips.
           </p>
         </div>
       </div>
@@ -251,15 +280,20 @@ export default function EmployeeSalary() {
               <input className={readOnlyFieldClass} type="number" readOnly value={formData.basic_salary} />
             </label>
             
-            <div className="grid gap-4 grid-cols-2">
+            <div className="grid gap-4 grid-cols-3">
                 <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Leave Days</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_days} />
+                  <span className="mb-1.5 block font-medium">Present Days</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.present_days} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Leave Days</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_days} />
                 </label>
                 
                 <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Leave Deduction (₹)</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_deduction} />
+                  <span className="mb-1.5 block font-medium">Leave Deduct (₹)</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_deduction} />
                 </label>
             </div>
             
@@ -283,6 +317,9 @@ export default function EmployeeSalary() {
             <label className="text-sm text-emerald-400 md:col-span-2">
               <span className="mb-1.5 block font-bold text-lg">Total Calculated Salary (₹)</span>
               <input className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xl font-bold text-emerald-400 outline-none" type="number" readOnly value={formData.total_salary} />
+              {(formData.present_days === 0 && formData.leave_days === 0) && (
+                <p className="mt-2 text-xs text-rose-400">Warning: Attendance not marked for this month. Calculated salary is ₹0.</p>
+              )}
             </label>
           </div>
         </section>
@@ -319,7 +356,7 @@ export default function EmployeeSalary() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-2">
-          <button type="submit" disabled={loading || !formData.employee_id}
+          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0}
             className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
@@ -330,13 +367,165 @@ export default function EmployeeSalary() {
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
             <RefreshCw size={15} /> Reset
           </button>
-          
-          <button type="button" onClick={() => navigate('/admin/expenses')} disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-            <ArrowLeft size={15} /> Cancel
-          </button>
         </div>
       </form>
+
+      {/* Salary History Table */}
+      <section className={`${sectionClass} mt-10`}>
+        <div className="mb-5 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
+          <h2 className="text-base font-bold text-white">Salary History</h2>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-white/70">
+            <thead className="bg-white/5 text-white/50">
+              <tr>
+                <th className="px-4 py-3 rounded-l-lg font-medium">Employee</th>
+                <th className="px-4 py-3 font-medium">Period</th>
+                <th className="px-4 py-3 font-medium">Basic (₹)</th>
+                <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
+                <th className="px-4 py-3 font-medium">Paid On</th>
+                <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {historyLoading ? (
+                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
+              ) : history.length === 0 ? (
+                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No salary records found.</td></tr>
+              ) : (
+                history.map((record) => (
+                  <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-white">{record.first_name} {record.last_name}</div>
+                      <div className="text-xs opacity-60">{record.employee_code}</div>
+                    </td>
+                    <td className="px-4 py-3">{new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'short' })} {record.salary_year}</td>
+                    <td className="px-4 py-3">{parseFloat(record.basic_salary).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button 
+                        onClick={() => setSelectedPayslip(record)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                      >
+                        <Printer size={13} /> Payslip
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Payslip Modal */}
+      {selectedPayslip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-bold text-gray-800">Payslip Preview</h3>
+              <div className="flex items-center gap-2">
+                <ReactToPrint
+                  trigger={() => (
+                    <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition shadow-sm">
+                      <Printer size={15} /> Print
+                    </button>
+                  )}
+                  content={() => payslipRef.current}
+                  documentTitle={`Payslip_${selectedPayslip.first_name}_${selectedPayslip.salary_month}_${selectedPayslip.salary_year}`}
+                />
+                <button onClick={() => setSelectedPayslip(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Printable Area */}
+            <div className="p-8 overflow-y-auto bg-white text-gray-800" ref={payslipRef}>
+              <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-6">
+                <div>
+                  <h1 className="text-3xl font-black text-gray-900 tracking-tight">Q-Techx Solutions</h1>
+                  <p className="text-sm text-gray-500 mt-1">123 Tech Avenue, Innovation Park</p>
+                  <p className="text-sm text-gray-500">City, State, ZIP</p>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-2xl font-bold text-blue-600 uppercase tracking-widest">Payslip</h2>
+                  <p className="text-sm font-medium text-gray-600 mt-1">
+                    {new Date(0, selectedPayslip.salary_month - 1).toLocaleString('default', { month: 'long' })} {selectedPayslip.salary_year}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-10 gap-y-4 mb-8 text-sm">
+                <div>
+                  <span className="text-gray-500 block mb-1">Employee Name</span>
+                  <span className="font-bold text-base">{selectedPayslip.first_name} {selectedPayslip.last_name}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block mb-1">Employee ID</span>
+                  <span className="font-bold text-base">{selectedPayslip.employee_code || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block mb-1">Present Days</span>
+                  <span className="font-semibold">{selectedPayslip.present_days}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block mb-1">Leave Days</span>
+                  <span className="font-semibold">{selectedPayslip.leave_days}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                {/* Earnings */}
+                <div>
+                  <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">EARNINGS</h3>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Basic Salary</span>
+                    <span className="font-medium">₹{parseFloat(selectedPayslip.basic_salary).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Incentive ({selectedPayslip.incentive_percentage}%)</span>
+                    <span className="font-medium">₹{parseFloat(selectedPayslip.incentive_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Deductions */}
+                <div>
+                  <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">DEDUCTIONS</h3>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Leave Deduction</span>
+                    <span className="font-medium">₹{parseFloat(selectedPayslip.leave_deduction).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Other Deductions</span>
+                    <span className="font-medium">₹{parseFloat(selectedPayslip.additional_deduction).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center bg-gray-50 p-5 rounded-xl border border-gray-200">
+                <span className="font-bold text-gray-700 text-lg">Net Pay</span>
+                <span className="font-black text-2xl text-blue-700">₹{parseFloat(selectedPayslip.total_salary).toLocaleString('en-IN')}</span>
+              </div>
+              
+              <div className="mt-12 pt-8 border-t border-gray-200 flex justify-between">
+                <div className="text-center">
+                  <div className="w-40 border-b border-gray-400 mb-2"></div>
+                  <span className="text-xs text-gray-500 font-medium">Employer Signature</span>
+                </div>
+                <div className="text-center">
+                  <div className="w-40 border-b border-gray-400 mb-2"></div>
+                  <span className="text-xs text-gray-500 font-medium">Employee Signature</span>
+                </div>
+              </div>
+              <p className="text-center text-xs text-gray-400 mt-8 italic">This is a system generated document and does not require a physical signature.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
