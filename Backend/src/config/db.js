@@ -568,6 +568,30 @@ async function ensureExpenseSchema(pool) {
   );
 }
 
+async function ensureSalarySchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS employee_salaries (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      employee_id VARCHAR(36) NOT NULL,
+      salary_month INT NOT NULL,
+      salary_year INT NOT NULL,
+      basic_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      leave_days INT NOT NULL DEFAULT 0,
+      leave_deduction DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      incentive_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+      incentive_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      additional_deduction DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      total_salary DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      expense_id VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE,
+      CONSTRAINT fk_employee_salaries_expense FOREIGN KEY (expense_id) REFERENCES expenses (expense_id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -581,6 +605,7 @@ async function initDB() {
     await ensureEmployeesSchema(pool);
     await ensureAttendanceSchema(pool);
     await ensureExpenseSchema(pool);
+    await ensureSalarySchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;

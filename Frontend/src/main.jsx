@@ -50,6 +50,7 @@ import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
+const EmployeeSalary = lazy(() => import('./Admin/Expenses/EmployeeSalary.jsx'))
 
 
 
@@ -225,6 +226,10 @@ const router = createHashRouter([
           {
             path: 'expenses',
             element: <ExpensesPage />,
+          },
+          {
+            path: 'expenses/salary',
+            element: <EmployeeSalary />,
           },
         ],
       },
