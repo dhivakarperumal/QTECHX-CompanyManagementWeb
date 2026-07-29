@@ -185,6 +185,48 @@ async function ensureSchema(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 
+  // ── Trainees & Interns ───────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_intern (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      person_id VARCHAR(50) NULL,
+      full_name VARCHAR(255) NOT NULL,
+      type ENUM('Trainee','Intern') NOT NULL DEFAULT 'Trainee',
+      department VARCHAR(100) NULL,
+      designation VARCHAR(100) NULL,
+      reporting_manager VARCHAR(255) NULL,
+      joining_date DATE NULL,
+      end_date DATE NULL,
+      status ENUM('Active','Completed','On Leave','Inactive') NOT NULL DEFAULT 'Active',
+      mobile_number VARCHAR(20) NULL,
+      email_address VARCHAR(255) NULL,
+      current_address TEXT NULL,
+      emergency_contact_name VARCHAR(255) NULL,
+      emergency_contact_number VARCHAR(20) NULL,
+      profile_photo VARCHAR(500) NULL,
+      resume VARCHAR(500) NULL,
+      college_id_doc VARCHAR(500) NULL,
+      offer_letter VARCHAR(500) NULL,
+      internship_letter VARCHAR(500) NULL,
+      college_university VARCHAR(255) NULL,
+      course VARCHAR(255) NULL,
+      academic_department VARCHAR(255) NULL,
+      year_semester VARCHAR(100) NULL,
+      college_id_number VARCHAR(100) NULL,
+      guide_name VARCHAR(255) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_trainee_intern_uuid (uuid),
+      UNIQUE KEY uq_trainee_intern_person_id (person_id),
+      INDEX idx_ti_type (type),
+      INDEX idx_ti_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
   // ── Project Assignments ────────────────────────────────────────────────────
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_assignments (

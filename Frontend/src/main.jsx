@@ -38,6 +38,9 @@ import EditProject from './Admin/Projects/EditProject.jsx'
 import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
 import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
+import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
+import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
+import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -156,6 +159,30 @@ const router = createHashRouter([
           {
             path: 'employees/view/:id',
             element: <EmployeeView />,
+          },
+          {
+            path: 'trainees',
+            element: <AllTraineeInterns />,
+          },
+          {
+            path: 'internships',
+            element: <AllTraineeInterns />,
+          },
+          {
+            path: 'trainees/add',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'internships/add',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'trainees/edit/:id',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'trainees/view/:id',
+            element: <TraineeInternDetails />,
           },
           {
             path: 'attendance',

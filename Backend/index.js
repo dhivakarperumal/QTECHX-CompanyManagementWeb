@@ -14,6 +14,7 @@ const projectRouter = require("./src/routers/projectRouter");
 const taskRouter = require("./src/routers/taskRouter");
 const fundRouter = require("./src/routers/fundRouter");
 const expenseRouter = require("./src/routers/expenseRouter");
+const traineeInternRouter = require("./src/routers/traineeInternRouter");
 
 const app = express();
 const als = new AsyncLocalStorage();
@@ -56,6 +57,7 @@ app.use("/api/projects", projectRouter);
 app.use("/api/tasks", taskRouter);
 app.use("/api/fund", fundRouter);
 app.use("/api/expenses", expenseRouter);
+app.use("/api/trainee-intern", traineeInternRouter);
 
 // Serve uploaded files from the backend uploads directory as inline browser content
 app.use("/uploads", (req, res, next) => {

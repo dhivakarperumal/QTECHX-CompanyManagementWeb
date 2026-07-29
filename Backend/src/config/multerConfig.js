@@ -6,7 +6,7 @@ const uploadDir = path.join(__dirname, "../../uploads");
 const employeeUploadDir = path.join(uploadDir, "employees");
 const clientUploadDir = path.join(uploadDir, "clients");
 const projectUploadDir = path.join(uploadDir, "projects");
-
+const traineeUploadDir = path.join(uploadDir, "trainees");
 const expenseUploadDir = path.join(uploadDir, "expenses");
 
 if (!fs.existsSync(uploadDir)) {
@@ -21,6 +21,9 @@ if (!fs.existsSync(clientUploadDir)) {
 if (!fs.existsSync(projectUploadDir)) {
   fs.mkdirSync(projectUploadDir, { recursive: true });
 }
+if (!fs.existsSync(traineeUploadDir)) {
+  fs.mkdirSync(traineeUploadDir, { recursive: true });
+}
 if (!fs.existsSync(expenseUploadDir)) {
   fs.mkdirSync(expenseUploadDir, { recursive: true });
 }
@@ -31,9 +34,11 @@ const storage = multer.diskStorage({
       ? clientUploadDir
       : req.baseUrl?.includes("/projects")
         ? projectUploadDir
-        : req.baseUrl?.includes("/expenses")
-          ? expenseUploadDir
-          : employeeUploadDir;
+        : req.baseUrl?.includes("/trainee-intern")
+          ? traineeUploadDir
+          : req.baseUrl?.includes("/expenses")
+            ? expenseUploadDir
+            : employeeUploadDir;
     if (!fs.existsSync(destinationDir)) {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
