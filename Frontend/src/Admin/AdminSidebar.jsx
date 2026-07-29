@@ -138,20 +138,11 @@ const navItems = [
 
   /* ---- FINANCE ---- */
   {
-    label: "Expenses",
+    label: "Payroll",
     icon: Receipt,
     children: [
       { path: "/admin/expenses", label: "All Expenses", icon: Receipt, exact: true },
       { path: "/admin/expenses/salary", label: "Employee Salary", icon: DollarSign },
-    ],
-  },
-
-  {
-    label: "Payroll",
-    icon: DollarSign,
-    children: [
-      { path: "/admin/payroll", label: "Payroll Overview", icon: DollarSign },
-      { path: "/admin/payroll/run", label: "Run Payroll", icon: TrendingUp },
     ],
   },
 
