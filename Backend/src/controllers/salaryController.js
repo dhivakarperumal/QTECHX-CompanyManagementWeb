@@ -37,12 +37,21 @@ exports.getEmployeeSalaryDetails = async (req, res) => {
     const leave_days = attRows[0].leave_days || 0;
     const present_days = attRows[0].present_days || 0;
 
+    // Check if salary is already paid for this month
+    const [salaryRows] = await pool.query(
+      `SELECT id FROM employee_salaries WHERE employee_id = ? AND salary_month = ? AND salary_year = ?`,
+      [employee_id, month, year]
+    );
+
+    const alreadyPaid = salaryRows.length > 0;
+
     res.status(200).json({
       success: true,
       data: {
         ...employee,
         leave_days,
-        present_days
+        present_days,
+        alreadyPaid
       }
     });
   } catch (error) {
@@ -52,26 +61,38 @@ exports.getEmployeeSalaryDetails = async (req, res) => {
 };
 
 exports.paySalary = async (req, res) => {
+  const {
+    employee_id,
+    month,
+    year,
+    basic_salary,
+    present_days,
+    leave_days,
+    leave_deduction,
+    incentive_percentage,
+    incentive_amount,
+    additional_deduction,
+    total_salary
+  } = req.body;
+
   const pool = getDB();
+
+  // Check if already paid
+  const [existingRows] = await pool.query(
+    `SELECT id FROM employee_salaries WHERE employee_id = ? AND salary_month = ? AND salary_year = ?`,
+    [employee_id, month, year]
+  );
+  if (existingRows.length > 0) {
+    return res.status(400).json({ success: false, message: "Salary already paid for this month" });
+  }
+
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
     const actor = req.user?.user_id || req.body.created_by || null;
-    const {
-      employee_id,
-      month,
-      year,
-      basic_salary,
-      present_days,
-      leave_days,
-      leave_deduction,
-      incentive_percentage,
-      incentive_amount,
-      additional_deduction,
-      total_salary
-    } = req.body;
+
 
     if (!employee_id || !total_salary || isNaN(total_salary)) {
       return res.status(400).json({ success: false, message: "Valid employee_id and total_salary are required" });

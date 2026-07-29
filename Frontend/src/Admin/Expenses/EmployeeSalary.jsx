@@ -98,6 +98,7 @@ export default function EmployeeSalary() {
           const basic = parseFloat(emp.basic_salary) || 0;
           const leaveDays = parseInt(emp.leave_days) || 0;
           const presentDays = parseInt(emp.present_days) || 0;
+          const alreadyPaid = emp.alreadyPaid || false;
 
           const daysInMonth = new Date(formData.year, formData.month, 0).getDate();
 
@@ -106,12 +107,17 @@ export default function EmployeeSalary() {
             lDeduct = parseFloat(((basic / daysInMonth) * leaveDays).toFixed(2));
           }
 
+          if (alreadyPaid) {
+            setError(`Salary has already been paid for this employee for ${new Date(0, formData.month - 1).toLocaleString('default', { month: 'long' })} ${formData.year}.`);
+          }
+
           setFormData(prev => ({
             ...prev,
             basic_salary: basic,
             leave_days: leaveDays,
             present_days: presentDays,
             leave_deduction: lDeduct,
+            alreadyPaid: alreadyPaid,
             bank_name: emp.bank_name || '',
             account_number: emp.account_number || '',
             ifsc_code: emp.ifsc_code || '',
@@ -143,20 +149,22 @@ export default function EmployeeSalary() {
 
     const addDeduct = parseFloat(formData.additional_deduction) || 0;
 
-    // Core logic for 0 attendance:
-    let earnedBasic = basic;
-    if (pDays === 0 && lDays === 0) {
-      earnedBasic = 0; // Attendance not marked
+    const daysInMonth = new Date(formData.year, formData.month, 0).getDate();
+    let earnedBasic = 0;
+    if (basic > 0 && pDays > 0) {
+      earnedBasic = parseFloat(((basic / daysInMonth) * pDays).toFixed(2));
     }
-
-    const total = parseFloat((earnedBasic - lDeduct + incAmount - addDeduct).toFixed(2));
-
+    
+    // Total is calculated purely from earnedBasic (based on present days) + incentives - additional.
+    // We ignore lDeduct here since leave days naturally deduct from the earned basic.
+    const total = parseFloat((earnedBasic + incAmount - addDeduct).toFixed(2));
+    
     setFormData(prev => ({
       ...prev,
       incentive_amount: incAmount,
       total_salary: total > 0 ? total : 0
     }));
-  }, [formData.basic_salary, formData.leave_deduction, formData.present_days, formData.leave_days, formData.incentive_percentage, formData.additional_deduction]);
+  }, [formData.basic_salary, formData.present_days, formData.month, formData.year, formData.incentive_percentage, formData.additional_deduction]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -362,7 +370,7 @@ export default function EmployeeSalary() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-2">
-          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0}
+          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || formData.alreadyPaid}
             className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
