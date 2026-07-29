@@ -596,6 +596,30 @@ async function ensureSalarySchema(pool) {
   );
 }
 
+async function ensureProjectPaymentSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS project_payments (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      project_id INT UNSIGNED NOT NULL,
+      client_name VARCHAR(255) NULL,
+      paid_to VARCHAR(255) NULL,
+      amount_paid DECIMAL(15,2) NOT NULL,
+      reason_for_payment VARCHAR(255) NULL,
+      date_of_payment DATE NOT NULL,
+      time_of_payment TIME NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_project_payments_uuid (uuid),
+      INDEX idx_project_payments_project (project_id),
+      CONSTRAINT fk_project_payments_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -610,6 +634,7 @@ async function initDB() {
     await ensureAttendanceSchema(pool);
     await ensureExpenseSchema(pool);
     await ensureSalarySchema(pool);
+    await ensureProjectPaymentSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;
