@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X } from 'lucide-react';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
   const [editingUuid, setEditingUuid] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -14,11 +18,14 @@ const TraineeTaskMaster = () => {
 
   const fetchTasks = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/trainee-tasks');
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching trainee tasks:', error);
       toast.error('Failed to load tasks');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,9 +44,7 @@ const TraineeTaskMaster = () => {
         await api.post('/trainee-tasks', { task_name: taskName, description });
         toast.success('Task created successfully');
       }
-      setTaskName('');
-      setDescription('');
-      setEditingUuid(null);
+      resetForm();
       fetchTasks();
     } catch (error) {
       console.error('Error saving task:', error);
@@ -51,6 +56,7 @@ const TraineeTaskMaster = () => {
     setEditingUuid(task.uuid);
     setTaskName(task.task_name);
     setDescription(task.description || '');
+    setShowForm(true);
   };
 
   const handleDelete = async (uuid) => {
@@ -66,83 +72,138 @@ const TraineeTaskMaster = () => {
     }
   };
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <Toaster position="top-right" />
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Trainee & Intern Task Master</h2>
+  const resetForm = () => {
+    setEditingUuid(null);
+    setTaskName('');
+    setDescription('');
+    setShowForm(false);
+  };
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-xl font-semibold mb-4">{editingUuid ? 'Edit Task' : 'Add New Task'}</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Task Name *</label>
-            <input
-              type="text"
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Enter task name"
-            />
+  return (
+    <div className="space-y-5 pb-10 text-white min-h-screen">
+      <Toaster position="top-right" />
+      
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+            <CheckSquare size={22} className="text-orange-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500"
-              rows="3"
-              placeholder="Enter task description"
-            />
+            <h1 className="text-2xl font-bold tracking-tight text-white">Trainee Task Master</h1>
+            <p className="text-white/40 text-xs mt-0.5">Manage predefined tasks for trainees & interns</p>
           </div>
-          <div className="flex justify-end gap-2">
-            {editingUuid && (
+        </div>
+        <div className="flex items-center gap-2">
+          {!showForm && (
+            <button 
+              onClick={() => setShowForm(true)} 
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90" 
+              style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+            >
+              <Plus size={15} /> Add Task
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showForm && (
+        <div className="rounded-2xl border border-white/10 bg-[#111318] p-6 mb-6 shadow-lg">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-white">{editingUuid ? 'Edit Task' : 'Add New Task'}</h3>
+            <button onClick={resetForm} className="text-white/40 hover:text-white transition">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Task Name *</label>
+              <input
+                type="text"
+                value={taskName}
+                onChange={(e) => setTaskName(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                placeholder="Enter task name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                rows="4"
+                placeholder="Enter task description"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => { setEditingUuid(null); setTaskName(''); setDescription(''); }}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                onClick={resetForm}
+                className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition"
               >
                 Cancel
               </button>
-            )}
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {editingUuid ? 'Update Task' : 'Add Task'}
-            </button>
-          </div>
-        </form>
-      </div>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+                style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+              >
+                <Save size={15} /> {editingUuid ? 'Update Task' : 'Save Task'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold mb-4">Task List</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="min-w-full text-sm">
+            <thead className="bg-white/4 text-white/60">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.No</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-4 text-left font-medium">S.No</th>
+                <th className="px-4 py-4 text-left font-medium">Task Name</th>
+                <th className="px-4 py-4 text-left font-medium">Description</th>
+                <th className="px-4 py-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tasks.length > 0 ? (
+            <tbody className="divide-y divide-white/10">
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="px-4 py-8 text-center text-white/40">
+                    <Loader2 size={18} className="mx-auto animate-spin" />
+                  </td>
+                </tr>
+              ) : tasks.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
+                </tr>
+              ) : (
                 tasks.map((task, index) => (
-                  <tr key={task.uuid} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.task_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{task.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button onClick={() => handleEdit(task)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                      <button onClick={() => handleDelete(task.uuid)} className="text-red-600 hover:text-red-900">Delete</button>
+                  <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
+                    <td className="px-4 py-4 text-white/70">{index + 1}</td>
+                    <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
+                    <td className="px-4 py-4 text-white/50">{task.description || "—"}</td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => handleEdit(task)} 
+                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+                          title="Edit Task"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(task.uuid)} 
+                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                          title="Delete Task"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">No tasks found.</td>
-                </tr>
               )}
             </tbody>
           </table>
