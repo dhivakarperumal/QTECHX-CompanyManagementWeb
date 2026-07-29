@@ -142,7 +142,6 @@ const navItems = [
     icon: Receipt,
     children: [
       { path: "/admin/expenses", label: "All Expenses", icon: Receipt },
-      { path: "/admin/expenses/add", label: "Add Expense", icon: FileText },
     ],
   },
 
