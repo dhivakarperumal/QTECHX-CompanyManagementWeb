@@ -1,8 +1,13 @@
+const path = require('path');
+const fs = require('fs');
 const { findProjectById, findProjectByUUID } = require('../models/projectModel');
 const {
   assignTaskToEmployee,
   listEmployeeTaskAssignments,
 } = require('../models/employeeTaskAssignmentModel');
+
+const taskUploadDir = path.join(__dirname, '../../uploads/tasks');
+if (!fs.existsSync(taskUploadDir)) fs.mkdirSync(taskUploadDir, { recursive: true });
 
 function ok(res, data, code = 200) {
   return res.status(code).json({ success: true, ...data });
@@ -36,13 +41,47 @@ async function resolveProject(req) {
   return null;
 }
 
+/**
+ * Decode a base64 file and save to uploads/tasks/.
+ * Returns JSON string of attachment metadata, or null.
+ */
+function saveAssignmentFile(base64, originalName, mimeType) {
+  if (!base64 || !originalName) return null;
+  try {
+    const ext = path.extname(originalName) || '';
+    const { v4: uuidv4 } = require('uuid');
+    const filename = `${Date.now()}-${uuidv4().slice(0, 8)}${ext}`;
+    const filePath = path.join(taskUploadDir, filename);
+    const buffer = Buffer.from(base64, 'base64');
+    fs.writeFileSync(filePath, buffer);
+    return JSON.stringify([{
+      original_name: originalName,
+      filename,
+      path: `uploads/tasks/${filename}`,
+      mimetype: mimeType || 'application/octet-stream',
+      size: buffer.length,
+      uploaded_at: new Date().toISOString(),
+    }]);
+  } catch (e) {
+    console.error('saveAssignmentFile error:', e);
+    return null;
+  }
+}
+
 async function assignTaskHandler(req, res) {
   try {
     const project = await resolveProject(req);
     if (!project) return fail(res, 'Project not found', 404);
 
-    const { employee_id, task_id, assigned_by, assigned_date, status } = req.body;
+    const {
+      employee_id, task_id, assigned_by, assigned_date, status,
+      attachmentBase64, attachmentName, attachmentType,
+    } = req.body;
+
     if (!employee_id || !task_id) return fail(res, 'employee_id and task_id are required', 400);
+
+    // Save uploaded document if provided
+    const attachments = saveAssignmentFile(attachmentBase64, attachmentName, attachmentType);
 
     const actor = getActor(req);
     const result = await assignTaskToEmployee({
@@ -54,6 +93,7 @@ async function assignTaskHandler(req, res) {
       created_by: actor,
       updated_by: actor,
       status: status || null,
+      attachments,
     });
 
     return ok(res, {
