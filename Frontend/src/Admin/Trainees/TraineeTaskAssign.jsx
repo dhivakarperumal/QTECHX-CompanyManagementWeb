@@ -117,6 +117,8 @@ const TraineeTaskAssign = () => {
     setShowForm(false);
   };
 
+  const filteredAssignments = assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter);
+
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <Toaster position="top-right" />
@@ -271,12 +273,13 @@ const TraineeTaskAssign = () => {
                   <td colSpan="7" className="px-4 py-8 text-center text-white/40">
                     <Loader2 size={18} className="mx-auto animate-spin" />
                   </td>
-              ) : assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter).length === 0 ? (
+                </tr>
+              ) : filteredAssignments.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
                 </tr>
               ) : (
-                assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter).map((assignment) => {
+                filteredAssignments.map((assignment) => {
                   const isEditing = editingAssignmentUuid === assignment.uuid;
                   return (
                     <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
