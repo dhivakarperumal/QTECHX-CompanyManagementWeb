@@ -92,12 +92,12 @@ exports.paySalary = async (req, res) => {
     // Create an Expense record
     const expense_id = uuidv4();
     const date_of_payment = new Date().toISOString().slice(0, 10);
-    const description = \`Salary for Employee \${employee_id} - \${month}/\${year}\`;
+    const description = `Salary for Employee ${employee_id} - ${month}/${year}`;
 
     await connection.query(
-      \`INSERT INTO expenses 
+      `INSERT INTO expenses 
        (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expense_id,
         'Salary',
@@ -114,9 +114,9 @@ exports.paySalary = async (req, res) => {
 
     // Record into employee_salaries table
     await connection.query(
-      \`INSERT INTO employee_salaries 
+      `INSERT INTO employee_salaries 
        (employee_id, salary_month, salary_year, basic_salary, leave_days, leave_deduction, incentive_percentage, incentive_amount, additional_deduction, total_salary, expense_id, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         employee_id,
         month,
