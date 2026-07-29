@@ -64,7 +64,7 @@ export default function EmployeeSalary() {
       setDetailsLoading(true);
       setError('');
       try {
-        const { data } = await api.get(\`/salary/details?employee_id=\${formData.employee_id}&month=\${formData.month}&year=\${formData.year}\`);
+        const { data } = await api.get(`/salary/details?employee_id=${formData.employee_id}&month=${formData.month}&year=${formData.year}`);
         if (data.success) {
           const emp = data.data;
           
