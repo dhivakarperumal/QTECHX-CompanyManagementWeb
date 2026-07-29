@@ -227,6 +227,34 @@ async function ensureSchema(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 
+  // ── Trainee / Intern Attendance ───────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_intern_attendance (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      trainee_intern_id VARCHAR(36) NOT NULL,
+      attendance_date DATE NOT NULL,
+      month INT NOT NULL,
+      year INT NOT NULL,
+      check_in_time VARCHAR(20) NULL,
+      check_out_time VARCHAR(20) NULL,
+      working_hours VARCHAR(50) NOT NULL DEFAULT '0h 0m',
+      late_entry VARCHAR(50) NOT NULL DEFAULT 'No',
+      early_exit VARCHAR(50) NOT NULL DEFAULT 'No',
+      overtime VARCHAR(50) NOT NULL DEFAULT 'No',
+      attendance_status ENUM('Present','Absent') NOT NULL DEFAULT 'Absent',
+      location VARCHAR(255) NULL,
+      notes TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_ti_attendance_record (trainee_intern_id, attendance_date),
+      INDEX idx_ti_attendance_month_year (month, year),
+      INDEX idx_ti_attendance_status (attendance_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
   // ── Project Assignments ────────────────────────────────────────────────────
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_assignments (
