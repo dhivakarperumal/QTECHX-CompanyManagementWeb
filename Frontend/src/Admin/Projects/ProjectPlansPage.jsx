@@ -9,9 +9,12 @@ import {
   Code2,
   Copy,
   CreditCard,
+  Edit3,
+  Eye,
   FileText,
   Filter,
   Layers,
+  RefreshCw,
   Users,
   Plus,
   Search,
@@ -96,6 +99,9 @@ const createEmptyForm = () => ({
   coverImage: '',
   planDocument: null,
   planDocumentName: '',
+  newFeature: '',
+  newModule: '',
+  newTech: '',
   metaTitle: '',
   metaDescription: '',
   keywords: '',
@@ -507,13 +513,20 @@ function ProjectPlansPage() {
       updatedAt: new Date().toISOString(),
     };
 
+    const sanitizedPayload = { ...planPayload };
+    delete sanitizedPayload.newFeature;
+    delete sanitizedPayload.newModule;
+    delete sanitizedPayload.newTech;
+    delete sanitizedPayload.planDocumentName;
+
     const useMultipart = formData.planDocument instanceof File;
-    const requestPayload = useMultipart ? new FormData() : planPayload;
     if (useMultipart) {
-      const safePayload = { ...planPayload };
-      delete safePayload.planDocument;
-      delete safePayload.planDocumentName;
-      Object.entries(safePayload).forEach(([key, value]) => {
+      delete sanitizedPayload.planDocument;
+    }
+
+    const requestPayload = useMultipart ? new FormData() : sanitizedPayload;
+    if (useMultipart) {
+      Object.entries(sanitizedPayload).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
         if (typeof value === 'object' && !(value instanceof File)) {
           requestPayload.append(key, JSON.stringify(value));
@@ -1107,6 +1120,34 @@ function ProjectPlansPage() {
                     ))}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      value={formData.newFeature}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, newFeature: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          addChoice('features', formData.newFeature);
+                          setFormData((prev) => ({ ...prev, newFeature: '' }));
+                        }
+                      }}
+                      placeholder="Add a custom feature"
+                      className={fieldClasses}
+                      disabled={mode === 'view'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addChoice('features', formData.newFeature);
+                        setFormData((prev) => ({ ...prev, newFeature: '' }));
+                      }}
+                      disabled={mode === 'view' || !formData.newFeature.trim()}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {formData.features.map((item) => (
                       <span key={item} className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-sm text-orange-300">
                         {item}
@@ -1126,6 +1167,34 @@ function ProjectPlansPage() {
                     ))}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      value={formData.newModule}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, newModule: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          addChoice('includedModules', formData.newModule);
+                          setFormData((prev) => ({ ...prev, newModule: '' }));
+                        }
+                      }}
+                      placeholder="Add a custom module"
+                      className={fieldClasses}
+                      disabled={mode === 'view'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addChoice('includedModules', formData.newModule);
+                        setFormData((prev) => ({ ...prev, newModule: '' }));
+                      }}
+                      disabled={mode === 'view' || !formData.newModule.trim()}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {formData.includedModules.map((item) => (
                       <span key={item} className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
                         {item}
@@ -1143,6 +1212,34 @@ function ProjectPlansPage() {
                         {option}
                       </button>
                     ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      value={formData.newTech}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, newTech: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          addChoice('technologyStack', formData.newTech);
+                          setFormData((prev) => ({ ...prev, newTech: '' }));
+                        }
+                      }}
+                      placeholder="Add a custom technology"
+                      className={fieldClasses}
+                      disabled={mode === 'view'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addChoice('technologyStack', formData.newTech);
+                        setFormData((prev) => ({ ...prev, newTech: '' }));
+                      }}
+                      disabled={mode === 'view' || !formData.newTech.trim()}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {formData.technologyStack.map((item) => (

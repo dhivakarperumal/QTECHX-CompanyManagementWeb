@@ -28,7 +28,9 @@ async function createProjectPlanHandler(req, res) {
   try {
     const planPayload = {
       ...req.body,
-      plan_document: req.file ? `/uploads/projects/project_plans/${req.file.filename}` : req.body.plan_document ?? req.body.planDocument || null,
+      plan_document: req.file
+        ? `/uploads/projects/project_plans/${req.file.filename}`
+        : (req.body.plan_document ?? req.body.planDocument ?? null),
     };
     const plan = await createProjectPlan(planPayload);
     return ok(res, { message: 'Project plan created successfully', data: plan }, 201);
@@ -42,7 +44,9 @@ async function updateProjectPlanHandler(req, res) {
   try {
     const planPayload = {
       ...req.body,
-      plan_document: req.file ? `/uploads/projects/project_plans/${req.file.filename}` : req.body.plan_document ?? req.body.planDocument || undefined,
+      plan_document: req.file
+        ? `/uploads/projects/project_plans/${req.file.filename}`
+        : (req.body.plan_document ?? req.body.planDocument ?? undefined),
     };
     const plan = await updateProjectPlan(req.params.id, planPayload);
     if (!plan) return fail(res, 'Project plan not found', 404);
