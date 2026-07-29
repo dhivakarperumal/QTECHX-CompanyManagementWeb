@@ -73,7 +73,7 @@ exports.getAssignments = async (req, res) => {
     const db = getDB();
     
     let query = `
-      SELECT tta.*, tt.task_name, tt.description, ti.full_name as trainee_name
+      SELECT tta.*, tt.task_name, tt.description, ti.full_name as trainee_name, ti.type as trainee_type
       FROM trainee_task_assignments tta
       JOIN trainee_tasks tt ON tta.trainee_task_id = tt.id
       JOIN trainee_intern ti ON tta.trainee_intern_id = ti.uuid

@@ -9,6 +9,7 @@ const TraineeTaskAssign = () => {
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('All');
 
   // Form State
   const [selectedTask, setSelectedTask] = useState('');
@@ -238,6 +239,19 @@ const TraineeTaskAssign = () => {
 
       {/* Assignments Table */}
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+        <div className="flex items-center justify-between mb-4 px-2">
+          <h2 className="text-lg font-semibold text-white">Assigned Tasks</h2>
+          <select 
+            value={typeFilter} 
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+          >
+            <option value="All" className="text-black">All Types</option>
+            <option value="Trainee" className="text-black">Trainee</option>
+            <option value="Intern" className="text-black">Intern</option>
+          </select>
+        </div>
+        
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <table className="min-w-full text-sm">
             <thead className="bg-white/4 text-white/60">
@@ -257,13 +271,12 @@ const TraineeTaskAssign = () => {
                   <td colSpan="7" className="px-4 py-8 text-center text-white/40">
                     <Loader2 size={18} className="mx-auto animate-spin" />
                   </td>
-                </tr>
-              ) : assignments.length === 0 ? (
+              ) : assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter).length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found.</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
                 </tr>
               ) : (
-                assignments.map((assignment) => {
+                assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter).map((assignment) => {
                   const isEditing = editingAssignmentUuid === assignment.uuid;
                   return (
                     <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
