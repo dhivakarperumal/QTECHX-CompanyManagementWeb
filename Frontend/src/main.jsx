@@ -40,6 +40,7 @@ import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
+const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
 
 
 
@@ -167,6 +168,10 @@ const router = createHashRouter([
           {
             path: 'attendance/summary',
             element: <AttendancePage />,
+          },
+          {
+            path: 'expenses',
+            element: <ExpensesPage />,
           },
         ],
       },
