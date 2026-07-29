@@ -19,16 +19,18 @@ async function generatePersonCode(db) {
 async function createTraineeIntern(data) {
   const db = getDB();
   const personId = (data.person_id || '').toString().trim() || (await generatePersonCode(db));
+  const columns = `(
+    uuid, person_id, full_name, type, department, designation,
+    reporting_manager, joining_date, end_date, status,
+    mobile_number, email_address, current_address, emergency_contact_name,
+    emergency_contact_number, profile_photo, resume, college_id_doc,
+    offer_letter, internship_letter, college_university, course,
+    academic_department, year_semester, college_id_number, guide_name,
+    created_by, updated_by
+  )`;
+  const placeholders = Array(28).fill('?').join(', ');
   const [result] = await db.execute(
-    `INSERT INTO trainee_intern (
-      uuid, person_id, full_name, type, department, designation,
-      reporting_manager, joining_date, end_date, status,
-      mobile_number, email_address, current_address, emergency_contact_name,
-      emergency_contact_number, profile_photo, resume, college_id_doc,
-      offer_letter, internship_letter, college_university, course,
-      academic_department, year_semester, college_id_number, guide_name,
-      created_by, updated_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+    `INSERT INTO trainee_intern ${columns} VALUES (${placeholders})`,
     [
       data.uuid,
       personId,
