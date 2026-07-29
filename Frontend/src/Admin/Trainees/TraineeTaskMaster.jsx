@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster, toast } from 'react-hot-toast';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -69,7 +68,7 @@ const TraineeTaskMaster = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <Toaster position="top-right" />
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Trainee & Intern Task Master</h2>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">

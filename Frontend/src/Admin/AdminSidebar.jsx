@@ -129,6 +129,8 @@ const navItems = [
       { path: "/admin/trainees", label: "All Trainees & Interns", icon: GraduationCap },
       { path: "/admin/trainees/add", label: "Add Trainee / Intern", icon: UserCog },
       { path: "/admin/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
+      { path: "/admin/trainees/tasks", label: "Tasks", icon: CheckSquare },
+      { path: "/admin/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },
 
     ],
   },

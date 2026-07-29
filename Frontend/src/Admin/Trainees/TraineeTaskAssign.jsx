@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster, toast } from 'react-hot-toast';
 
 const TraineeTaskAssign = () => {
   const [assignments, setAssignments] = useState([]);
@@ -110,7 +109,7 @@ const TraineeTaskAssign = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <Toaster position="top-right" />
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Assign Tasks to Trainees/Interns</h2>
 
       {/* Assign Form */}
@@ -235,9 +234,9 @@ const TraineeTaskAssign = () => {
                             <option value="Cancelled">Cancelled</option>
                           </select>
                         ) : (
-                          <span className={\`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            \${assignment.status === 'Completed' ? 'bg-green-100 text-green-800' : 
-                              assignment.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}\`}>
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${assignment.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                              assignment.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
                             {assignment.status}
                           </span>
                         )}
@@ -255,7 +254,7 @@ const TraineeTaskAssign = () => {
                           </div>
                         ) : (
                           <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: \`\${assignment.progress}%\` }}></div>
+                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
                             <span className="text-xs mt-1 inline-block">{assignment.progress}%</span>
                           </div>
                         )}
