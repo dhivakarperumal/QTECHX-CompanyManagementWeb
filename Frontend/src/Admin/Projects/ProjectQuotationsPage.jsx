@@ -222,13 +222,16 @@ const ProjectQuotationsPage = () => {
     approval: data.approval || {},
   });
 
+  const getQuoteKey = (quote) => quote.uuid || quote.id;
+
   useEffect(() => {
     let isMounted = true;
     const loadQuotations = async () => {
       setLoading(true);
       try {
         const { data } = await api.get('/quotations?limit=200&page=1');
-        if (isMounted) setQuotations(data.data || []);
+        const payload = data?.data ?? data?.rows ?? data ?? [];
+        if (isMounted) setQuotations(Array.isArray(payload) ? payload : []);
       } catch (err) {
         console.error('loadQuotations:', err);
         toast.error('Failed to load quotations from the server.');
@@ -499,12 +502,12 @@ const ProjectQuotationsPage = () => {
   };
 
 
-  const toggleSelection = (id) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  const toggleSelection = (key) => {
+    setSelectedIds((prev) => (prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]));
   };
 
   const toggleAll = () => {
-    setSelectedIds((prev) => (prev.length === filteredQuotations.length ? [] : filteredQuotations.map((item) => item.id)));
+    setSelectedIds((prev) => (prev.length === filteredQuotations.length ? [] : filteredQuotations.map(getQuoteKey)));
   };
 
   const handleBulkAction = (action) => {
@@ -648,9 +651,15 @@ const ProjectQuotationsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredQuotations.map((quote) => (
-                  <tr key={quote.id} className="border-t border-white/10 text-slate-200 hover:bg-white/5">
-                    <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(quote.id)} onChange={() => toggleSelection(quote.id)} className="h-4 w-4 rounded border-white/20 bg-transparent" /></td>
+                {filteredQuotations.length === 0 ? (
+                  <tr>
+                    <td colSpan="10" className="px-4 py-8 text-center text-slate-400">
+                      {loading ? 'Loading quotations...' : 'No quotations found. Please confirm the backend API is running and authenticated.'}
+                    </td>
+                  </tr>
+                ) : filteredQuotations.map((quote) => (
+                  <tr key={getQuoteKey(quote)} className="border-t border-white/10 text-slate-200 hover:bg-white/5">
+                    <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(getQuoteKey(quote))} onChange={() => toggleSelection(getQuoteKey(quote))} className="h-4 w-4 rounded border-white/20 bg-transparent" /></td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{quote.quotation_number}</div>
                       <div className="mt-1 text-xs text-slate-400">{quote.company_name || quote.client_name || 'Unknown client'}</div>
