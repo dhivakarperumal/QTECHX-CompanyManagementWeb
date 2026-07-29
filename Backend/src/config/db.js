@@ -377,6 +377,45 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_timesheets_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_tasks (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      task_name VARCHAR(255) NOT NULL,
+      description TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_trainee_tasks_uuid (uuid)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_task_assignments (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      trainee_task_id INT UNSIGNED NOT NULL,
+      trainee_intern_id VARCHAR(36) NOT NULL,
+      assigned_date DATE NULL,
+      assigned_time TIME NULL,
+      due_date DATE NULL,
+      status ENUM('Pending','In Progress','On Hold','Review','Completed','Cancelled') NOT NULL DEFAULT 'Pending',
+      progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      daily_report TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_tta_uuid (uuid),
+      INDEX idx_tta_trainee_task_id (trainee_task_id),
+      INDEX idx_tta_trainee_intern_id (trainee_intern_id),
+      CONSTRAINT fk_tta_trainee_task FOREIGN KEY (trainee_task_id) REFERENCES trainee_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_tta_trainee_intern FOREIGN KEY (trainee_intern_id) REFERENCES trainee_intern (uuid) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {
