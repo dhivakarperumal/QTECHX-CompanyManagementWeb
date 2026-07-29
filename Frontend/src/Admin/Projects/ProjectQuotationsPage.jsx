@@ -189,7 +189,7 @@ const ProjectQuotationsPage = () => {
   const [clientLoading, setClientLoading] = useState(false);
   const [selectedClientUuid, setSelectedClientUuid] = useState('');
 
-  const clientOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.company_name).filter(Boolean))), [quotations]);
+  const clientOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.company_name || item.client_name).filter(Boolean))), [quotations]);
   const projectOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.project_name).filter(Boolean))), [quotations]);
   const createdByOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.created_by).filter(Boolean))), [quotations]);
 
@@ -199,7 +199,7 @@ const ProjectQuotationsPage = () => {
         .join(" ")
         .toLowerCase()
         .includes(filters.search.toLowerCase());
-      const matchesClient = !filters.client || item.company_name === filters.client;
+      const matchesClient = !filters.client || item.company_name === filters.client || item.client_name === filters.client;
       const matchesProject = !filters.project || item.project_name === filters.project;
       const matchesService = !filters.service_type || item.service_type === filters.service_type;
       const matchesStatus = !filters.status || item.status === filters.status;
@@ -652,7 +652,7 @@ const ProjectQuotationsPage = () => {
                     <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(quote.id)} onChange={() => toggleSelection(quote.id)} className="h-4 w-4 rounded border-white/20 bg-transparent" /></td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{quote.quotation_number}</div>
-                      <div className="mt-1 text-xs text-slate-400">{quote.company_name}</div>
+                      <div className="mt-1 text-xs text-slate-400">{quote.company_name || quote.client_name || 'Unknown client'}</div>
                     </td>
                     <td className="px-4 py-3">{quote.project_name}</td>
                     <td className="px-4 py-3">{quote.client_name}</td>
@@ -689,16 +689,12 @@ const ProjectQuotationsPage = () => {
                 <h2 className="mt-2 text-2xl font-semibold text-white">{modalMode === "view" ? (activeQuotation?.quotation_number || "Quotation") : modalMode === "edit" ? "Update quotation details" : "Create a new quotation"}</h2>
                 <p className="mt-2 max-w-2xl text-sm text-slate-400">Capture the project scope, pricing, approvals, and engagement history in one place.</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {modalMode !== "view" ? (
-                  <button disabled={saving} onClick={submitQuotation} className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-70">
-                    <Save className="h-4 w-4" /> {saving ? 'Saving...' : 'Save quotation'}
-                  </button>
-                ) : (
+              <div className="flex flex-wrap gap-2 justify-between">
+                {modalMode === "view" ? (
                   <button onClick={() => openEditModal(activeQuotation)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
                     <Pencil className="h-4 w-4" /> Edit
                   </button>
-                )}
+                ) : null}
                 <button onClick={closeModal} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">Close</button>
               </div>
             </div>
@@ -763,7 +759,7 @@ const ProjectQuotationsPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.1fr_0.9fr]">
                 <div className="space-y-6">
                   <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold text-white">Basic information</h3>
@@ -926,10 +922,8 @@ const ProjectQuotationsPage = () => {
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-6">
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                   <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold text-white">Pricing summary</h3>
                     <div className="mt-4 grid gap-3">
                       <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-3 text-sm text-slate-300"><span>Sub total</span><span>{formatCurrency(formData.subtotal || 0, formData.currency || "INR")}</span></div>
@@ -958,6 +952,10 @@ const ProjectQuotationsPage = () => {
                       <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-3 text-sm text-slate-300"><span>Remaining balance</span><span>{formatCurrency(formData.balance_amount || 0, formData.currency || "INR")}</span></div>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-6">
+                 
 
                   <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold text-white">Project timeline</h3>
@@ -1103,6 +1101,14 @@ const ProjectQuotationsPage = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+            {modalMode !== 'view' && (
+              <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-4">
+                <button onClick={closeModal} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">Close</button>
+                <button disabled={saving} onClick={submitQuotation} className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-70">
+                  <Save className="h-4 w-4" /> {saving ? 'Saving...' : 'Save quotation'}
+                </button>
               </div>
             )}
           </div>
