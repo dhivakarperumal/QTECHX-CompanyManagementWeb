@@ -129,15 +129,7 @@ const navItems = [
       { path: "/admin/trainees", label: "All Trainees & Interns", icon: GraduationCap },
       { path: "/admin/trainees/add", label: "Add Trainee / Intern", icon: UserCog },
       { path: "/admin/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
-      // { path: "/admin/internships", label: "All Internships", icon: BookOpen },
-      // { path: "/admin/internships/add", label: "Add Internship", icon: FileText },
-      { path: "/admin/leaves", label: "All Leaves", icon: CalendarOff },
-      { path: "/admin/leaves/requests", label: "Leave Requests", icon: FileText },
-      { path: "/admin/leaves/followups", label: "Leave Followups", icon: Clock },
-      { path: "/trainees/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/trainees/attendance/view/:id", label: "Summary", icon: BarChart3 },
-      { path: "/admin/attendance/followups", label: "Attendance Followups", icon: Clock },
-      { path: "/admin/attendance/class", label: "Attendance Class", icon: Layers },
+
     ],
   },
 
