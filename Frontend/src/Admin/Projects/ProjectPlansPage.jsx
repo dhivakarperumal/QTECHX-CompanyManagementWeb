@@ -94,6 +94,8 @@ const createEmptyForm = () => ({
   displayOrder: '1',
   planIcon: '',
   coverImage: '',
+  planDocument: null,
+  planDocumentName: '',
   metaTitle: '',
   metaDescription: '',
   keywords: '',
@@ -110,6 +112,17 @@ const createEmptyForm = () => ({
 
 const selectClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
 const fieldClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
+
+const generatePlanCode = (existingPlans = []) => {
+  const existingCodes = new Set(existingPlans.map((plan) => String(plan.planCode || '').toUpperCase()));
+  let nextIndex = existingPlans.length + 1;
+  let candidate = `PLAN-${String(nextIndex).padStart(3, '0')}`;
+  while (existingCodes.has(candidate)) {
+    nextIndex += 1;
+    candidate = `PLAN-${String(nextIndex).padStart(3, '0')}`;
+  }
+  return candidate;
+};
 
 const formatCurrency = (value) => {
   if (value === '' || value === null || value === undefined) return '—';
@@ -211,175 +224,9 @@ const statuses = ['Draft', 'Active', 'Inactive'];
 const billingCycles = ['One Time', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'Lifetime'];
 const featuredBadges = ['Popular', 'Recommended', 'Best Seller', 'Premium', 'Enterprise', 'New Launch'];
 
-const initialPlans = [
-  {
-    id: 1,
-    planId: 'PLAN-001',
-    planCode: 'WEB-START',
-    planName: 'Starter Website Plan',
-    projectType: 'Website',
-    category: 'Website',
-    shortDescription: 'A polished starter package for fast-moving businesses.',
-    fullDescription: 'Ideal for businesses that want a strong online presence with modern design, essential pages, and reliable hosting.',
-    basePrice: 45000,
-    discountPrice: 39000,
-    currency: 'INR',
-    taxPercentage: 0,
-    setupFee: 5000,
-    renewalPrice: 15000,
-    billingCycle: 'Yearly',
-    deliveryDays: 30,
-    minimumDeliveryDays: 15,
-    maximumDeliveryDays: 45,
-    priorityDeliveryAvailable: 'Yes',
-    rushDeliveryCharges: 5000,
-    uiUxDesigner: 1,
-    frontendDeveloper: 1,
-    backendDeveloper: 0,
-    mobileDeveloper: 0,
-    qaEngineer: 1,
-    devOpsEngineer: 0,
-    projectManager: 1,
-    supportEngineer: 1,
-    estimatedTeamSize: 4,
-    hostingIncluded: 'Yes',
-    hostingType: 'Cloud Hosting',
-    storageLimit: '50 GB',
-    bandwidthLimit: '200 GB',
-    freeSsl: 'Yes',
-    freeEmailAccounts: '5',
-    dailyBackup: 'Yes',
-    hostingDuration: '12 Months',
-    domainIncluded: 'Yes',
-    domainExtension: '.com',
-    domainValidity: '1 Year',
-    freeRenewal: 'Yes',
-    whoisPrivacy: 'Yes',
-    freeMaintenance: 'Yes',
-    maintenanceDuration: '6 Months',
-    bugFixesIncluded: 'Yes',
-    securityUpdates: 'Yes',
-    performanceOptimization: 'Yes',
-    backupSupport: 'Yes',
-    emailSupport: 'Yes',
-    phoneSupport: 'Yes',
-    whatsappSupport: 'No',
-    liveChat: 'Yes',
-    prioritySupport: 'No',
-    dedicatedProjectManager: 'No',
-    supportDuration: '6 Months',
-    responseSla: '24 Hours',
-    sourceCode: 'Yes',
-    documentation: 'Yes',
-    installationGuide: 'Yes',
-    apiDocumentation: 'No',
-    userManual: 'Yes',
-    adminManual: 'Yes',
-    trainingSession: 'No',
-    deployment: 'Yes',
-    testingReport: 'Yes',
-    featuredBadge: 'Recommended',
-    status: 'Active',
-    displayOrder: 1,
-    features: ['Responsive Design', 'SEO Friendly', 'Free Domain'],
-    includedModules: ['Authentication', 'Dashboard', 'Contact Form'],
-    technologyStack: ['React', 'Tailwind CSS', 'Node.js', 'MongoDB'],
-    activeProjectsUsingPlan: 3,
-    completedProjectsUsingPlan: 2,
-    createdBy: 'Sajid Khan',
-    createdAt: '2024-10-15T09:00:00.000Z',
-    updatedAt: '2025-02-10T09:30:00.000Z',
-  },
-  {
-    id: 2,
-    planId: 'PLAN-002',
-    planCode: 'APP-GROW',
-    planName: 'Growth App Plan',
-    projectType: 'Web Application',
-    category: 'Web Application',
-    shortDescription: 'A scalable web app package with advanced admin tools.',
-    fullDescription: 'Designed for growth-focused companies that need automation, analytics, and smooth workflows.',
-    basePrice: 145000,
-    discountPrice: 129000,
-    currency: 'INR',
-    taxPercentage: 5,
-    setupFee: 12000,
-    renewalPrice: 30000,
-    billingCycle: 'Monthly',
-    deliveryDays: 45,
-    minimumDeliveryDays: 30,
-    maximumDeliveryDays: 60,
-    priorityDeliveryAvailable: 'Yes',
-    rushDeliveryCharges: 8000,
-    uiUxDesigner: 1,
-    frontendDeveloper: 2,
-    backendDeveloper: 2,
-    mobileDeveloper: 0,
-    qaEngineer: 1,
-    devOpsEngineer: 1,
-    projectManager: 1,
-    supportEngineer: 1,
-    estimatedTeamSize: 8,
-    hostingIncluded: 'Yes',
-    hostingType: 'Cloud Hosting',
-    storageLimit: '200 GB',
-    bandwidthLimit: '500 GB',
-    freeSsl: 'Yes',
-    freeEmailAccounts: '10',
-    dailyBackup: 'Yes',
-    hostingDuration: '24 Months',
-    domainIncluded: 'Yes',
-    domainExtension: '.in',
-    domainValidity: '2 Years',
-    freeRenewal: 'Yes',
-    whoisPrivacy: 'No',
-    freeMaintenance: 'Yes',
-    maintenanceDuration: '12 Months',
-    bugFixesIncluded: 'Yes',
-    securityUpdates: 'Yes',
-    performanceOptimization: 'Yes',
-    backupSupport: 'Yes',
-    emailSupport: 'Yes',
-    phoneSupport: 'Yes',
-    whatsappSupport: 'Yes',
-    liveChat: 'Yes',
-    prioritySupport: 'Yes',
-    dedicatedProjectManager: 'Yes',
-    supportDuration: '12 Months',
-    responseSla: '8 Hours',
-    sourceCode: 'Yes',
-    documentation: 'Yes',
-    installationGuide: 'Yes',
-    apiDocumentation: 'Yes',
-    userManual: 'Yes',
-    adminManual: 'Yes',
-    trainingSession: 'Yes',
-    deployment: 'Yes',
-    testingReport: 'Yes',
-    featuredBadge: 'Popular',
-    status: 'Draft',
-    displayOrder: 2,
-    features: ['Admin Dashboard', 'Analytics', 'Payment Integration'],
-    includedModules: ['User Management', 'Project Management', 'Reports', 'Analytics'],
-    technologyStack: ['React', 'Next.js', 'Express.js', 'PostgreSQL', 'AWS'],
-    activeProjectsUsingPlan: 1,
-    completedProjectsUsingPlan: 0,
-    createdBy: 'Admin',
-    createdAt: '2024-12-12T09:00:00.000Z',
-    updatedAt: '2025-03-01T09:30:00.000Z',
-  },
-];
-
+const initialPlans = [];
 function ProjectPlansPage() {
-  const [plans, setPlans] = useState(() => {
-    if (typeof window === 'undefined') return initialPlans;
-    try {
-      const cached = window.localStorage.getItem('qtechx-project-plans');
-      return cached ? JSON.parse(cached) : initialPlans;
-    } catch {
-      return initialPlans;
-    }
-  });
+  const [plans, setPlans] = useState(initialPlans);
   const [backendAvailable, setBackendAvailable] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -399,20 +246,14 @@ function ProjectPlansPage() {
   const [formData, setFormData] = useState(createEmptyForm());
 
   useEffect(() => {
-    window.localStorage.setItem('qtechx-project-plans', JSON.stringify(plans));
-  }, [plans]);
-
-  useEffect(() => {
     const loadPlans = async () => {
       try {
         const response = await api.get('/project-plans');
         const fetchedPlans = Array.isArray(response?.data?.data) ? response.data.data : [];
-        if (fetchedPlans.length) {
-          setPlans(fetchedPlans);
-        }
+        setPlans(fetchedPlans);
         setBackendAvailable(true);
       } catch (error) {
-        console.warn('Project plans API unavailable, using local cache', error);
+        console.warn('Project plans API unavailable', error);
         setBackendAvailable(false);
       }
     };
@@ -509,6 +350,10 @@ function ProjectPlansPage() {
 
   const openCreateDrawer = () => {
     resetForm();
+    setFormData((prev) => ({
+      ...prev,
+      planCode: generatePlanCode(plans),
+    }));
     setDrawerOpen(true);
   };
 
@@ -557,6 +402,11 @@ function ProjectPlansPage() {
   const handleFileChange = (event, field) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (field === 'planDocument') {
+      setFormData((prev) => ({ ...prev, planDocument: file, planDocumentName: file.name }));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       setFormData((prev) => ({ ...prev, [field]: reader.result, [`${field}Name`]: file.name }));
@@ -581,10 +431,6 @@ function ProjectPlansPage() {
   const validateForm = () => {
     if (!formData.planName.trim()) {
       setToast('Plan name is required.');
-      return false;
-    }
-    if (!formData.planCode.trim()) {
-      setToast('Plan code is required.');
       return false;
     }
     if (!formData.projectType.trim()) {
@@ -614,10 +460,15 @@ function ProjectPlansPage() {
       return false;
     }
 
-    const existingCode = plans.find((plan) => plan.planCode.toLowerCase() === formData.planCode.trim().toLowerCase() && plan.id !== currentPlan?.id);
-    if (existingCode) {
-      setToast('Plan code must be unique.');
-      return false;
+    const planCodeValue = formData.planCode.trim();
+    if (planCodeValue) {
+      const existingCode = plans.find(
+        (plan) => plan.planCode.toLowerCase() === planCodeValue.toLowerCase() && plan.id !== currentPlan?.id
+      );
+      if (existingCode) {
+        setToast('Plan code must be unique.');
+        return false;
+      }
     }
 
     return true;
@@ -627,7 +478,7 @@ function ProjectPlansPage() {
     event.preventDefault();
     if (!validateForm()) return;
 
-    const normalizedCode = formData.planCode.trim().toUpperCase();
+    const normalizedCode = (formData.planCode.trim() || generatePlanCode(plans)).toUpperCase();
     const planPayload = {
       ...formData,
       id: currentPlan?.id || Date.now(),
@@ -656,11 +507,33 @@ function ProjectPlansPage() {
       updatedAt: new Date().toISOString(),
     };
 
+    const useMultipart = formData.planDocument instanceof File;
+    const requestPayload = useMultipart ? new FormData() : planPayload;
+    if (useMultipart) {
+      const safePayload = { ...planPayload };
+      delete safePayload.planDocument;
+      delete safePayload.planDocumentName;
+      Object.entries(safePayload).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        if (typeof value === 'object' && !(value instanceof File)) {
+          requestPayload.append(key, JSON.stringify(value));
+        } else {
+          requestPayload.append(key, value);
+        }
+      });
+      requestPayload.append('plan_document', formData.planDocument);
+    }
+
+    const responsePayload = (response) => {
+      if (!response?.data?.data) return planPayload;
+      return response.data.data;
+    };
+
     if (currentPlan) {
       if (backendAvailable) {
         try {
-          const response = await api.put(`/project-plans/${currentPlan.id}`, planPayload);
-          const updatedPlan = response?.data?.data || planPayload;
+          const response = await api.put(`/project-plans/${currentPlan.id}`, requestPayload);
+          const updatedPlan = responsePayload(response);
           setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
           setToast('Plan updated successfully.');
         } catch (error) {
@@ -676,7 +549,7 @@ function ProjectPlansPage() {
     } else {
       if (backendAvailable) {
         try {
-          const response = await api.post('/project-plans', planPayload);
+          const response = await api.post('/project-plans', requestPayload);
           const createdPlan = response?.data?.data || planPayload;
           setPlans((prev) => [createdPlan, ...prev]);
           setToast('Plan created successfully.');
@@ -1118,6 +991,15 @@ function ProjectPlansPage() {
                   <span className="mb-1 block">Plan Icon</span>
                   <input type="file" accept="image/*" onChange={(event) => handleFileChange(event, 'planIcon')} className={fieldClasses} disabled={mode === 'view'} />
                   {formData.planIcon ? <img src={formData.planIcon} alt="Plan icon preview" className="mt-2 h-14 w-14 rounded-2xl object-cover" /> : null}
+                </label>
+                <label className="text-sm text-white/70">
+                  <span className="mb-1 block">Project Document</span>
+                  <input type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" onChange={(event) => handleFileChange(event, 'planDocument')} className={fieldClasses} disabled={mode === 'view'} />
+                  {formData.planDocumentName ? (
+                    <p className="mt-2 text-sm text-white/70">{formData.planDocumentName}</p>
+                  ) : formData.planDocument ? (
+                    <p className="mt-2 text-sm text-white/70">{typeof formData.planDocument === 'string' ? formData.planDocument : 'Selected file'}</p>
+                  ) : null}
                 </label>
                 <label className="text-sm text-white/70 md:col-span-2">
                   <span className="mb-1 block">Cover Image</span>

@@ -26,11 +26,30 @@ async function getAllProjectPlansHandler(req, res) {
 
 async function createProjectPlanHandler(req, res) {
   try {
-    const plan = await createProjectPlan(req.body);
+    const planPayload = {
+      ...req.body,
+      plan_document: req.file ? `/uploads/projects/project_plans/${req.file.filename}` : req.body.plan_document ?? req.body.planDocument || null,
+    };
+    const plan = await createProjectPlan(planPayload);
     return ok(res, { message: 'Project plan created successfully', data: plan }, 201);
   } catch (err) {
     console.error('createProjectPlanHandler:', err);
     return fail(res, 'Failed to create project plan', 500, err.message);
+  }
+}
+
+async function updateProjectPlanHandler(req, res) {
+  try {
+    const planPayload = {
+      ...req.body,
+      plan_document: req.file ? `/uploads/projects/project_plans/${req.file.filename}` : req.body.plan_document ?? req.body.planDocument || undefined,
+    };
+    const plan = await updateProjectPlan(req.params.id, planPayload);
+    if (!plan) return fail(res, 'Project plan not found', 404);
+    return ok(res, { message: 'Project plan updated successfully', data: plan });
+  } catch (err) {
+    console.error('updateProjectPlanHandler:', err);
+    return fail(res, 'Failed to update project plan', 500, err.message);
   }
 }
 
@@ -42,17 +61,6 @@ async function getProjectPlanHandler(req, res) {
   } catch (err) {
     console.error('getProjectPlanHandler:', err);
     return fail(res, 'Failed to retrieve project plan', 500, err.message);
-  }
-}
-
-async function updateProjectPlanHandler(req, res) {
-  try {
-    const plan = await updateProjectPlan(req.params.id, req.body);
-    if (!plan) return fail(res, 'Project plan not found', 404);
-    return ok(res, { message: 'Project plan updated successfully', data: plan });
-  } catch (err) {
-    console.error('updateProjectPlanHandler:', err);
-    return fail(res, 'Failed to update project plan', 500, err.message);
   }
 }
 

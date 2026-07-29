@@ -52,6 +52,7 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/project-plans", projectPlanRouter);
+console.log('Mounted backend route: /api/project-plans');
 app.use("/api/tasks", taskRouter);
 
 // Serve uploaded files from the backend uploads directory as inline browser content

@@ -119,34 +119,6 @@ async function ensureProjectAssignmentsSchema(pool) {
     await pool.execute('ALTER TABLE project_assignments DROP INDEX uq_project_assignments_project_employee');
   }
 
-}
-
-async function ensureProjectPlanSchema(pool) {
-  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'project_plan'");
-
-  if (!existingTables.length) {
-    await pool.execute(
-      `CREATE TABLE IF NOT EXISTS project_plan (
-        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        plan_id VARCHAR(50) NOT NULL,
-        plan_code VARCHAR(100) NOT NULL,
-        plan_name VARCHAR(255) NOT NULL,
-        project_type VARCHAR(100) NULL,
-        category VARCHAR(100) NULL,
-        status ENUM('Draft','Active','Inactive') NOT NULL DEFAULT 'Draft',
-        plan_data JSON NULL,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by VARCHAR(100) NULL,
-        updated_by VARCHAR(100) NULL,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_project_plan_code (plan_code)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-    );
-    return;
-  }
-}
-
   if (legacyRows.length) {
     const groupedProjects = new Map();
     legacyRows.forEach((row) => {
@@ -191,6 +163,43 @@ async function ensureProjectPlanSchema(pool) {
   }
   if (!hasEmployeeIndex && columnNames.has('employee_id')) {
     await pool.execute('ALTER TABLE project_assignments ADD INDEX idx_project_assignments_employee (employee_id)');
+  }
+}
+
+async function ensureProjectPlanSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'project_plan'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS project_plan (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        plan_id VARCHAR(50) NOT NULL,
+        plan_code VARCHAR(100) NOT NULL,
+        plan_name VARCHAR(255) NOT NULL,
+        project_type VARCHAR(100) NULL,
+        category VARCHAR(100) NULL,
+        status ENUM('Draft','Active','Inactive') NOT NULL DEFAULT 'Draft',
+        plan_data JSON NULL,
+        plan_document VARCHAR(500) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(100) NULL,
+        updated_by VARCHAR(100) NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_project_plan_code (plan_code)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute('SHOW COLUMNS FROM project_plan');
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+  if (!columnNames.has('plan_document')) {
+    addColumnStatements.push('ADD COLUMN plan_document VARCHAR(500) NULL AFTER plan_data');
+  }
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE project_plan ${addColumnStatements.join(', ')}`);
   }
 }
 

@@ -23,6 +23,7 @@ if (!fs.existsSync(projectUploadDir)) {
 const projectImagesDir = path.join(projectUploadDir, "images");
 const projectImagesZipDir = path.join(projectUploadDir, "ProjectImageZip");
 const projectSourceBackupDir = path.join(projectUploadDir, "source_code_backup");
+const projectPlanUploadDir = path.join(projectUploadDir, "project_plans");
 
 if (!fs.existsSync(projectImagesDir)) {
   fs.mkdirSync(projectImagesDir, { recursive: true });
@@ -33,6 +34,9 @@ if (!fs.existsSync(projectImagesZipDir)) {
 if (!fs.existsSync(projectSourceBackupDir)) {
   fs.mkdirSync(projectSourceBackupDir, { recursive: true });
 }
+if (!fs.existsSync(projectPlanUploadDir)) {
+  fs.mkdirSync(projectPlanUploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -40,8 +44,10 @@ const storage = multer.diskStorage({
 
     if (req.baseUrl?.includes("/clients")) {
       destinationDir = clientUploadDir;
-    } else if (req.baseUrl?.includes("/projects")) {
-      if (file.fieldname === 'project_images' && path.extname(file.originalname).toLowerCase() === '.zip') {
+    } else if (req.baseUrl?.includes("/projects") || req.baseUrl?.includes("/project-plans")) {
+      if (file.fieldname === 'plan_document' || file.fieldname === 'project_plans') {
+        destinationDir = projectPlanUploadDir;
+      } else if (file.fieldname === 'project_images' && path.extname(file.originalname).toLowerCase() === '.zip') {
         destinationDir = projectImagesZipDir;
       } else if (file.fieldname === 'project_images') {
         destinationDir = projectImagesDir;

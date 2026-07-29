@@ -5,8 +5,8 @@ async function createProjectPlan(plan = {}) {
   const [result] = await db.execute(
     `INSERT INTO project_plan (
       plan_id, plan_code, plan_name, project_type, category, status,
-      plan_data, created_by, updated_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      plan_data, plan_document, created_by, updated_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       plan.planId || null,
       plan.planCode || null,
@@ -15,6 +15,7 @@ async function createProjectPlan(plan = {}) {
       plan.category || null,
       plan.status || 'Draft',
       JSON.stringify(plan),
+      plan.plan_document || null,
       plan.createdBy || null,
       plan.updatedBy || null,
     ]
@@ -25,7 +26,7 @@ async function createProjectPlan(plan = {}) {
 async function listProjectPlans() {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, plan_id, plan_code, plan_name, project_type, category, status, plan_data, created_at, updated_at FROM project_plan ORDER BY updated_at DESC`
+    `SELECT id, plan_id, plan_code, plan_name, project_type, category, status, plan_data, plan_document, created_at, updated_at FROM project_plan ORDER BY updated_at DESC`
   );
   return rows.map((row) => {
     const parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
@@ -37,7 +38,7 @@ async function listProjectPlans() {
       planName: row.plan_name || parsedData.planName,
       projectType: row.project_type || parsedData.projectType,
       category: row.category || parsedData.category,
-      status: row.status || parsedData.status,
+      status: row.status || parsedData.status,      planDocument: row.plan_document || parsedData.planDocument || null,      planDocument: row.plan_document || parsedData.planDocument || null,
       createdAt: row.created_at ? row.created_at.toISOString() : parsedData.createdAt,
       updatedAt: row.updated_at ? row.updated_at.toISOString() : parsedData.updatedAt,
     };
@@ -47,7 +48,7 @@ async function listProjectPlans() {
 async function findProjectPlanById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, plan_id, plan_code, plan_name, project_type, category, status, plan_data, created_at, updated_at FROM project_plan WHERE id = ? LIMIT 1`,
+    `SELECT id, plan_id, plan_code, plan_name, project_type, category, status, plan_data, plan_document, created_at, updated_at FROM project_plan WHERE id = ? LIMIT 1`,
     [id]
   );
   const row = rows[0];
@@ -69,10 +70,10 @@ async function findProjectPlanById(id) {
 
 async function updateProjectPlan(id, plan = {}) {
   const db = getDB();
-  const [existingRows] = await db.execute(`SELECT plan_id, plan_code, plan_name, project_type, category, status FROM project_plan WHERE id = ? LIMIT 1`, [id]);
+  const [existingRows] = await db.execute(`SELECT plan_id, plan_code, plan_name, project_type, category, status, plan_document FROM project_plan WHERE id = ? LIMIT 1`, [id]);
   if (!existingRows.length) return null;
   await db.execute(
-    `UPDATE project_plan SET plan_id = ?, plan_code = ?, plan_name = ?, project_type = ?, category = ?, status = ?, plan_data = ?, updated_by = ? WHERE id = ?`,
+    `UPDATE project_plan SET plan_id = ?, plan_code = ?, plan_name = ?, project_type = ?, category = ?, status = ?, plan_data = ?, plan_document = ?, updated_by = ? WHERE id = ?`,
     [
       plan.planId || existingRows[0].plan_id,
       plan.planCode || existingRows[0].plan_code,
@@ -81,6 +82,7 @@ async function updateProjectPlan(id, plan = {}) {
       plan.category || existingRows[0].category,
       plan.status || existingRows[0].status,
       JSON.stringify(plan),
+      plan.plan_document !== undefined ? plan.plan_document : existingRows[0].plan_document,
       plan.updatedBy || null,
       id,
     ]
