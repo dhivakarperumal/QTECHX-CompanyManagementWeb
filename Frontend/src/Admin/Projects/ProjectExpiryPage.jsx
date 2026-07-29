@@ -39,49 +39,64 @@ export default function ProjectExpiryPage() {
   const [form, setForm] = useState({ project_id: '', client_id: '', client_name: '', domain_name: '', expiry_type: 'Hosting', project_type: '', service_name: '', provider_name: '', plan_name: '', price_per_month: '', purchase_date: '', start_date: '', expiry_date: '', renewal_cost: '', payment_status: 'Pending', payment_method: '', invoice_number: '', auto_renew: false, renewal_status: 'Active', notes: '', internal_notes: '', status: 'Active' });
   const [renewForm, setRenewForm] = useState({ renewal_type: 'Hosting', new_expiry_date: '', renewal_amount: '', tax_amount: '', total_amount: '', payment_method: '', payment_status: 'Pending', invoice_number: '', notes: '' });
 
-  const loadData = async () => {
+  const fetchExpiryData = async () => {
     setIsLoading(true);
     try {
-      const [expiryRes, statsRes, assignmentRes, clientRes] = await Promise.all([
-        api.get('/project-expiries', { params: { ...filters, page: 1, limit: 50 } }),
-        api.get('/project-expiries/stats'),
-        api.get('/projects/assignments/all', { params: { page: 1, limit: 200 } }),
-        api.get('/clients', { params: { page: 1, limit: 100 } }),
+      const [expiryRes, statsRes] = await Promise.all([
+        api.get('/project-expiries', { params: { ...filters, page: 1, limit: 200 } }),
+        api.get('/project-expiries/stats').catch(() => ({ data: { data: {} } })),
       ]);
       setRecords(expiryRes?.data?.data || []);
       setStats(statsRes?.data?.data || {});
-      setClients(clientRes?.data?.data || []);
-
-      // Get unique assigned project UUIDs from assignments
-      const assignments = assignmentRes?.data?.data || [];
-      const assignedUUIDs = [...new Set(assignments.map((a) => a.project_uuid).filter(Boolean))];
-
-      if (assignedUUIDs.length > 0) {
-        // Fetch full project details (with client/domain) for each assigned project
-        const projectRes = await api.get('/projects', { params: { page: 1, limit: 200 } });
-        const allProjects = projectRes?.data?.data || [];
-        // Filter to only assigned projects
-        const assignedProjects = allProjects.filter((p) =>
-          assignedUUIDs.includes(p.uuid) || assignedUUIDs.includes(p.id)
-        );
-        setProjects(assignedProjects.length > 0 ? assignedProjects : allProjects);
-      } else {
-        // Fallback: show all projects
-        const projectRes = await api.get('/projects', { params: { page: 1, limit: 200 } });
-        setProjects(projectRes?.data?.data || []);
-      }
     } catch (error) {
-      console.error(error);
-      try {
-        const projectRes = await api.get('/projects', { params: { page: 1, limit: 200 } });
-        setProjects(projectRes?.data?.data || []);
-      } catch (e) { console.error(e); }
+      console.error('Failed to load expiry records:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  const fetchStaticData = async () => {
+    try {
+      const clientRes = await api.get('/clients', { params: { page: 1, limit: 100 } });
+      setClients(clientRes?.data?.data || []);
+    } catch (e) { console.error('Clients load failed:', e); }
+
+    try {
+      const assignmentRes = await api.get('/projects/assignments/all', { params: { page: 1, limit: 200 } });
+      const assignments = assignmentRes?.data?.data || [];
+      const assignedUUIDs = [...new Set(assignments.map((a) => a.project_uuid).filter(Boolean))];
+
+      const projectRes = await api.get('/projects', { params: { page: 1, limit: 200 } });
+      const allProjects = projectRes?.data?.data || [];
+
+      if (assignedUUIDs.length > 0) {
+        const assignedProjects = allProjects.filter((p) =>
+          assignedUUIDs.includes(p.uuid) || assignedUUIDs.includes(String(p.id))
+        );
+        setProjects(assignedProjects.length > 0 ? assignedProjects : allProjects);
+      } else {
+        setProjects(allProjects);
+      }
+    } catch (e) {
+      console.error('Projects load failed:', e);
+      try {
+        const projectRes = await api.get('/projects', { params: { page: 1, limit: 200 } });
+        setProjects(projectRes?.data?.data || []);
+      } catch (e2) { console.error(e2); }
+    }
+  };
+
+  const loadData = () => {
+    fetchExpiryData();
+  };
+
+  useEffect(() => {
+    fetchStaticData();
+  }, []);
+
+  useEffect(() => {
+    fetchExpiryData();
+  }, [filters]);
 
   const visibleRecords = useMemo(() => records.map((record) => ({ ...record, days_remaining: record.expiry_date ? Math.ceil((new Date(record.expiry_date) - new Date(new Date().toDateString())) / (1000 * 60 * 60 * 24)) : null })), [records]);
 
@@ -140,14 +155,16 @@ export default function ProjectExpiryPage() {
     setForm({
       project_id: record.project_id || '',
       client_id: record.client_id || '',
+      client_name: record.client_name || record.company_name || '',
+      domain_name: record.domain_name || '',
       expiry_type: record.expiry_type || 'Hosting',
       project_type: record.project_type || '',
       service_name: record.service_name || '',
       provider_name: record.provider_name || '',
       plan_name: record.plan_name || '',
-      purchase_date: record.purchase_date || '',
-      start_date: record.start_date || '',
-      expiry_date: record.expiry_date || '',
+      purchase_date: record.purchase_date ? record.purchase_date.split('T')[0] : '',
+      start_date: record.start_date ? record.start_date.split('T')[0] : '',
+      expiry_date: record.expiry_date ? record.expiry_date.split('T')[0] : '',
       renewal_cost: record.renewal_cost || '',
       payment_status: record.payment_status || 'Pending',
       payment_method: record.payment_method || '',
@@ -329,50 +346,98 @@ export default function ProjectExpiryPage() {
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-800/80 text-slate-300">
+              <thead className="bg-slate-800/80 text-slate-300 text-xs uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-3 text-left">Project</th>
-                  <th className="px-4 py-3 text-left">Type</th>
-                  <th className="px-4 py-3 text-left">Provider</th>
-                  <th className="px-4 py-3 text-left">Expiry</th>
-                  <th className="px-4 py-3 text-left">Days</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">#</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Project / Client</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Service Name</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Expiry Type</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Provider / Plan</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Purchase Date</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Start Date</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Expiry Date</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Days Left</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Renewal Cost</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Payment</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Auto Renew</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Renewal Status</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-left whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan="7" className="px-4 py-10 text-center text-slate-400">Loading expiry records…</td></tr>
+                  <tr><td colSpan="15" className="px-4 py-10 text-center text-slate-400">Loading expiry records…</td></tr>
                 ) : visibleRecords.length === 0 ? (
-                  <tr><td colSpan="7" className="px-4 py-10 text-center text-slate-400">No expiry records found.</td></tr>
-                ) : visibleRecords.map((record) => {
+                  <tr><td colSpan="15" className="px-4 py-10 text-center text-slate-400">No expiry records found.</td></tr>
+                ) : visibleRecords.map((record, idx) => {
                   const badge = getDaysBadge(record.days_remaining);
                   return (
-                    <tr key={record.id} className="border-t border-white/10 bg-slate-950/30 hover:bg-slate-800/40">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-white">{record.project_name || `Project #${record.project_id}`}</div>
-                        <div className="text-xs text-slate-400">{record.client_name || 'No client'}</div>
+                    <tr key={record.id} className="border-t border-white/10 hover:bg-slate-800/40 transition-colors">
+                      <td className="px-4 py-3 text-slate-400 text-xs">{idx + 1}</td>
+                      <td className="px-4 py-3 min-w-[160px]">
+                        <div className="font-medium text-white truncate max-w-[150px]">{record.project_name || `Project #${record.project_id}`}</div>
+                        <div className="text-xs text-slate-400 truncate max-w-[150px]">{record.client_name || '—'}</div>
+                        {record.domain_name && <div className="text-xs text-orange-400/70 truncate max-w-[150px]">{record.domain_name}</div>}
                       </td>
-                      <td className="px-4 py-3">{record.expiry_type}</td>
-                      <td className="px-4 py-3">{record.provider_name || record.plan_name || '-'}</td>
-                      <td className="px-4 py-3">{record.expiry_date || '-'}</td>
-                      <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>{badge.label}</span></td>
-                      <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span></td>
+                      <td className="px-4 py-3 text-slate-200 whitespace-nowrap">{record.service_name || '—'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="rounded-full bg-blue-500/15 border border-blue-500/30 px-2.5 py-1 text-xs font-medium text-blue-300">{record.expiry_type || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 min-w-[140px]">
+                        <div className="text-slate-200 text-xs">{record.provider_name || '—'}</div>
+                        {record.plan_name && <div className="text-xs text-slate-400">{record.plan_name}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-slate-300 whitespace-nowrap text-xs">{record.purchase_date ? new Date(record.purchase_date).toLocaleDateString('en-IN') : '—'}</td>
+                      <td className="px-4 py-3 text-slate-300 whitespace-nowrap text-xs">{record.start_date ? new Date(record.start_date).toLocaleDateString('en-IN') : '—'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-white text-xs font-medium">{record.expiry_date ? new Date(record.expiry_date).toLocaleDateString('en-IN') : '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.className}`}>{badge.label}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {record.renewal_cost ? (
+                          <div className="text-emerald-400 text-xs font-semibold">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</div>
+                        ) : <span className="text-slate-500">—</span>}
+                        {record.payment_method && <div className="text-xs text-slate-400">{record.payment_method}</div>}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          record.payment_status === 'Paid' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                          record.payment_status === 'Failed' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
+                          'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        }`}>{record.payment_status || 'Pending'}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                        {record.auto_renew ? (
+                          <span className="text-emerald-400 text-xs font-medium">✓ Yes</span>
+                        ) : (
+                          <span className="text-slate-500 text-xs">No</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          record.status === 'Active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                        }`}>{record.status || 'Active'}</span>
+                      </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <button onClick={() => openAction(record, 'view')} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="View"><Eye size={16} /></button>
-                          <button onClick={() => openEdit(record)} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Edit"><Edit size={16} /></button>
-                          <button onClick={() => openAction(record, 'renew')} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Renew"><RefreshCcw size={16} /></button>
-                          <button onClick={() => openAction(record, 'history')} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="History"><History size={16} /></button>
-                          <button onClick={() => handleReminderSend(record)} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Reminder"><Send size={16} /></button>
-                          <button onClick={() => handleInvoiceDownload(record)} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Invoice"><Download size={16} /></button>
-                          <button onClick={() => window.print()} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Print"><Printer size={16} /></button>
-                          <button onClick={() => handleDelete(record.id)} className="rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10" title="Delete"><Trash2 size={16} /></button>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => openAction(record, 'view')} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-blue-500/20 hover:text-blue-300 hover:border-blue-500/30 transition-colors" title="View"><Eye size={14} /></button>
+                          <button onClick={() => openEdit(record)} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-orange-500/20 hover:text-orange-300 hover:border-orange-500/30 transition-colors" title="Edit"><Edit size={14} /></button>
+                          <button onClick={() => openAction(record, 'renew')} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/30 transition-colors" title="Renew"><RefreshCcw size={14} /></button>
+                          <button onClick={() => openAction(record, 'history')} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-purple-500/20 hover:text-purple-300 hover:border-purple-500/30 transition-colors" title="History"><History size={14} /></button>
+                          <button onClick={() => handleReminderSend(record)} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-sky-500/20 hover:text-sky-300 hover:border-sky-500/30 transition-colors" title="Send Reminder"><Send size={14} /></button>
+                          <button onClick={() => handleDelete(record.id)} className="rounded-xl border border-white/10 p-1.5 text-slate-300 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/30 transition-colors" title="Delete"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
                   );
                 })}
+
               </tbody>
             </table>
           </div>

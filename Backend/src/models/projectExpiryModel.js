@@ -42,18 +42,19 @@ function buildListWhereClause({ search, project_id, client_id, expiry_type, rene
     conditions.push('e.expiry_date <= ?');
     values.push(to_date);
   }
-  if (expiring_today) {
+  if (expiring_today === true || expiring_today === 'true') {
     conditions.push('e.expiry_date = CURDATE()');
   }
-  if (next_7_days) {
+  if (next_7_days === true || next_7_days === 'true') {
     conditions.push('e.expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)');
   }
-  if (next_30_days) {
+  if (next_30_days === true || next_30_days === 'true') {
     conditions.push('e.expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)');
   }
-  if (expired) {
+  if (expired === true || expired === 'true') {
     conditions.push('e.expiry_date < CURDATE()');
   }
+
 
   return { where: `WHERE ${conditions.join(' AND ')}`, values };
 }
@@ -109,7 +110,7 @@ async function listExpiryRecords(options = {}) {
   const { where, values } = buildListWhereClause(options);
 
   const [rows] = await db.execute(
-    `SELECT e.*, p.project_name, p.project_code, p.project_manager, c.client_name, c.company_name
+    `SELECT e.*, p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
      FROM project_expiry_management e
      LEFT JOIN projects p ON p.id = e.project_id
      LEFT JOIN clients c ON c.id = e.client_id
@@ -128,7 +129,7 @@ async function listExpiryRecords(options = {}) {
 async function getExpiryRecordById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT e.*, p.project_name, p.project_code, p.project_manager, c.client_name, c.company_name
+    `SELECT e.*, p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
      FROM project_expiry_management e
      LEFT JOIN projects p ON p.id = e.project_id
      LEFT JOIN clients c ON c.id = e.client_id
