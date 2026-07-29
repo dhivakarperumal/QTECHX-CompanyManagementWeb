@@ -759,9 +759,10 @@ const ProjectQuotationsPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.1fr_0.9fr]">
-                <div className="space-y-6">
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+              <>
+                <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.1fr_0.9fr]">
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                     <h3 className="text-lg font-semibold text-white">Basic information</h3>
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <label className="text-sm text-slate-300">
@@ -1087,21 +1088,22 @@ const ProjectQuotationsPage = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-lg font-semibold text-white">Notes & follow-up</h3>
-                    <div className="mt-4 space-y-3">
-                      <label className="text-sm text-slate-300">
-                        <span className="mb-2 block">Internal notes</span>
-                        <textarea value={formData.notes} onChange={(event) => updateField("notes", event.target.value)} className="min-h-24 w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none" />
-                      </label>
-                      <label className="text-sm text-slate-300">
-                        <span className="mb-2 block">Client notes</span>
-                        <textarea value={formData.client_message} onChange={(event) => updateField("client_message", event.target.value)} className="min-h-24 w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none" />
-                      </label>
-                    </div>
-                  </div>
                 </div>
               </div>
+              <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+                <h3 className="text-lg font-semibold text-white">Notes & follow-up</h3>
+                <div className="mt-4 space-y-3">
+                  <label className="text-sm text-slate-300">
+                    <span className="mb-2 block">Internal notes</span>
+                    <textarea value={formData.notes} onChange={(event) => updateField("notes", event.target.value)} className="min-h-24 w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none" />
+                  </label>
+                  <label className="text-sm text-slate-300">
+                    <span className="mb-2 block">Client notes</span>
+                    <textarea value={formData.client_message} onChange={(event) => updateField("client_message", event.target.value)} className="min-h-24 w-full rounded-2xl border border-white/10 bg-[#0f1119] px-3 py-2.5 text-white outline-none" />
+                  </label>
+                </div>
+              </div>
+              </>
             )}
             {modalMode !== 'view' && (
               <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-4">
