@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../../api';
+import dayjs from 'dayjs';
 import {
   Box,
   Building2,
@@ -144,11 +145,7 @@ const formatCurrency = (value) => {
 const formatDate = (value) => {
   if (!value) return '—';
   try {
-    return new Date(value).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    return dayjs(value).isValid() ? dayjs(value).format('DD MMM YYYY • HH:mm') : value;
   } catch {
     return value;
   }
@@ -256,7 +253,31 @@ function ProjectPlansPage() {
       try {
         const response = await api.get('/project-plans');
         const fetchedPlans = Array.isArray(response?.data?.data) ? response.data.data : [];
-        setPlans(fetchedPlans);
+
+        // Normalize fields that may be returned as JSON strings by the backend
+        const parseField = (val) => {
+          if (!val) return [];
+          if (Array.isArray(val)) return val;
+          if (typeof val === 'string') {
+            try {
+              const parsed = JSON.parse(val);
+              return Array.isArray(parsed) ? parsed : [parsed];
+            } catch {
+              // fallback: split comma-separated string
+              return val.split(',').map((s) => s.trim()).filter(Boolean);
+            }
+          }
+          return [];
+        };
+
+        const normalized = fetchedPlans.map((plan) => ({
+          ...plan,
+          features: parseField(plan.features),
+          includedModules: parseField(plan.includedModules),
+          technologyStack: parseField(plan.technologyStack),
+        }));
+
+        setPlans(normalized);
         setBackendAvailable(true);
       } catch (error) {
         console.warn('Project plans API unavailable', error);
@@ -545,8 +566,27 @@ function ProjectPlansPage() {
     if (currentPlan) {
       if (backendAvailable) {
         try {
+          // Debug: log payload being sent to API to diagnose update issues
+          if (requestPayload instanceof FormData) {
+            const entries = {};
+            for (const pair of requestPayload.entries()) {
+              const [k, v] = pair;
+              entries[k] = entries[k] ? [].concat(entries[k], v) : v;
+            }
+            console.debug('Submitting (FormData) plan payload:', entries);
+          } else {
+            console.debug('Submitting (JSON) plan payload:', requestPayload);
+          }
+
           const response = await api.put(`/project-plans/${currentPlan.id}`, requestPayload);
-          const updatedPlan = responsePayload(response);
+          const updatedPlanRaw = responsePayload(response);
+          const normalizePlan = (plan) => ({
+            ...plan,
+            features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+          });
+          const updatedPlan = normalizePlan(updatedPlanRaw);
           setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
           setToast('Plan updated successfully.');
         } catch (error) {
@@ -563,7 +603,14 @@ function ProjectPlansPage() {
       if (backendAvailable) {
         try {
           const response = await api.post('/project-plans', requestPayload);
-          const createdPlan = response?.data?.data || planPayload;
+          const createdPlanRaw = response?.data?.data || planPayload;
+          const normalizePlanShort = (plan) => ({
+            ...plan,
+            features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+          });
+          const createdPlan = normalizePlanShort(createdPlanRaw);
           setPlans((prev) => [createdPlan, ...prev]);
           setToast('Plan created successfully.');
         } catch (error) {
@@ -860,7 +907,7 @@ function ProjectPlansPage() {
                   <th className="px-3 py-3">Plan Code</th>
                   <th className="px-3 py-3">Plan Name</th>
                   <th className="px-3 py-3">Project Type</th>
-                  <th className="px-3 py-3">Category</th>
+                 
                   <th className="px-3 py-3">Price</th>
                   <th className="px-3 py-3">Billing</th>
                   <th className="px-3 py-3">Delivery</th>
@@ -886,7 +933,7 @@ function ProjectPlansPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">{plan.projectType}</td>
-                    <td className="px-3 py-3">{plan.category}</td>
+                    
                     <td className="px-3 py-3">{formatCurrency(plan.discountPrice || plan.basePrice)}</td>
                     <td className="px-3 py-3">{plan.billingCycle}</td>
                     <td className="px-3 py-3">{plan.deliveryDays} days</td>
@@ -898,11 +945,17 @@ function ProjectPlansPage() {
                     <td className="px-3 py-3">{formatDate(plan.updatedAt)}</td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => openViewDrawer(plan)} className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80">View</button>
-                        <button onClick={() => openEditDrawer(plan)} className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80">Edit</button>
-                        {/* <button onClick={() => handleDuplicate(plan)} className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-xs text-sky-300">Clone</button>
-                        <button onClick={() => toggleStatus(plan)} className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">Status</button> */}
-                        <button onClick={() => handleDelete(plan)} className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1.5 text-xs text-rose-300">Delete</button>
+                        <button aria-label="View" onClick={() => openViewDrawer(plan)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button aria-label="Edit" onClick={() => openEditDrawer(plan)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80">
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        {/* <button onClick={() => handleDuplicate(plan)} className="rounded-full border border-sky-500/20 bg-sky-500/10 p-2 text-sky-300"><Copy className="w-4 h-4" /></button>
+                        <button onClick={() => toggleStatus(plan)} className="rounded-full border border-amber-500/20 bg-amber-500/10 p-2 text-amber-300"><RefreshCw className="w-4 h-4" /></button> */}
+                        <button aria-label="Delete" onClick={() => handleDelete(plan)} className="rounded-full border border-rose-500/20 bg-rose-500/10 p-2 text-rose-300">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
