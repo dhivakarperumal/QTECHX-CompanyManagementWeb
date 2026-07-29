@@ -886,13 +886,34 @@ function ProjectPlansPage() {
 
       <div className="rounded-3xl border border-white/10 bg-[#0f141d] p-3">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button onClick={() => handleBulkAction('activate')} className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Activate</button>
-          <button onClick={() => handleBulkAction('deactivate')} className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">Deactivate</button>
-          <button onClick={() => handleBulkAction('clone')} className="rounded-2xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-sm text-sky-300">Clone</button>
-          <button onClick={() => handleBulkAction('csv')} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">Export CSV</button>
-          <button onClick={() => handleBulkAction('excel')} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">Export Excel</button>
-          <button onClick={() => handleBulkAction('print')} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">Print</button>
-          <button onClick={() => setSelectedIds([])} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">Clear Selection</button>
+          <button onClick={() => handleBulkAction('activate')} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+            <CheckCircle2 size={16} />
+            Activate
+          </button>
+          <button onClick={() => handleBulkAction('deactivate')} className="inline-flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+            <RefreshCw size={16} />
+            Deactivate
+          </button>
+          <button onClick={() => handleBulkAction('clone')} className="inline-flex items-center gap-2 rounded-2xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-sm text-sky-300">
+            <Copy size={16} />
+            Clone
+          </button>
+          <button onClick={() => handleBulkAction('csv')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+            <Upload size={16} />
+            Export CSV
+          </button>
+          <button onClick={() => handleBulkAction('excel')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+            <FileText size={16} />
+            Export Excel
+          </button>
+          <button onClick={() => handleBulkAction('print')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+            <ClipboardList size={16} />
+            Print
+          </button>
+          <button onClick={() => setSelectedIds([])} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+            <X size={16} />
+            Clear Selection
+          </button>
         </div>
 
         {filteredPlans.length ? (

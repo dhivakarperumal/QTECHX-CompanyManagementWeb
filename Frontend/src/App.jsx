@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Navbar from "./Componets/CommonComponents/Navbar";
 import Header from "./Componets/CommonComponents/Header";
 import Footer from "./Componets/Components/Footer";
@@ -33,6 +34,7 @@ function App() {
       <ScrollToTop/>
       <ScrollNavigator/>
       <Outlet />
+      <Toaster position="top-right" reverseOrder={false} />
       {!isAdmin && <FloatingSupport />}
       {showPublicChrome && <Footer />}
       {/* {showPublicChrome && <Footer />} */}

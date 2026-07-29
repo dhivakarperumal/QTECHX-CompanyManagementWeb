@@ -203,6 +203,153 @@ async function ensureProjectPlanSchema(pool) {
   }
 }
 
+async function ensureQuotationsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'quotations'");
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS quotations (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        uuid VARCHAR(36) NOT NULL,
+        quotation_number VARCHAR(100) NOT NULL,
+        client_name VARCHAR(255) NULL,
+        company_name VARCHAR(255) NULL,
+        contact_person VARCHAR(255) NULL,
+        email VARCHAR(255) NULL,
+        phone_number VARCHAR(50) NULL,
+        project_name VARCHAR(255) NULL,
+        project_description TEXT NULL,
+        scope_of_work TEXT NULL,
+        technologies_used VARCHAR(500) NULL,
+        project_type VARCHAR(100) NULL,
+        service_category VARCHAR(100) NULL,
+        service_type VARCHAR(100) NULL,
+        quotation_date DATE NULL,
+        valid_until DATE NULL,
+        currency VARCHAR(20) NULL,
+        payment_terms VARCHAR(100) NULL,
+        delivery_timeline VARCHAR(100) NULL,
+        sales_executive VARCHAR(255) NULL,
+        prepared_by VARCHAR(255) NULL,
+        platform VARCHAR(100) NULL,
+        subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
+        discount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        additional_charges DECIMAL(15,2) NOT NULL DEFAULT 0,
+        tax_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        round_off DECIMAL(15,2) NOT NULL DEFAULT 0,
+        grand_total DECIMAL(15,2) NOT NULL DEFAULT 0,
+        advance_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        balance_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+        status VARCHAR(100) NOT NULL DEFAULT 'Draft',
+        approval_status VARCHAR(100) NOT NULL DEFAULT 'Pending',
+        payment_status VARCHAR(100) NOT NULL DEFAULT 'Pending',
+        notes TEXT NULL,
+        terms_conditions TEXT NULL,
+        items JSON NULL,
+        timeline_items JSON NULL,
+        terms_sections JSON NULL,
+        attachments JSON NULL,
+        activity_logs JSON NULL,
+        approval JSON NULL,
+        client_message TEXT NULL,
+        response_date DATE NULL,
+        sent_date DATE NULL,
+        viewed_date DATE NULL,
+        download_count INT UNSIGNED NOT NULL DEFAULT 0,
+        email_status VARCHAR(100) NULL,
+        whatsapp_status VARCHAR(100) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        deleted TINYINT(1) NOT NULL DEFAULT 0,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_quotations_uuid (uuid),
+        INDEX idx_quotations_status (status),
+        INDEX idx_quotations_approval_status (approval_status),
+        INDEX idx_quotations_created_by (created_by)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute('SHOW COLUMNS FROM quotations');
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+  const columnDefinitions = [
+    ['uuid', 'VARCHAR(36) NOT NULL'],
+    ['quotation_number', 'VARCHAR(100) NOT NULL'],
+    ['client_name', 'VARCHAR(255) NULL'],
+    ['company_name', 'VARCHAR(255) NULL'],
+    ['contact_person', 'VARCHAR(255) NULL'],
+    ['email', 'VARCHAR(255) NULL'],
+    ['phone_number', 'VARCHAR(50) NULL'],
+    ['project_name', 'VARCHAR(255) NULL'],
+    ['project_description', 'TEXT NULL'],
+    ['scope_of_work', 'TEXT NULL'],
+    ['technologies_used', 'VARCHAR(500) NULL'],
+    ['project_type', 'VARCHAR(100) NULL'],
+    ['service_category', 'VARCHAR(100) NULL'],
+    ['service_type', 'VARCHAR(100) NULL'],
+    ['quotation_date', 'DATE NULL'],
+    ['valid_until', 'DATE NULL'],
+    ['currency', 'VARCHAR(20) NULL'],
+    ['payment_terms', 'VARCHAR(100) NULL'],
+    ['delivery_timeline', 'VARCHAR(100) NULL'],
+    ['sales_executive', 'VARCHAR(255) NULL'],
+    ['prepared_by', 'VARCHAR(255) NULL'],
+    ['platform', 'VARCHAR(100) NULL'],
+    ['subtotal', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['discount', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['additional_charges', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['tax_amount', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['round_off', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['grand_total', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['advance_amount', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['balance_amount', 'DECIMAL(15,2) NOT NULL DEFAULT 0'],
+    ['status', "VARCHAR(100) NOT NULL DEFAULT 'Draft'"],
+    ['approval_status', "VARCHAR(100) NOT NULL DEFAULT 'Pending'"],
+    ['payment_status', "VARCHAR(100) NOT NULL DEFAULT 'Pending'"],
+    ['notes', 'TEXT NULL'],
+    ['terms_conditions', 'TEXT NULL'],
+    ['items', 'JSON NULL'],
+    ['timeline_items', 'JSON NULL'],
+    ['terms_sections', 'JSON NULL'],
+    ['attachments', 'JSON NULL'],
+    ['activity_logs', 'JSON NULL'],
+    ['approval', 'JSON NULL'],
+    ['client_message', 'TEXT NULL'],
+    ['response_date', 'DATE NULL'],
+    ['sent_date', 'DATE NULL'],
+    ['viewed_date', 'DATE NULL'],
+    ['download_count', 'INT UNSIGNED NOT NULL DEFAULT 0'],
+    ['email_status', 'VARCHAR(100) NULL'],
+    ['whatsapp_status', 'VARCHAR(100) NULL'],
+    ['created_by', 'VARCHAR(36) NULL'],
+    ['updated_by', 'VARCHAR(36) NULL'],
+    ['deleted', 'TINYINT(1) NOT NULL DEFAULT 0'],
+  ];
+
+  columnDefinitions.forEach(([columnName, definition]) => {
+    if (!columnNames.has(columnName)) {
+      addColumnStatements.push(`ADD COLUMN ${columnName} ${definition}`);
+    }
+  });
+
+  if (!columnNames.has('id')) {
+    addColumnStatements.unshift('ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY');
+  }
+  if (!columnNames.has('created_at')) {
+    addColumnStatements.push('ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  }
+  if (!columnNames.has('updated_at')) {
+    addColumnStatements.push('ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+  }
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE quotations ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureProjectsSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'projects'");
 
@@ -714,6 +861,7 @@ async function initDB() {
     await ensureEmployeesSchema(pool);
     await ensureAttendanceSchema(pool);
     await ensureProjectPlanSchema(pool);
+    await ensureQuotationsSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;
