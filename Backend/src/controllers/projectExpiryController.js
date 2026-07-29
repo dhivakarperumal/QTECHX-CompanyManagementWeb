@@ -53,6 +53,7 @@ function normalizeExpiryPayload(payload, actor, invoiceFile = null) {
     service_name: payload.service_name || payload.expiry_type || null,
     provider_name: payload.provider_name || null,
     plan_name: payload.plan_name || null,
+    price_per_month: Number(payload.price_per_month || 0),
     purchase_date: payload.purchase_date || null,
     start_date: payload.start_date || null,
     expiry_date: payload.expiry_date || null,

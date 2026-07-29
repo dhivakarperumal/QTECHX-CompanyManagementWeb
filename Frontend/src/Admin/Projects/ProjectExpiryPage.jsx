@@ -162,6 +162,7 @@ export default function ProjectExpiryPage() {
       service_name: record.service_name || '',
       provider_name: record.provider_name || '',
       plan_name: record.plan_name || '',
+      price_per_month: record.price_per_month || '',
       purchase_date: record.purchase_date ? record.purchase_date.split('T')[0] : '',
       start_date: record.start_date ? record.start_date.split('T')[0] : '',
       expiry_date: record.expiry_date ? record.expiry_date.split('T')[0] : '',
@@ -181,7 +182,13 @@ export default function ProjectExpiryPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const payload = { ...form, project_id: Number(form.project_id || 0), client_id: form.client_id ? Number(form.client_id) : null, renewal_cost: Number(form.renewal_cost || 0) };
+      const payload = {
+        ...form,
+        project_id: Number(form.project_id || 0),
+        client_id: form.client_id ? Number(form.client_id) : null,
+        renewal_cost: Number(form.renewal_cost || 0),
+        price_per_month: Number(form.price_per_month || 0)
+      };
       if (modalMode === 'edit') {
         await api.put(`/project-expiries/${selectedRecord.id}`, payload);
       } else {

@@ -503,6 +503,7 @@ async function ensureProjectExpirySchema(pool) {
       service_name VARCHAR(150) NULL,
       provider_name VARCHAR(150) NULL,
       plan_name VARCHAR(150) NULL,
+      price_per_month DECIMAL(10,2) NOT NULL DEFAULT 0,
       purchase_date DATE NULL,
       start_date DATE NULL,
       expiry_date DATE NULL,
@@ -535,6 +536,13 @@ async function ensureProjectExpirySchema(pool) {
       CONSTRAINT fk_project_expiry_client FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM project_expiry_management");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  if (!columnNames.has('price_per_month')) {
+    await pool.execute('ALTER TABLE project_expiry_management ADD COLUMN price_per_month DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER plan_name');
+  }
+
 
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS project_renewal_history (

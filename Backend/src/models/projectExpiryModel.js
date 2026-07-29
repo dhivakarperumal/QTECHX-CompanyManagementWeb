@@ -64,11 +64,11 @@ async function createExpiryRecord(payload = {}) {
   const [result] = await db.execute(
     `INSERT INTO project_expiry_management (
       project_id, client_id, expiry_type, project_type, service_name, provider_name, plan_name,
-      purchase_date, start_date, expiry_date, renewal_cost, payment_status, payment_method,
+      price_per_month, purchase_date, start_date, expiry_date, renewal_cost, payment_status, payment_method,
       invoice_number, invoice_file, auto_renew, renewal_status, last_renewal_date,
       next_reminder_date, reminder_sent, notes, internal_notes, status,
       assigned_employee_id, assigned_employee_name, created_by, updated_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
     [
       payload.project_id || null,
       payload.client_id || null,
@@ -77,6 +77,7 @@ async function createExpiryRecord(payload = {}) {
       payload.service_name || null,
       payload.provider_name || null,
       payload.plan_name || null,
+      toNumber(payload.price_per_month),
       payload.purchase_date || null,
       payload.start_date || null,
       payload.expiry_date || null,
@@ -110,7 +111,13 @@ async function listExpiryRecords(options = {}) {
   const { where, values } = buildListWhereClause(options);
 
   const [rows] = await db.execute(
-    `SELECT e.*, p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
+    `SELECT e.*,
+            DATE_FORMAT(e.purchase_date, '%Y-%m-%d') AS purchase_date,
+            DATE_FORMAT(e.start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(e.expiry_date, '%Y-%m-%d') AS expiry_date,
+            DATE_FORMAT(e.last_renewal_date, '%Y-%m-%d') AS last_renewal_date,
+            DATE_FORMAT(e.next_reminder_date, '%Y-%m-%d') AS next_reminder_date,
+            p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
      FROM project_expiry_management e
      LEFT JOIN projects p ON p.id = e.project_id
      LEFT JOIN clients c ON c.id = e.client_id
@@ -129,7 +136,13 @@ async function listExpiryRecords(options = {}) {
 async function getExpiryRecordById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT e.*, p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
+    `SELECT e.*,
+            DATE_FORMAT(e.purchase_date, '%Y-%m-%d') AS purchase_date,
+            DATE_FORMAT(e.start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(e.expiry_date, '%Y-%m-%d') AS expiry_date,
+            DATE_FORMAT(e.last_renewal_date, '%Y-%m-%d') AS last_renewal_date,
+            DATE_FORMAT(e.next_reminder_date, '%Y-%m-%d') AS next_reminder_date,
+            p.project_name, p.project_code, p.project_manager, p.domain_name, c.client_name, c.company_name
      FROM project_expiry_management e
      LEFT JOIN projects p ON p.id = e.project_id
      LEFT JOIN clients c ON c.id = e.client_id
