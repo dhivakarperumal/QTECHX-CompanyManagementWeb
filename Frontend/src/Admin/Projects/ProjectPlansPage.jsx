@@ -856,7 +856,7 @@ function ProjectPlansPage() {
                   <th className="px-3 py-3">
                     <input type="checkbox" checked={selectedIds.length === filteredPlans.length && filteredPlans.length > 0} onChange={() => setSelectedIds(selectedIds.length === filteredPlans.length ? [] : filteredPlans.map((plan) => plan.id))} />
                   </th>
-                  <th className="px-3 py-3">Plan ID</th>
+                  
                   <th className="px-3 py-3">Plan Code</th>
                   <th className="px-3 py-3">Plan Name</th>
                   <th className="px-3 py-3">Project Type</th>
@@ -865,8 +865,8 @@ function ProjectPlansPage() {
                   <th className="px-3 py-3">Billing</th>
                   <th className="px-3 py-3">Delivery</th>
                   <th className="px-3 py-3">Status</th>
-                  <th className="px-3 py-3">Featured</th>
-                  <th className="px-3 py-3">Projects</th>
+                  
+               
                   <th className="px-3 py-3">Updated</th>
                   <th className="px-3 py-3">Actions</th>
                 </tr>
@@ -877,12 +877,12 @@ function ProjectPlansPage() {
                     <td className="px-3 py-3">
                       <input type="checkbox" checked={selectedIds.includes(plan.id)} onChange={() => toggleSelect(plan.id)} />
                     </td>
-                    <td className="px-3 py-3 font-medium text-white">{plan.planId}</td>
+                    
                     <td className="px-3 py-3">{plan.planCode}</td>
                     <td className="px-3 py-3">
                       <div>
                         <div className="font-semibold text-white">{plan.planName}</div>
-                        <div className="text-xs text-white/50">{plan.shortDescription}</div>
+                        
                       </div>
                     </td>
                     <td className="px-3 py-3">{plan.projectType}</td>
@@ -893,19 +893,15 @@ function ProjectPlansPage() {
                     <td className="px-3 py-3">
                       <span className={`rounded-full border px-2.5 py-1 text-xs ${statusStyles[plan.status] || 'border-white/10 bg-white/5 text-white/70'}`}>{plan.status}</span>
                     </td>
-                    <td className="px-3 py-3">
-                      {plan.featuredBadge ? (
-                        <span className={`rounded-full border px-2.5 py-1 text-xs ${featuredStyles[plan.featuredBadge] || 'border-white/10 bg-white/5 text-white/70'}`}>{plan.featuredBadge}</span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-3 py-3">{plan.activeProjectsUsingPlan}</td>
+                    
+                    
                     <td className="px-3 py-3">{formatDate(plan.updatedAt)}</td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => openViewDrawer(plan)} className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80">View</button>
                         <button onClick={() => openEditDrawer(plan)} className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80">Edit</button>
-                        <button onClick={() => handleDuplicate(plan)} className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-xs text-sky-300">Clone</button>
-                        <button onClick={() => toggleStatus(plan)} className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">Status</button>
+                        {/* <button onClick={() => handleDuplicate(plan)} className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-xs text-sky-300">Clone</button>
+                        <button onClick={() => toggleStatus(plan)} className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-300">Status</button> */}
                         <button onClick={() => handleDelete(plan)} className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1.5 text-xs text-rose-300">Delete</button>
                       </div>
                     </td>
