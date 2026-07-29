@@ -94,8 +94,6 @@ const navItems = [
       { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
       { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
       { path: "/admin/tasks/update", label: "Update Task", icon: Edit3 },
-      { path: "/admin/tasks/board", label: "Task Board", icon: FolderKanban },
-      { path: "/admin/tasks/graph", label: "Task Graph", icon: BarChart3 },
       { path: "/admin/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
     ],
   },

@@ -14,6 +14,7 @@ const clientRouter = require("./src/routers/clientRouter");
 const projectRouter = require("./src/routers/projectRouter");
 const quotationRouter = require("./src/routers/quotationRouter");
 const projectPlanRouter = require('./src/routers/projectPlanRouter');
+const projectExpiryRouter = require('./src/routers/projectExpiryRouter');
 const taskRouter = require("./src/routers/taskRouter");
 
 const app = express();
@@ -56,7 +57,8 @@ app.use("/api/attendance", attendanceRouter);
 app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/project-plans", projectPlanRouter);
-console.log('Mounted backend route: /api/project-plans');
+app.use("/api/project-expiries", projectExpiryRouter);
+console.log('Mounted backend route: /api/project-expiries');
 app.use("/api/tasks", taskRouter);
 
 // Serve uploaded files from the backend uploads directory as inline browser content

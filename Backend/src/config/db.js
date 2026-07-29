@@ -492,6 +492,96 @@ async function ensureProjectsSchema(pool) {
   }
 }
 
+async function ensureProjectExpirySchema(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS project_expiry_management (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      project_id INT UNSIGNED NULL,
+      client_id INT UNSIGNED NULL,
+      expiry_type VARCHAR(100) NOT NULL,
+      project_type VARCHAR(100) NULL,
+      service_name VARCHAR(150) NULL,
+      provider_name VARCHAR(150) NULL,
+      plan_name VARCHAR(150) NULL,
+      purchase_date DATE NULL,
+      start_date DATE NULL,
+      expiry_date DATE NULL,
+      renewal_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
+      payment_status ENUM('Paid','Pending','Failed') NOT NULL DEFAULT 'Pending',
+      payment_method VARCHAR(100) NULL,
+      invoice_number VARCHAR(100) NULL,
+      invoice_file VARCHAR(255) NULL,
+      auto_renew TINYINT(1) NOT NULL DEFAULT 0,
+      renewal_status VARCHAR(50) NOT NULL DEFAULT 'Active',
+      last_renewal_date DATE NULL,
+      next_reminder_date DATE NULL,
+      reminder_sent TINYINT(1) NOT NULL DEFAULT 0,
+      notes TEXT NULL,
+      internal_notes TEXT NULL,
+      status ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+      assigned_employee_id VARCHAR(36) NULL,
+      assigned_employee_name VARCHAR(255) NULL,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      deleted_at DATETIME NULL,
+      PRIMARY KEY (id),
+      INDEX idx_project_expiry_project (project_id),
+      INDEX idx_project_expiry_client (client_id),
+      INDEX idx_project_expiry_date (expiry_date),
+      INDEX idx_project_expiry_status (renewal_status),
+      CONSTRAINT fk_project_expiry_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL ON UPDATE CASCADE,
+      CONSTRAINT fk_project_expiry_client FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE SET NULL ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS project_renewal_history (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      project_expiry_id INT UNSIGNED NULL,
+      project_id INT UNSIGNED NULL,
+      renewal_type VARCHAR(100) NULL,
+      old_expiry_date DATE NULL,
+      new_expiry_date DATE NULL,
+      renewal_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+      tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+      total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+      payment_method VARCHAR(100) NULL,
+      payment_status ENUM('Paid','Pending','Failed') NOT NULL DEFAULT 'Pending',
+      invoice_number VARCHAR(100) NULL,
+      invoice_file VARCHAR(255) NULL,
+      renewed_by VARCHAR(36) NULL,
+      renewal_notes TEXT NULL,
+      renewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_history_expiry (project_expiry_id),
+      INDEX idx_history_project (project_id),
+      CONSTRAINT fk_history_expiry FOREIGN KEY (project_expiry_id) REFERENCES project_expiry_management (id) ON DELETE SET NULL ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS project_expiry_reminders (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      project_expiry_id INT UNSIGNED NULL,
+      reminder_type VARCHAR(100) NULL,
+      reminder_days_before INT NOT NULL DEFAULT 0,
+      reminder_status ENUM('Pending','Sent','Failed','Acknowledged') NOT NULL DEFAULT 'Pending',
+      scheduled_for DATE NULL,
+      sent_at DATETIME NULL,
+      acknowledged_at DATETIME NULL,
+      notes TEXT NULL,
+      created_by VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_reminders_expiry (project_expiry_id),
+      CONSTRAINT fk_reminders_expiry FOREIGN KEY (project_expiry_id) REFERENCES project_expiry_management (id) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+}
+
 async function ensureSchema(pool) {
   // ── Users ────────────────────────────────────────────────────────────────
   await pool.execute(
@@ -599,6 +689,7 @@ async function ensureSchema(pool) {
 
   // ── Projects ──────────────────────────────────────────────────────────────
   await ensureProjectsSchema(pool);
+  await ensureProjectExpirySchema(pool);
 
   // ── Project Assignments ────────────────────────────────────────────────────
   await ensureProjectAssignmentsSchema(pool);

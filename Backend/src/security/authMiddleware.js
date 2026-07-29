@@ -16,6 +16,22 @@ function authenticate(req, res, next) {
   }
 }
 
+function optionalAuthenticate(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith("Bearer ")) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET);
+    next();
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+}
+
 function authorize(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
@@ -25,4 +41,4 @@ function authorize(...allowedRoles) {
   };
 }
 
-module.exports = { authenticate, authorize };
+module.exports = { authenticate, optionalAuthenticate, authorize };
