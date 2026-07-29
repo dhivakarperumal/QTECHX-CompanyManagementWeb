@@ -43,10 +43,12 @@ export default function EmployeeSalary() {
       setEmployeeLoading(true);
       try {
         const { data } = await api.get('/employees?limit=500&page=1');
-        if (data.success && Array.isArray(data.data)) {
+        if (data.data && Array.isArray(data.data)) {
           setEmployees(data.data);
-        } else if (data.success && data.data?.rows) {
+        } else if (data.data?.rows) {
           setEmployees(data.data.rows);
+        } else if (Array.isArray(data)) {
+          setEmployees(data);
         }
       } catch (err) {
         console.warn('Failed to load employees:', err);
