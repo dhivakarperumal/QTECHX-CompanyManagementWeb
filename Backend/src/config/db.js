@@ -699,6 +699,76 @@ async function ensureSchema(pool) {
   await ensureProjectsSchema(pool);
   await ensureProjectExpirySchema(pool);
 
+  // ── Trainees & Interns ───────────────────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_intern (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      person_id VARCHAR(50) NULL,
+      full_name VARCHAR(255) NOT NULL,
+      type ENUM('Trainee','Intern') NOT NULL DEFAULT 'Trainee',
+      department VARCHAR(100) NULL,
+      designation VARCHAR(100) NULL,
+      reporting_manager VARCHAR(255) NULL,
+      joining_date DATE NULL,
+      end_date DATE NULL,
+      status ENUM('Active','Completed','On Leave','Inactive') NOT NULL DEFAULT 'Active',
+      mobile_number VARCHAR(20) NULL,
+      email_address VARCHAR(255) NULL,
+      current_address TEXT NULL,
+      emergency_contact_name VARCHAR(255) NULL,
+      emergency_contact_number VARCHAR(20) NULL,
+      profile_photo VARCHAR(500) NULL,
+      resume VARCHAR(500) NULL,
+      college_id_doc VARCHAR(500) NULL,
+      offer_letter VARCHAR(500) NULL,
+      internship_letter VARCHAR(500) NULL,
+      college_university VARCHAR(255) NULL,
+      course VARCHAR(255) NULL,
+      academic_department VARCHAR(255) NULL,
+      year_semester VARCHAR(100) NULL,
+      college_id_number VARCHAR(100) NULL,
+      guide_name VARCHAR(255) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_trainee_intern_uuid (uuid),
+      UNIQUE KEY uq_trainee_intern_person_id (person_id),
+      INDEX idx_ti_type (type),
+      INDEX idx_ti_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  // ── Trainee / Intern Attendance ───────────────────────────────────────
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_intern_attendance (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      trainee_intern_id VARCHAR(36) NOT NULL,
+      attendance_date DATE NOT NULL,
+      month INT NOT NULL,
+      year INT NOT NULL,
+      check_in_time VARCHAR(20) NULL,
+      check_out_time VARCHAR(20) NULL,
+      working_hours VARCHAR(50) NOT NULL DEFAULT '0h 0m',
+      late_entry VARCHAR(50) NOT NULL DEFAULT 'No',
+      early_exit VARCHAR(50) NOT NULL DEFAULT 'No',
+      overtime VARCHAR(50) NOT NULL DEFAULT 'No',
+      attendance_status ENUM('Present','Absent') NOT NULL DEFAULT 'Absent',
+      location VARCHAR(255) NULL,
+      notes TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_ti_attendance_record (trainee_intern_id, attendance_date),
+      INDEX idx_ti_attendance_month_year (month, year),
+      INDEX idx_ti_attendance_status (attendance_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
   // ── Project Assignments ────────────────────────────────────────────────────
   await ensureProjectAssignmentsSchema(pool);
   await require('../models/employeeTaskAssignmentModel').ensureEmployeeTaskAssignmentsSchema(pool);
@@ -826,6 +896,45 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_timesheets_project FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_tasks (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      task_name VARCHAR(255) NOT NULL,
+      description TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_trainee_tasks_uuid (uuid)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS trainee_task_assignments (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid VARCHAR(36) NOT NULL,
+      trainee_task_id INT UNSIGNED NOT NULL,
+      trainee_intern_id VARCHAR(36) NOT NULL,
+      assigned_date DATE NULL,
+      assigned_time TIME NULL,
+      due_date DATE NULL,
+      status ENUM('Pending','In Progress','On Hold','Review','Completed','Cancelled') NOT NULL DEFAULT 'Pending',
+      progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      daily_report TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_tta_uuid (uuid),
+      INDEX idx_tta_trainee_task_id (trainee_task_id),
+      INDEX idx_tta_trainee_intern_id (trainee_intern_id),
+      CONSTRAINT fk_tta_trainee_task FOREIGN KEY (trainee_task_id) REFERENCES trainee_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT fk_tta_trainee_intern FOREIGN KEY (trainee_intern_id) REFERENCES trainee_intern (uuid) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
 }
 
 async function seedDefaultUser(pool) {
@@ -947,6 +1056,37 @@ async function ensureAttendanceSchema(pool) {
   );
 }
 
+async function ensureExpenseSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS company_funds (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      available_fund DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+      created_by VARCHAR(36) NULL,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS expenses (
+      expense_id VARCHAR(36) NOT NULL,
+      expense_type VARCHAR(100) NOT NULL,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      date_of_payment DATE NOT NULL,
+      amount DECIMAL(15,2) NOT NULL,
+      payment_type VARCHAR(50) NOT NULL,
+      paid_to VARCHAR(255) NOT NULL,
+      description TEXT NULL,
+      invoice_number VARCHAR(100) NULL,
+      upload_bill VARCHAR(255) NULL,
+      PRIMARY KEY (expense_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -959,6 +1099,7 @@ async function initDB() {
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureAttendanceSchema(pool);
+    await ensureExpenseSchema(pool);
     await ensureProjectPlanSchema(pool);
     await ensureQuotationsSchema(pool);
     await seedDefaultUser(pool);

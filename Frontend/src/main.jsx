@@ -43,8 +43,17 @@ import ProjectQuotationsPage from './Admin/Projects/ProjectQuotationsPage.jsx'
 import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
 import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
+import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
+import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
+import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
+import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
+import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
+
+import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx'
+import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx'
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
+const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
 
 
 
@@ -190,6 +199,46 @@ const router = createHashRouter([
             element: <EmployeeView />,
           },
           {
+            path: 'trainees',
+            element: <AllTraineeInterns />,
+          },
+          {
+            path: 'internships',
+            element: <AllTraineeInterns />,
+          },
+          {
+            path: 'trainees/add',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'internships/add',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'trainees/edit/:id',
+            element: <AddTraineeIntern />,
+          },
+          {
+            path: 'trainees/view/:id',
+            element: <TraineeInternDetails />,
+          },
+          {
+            path: 'trainees/attendance',
+            element: <TraineeInternAttendancePage />,
+          },
+          {
+            path: 'trainees/attendance/view/:id',
+            element: <TraineeInternAttendanceView />,
+          },
+          {
+            path: 'trainees/tasks',
+            element: <TraineeTaskMaster />,
+          },
+          {
+            path: 'trainees/tasks/assign',
+            element: <TraineeTaskAssign />,
+          },
+          {
             path: 'attendance',
             element: <AttendancePage />,
           },
@@ -200,6 +249,10 @@ const router = createHashRouter([
           {
             path: 'attendance/summary',
             element: <AttendancePage />,
+          },
+          {
+            path: 'expenses',
+            element: <ExpensesPage />,
           },
         ],
       },
