@@ -5,6 +5,7 @@ import {
   AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
 } from 'lucide-react';
 import api, { API_URL } from '../../api';
+import { calculateProjectTotal } from './projectCostUtils';
 
 const BACKEND_BASE_URL = API_URL.replace(/\/api$/, '');
 
@@ -25,6 +26,7 @@ const BLANK = {
   total_project_cost: '', current_status: 'Planning', overall_progress: '0',
   proposal_date: '', approval_date: '', project_start_date: '', estimated_completion_date: '',
   project_end_date: '', go_live_date: '', support_period: '',
+  is_extended_project: false, extended_project_amount: '',
   frontend_tech: '', mobile_tech: '', backend_tech: '', database_tech: '',
   github_link: '', domain_name: '', sub_domain_name: '',
   project_manager: '', ui_ux_designer: '', frontend_developers: '', backend_developers: '',
@@ -51,6 +53,8 @@ const toForm = (p) => ({
   project_end_date: p.project_end_date ? p.project_end_date.slice(0, 10) : '',
   go_live_date: p.go_live_date ? p.go_live_date.slice(0, 10) : '',
   support_period: p.support_period || '',
+  is_extended_project: Boolean(p.is_extended_project),
+  extended_project_amount: p.extended_project_amount != null ? String(p.extended_project_amount) : '',
   frontend_tech: p.frontend_tech || '', mobile_tech: p.mobile_tech || '',
   backend_tech: p.backend_tech || '', database_tech: p.database_tech || '',
   github_link: p.github_link || '', domain_name: p.domain_name || '', sub_domain_name: p.sub_domain_name || '',
@@ -168,6 +172,14 @@ export default function AddProject() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleExtendedProjectToggle = (checked) => {
+    setFormData(prev => ({
+      ...prev,
+      is_extended_project: checked,
+      extended_project_amount: checked ? prev.extended_project_amount : '',
+    }));
+  };
+
   const handleFileChange = (name, file) => {
     setDocumentFiles(prev => ({ ...prev, [name]: file }));
     if (name === 'agreement_doc' && file) {
@@ -190,9 +202,14 @@ export default function AddProject() {
     setLoading(true); setError(''); setSuccess('');
     try {
       const form = new FormData();
+      const totalProjectCost = calculateProjectTotal({
+        baseAmount: formData.total_project_cost,
+        extensionAmount: formData.extended_project_amount,
+        isExtended: Boolean(formData.is_extended_project),
+      });
       const payload = {
         ...formData,
-        total_project_cost:  formData.total_project_cost  ? Number(formData.total_project_cost)  : null,
+        total_project_cost: totalProjectCost || (formData.total_project_cost ? Number(formData.total_project_cost) : null),
         overall_progress:    Number(formData.overall_progress)    || 0,
         ui_progress:         Number(formData.ui_progress)         || 0,
         frontend_progress:   Number(formData.frontend_progress)   || 0,
@@ -328,6 +345,58 @@ export default function AddProject() {
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Overall Progress (%)</span>
               <input className={fieldClass} type="number" name="overall_progress" value={formData.overall_progress} onChange={handleChange} placeholder="0" min="0" max="100" />
+            </label>
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Extended Project</span>
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-[#0e1118] px-3 py-3">
+                <label className="flex items-center gap-2 text-sm text-white/70">
+                  <input
+                    type="radio"
+                    name="is_extended_project"
+                    checked={Boolean(formData.is_extended_project)}
+                    onChange={() => handleExtendedProjectToggle(true)}
+                  />
+                  <span>Yes</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-white/70">
+                  <input
+                    type="radio"
+                    name="is_extended_project"
+                    checked={!Boolean(formData.is_extended_project)}
+                    onChange={() => handleExtendedProjectToggle(false)}
+                  />
+                  <span>No</span>
+                </label>
+                {Boolean(formData.is_extended_project) && (
+                  <div className="flex-1 min-w-[220px]">
+                    <input
+                      className={fieldClass}
+                      type="number"
+                      name="extended_project_amount"
+                      value={formData.extended_project_amount}
+                      onChange={handleChange}
+                      placeholder="Enter extension amount"
+                      min="0"
+                    />
+                  </div>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-white/40">
+                Total cost will be {formData.total_project_cost ? `${Number(formData.total_project_cost).toLocaleString('en-IN')} + extension` : 'base amount + extension'} when enabled.
+              </p>
+            </label>
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Calculated Total Cost (₹)</span>
+              <input
+                className={`${fieldClass} bg-white/5 text-orange-300`}
+                type="text"
+                readOnly
+                value={calculateProjectTotal({
+                  baseAmount: formData.total_project_cost,
+                  extensionAmount: formData.extended_project_amount,
+                  isExtended: Boolean(formData.is_extended_project),
+                }).toLocaleString('en-IN')}
+              />
             </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Description</span>

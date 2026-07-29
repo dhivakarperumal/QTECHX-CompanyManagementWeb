@@ -8,6 +8,7 @@ const clientUploadDir = path.join(uploadDir, "clients");
 const projectUploadDir = path.join(uploadDir, "projects");
 const traineeUploadDir = path.join(uploadDir, "trainees");
 const expenseUploadDir = path.join(uploadDir, "expenses");
+const taskUploadDir = path.join(uploadDir, "tasks");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -26,6 +27,9 @@ if (!fs.existsSync(traineeUploadDir)) {
 }
 if (!fs.existsSync(expenseUploadDir)) {
   fs.mkdirSync(expenseUploadDir, { recursive: true });
+}
+if (!fs.existsSync(taskUploadDir)) {
+  fs.mkdirSync(taskUploadDir, { recursive: true });
 }
 
 const projectImagesDir = path.join(projectUploadDir, "images");
@@ -52,31 +56,28 @@ const storage = multer.diskStorage({
 
     if (req.baseUrl?.includes("/clients")) {
       destinationDir = clientUploadDir;
+    } else if (req.baseUrl?.includes("/tasks")) {
+      destinationDir = taskUploadDir;
     } else if (req.baseUrl?.includes("/projects") || req.baseUrl?.includes("/project-plans")) {
-      if (file.fieldname === 'plan_document' || file.fieldname === 'project_plans') {
+      if (file.fieldname === "plan_document" || file.fieldname === "project_plans") {
         destinationDir = projectPlanUploadDir;
-      } else if (file.fieldname === 'project_images' && path.extname(file.originalname).toLowerCase() === '.zip') {
+      } else if (file.fieldname === "project_images" && path.extname(file.originalname).toLowerCase() === ".zip") {
         destinationDir = projectImagesZipDir;
-      } else if (file.fieldname === 'project_images') {
+      } else if (file.fieldname === "project_images") {
         destinationDir = projectImagesDir;
-      } else if (file.fieldname === 'source_code_backup') {
+      } else if (file.fieldname === "source_code_backup") {
         destinationDir = projectSourceBackupDir;
       } else {
         destinationDir = projectUploadDir;
       }
+    } else if (req.baseUrl?.includes("/trainee-intern")) {
+      destinationDir = traineeUploadDir;
+    } else if (req.baseUrl?.includes("/expenses")) {
+      destinationDir = expenseUploadDir;
     } else {
       destinationDir = employeeUploadDir;
     }
 
-    const destinationDir = req.baseUrl?.includes("/clients")
-      ? clientUploadDir
-      : req.baseUrl?.includes("/projects")
-        ? projectUploadDir
-        : req.baseUrl?.includes("/trainee-intern")
-          ? traineeUploadDir
-          : req.baseUrl?.includes("/expenses")
-            ? expenseUploadDir
-            : employeeUploadDir;
     if (!fs.existsSync(destinationDir)) {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
