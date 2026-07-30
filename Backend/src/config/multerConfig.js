@@ -53,10 +53,11 @@ if (!fs.existsSync(projectPlanUploadDir)) {
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let destinationDir;
+    const requestPath = `${req.originalUrl || ''} ${req.baseUrl || ''} ${req.path || ''}`;
 
     if (req.baseUrl?.includes("/clients")) {
       destinationDir = clientUploadDir;
-    } else if (req.baseUrl?.includes("/tasks")) {
+    } else if (requestPath.includes("/trainee-tasks") || requestPath.includes("/tasks")) {
       destinationDir = taskUploadDir;
     } else if (req.baseUrl?.includes("/projects") || req.baseUrl?.includes("/project-plans")) {
       if (file.fieldname === "plan_document" || file.fieldname === "project_plans") {
