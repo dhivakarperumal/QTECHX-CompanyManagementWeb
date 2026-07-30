@@ -96,7 +96,7 @@ const defaultForm = {
   startTime: '09:00', endTime: '10:00', allDay: false,
   priority: 'Medium', status: 'Scheduled', location: '', meetingLink: '',
   project: '', color: '', reminder: '30 min before',
-  assignedEmployees: [], departments: [], teams: [],
+  participants: [], departments: [], teams: [],
   externalGuests: false, guestEmailAddresses: [], attendanceRequired: true,
   organizerName: '', organizerDepartment: '', createdBy: '',
   organizerContactNumber: '', organizerEmail: '', attachments: [], notes: '',
@@ -170,10 +170,10 @@ const OfficeCalendar = () => {
   const filteredEvents = useMemo(() => {
     const search = searchText.trim().toLowerCase();
     return events.filter(ev => {
-      const parts = Array.isArray(ev.assignedEmployees)
-        ? ev.assignedEmployees.filter(Boolean)
-        : typeof ev.assignedEmployees === 'string' && ev.assignedEmployees
-          ? ev.assignedEmployees.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const parts = Array.isArray(ev.participants)
+        ? ev.participants.filter(Boolean)
+        : typeof ev.participants === 'string' && ev.participants
+          ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : [];
       const depts = Array.isArray(ev.departments)
         ? ev.departments.filter(Boolean)
         : typeof ev.departments === 'string' && ev.departments
@@ -257,9 +257,9 @@ const OfficeCalendar = () => {
 
   const projects  = useMemo(() => Array.from(new Set(events.map(ev => ev.project).filter(Boolean))), [events]);
   const employees = useMemo(() => Array.from(new Set(events.flatMap(ev =>
-    Array.isArray(ev.assignedEmployees) ? ev.assignedEmployees.filter(Boolean)
-    : typeof ev.assignedEmployees === 'string' && ev.assignedEmployees
-      ? ev.assignedEmployees.split(',').map(s => s.trim()).filter(Boolean) : []
+    Array.isArray(ev.participants) ? ev.participants.filter(Boolean)
+    : typeof ev.participants === 'string' && ev.participants
+      ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : []
   ))), [events]);
 
   const miniCalDays = useMemo(() => {
@@ -283,7 +283,7 @@ const OfficeCalendar = () => {
 
   const normalizeEvent = (ev) => ({
     ...ev,
-    assignedEmployees:  ensureArrayField(ev?.assignedEmployees),
+    participants:  ensureArrayField(ev?.participants),
     departments:        ensureArrayField(ev?.departments),
     teams:              ensureArrayField(ev?.teams),
     guestEmailAddresses:ensureArrayField(ev?.guestEmailAddresses),
@@ -309,11 +309,11 @@ const OfficeCalendar = () => {
 
   const handleParticipantsChange = e => {
     const sel = Array.from(e.target.selectedOptions).map(o => o.value);
-    setFormData(c => ({ ...c, assignedEmployees: sel }));
+    setFormData(c => ({ ...c, participants: sel }));
   };
 
   const handleRemoveParticipant = (p) =>
-    setFormData(c => ({ ...c, assignedEmployees: (c.assignedEmployees || []).filter(x => x !== p) }));
+    setFormData(c => ({ ...c, participants: (c.participants || []).filter(x => x !== p) }));
 
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files || []).map(f => f.name);
@@ -1126,7 +1126,7 @@ const OfficeCalendar = () => {
               <div className="oc-section-ttl">Participants & Departments</div>
               <div className="oc-full">
                 <label className="oc-flbl">Select Employees</label>
-                <select multiple value={Array.isArray(formData.assignedEmployees)?formData.assignedEmployees:[]} onChange={handleParticipantsChange} className="oc-fsel" style={{ minHeight:120 }}>
+                <select multiple value={Array.isArray(formData.participants)?formData.participants:[]} onChange={handleParticipantsChange} className="oc-fsel" style={{ minHeight:120 }}>
                   {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
                     const name = getEmployeeFullName(emp);
                     return name ? <option key={emp.employee_id||`${name}-${i}`} value={name}>{name}</option> : null;
@@ -1134,7 +1134,7 @@ const OfficeCalendar = () => {
                 </select>
                 <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:4 }}>Hold Ctrl/Cmd to select multiple.</div>
                 <div className="oc-chips">
-                  {(Array.isArray(formData.assignedEmployees)?formData.assignedEmployees:[]).map((p,i) => (
+                  {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => (
                     <span key={`${p}-${i}`} className="oc-c-chip">
                       {p}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
                     </span>
@@ -1286,8 +1286,8 @@ const OfficeCalendar = () => {
             <div className="oc-dr-card">
               <div className="oc-dr-card-ttl"><Users size={12} /> Participants</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                {ensureArrayField(selectedEvent?.assignedEmployees).length > 0
-                  ? ensureArrayField(selectedEvent.assignedEmployees).map((p,i) => <span key={`${p}-${i}`} className="oc-tag">{p}</span>)
+                {ensureArrayField(selectedEvent?.participants).length > 0
+                  ? ensureArrayField(selectedEvent.participants).map((p,i) => <span key={`${p}-${i}`} className="oc-tag">{p}</span>)
                   : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No participants.</span>
                 }
               </div>
