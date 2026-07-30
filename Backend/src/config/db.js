@@ -250,6 +250,7 @@ async function ensureProjectAssignmentsSchema(pool) {
         id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
         project_id  INT UNSIGNED NOT NULL,
         employee_ids JSON NULL,
+        role        VARCHAR(100) NULL,
         status      ENUM('Assigned','Active','Completed','Removed') NOT NULL DEFAULT 'Assigned',
         assigned_date DATETIME NULL,
         created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -273,8 +274,11 @@ async function ensureProjectAssignmentsSchema(pool) {
   if (!columnNames.has('employee_ids')) {
     addColumnStatements.push('ADD COLUMN employee_ids JSON NULL AFTER project_id');
   }
+  if (!columnNames.has('role')) {
+    addColumnStatements.push('ADD COLUMN role VARCHAR(100) NULL AFTER employee_ids');
+  }
   if (!columnNames.has('status')) {
-    addColumnStatements.push("ADD COLUMN status ENUM('Assigned','Active','Completed','Removed') NOT NULL DEFAULT 'Assigned' AFTER employee_ids");
+    addColumnStatements.push("ADD COLUMN status ENUM('Assigned','Active','Completed','Removed') NOT NULL DEFAULT 'Assigned' AFTER role");
   }
   if (!columnNames.has('assigned_date')) {
     addColumnStatements.push('ADD COLUMN assigned_date DATETIME NULL AFTER status');
