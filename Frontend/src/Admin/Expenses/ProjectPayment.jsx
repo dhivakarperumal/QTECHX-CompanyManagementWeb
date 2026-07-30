@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -40,6 +40,10 @@ export default function ProjectPayment() {
 
   const [editId, setEditId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [projectSearch, setProjectSearch] = useState('');
+  const [clientSearch, setClientSearch] = useState('');
+  const [modeFilter, setModeFilter] = useState('All');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
   const receiptRef = useRef();
   
   const handlePrint = useReactToPrint({
@@ -193,6 +197,36 @@ export default function ProjectPayment() {
     setError('');
   };
 
+  const filteredProjects = useMemo(() => {
+    const projectTerm = projectSearch.trim().toLowerCase();
+    const clientTerm = clientSearch.trim().toLowerCase();
+    return projects.filter((project) => {
+      const projectName = (project.project_name || '').toLowerCase();
+      const clientName = (project.client_name || '').toLowerCase();
+      const matchesProject = !projectTerm || projectName.includes(projectTerm);
+      const matchesClient = !clientTerm || clientName.includes(clientTerm);
+      return matchesProject && matchesClient;
+    });
+  }, [projects, projectSearch, clientSearch]);
+
+  const filteredProjectHistory = useMemo(() => {
+    return history.filter((record) => {
+      const matchesMode = modeFilter === 'All' || (record.payment_mode || '').toLowerCase() === modeFilter.toLowerCase();
+      const matchesSelected = !selectedProjectId || Number(record.project_id) === Number(selectedProjectId);
+      return matchesMode && matchesSelected;
+    });
+  }, [history, modeFilter, selectedProjectId]);
+
+  const projectTotals = useMemo(() => {
+    return history.reduce((acc, record) => {
+      const key = String(record.project_id);
+      if (!acc[key]) acc[key] = { total: 0, count: 0 };
+      acc[key].total += parseFloat(record.amount_paid || 0);
+      acc[key].count += 1;
+      return acc;
+    }, {});
+  }, [history]);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex items-start gap-4">
@@ -210,6 +244,101 @@ export default function ProjectPayment() {
           </p>
         </div>
       </div>
+
+      <section className={sectionClass}>
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-400">
+              <FolderKanban size={11} /> Project Directory
+            </div>
+            <h2 className="text-base font-bold text-white">Project cards & payment history</h2>
+            <p className="text-sm text-white/40 mt-0.5">Filter projects by name/client and click a card to view its payment timeline.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={projectSearch} onChange={(e) => setProjectSearch(e.target.value)} placeholder="Project name" className="w-44 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70" />
+            </div>
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} placeholder="Client" className="w-40 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70" />
+            </div>
+            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="All">All modes</option>
+              <option value="UPI">UPI</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {filteredProjects.length === 0 ? (
+            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No projects match the current filters.</div>
+          ) : (
+            filteredProjects.map((project) => {
+              const stats = projectTotals[String(project.id)] || { total: 0, count: 0 };
+              const isActive = String(selectedProjectId || '') === String(project.id);
+              return (
+                <button key={project.id} type="button" onClick={() => setSelectedProjectId(String(project.id))} className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{project.project_name}</p>
+                      <p className="text-xs text-white/40">{project.project_code || 'No code'}</p>
+                    </div>
+                    <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{stats.count} pay</div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-white/50">Client</span>
+                    <span className="font-semibold text-white">{project.client_name || 'N/A'}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <span className="text-white/50">Paid</span>
+                    <span className="font-semibold text-emerald-400">₹{stats.total.toLocaleString('en-IN')}</span>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-white/10 bg-[#0e1118] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Payment history {selectedProjectId ? 'for selected project' : 'for current filters'}</h3>
+            <span className="text-xs text-white/40">{filteredProjectHistory.length} record(s)</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/5 text-white/40">
+                <tr>
+                  <th className="px-3 py-2 text-left">Project</th>
+                  <th className="px-3 py-2 text-left">Client</th>
+                  <th className="px-3 py-2 text-left">Amount</th>
+                  <th className="px-3 py-2 text-left">Mode</th>
+                  <th className="px-3 py-2 text-left">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10 text-white/70">
+                {filteredProjectHistory.length === 0 ? (
+                  <tr><td colSpan="5" className="px-3 py-4 text-center text-white/40">No payment records found.</td></tr>
+                ) : (
+                  filteredProjectHistory.map((record) => (
+                    <tr key={record.id} className="hover:bg-white/5">
+                      <td className="px-3 py-2 font-medium text-white">{record.project_name}</td>
+                      <td className="px-3 py-2">{record.client_name || 'N/A'}</td>
+                      <td className="px-3 py-2 font-semibold text-emerald-400">₹{parseFloat(record.amount_paid || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-3 py-2">{record.payment_mode || '-'}</td>
+                      <td className="px-3 py-2">{new Date(record.date_of_payment).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">

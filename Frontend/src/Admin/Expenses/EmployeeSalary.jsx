@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
   AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
-  History, Printer, X, Edit, Trash2
+  History, Printer, X, Edit, Trash2, Search
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -47,6 +47,10 @@ export default function EmployeeSalary() {
 
   const [editId, setEditId] = useState(null);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [historyMonthFilter, setHistoryMonthFilter] = useState('all');
+  const [historyYearFilter, setHistoryYearFilter] = useState(String(new Date().getFullYear()));
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const payslipRef = useRef();
   
   const handlePrint = useReactToPrint({
@@ -258,6 +262,34 @@ export default function EmployeeSalary() {
     setError('');
   };
 
+  const filteredEmployees = useMemo(() => {
+    const search = employeeSearch.trim().toLowerCase();
+    return employees.filter((emp) => {
+      if (!search) return true;
+      const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
+      const code = (emp.employee_code || '').toLowerCase();
+      return fullName.includes(search) || code.includes(search);
+    });
+  }, [employees, employeeSearch]);
+
+  const filteredSalaryHistory = useMemo(() => {
+    return history.filter((record) => {
+      const employee = employees.find((item) => item.employee_id === record.employee_id);
+      const fullName = `${employee?.first_name || ''} ${employee?.last_name || ''}`.toLowerCase();
+      const code = (employee?.employee_code || '').toLowerCase();
+      const search = employeeSearch.trim().toLowerCase();
+      const matchesSearch = !search || fullName.includes(search) || code.includes(search);
+      const matchesMonth = historyMonthFilter === 'all' || Number(record.salary_month) === Number(historyMonthFilter);
+      const matchesYear = historyYearFilter === 'all' || Number(record.salary_year) === Number(historyYearFilter);
+      return matchesSearch && matchesMonth && matchesYear;
+    });
+  }, [history, employees, employeeSearch, historyMonthFilter, historyYearFilter]);
+
+  const selectedEmployeeHistory = useMemo(() => {
+    if (!selectedEmployeeId) return filteredSalaryHistory;
+    return filteredSalaryHistory.filter((record) => record.employee_id === selectedEmployeeId);
+  }, [filteredSalaryHistory, selectedEmployeeId]);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex items-start gap-4">
@@ -275,6 +307,114 @@ export default function EmployeeSalary() {
           </p>
         </div>
       </div>
+
+      <section className={sectionClass}>
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-400">
+              <Users size={11} /> Employee Overview
+            </div>
+            <h2 className="text-base font-bold text-white">Employee cards & salary history</h2>
+            <p className="text-sm text-white/40 mt-0.5">Search employees, filter by month/year, and open a card to review that employee&apos;s salary records.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input
+                type="text"
+                value={employeeSearch}
+                onChange={(e) => setEmployeeSearch(e.target.value)}
+                placeholder="Search employee"
+                className="w-48 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70"
+              />
+            </div>
+            <select value={historyMonthFilter} onChange={(e) => setHistoryMonthFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="all">All Months</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                <option key={month} value={month}>{new Date(0, month - 1).toLocaleString('default', { month: 'long' })}</option>
+              ))}
+            </select>
+            <select value={historyYearFilter} onChange={(e) => setHistoryYearFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="all">All Years</option>
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {filteredEmployees.length === 0 ? (
+            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No employees match this search.</div>
+          ) : (
+            filteredEmployees.map((emp) => {
+              const employeeName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+              const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
+              const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
+              const isActive = selectedEmployeeId === emp.employee_id;
+              return (
+                <button
+                  key={emp.employee_id}
+                  type="button"
+                  onClick={() => setSelectedEmployeeId(emp.employee_id)}
+                  className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</p>
+                      <p className="text-xs text-white/40">{emp.employee_code || 'No code'}</p>
+                    </div>
+                    <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{employeeHistory.length} pays</div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-white/50">Total salary</span>
+                    <span className="font-semibold text-emerald-400">₹{totalPaid.toLocaleString('en-IN')}</span>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-white/10 bg-[#0e1118] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Salary history {selectedEmployeeId ? 'for selected employee' : 'for current filters'}</h3>
+            <span className="text-xs text-white/40">{selectedEmployeeHistory.length} record(s)</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/5 text-white/40">
+                <tr>
+                  <th className="px-3 py-2 text-left">Employee</th>
+                  <th className="px-3 py-2 text-left">Month</th>
+                  <th className="px-3 py-2 text-left">Year</th>
+                  <th className="px-3 py-2 text-left">Total Salary</th>
+                  <th className="px-3 py-2 text-left">Present / Leave</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10 text-white/70">
+                {selectedEmployeeHistory.length === 0 ? (
+                  <tr><td colSpan="5" className="px-3 py-4 text-center text-white/40">No salary records found.</td></tr>
+                ) : (
+                  selectedEmployeeHistory.map((record) => {
+                    const emp = employees.find((item) => item.employee_id === record.employee_id);
+                    const employeeLabel = `${emp?.first_name || ''} ${emp?.last_name || ''}`.trim() || emp?.employee_code || 'Unknown';
+                    return (
+                      <tr key={record.id} className="hover:bg-white/5">
+                        <td className="px-3 py-2 font-medium text-white">{employeeLabel}</td>
+                        <td className="px-3 py-2">{new Date(0, Number(record.salary_month) - 1).toLocaleString('default', { month: 'long' })}</td>
+                        <td className="px-3 py-2">{record.salary_year}</td>
+                        <td className="px-3 py-2 font-semibold text-emerald-400">₹{parseFloat(record.total_salary || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-3 py-2">{record.present_days}/{record.leave_days}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">

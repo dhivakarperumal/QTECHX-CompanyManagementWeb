@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -38,6 +38,10 @@ export default function Incomes() {
 
   const [editId, setEditId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All');
+  const [modeFilter, setModeFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('all');
   const receiptRef = useRef();
   
   const handlePrint = useReactToPrint({
@@ -172,6 +176,29 @@ export default function Incomes() {
     setError('');
   };
 
+  const filteredHistory = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return history.filter((record) => {
+      const detailText = `${record.income_type || ''} ${record.intern_name || ''} ${record.income_reason || ''} ${record.paid_to || ''}`.toLowerCase();
+      const matchesSearch = !term || detailText.includes(term);
+      const matchesType = typeFilter === 'All' || record.income_type === typeFilter;
+      const matchesMode = modeFilter === 'All' || record.payment_type === modeFilter;
+
+      let matchesDate = true;
+      if (dateFilter === 'today') {
+        const today = new Date();
+        const recordDate = record.date_of_payment ? new Date(record.date_of_payment) : null;
+        matchesDate = Boolean(recordDate && recordDate.toDateString() === today.toDateString());
+      } else if (dateFilter === 'this_month') {
+        const today = new Date();
+        const recordDate = record.date_of_payment ? new Date(record.date_of_payment) : null;
+        matchesDate = Boolean(recordDate && recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear());
+      }
+
+      return matchesSearch && matchesType && matchesMode && matchesDate;
+    });
+  }, [history, searchTerm, typeFilter, modeFilter, dateFilter]);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex items-start gap-4">
@@ -290,14 +317,38 @@ export default function Incomes() {
 
       {/* History Table */}
       <section className={sectionClass}>
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center"><History size={15} className="text-purple-400" /></div>
-            <h2 className="text-base font-bold text-white">Income History</h2>
+            <div>
+              <h2 className="text-base font-bold text-white">Income History</h2>
+              <p className="text-sm text-white/40">Search and filter income entries quickly.</p>
+            </div>
           </div>
-          <span className="text-xs font-medium text-white/40 bg-white/5 px-2.5 py-1 rounded-lg">
-            {history.length} Records
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search income" className="w-44 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70" />
+            </div>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="All">All types</option>
+              <option value="Internship Payment">Internship Payment</option>
+              <option value="Other">Other</option>
+            </select>
+            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="All">All modes</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="UPI">UPI</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Other">Other</option>
+            </select>
+            <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+              <option value="all">All dates</option>
+              <option value="today">Today</option>
+              <option value="this_month">This month</option>
+            </select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -320,12 +371,12 @@ export default function Incomes() {
                     <Loader2 size={20} className="animate-spin text-white/40 mx-auto" />
                   </td>
                 </tr>
-              ) : history.length === 0 ? (
+              ) : filteredHistory.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="py-10 text-center text-white/40">No income history found</td>
                 </tr>
               ) : (
-                history.map((h, i) => (
+                filteredHistory.map((h, i) => (
                   <tr key={h.id || i} className="hover:bg-white/[0.02] transition">
                     <td className="px-4 py-3">{new Date(h.date_of_payment).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
