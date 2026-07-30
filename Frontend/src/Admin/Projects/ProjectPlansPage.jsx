@@ -847,15 +847,15 @@ function ProjectPlansPage() {
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none [&>option]:bg-[#111318]">
+            <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
               <option value="All">Project Type</option>
               {projectTypes.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
-            <select value={selectedFeatured} onChange={(event) => setSelectedFeatured(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none [&>option]:bg-[#111318]">
+            <select value={selectedFeatured} onChange={(event) => setSelectedFeatured(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
               <option value="All">Featured</option>
               {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
             </select>
-            <select value={selectedBilling} onChange={(event) => setSelectedBilling(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none [&>option]:bg-[#111318]">
+            <select value={selectedBilling} onChange={(event) => setSelectedBilling(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
               <option value="All">Billing</option>
               {billingCycles.map((cycle) => <option key={cycle} value={cycle}>{cycle}</option>)}
             </select>
