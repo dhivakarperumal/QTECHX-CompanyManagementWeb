@@ -149,4 +149,27 @@ async function addTrainee(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove, login, addTrainee };
+async function changePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    const user = await findByUserId(req.user.user_id, true);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(401).json({ message: "Invalid current password" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await updateUser(req.user.user_id, { password: hashedPassword, updated_by: req.user.user_id });
+
+    return res.json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    return res.status(500).json({ message: "Failed to change password" });
+  }
+}
+
+module.exports = { create, getAll, getOne, update, remove, login, addTrainee, changePassword };

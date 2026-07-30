@@ -300,10 +300,10 @@ const Header = ({ onMenuClick }) => {
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 text-sm text-white/80 hover:text-white transition">
                       <User size={15} className="text-white/40" /> Profile
                     </Link>
-                    <Link to="/admin/settings" onClick={() => setActiveDropdown(null)}
+                    {/* <Link to="/admin/settings" onClick={() => setActiveDropdown(null)}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 text-sm text-white/80 hover:text-white transition">
                       <Settings size={15} className="text-white/40" /> Settings
-                    </Link>
+                    </Link> */}
                     <div className="h-px bg-white/10 my-1" />
                     <button onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/15 text-sm text-red-400 hover:text-red-300 transition">
