@@ -58,6 +58,7 @@ import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
 import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
 import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
 import ReportsPage from './Admin/ReportsPage.jsx';
+import AdminProfile from './Admin/Settings/AdminProfile.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -275,6 +276,10 @@ const router = createHashRouter([
           {
             path: 'reports',
             element: <ReportsPage />,
+          },
+          {
+            path: 'settings/profile',
+            element: <AdminProfile />,
           },
           {
             path: 'office-calendar',
