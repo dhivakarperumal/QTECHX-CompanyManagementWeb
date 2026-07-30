@@ -15,6 +15,7 @@ const userManagers = authorize("Super Admin", "Admin", "Manager");
 const administrators = authorize("Super Admin", "Admin");
 
 router.post("/login", loginRules, validateRequest, controller.login);
+router.post("/change-password", authenticate, controller.changePassword);
 router.post("/", authenticate, userManagers, createUserRules, validateRequest, controller.create);
 router.get("/", authenticate, userManagers, listRules, validateRequest, controller.getAll);
 router.get("/:userId", authenticate, userManagers, userIdRule, validateRequest, controller.getOne);
