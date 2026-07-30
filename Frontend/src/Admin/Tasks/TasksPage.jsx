@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList } from 'lucide-react';
+import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download } from 'lucide-react';
 import api from '../../api';
 
 const tabs = [
@@ -51,6 +51,7 @@ const mapTaskToViewModel = (task) => ({
   estimatedHours: task.estimated_hours || "",
   project_id: task.project_id,
   project_uuid: task.project_uuid,
+  attachments: (() => { try { return JSON.parse(task.attachments || '[]'); } catch { return []; } })(),
 });
 
 const EMPTY_TASK_FORM = {
@@ -191,6 +192,7 @@ export default function TasksPage() {
   /* ── Add Task Modal ── */
   const [showAddModal, setShowAddModal] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
+  const [taskFile, setTaskFile] = useState(null);
   const [savingTask, setSavingTask] = useState(false);
   const [taskError, setTaskError] = useState('');
   const [taskSuccess, setTaskSuccess] = useState('');
@@ -198,6 +200,7 @@ export default function TasksPage() {
   /* ── Assign Task Modal ── */
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignForm, setAssignForm] = useState(EMPTY_ASSIGN_FORM);
+  const [assignFile, setAssignFile] = useState(null);
   const [assignedEmployees, setAssignedEmployees] = useState([]);
   const [projectEmployeesLoading, setProjectEmployeesLoading] = useState(false);
   const [assigningTask, setAssigningTask] = useState(false);
@@ -402,13 +405,34 @@ export default function TasksPage() {
 
     try {
       setSavingTask(true);
-      const payload = { ...taskForm };
+
+      let payload = { ...taskForm };
+
+      // Convert file to base64 and attach as JSON fields
+      if (taskFile) {
+        const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+        if (taskFile.size > MAX_SIZE) {
+          setSavingTask(false);
+          return setTaskError('File too large. Maximum allowed size is 50 MB.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(taskFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = taskFile.name;
+        payload.attachmentType = taskFile.type;
+      }
+
       const { data } = await api.post('/tasks', payload);
       if (data.success === false) {
         setTaskError(data.message || 'Failed to save task.');
       } else {
         setTaskSuccess(data.message || 'Task created successfully!');
         setTaskForm(EMPTY_TASK_FORM);
+        setTaskFile(null);
         await fetchTasks(selectedProject || '');
         setTimeout(() => {
           setShowAddModal(false);
@@ -464,6 +488,25 @@ export default function TasksPage() {
         assigned_date: assignForm.assignment_date,
         status: assignForm.status,
       };
+
+      // Attach document as base64 if provided
+      if (assignFile) {
+        const MAX_SIZE = 50 * 1024 * 1024;
+        if (assignFile.size > MAX_SIZE) {
+          setAssigningTask(false);
+          return setAssignError('File too large. Maximum 50 MB allowed.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(assignFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = assignFile.name;
+        payload.attachmentType = assignFile.type;
+      }
+
       const { data } = await api.post('/tasks/assign', payload);
       if (data.success === false) {
         setAssignError(data.message || 'Failed to assign task.');
@@ -474,6 +517,7 @@ export default function TasksPage() {
           setShowAssignModal(false);
           setAssignSuccess('');
           setAssignForm(EMPTY_ASSIGN_FORM);
+          setAssignFile(null);
         }, 1800);
       }
     } catch (err) {
@@ -849,6 +893,35 @@ export default function TasksPage() {
               <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Description</p>
               <p className="mt-2 text-sm text-slate-200 whitespace-pre-line">{selectedTaskDetails.description || 'No description provided.'}</p>
             </div>
+            {selectedTaskDetails.attachments && selectedTaskDetails.attachments.length > 0 && (
+              <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mb-3">Attachments</p>
+                <div className="flex flex-col gap-2">
+                  {selectedTaskDetails.attachments.map((att, i) => (
+                    <a
+                      key={i}
+                      href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 14px', borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.04)',
+                        color: '#94a3b8', textDecoration: 'none',
+                        fontSize: '13px', transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(249,115,22,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                    >
+                      <Paperclip size={14} style={{ color: '#f97316', flexShrink: 0 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name}</span>
+                      <Download size={14} style={{ flexShrink: 0 }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -858,7 +931,7 @@ export default function TasksPage() {
       ════════════════════════════════════════════════ */}
       <Modal
         open={showAddModal}
-        onClose={() => { setShowAddModal(false); setTaskError(''); setTaskSuccess(''); }}
+        onClose={() => { setShowAddModal(false); setTaskError(''); setTaskSuccess(''); setTaskFile(null); }}
         title="Create New Task"
         subtitle="Fill in the details below to create a new task."
         icon={Plus}
@@ -926,6 +999,38 @@ export default function TasksPage() {
           <FieldBox label="Description">
             <textarea value={taskForm.description} onChange={(e) => setTaskForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Brief description of the task..." />
           </FieldBox>
+          <div className="sm:col-span-2">
+            <FieldBox label="Attachment (PDF, Word, Excel, etc.)">
+              <label
+                htmlFor="task-file-upload"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                  border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                  padding: '14px 16px', transition: 'border-color 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+              >
+                <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: taskFile ? '#e2e8f0' : '#64748b' }}>
+                  {taskFile ? taskFile.name : 'Click to choose a file...'}
+                </span>
+                {taskFile && (
+                  <button type="button" onClick={(e) => { e.preventDefault(); setTaskFile(null); }}
+                    style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                )}
+              </label>
+              <input
+                id="task-file-upload"
+                type="file"
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                onChange={(e) => setTaskFile(e.target.files[0] || null)}
+              />
+            </FieldBox>
+          </div>
         </div>
       </Modal>
 
@@ -934,7 +1039,7 @@ export default function TasksPage() {
       ════════════════════════════════════════════════ */}
       <Modal
         open={showAssignModal}
-        onClose={() => { setShowAssignModal(false); setAssignError(''); setAssignSuccess(''); }}
+        onClose={() => { setShowAssignModal(false); setAssignError(''); setAssignSuccess(''); setAssignFile(null); }}
         title="Assign Task to Employee"
         subtitle="Select a project, pick a task and assign it to an employee."
         icon={UserPlus}
@@ -1032,6 +1137,39 @@ export default function TasksPage() {
               ))}
             </select>
           </FieldBox>
+
+          <div className="sm:col-span-2">
+            <FieldBox label="Attachment (PDF, Word, Excel, etc.)">
+              <label
+                htmlFor="assign-file-upload"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                  border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                  padding: '14px 16px', transition: 'border-color 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+              >
+                <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: assignFile ? '#e2e8f0' : '#64748b' }}>
+                  {assignFile ? assignFile.name : 'Click to attach a document...'}
+                </span>
+                {assignFile && (
+                  <button type="button" onClick={(e) => { e.preventDefault(); setAssignFile(null); }}
+                    style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                )}
+              </label>
+              <input
+                id="assign-file-upload"
+                type="file"
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                onChange={(e) => setAssignFile(e.target.files[0] || null)}
+              />
+            </FieldBox>
+          </div>
         </div>
       </Modal>
     </div>

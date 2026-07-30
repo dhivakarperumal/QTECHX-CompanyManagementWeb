@@ -92,6 +92,7 @@ async function ensureEmployeeTaskAssignmentsSchema(pool) {
         status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled','Assigned','Active','Removed') NOT NULL DEFAULT 'Assigned',
         assigned_by VARCHAR(36) NULL,
         assigned_date DATETIME NULL,
+        attachments TEXT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         created_by VARCHAR(36) NULL,
@@ -131,6 +132,9 @@ async function ensureEmployeeTaskAssignmentsSchema(pool) {
   }
   if (!columnNames.has('assigned_date')) {
     addColumnStatements.push('ADD COLUMN assigned_date DATETIME NULL AFTER assigned_by');
+  }
+  if (!columnNames.has('attachments')) {
+    addColumnStatements.push('ADD COLUMN attachments TEXT NULL AFTER assigned_date');
   }
   if (!columnNames.has('created_at')) {
     addColumnStatements.push('ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER assigned_date');
@@ -198,7 +202,7 @@ async function findEmployeeTaskAssignment(project_id, employee_id) {
   };
 }
 
-async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, created_by = null, updated_by = null, status = null }) {
+async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, created_by = null, updated_by = null, status = null, attachments = null }) {
   const db = getDB();
 
   if (!project_id) throw new Error('project_id is required');
@@ -237,8 +241,8 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
     const finalUpdatedAssignedDate = existing.assigned_date || finalAssignedDate;
 
     await db.execute(
-      'UPDATE employee_task_assignments SET task_details = ?, task_count = ?, status = ?, assigned_by = ?, assigned_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-      [JSON.stringify(existingTasks), updatedTaskCount, finalStatus, assigned_by, finalUpdatedAssignedDate, updated_by, existing.id]
+      'UPDATE employee_task_assignments SET task_details = ?, task_count = ?, status = ?, assigned_by = ?, assigned_date = ?, attachments = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
+      [JSON.stringify(existingTasks), updatedTaskCount, finalStatus, assigned_by, finalUpdatedAssignedDate, attachments || existing.attachments || null, updated_by, existing.id]
     );
 
     await db.execute(
@@ -263,9 +267,9 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   const initialStatus = status || task.status || 'Assigned';
   await db.execute(
     `INSERT INTO employee_task_assignments
-      (project_id, employee_id, employee_details, task_details, task_count, status, assigned_by, assigned_date, created_at, updated_at, created_by, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)`,
-    [project_id, employee.employee_id, JSON.stringify(employeeDetails), JSON.stringify([taskDetailsEntry]), 1, initialStatus, assigned_by, finalAssignedDate, created_by, updated_by]
+      (project_id, employee_id, employee_details, task_details, task_count, status, assigned_by, assigned_date, attachments, created_at, updated_at, created_by, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)`,
+    [project_id, employee.employee_id, JSON.stringify(employeeDetails), JSON.stringify([taskDetailsEntry]), 1, initialStatus, assigned_by, finalAssignedDate, attachments || null, created_by, updated_by]
   );
 
   await db.execute(
