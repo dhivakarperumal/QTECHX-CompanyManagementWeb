@@ -16,6 +16,7 @@ import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import AttendancePage from './Admin/AttendancePage.jsx'
 import AttendanceView from './Admin/AttendanceView.jsx'
+import OfficeCalendar from './Admin/OfficeCalendar.jsx'
 
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
@@ -268,6 +269,10 @@ const router = createHashRouter([
             element: <AttendancePage />,
           },
           {
+            path: 'office-calendar',
+            element: <OfficeCalendar />,
+          },
+          {
             path: 'expenses',
             element: <ExpensesPage />,
           },
@@ -294,6 +299,10 @@ const router = createHashRouter([
           {
             index: true,
             element: <TraineeDashboard />,
+          },
+          {
+            path: 'office-calendar',
+            element: <OfficeCalendar />,
           },
         ],
       },

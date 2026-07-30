@@ -154,15 +154,42 @@ async function createTaskHandler(req, res) {
 }
 
 /* ─── UPDATE ─── */
+// Only these columns are allowed to be updated from the frontend
+const ALLOWED_UPDATE_FIELDS = [
+  'project_id', 'module_name', 'task_name', 'description', 'category',
+  'parent_task_uuid', 'assigned_to', 'assigned_by', 'team', 'assignment_date',
+  'start_date', 'due_date', 'completion_date', 'estimated_hours', 'actual_hours',
+  'time_spent', 'remaining_hours', 'priority', 'status', 'progress',
+  'is_overdue', 'attachments', 'comments', 'internal_notes', 'client_notes',
+  'active',
+];
+
+// Fields that are optional and should be stored as NULL (not '') when blank
+const NULLABLE_FIELDS = [
+  'assigned_to', 'assigned_by', 'module_name', 'description', 'category',
+  'parent_task_uuid', 'team', 'assignment_date', 'start_date', 'due_date',
+  'completion_date', 'comments', 'internal_notes', 'client_notes',
+];
+
 async function updateTaskHandler(req, res) {
   try {
     const task = await findTaskByUUID(req.params.id);
     if (!task) return fail(res, 'Task not found', 404);
 
-    const {
-      attachmentBase64, attachmentName, attachmentType,
-      ...updates
-    } = req.body;
+    const { attachmentBase64, attachmentName, attachmentType } = req.body;
+
+    // Build a clean updates object — only whitelisted DB columns
+    const updates = {};
+    for (const field of ALLOWED_UPDATE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        let val = req.body[field];
+        // Convert empty strings to null for nullable fields
+        if (NULLABLE_FIELDS.includes(field) && (val === '' || val === undefined)) {
+          val = null;
+        }
+        updates[field] = val;
+      }
+    }
 
     // Save new file if provided, merge with existing
     const fileEntry = saveBase64File(attachmentBase64, attachmentName, attachmentType);
@@ -170,6 +197,7 @@ async function updateTaskHandler(req, res) {
       updates.attachments = mergeAttachments(task.attachments, fileEntry);
     }
 
+    // Resolve project UUID → numeric id
     if (updates.project_id) {
       const project = await findProjectByUUID(updates.project_id);
       if (!project) return fail(res, 'Project not found', 404);
@@ -187,11 +215,20 @@ async function updateTaskHandler(req, res) {
       updates.attachments = JSON.stringify(updates.attachments);
     }
 
+    // Recalculate is_overdue if due_date is being changed
+    if (Object.prototype.hasOwnProperty.call(updates, 'due_date')) {
+      updates.is_overdue = updates.due_date
+        ? (new Date(updates.due_date).setHours(23, 59, 59, 999) < Date.now() ? 1 : 0)
+        : 0;
+    }
+
     updates.updated_by = req.user?.user_id || 'SYSTEM';
+
+    console.log('updateTaskHandler - updating fields:', Object.keys(updates));
     const updated = await updateTask(req.params.id, updates);
     return ok(res, { message: 'Task updated successfully', data: updated });
   } catch (err) {
-    console.error('updateTaskHandler:', err);
+    console.error('updateTaskHandler error:', err.message, err.stack);
     return fail(res, 'Failed to update task');
   }
 }

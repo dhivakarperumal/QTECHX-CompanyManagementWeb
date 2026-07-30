@@ -68,7 +68,7 @@ const navItems = [
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
       { path: "/admin/projects/assignments", label: "Assigned Projects", icon: UserCheck },
-      { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
+      
     ],
   },
 
@@ -91,8 +91,8 @@ const navItems = [
     icon: CheckSquare,
     children: [
       { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
-      { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
-      { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
+      // { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
+      // { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
       { path: "/admin/tasks/update", label: "Update Task", icon: Edit3 },
       { path: "/admin/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
     ],

@@ -42,10 +42,13 @@ const mapTaskToViewModel = (task) => ({
   project: task.project_name || task.project_id || "—",
   assignedTo: task.assigned_to_name || "Unassigned",
   assignedBy: task.assigned_by_name || "—",
+  // Raw IDs for form editing
+  assigned_to_raw: task.assigned_to || "",
+  assigned_by_raw: task.assigned_by || "",
   status: normalizeTaskStatus(task.status),
   progress: Number(task.progress || 0),
   startDate: task.start_date || "",
-  dueDate: task.due_date || "—",
+  dueDate: task.due_date !== undefined ? (task.due_date || "") : "—",
   priority: task.priority || "Medium",
   description: task.description || "",
   estimatedHours: task.estimated_hours || "",
@@ -317,15 +320,16 @@ export default function TasksPage() {
         setSelectedTaskDetails(task);
         setTaskUpdateForm({
           project_id: task.project_uuid || '',
-          module_name: task.module,
+          module_name: task.module !== '—' ? task.module : '',
           task_name: task.name,
           description: task.description,
-          assigned_to: task.assignedTo,
-          assigned_by: task.assignedBy,
+          // Use raw IDs, not display names
+          assigned_to: task.assigned_to_raw || '',
+          assigned_by: task.assigned_by_raw || '',
           start_date: task.startDate || '',
-          due_date: task.dueDate || '',
+          due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
-          priority: task.priority || '',
+          priority: task.priority !== 'Medium' ? task.priority : (task.priority || ''),
         });
       }
     };
@@ -460,9 +464,17 @@ export default function TasksPage() {
         setUpdateError(data.message || 'Failed to update task.');
       } else {
         setUpdateSuccess(data.message || 'Task updated successfully!');
-        const updated = mapTaskToViewModel(data.data);
-        setSelectedTaskDetails(updated);
+        if (data.data) {
+          setSelectedTaskDetails(mapTaskToViewModel(data.data));
+        }
         await fetchTasks(selectedProject || '');
+        // Navigate back to tasks list after a short delay so user sees the success message
+        setTimeout(() => {
+          const backPath = selectedProject
+            ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}`
+            : '/admin/tasks';
+          navigate(backPath);
+        }, 1500);
       }
     } catch (err) {
       setUpdateError(err?.response?.data?.message || err.message || 'Failed to update task.');
@@ -653,8 +665,20 @@ export default function TasksPage() {
       {/* ── Update Task page (route-based) ── */}
       {pageKey === "update" && (
         <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 className="text-xl font-semibold">Update Task</h2>
-          <p className="mt-2 text-sm text-slate-400">Modify task details and save your updates.</p>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-xl font-semibold">Update Task</h2>
+              <p className="mt-1 text-sm text-slate-400">Modify task details and save your updates.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(selectedProject ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}` : '/admin/tasks')}
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:bg-white/10 transition"
+            >
+              ← Back to Tasks
+            </button>
+          </div>
+
           {!currentTaskUuid ? (
             <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
               No task selected for editing. Choose a task from the list and click Edit.
@@ -666,7 +690,7 @@ export default function TasksPage() {
           ) : (
             <>
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <FieldBox label="Project">
+                <FieldBox label="Project *">
                   <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
                     <option value="" disabled>Select project</option>
                     {projects.map((project) => (
@@ -677,17 +701,17 @@ export default function TasksPage() {
                 <FieldBox label="Module">
                   <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="Enter Module" />
                 </FieldBox>
-                <FieldBox label="Task Name">
+                <FieldBox label="Task Name *">
                   <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter Task Name" />
                 </FieldBox>
                 <FieldBox label="Description">
                   <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Enter task description" />
                 </FieldBox>
                 <FieldBox label="Assigned To">
-                  <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Enter Assigned To" />
+                  <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee ID or name" />
                 </FieldBox>
                 <FieldBox label="Assigned By">
-                  <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Enter Assigned By" />
+                  <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager ID or name" />
                 </FieldBox>
                 <FieldBox label="Start Date">
                   <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
@@ -696,7 +720,7 @@ export default function TasksPage() {
                   <input type="date" value={taskUpdateForm.due_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, due_date: e.target.value }))} className={inputCls} />
                 </FieldBox>
                 <FieldBox label="Estimated Hours">
-                  <input type="number" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="Enter Estimated Hours" />
+                  <input type="number" min="0" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
                 </FieldBox>
                 <FieldBox label="Priority">
                   <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
@@ -707,14 +731,26 @@ export default function TasksPage() {
                   </select>
                 </FieldBox>
               </div>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="mt-6 flex flex-wrap gap-3 items-center">
                 <button type="button" onClick={handleUpdateTask} disabled={updatingTask}
                   className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
                   {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : 'Update Task'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(selectedProject ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}` : '/admin/tasks')}
+                  className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-3 text-sm text-slate-300 hover:border-white/20 transition"
+                >
+                  Cancel
+                </button>
               </div>
               {updateError && <p className="mt-3 flex items-center gap-2 text-sm text-rose-400"><AlertCircle size={14} />{updateError}</p>}
-              {updateSuccess && <p className="mt-3 flex items-center gap-2 text-sm text-emerald-400"><CheckCircle size={14} />{updateSuccess}</p>}
+              {updateSuccess && (
+                <p className="mt-3 flex items-center gap-2 text-sm text-emerald-400">
+                  <CheckCircle size={14} />{updateSuccess}
+                  <span className="text-slate-500 text-xs ml-1">(Redirecting back to tasks...)</span>
+                </p>
+              )}
             </>
           )}
         </div>
