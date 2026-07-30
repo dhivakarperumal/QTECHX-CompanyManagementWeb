@@ -599,9 +599,8 @@ const OfficeCalendar = () => {
           display: flex; flex-direction: column; padding: 20px 16px;
           overflow-y: auto; gap: 24px; flex-shrink: 0; backdrop-filter: blur(4px);
         }
-        .oc-right::-webkit-scrollbar { width: 4px; }
-        .oc-right::-webkit-scrollbar-thumb { background: rgba(248, 116, 14, 0.35); border-radius: 4px; }
-        .oc-right::-webkit-scrollbar-thumb:hover { background: rgba(248, 116, 14, 0.6); }
+        .oc-right::-webkit-scrollbar { display: none; }
+        .oc-right { scrollbar-width: none; -ms-overflow-style: none; }
 
         /* Mini calendar */
         .oc-mini-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -676,8 +675,8 @@ const OfficeCalendar = () => {
           max-height: 92vh; overflow-y: auto; padding: 28px;
           box-shadow: 0 25px 60px rgba(0,0,0,0.5); color: #fff;
         }
-        .oc-modal::-webkit-scrollbar { width: 5px; }
-        .oc-modal::-webkit-scrollbar-thumb { background: rgba(248, 116, 14, 0.35); border-radius: 4px; }
+        .oc-modal::-webkit-scrollbar { display: none; }
+        .oc-modal { scrollbar-width: none; -ms-overflow-style: none; }
         .oc-modal-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
         .oc-modal-sub { font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
         .oc-modal-ttl { font-size: 20px; font-weight: 700; color: #fff; }
@@ -746,8 +745,8 @@ const OfficeCalendar = () => {
           display: flex; flex-direction: column; padding: 24px; overflow-y: auto;
           box-shadow: -8px 0 32px rgba(0,0,0,0.5); color: #fff;
         }
-        .oc-drawer::-webkit-scrollbar { width: 5px; }
-        .oc-drawer::-webkit-scrollbar-thumb { background: rgba(248, 116, 14, 0.35); border-radius: 4px; }
+        .oc-drawer::-webkit-scrollbar { display: none; }
+        .oc-drawer { scrollbar-width: none; -ms-overflow-style: none; }
         .oc-drawer-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
         .oc-drawer-sub { font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
         .oc-drawer-ttl { font-size: 18px; font-weight: 700; color: #fff; }
