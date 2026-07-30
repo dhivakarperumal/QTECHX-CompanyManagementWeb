@@ -433,21 +433,7 @@ const ExpensesPage = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
-              <select
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
-                value={filters.paymentType}
-                onChange={(e) => setFilters({ ...filters, paymentType: e.target.value })}
-              >
-                <option value="" className="bg-[#111318]">All Types</option>
-                <option value="Cash" className="bg-[#111318]">Cash</option>
-                <option value="Bank Transfer" className="bg-[#111318]">Bank Transfer</option>
-                <option value="Credit Card" className="bg-[#111318]">Credit Card</option>
-                <option value="UPI" className="bg-[#111318]">UPI</option>
-                <option value="Cheque" className="bg-[#111318]">Cheque</option>
-              </select>
-            </div>
+
             <div>
               <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Method</label>
               <select
