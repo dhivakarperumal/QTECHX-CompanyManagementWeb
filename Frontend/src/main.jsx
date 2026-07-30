@@ -37,6 +37,7 @@ import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
+import EmployeeMeetings from './Employees/EmployeeMeetings.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -345,6 +346,14 @@ const router = createHashRouter([
           {
             path: 'my-calendar',
             element: <MyCalendar />,
+          },
+          {
+            path: 'meetings',
+            element: <EmployeeMeetings />,
+          },
+          {
+            path: 'meetings/upcoming',
+            element: <EmployeeMeetings />,
           },
         ],
       },

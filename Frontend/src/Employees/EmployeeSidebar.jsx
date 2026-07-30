@@ -95,14 +95,9 @@ const navItems = [
   },
 
   /* ---- MEETINGS ---- */
-  {
-    label: "Meetings",
-    icon: Video,
-    children: [
-      { path: "/employee/meetings", label: "All Meetings", icon: Video },
-      { path: "/employee/meetings/upcoming", label: "Upcoming", icon: CalendarDays }
-    ]
-  },
+  { label: "Meetings",path: "/employee/meetings", label: "All Meetings", icon: Video },
+    
+    
 
   /* ---- CALENDAR ---- */
   {
