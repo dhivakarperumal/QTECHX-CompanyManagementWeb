@@ -267,38 +267,56 @@ export default function MyProjectDetails() {
             </div>
 
             {assignedEmployees.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {assignedEmployees.map((employee) => (
-                  <div key={`${employee.employee_id}-${employee.id}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 flex flex-col gap-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-white">
-                          {employee.full_name || employee.employee_name || [employee.first_name, employee.last_name].filter(Boolean).join(' ') || 'Unknown'}
-                        </p>
-                        <p className="text-xs text-white/45 mt-0.5">{employee.employee_code || employee.employee_id || 'N/A'}</p>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 shrink-0 border border-white/10">
-                        <User size={18} />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-xs text-white/50">{employee.designation || employee.role || 'Employee'}</p>
-                    </div>
-
-                    <div className="mt-auto pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
-                      <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-300">
-                        {employee.status || employee.role || 'Assigned'}
-                      </span>
-                      <button 
-                        onClick={() => navigate(`/admin/employees/view/${employee.employee_id}`)}
-                        className="text-[11px] font-semibold text-white/60 hover:text-white transition"
-                      >
-                        View Profile →
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm text-white/70">
+                    <thead className="bg-white/5 text-white">
+                      <tr>
+                        <th className="p-4 font-semibold w-16">S.No</th>
+                        <th className="p-4 font-semibold">Employee</th>
+                        <th className="p-4 font-semibold">Designation</th>
+                        <th className="p-4 font-semibold">Status</th>
+                        <th className="p-4 font-semibold text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {assignedEmployees.map((employee, index) => (
+                        <tr key={`${employee.employee_id}-${employee.id}`} className="hover:bg-white/5 transition">
+                          <td className="p-4 text-white/50">{index + 1}</td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 shrink-0 border border-white/10">
+                                <User size={14} />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-white">
+                                  {employee.full_name || employee.employee_name || [employee.first_name, employee.last_name].filter(Boolean).join(' ') || 'Unknown'}
+                                </p>
+                                <p className="text-[11px] text-white/45 mt-0.5">{employee.employee_code || employee.employee_id || 'N/A'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            {employee.designation || employee.role || 'Employee'}
+                          </td>
+                          <td className="p-4">
+                            <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-300">
+                              {employee.status || employee.role || 'Assigned'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button 
+                              onClick={() => navigate(`/admin/employees/view/${employee.employee_id}`)}
+                              className="text-[11px] font-semibold text-white/60 hover:text-white transition underline underline-offset-2"
+                            >
+                              View Profile →
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 flex flex-col items-center justify-center text-center">
