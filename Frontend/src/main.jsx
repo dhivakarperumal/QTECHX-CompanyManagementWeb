@@ -35,6 +35,8 @@ import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
 import TraineeLayout from './Trainee/TraineePanel.jsx'
+import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
+import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -302,9 +304,9 @@ const router = createHashRouter([
           },
         ],
       },
-    
 
-      {
+
+       {
         path: 'trainee',
         element: (
           <PrivateRoute allowedRoles={["Trainee"]}>
@@ -315,6 +317,26 @@ const router = createHashRouter([
           {
             index: true,
             element: <TraineeDashboard />,
+          },
+          {
+            path: 'office-calendar',
+            element: <OfficeCalendar />,
+          },
+        ],
+      },
+    
+
+      {
+        path: 'employee',
+        element: (
+          <PrivateRoute allowedRoles={["Employee"]}>
+            <EmployeeLayout />
+          </PrivateRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: <EmployeeDashboard />,
           },
           {
             path: 'office-calendar',
