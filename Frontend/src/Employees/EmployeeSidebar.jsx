@@ -54,14 +54,8 @@ const navItems = [
   },
 
   /* ---- PROJECTS ---- */
-  {
-    label: "My Projects",
-    icon: FolderKanban,
-    children: [
-      { path: "/employee/projects", label: "All Projects", icon: FolderKanban },
-      { path: "/employee/projects/active", label: "Active Projects", icon: TrendingUp },
-    ],
-  },
+  { path: "/employee/projects", label: "My Projects", icon: FolderKanban },
+  
 
   /* ---- TASKS ---- */
   {
