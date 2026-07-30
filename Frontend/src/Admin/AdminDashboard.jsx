@@ -1,13 +1,13 @@
-  import { useAuth } from '../PrivateRouter/AuthContext';
-  import { useAdmin } from '../PrivateRouter/AdminContext';
-  import React, { useState, useEffect } from 'react';
+import { useAuth } from '../PrivateRouter/AuthContext';
+import { useAdmin } from '../PrivateRouter/AdminContext';
+import React, { useState, useEffect } from 'react';
 import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
   TrendingDown, ArrowUpRight, Clock, CheckCircle2,
   UserPlus, Briefcase, Activity, Calendar, ChevronDown, Settings
 } from 'lucide-react';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
@@ -34,9 +34,8 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, color, bgColor
         <Icon size={20} />
       </div>
       {change !== undefined && (
-        <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-          changeType === 'up' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
-        }`}>
+        <span className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${changeType === 'up' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
+          }`}>
           {changeType === 'up' ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
           {change}
         </span>
@@ -118,9 +117,9 @@ const overviewData = [
 ];
 
 const tasksStatusData = [
-  { name: 'Completed', value: 178, color: '#f97316' }, 
-  { name: 'In Progress', value: 48, color: '#4b5563' }, 
-  { name: 'Pending', value: 16, color: '#9ca3af' }, 
+  { name: 'Completed', value: 178, color: '#f97316' },
+  { name: 'In Progress', value: 48, color: '#4b5563' },
+  { name: 'Pending', value: 16, color: '#9ca3af' },
 ];
 
 const employeeDeptData = [
@@ -216,14 +215,14 @@ const AdminDashboard = () => {
   };
 
   const stats = [
-    { icon: Users,         label: 'Total Employees',      value: dashboard ? String(dashboard.totalEmployees || 0) : '—',  change: '+3 this month', changeType: 'up',   color: 'bg-blue-500/20 text-blue-400',    bgColor: 'bg-blue-500' },
-    { icon: FolderKanban,  label: 'Active Projects',       value: dashboard ? String(dashboard.activeProjects || 0) : '—',   change: '+2 new',        changeType: 'up',   color: 'bg-primary/20 text-primary',      bgColor: 'bg-primary' },
-    { icon: CheckSquare,   label: 'Tasks In Progress',     value: dashboard ? String(dashboard.tasksInProgress || 0) : '—',   change: '12 overdue',    changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
-    { icon: CalendarOff,   label: 'Pending Leave Requests',value: dashboard ? String(dashboard.pendingLeaveRequests || 0) : '—',    change: '3 urgent',      changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
-    { icon: GraduationCap, label: 'Active Trainees',       value: dashboard ? String(dashboard.activeTrainees || 0) : '—',   change: '+5 this week',  changeType: 'up',   color: 'bg-teal-500/20 text-teal-400',    bgColor: 'bg-teal-500' },
-    { icon: BookOpen,      label: 'Internship Students',   value: dashboard ? String(dashboard.internshipStudents || 0) : '—',   change: 'Batch Jul 2026',changeType: 'up',   color: 'bg-pink-500/20 text-pink-400',    bgColor: 'bg-pink-500' },
-    { icon: DollarSign,    label: 'Monthly Payroll',       value: dashboard ? formatPayroll(dashboard.monthlyPayroll) : '—', change: 'Jul 31 due',   changeType: 'up',   color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
-    { icon: ClipboardCheck,label: 'Attendance Today',      value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—',  changeType: 'down', color: 'bg-sky-500/20 text-sky-400',      bgColor: 'bg-sky-500' },
+    { icon: Users, label: 'Total Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', change: '+3 this month', changeType: 'up', color: 'bg-blue-500/20 text-blue-400', bgColor: 'bg-blue-500' },
+    { icon: FolderKanban, label: 'Active Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', change: '+2 new', changeType: 'up', color: 'bg-primary/20 text-primary', bgColor: 'bg-primary' },
+    { icon: CheckSquare, label: 'Tasks In Progress', value: dashboard ? String(dashboard.tasksInProgress || 0) : '—', change: '12 overdue', changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
+    { icon: CalendarOff, label: 'Pending Leave Requests', value: dashboard ? String(dashboard.pendingLeaveRequests || 0) : '—', change: '3 urgent', changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: GraduationCap, label: 'Active Trainees', value: dashboard ? String(dashboard.activeTrainees || 0) : '—', change: '+5 this week', changeType: 'up', color: 'bg-teal-500/20 text-teal-400', bgColor: 'bg-teal-500' },
+    { icon: BookOpen, label: 'Internship Students', value: dashboard ? String(dashboard.internshipStudents || 0) : '—', change: 'Batch Jul 2026', changeType: 'up', color: 'bg-pink-500/20 text-pink-400', bgColor: 'bg-pink-500' },
+    { icon: DollarSign, label: 'Monthly Payroll', value: dashboard ? formatPayroll(dashboard.monthlyPayroll) : '—', change: 'Jul 31 due', changeType: 'up', color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
+    { icon: ClipboardCheck, label: 'Attendance Today', value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—', changeType: 'down', color: 'bg-sky-500/20 text-sky-400', bgColor: 'bg-sky-500' },
   ];
 
   const heroMetrics = [
@@ -234,24 +233,24 @@ const AdminDashboard = () => {
   ];
 
   const quickActions = [
-    { label: 'Add Employee',      icon: UserPlus },
-    { label: 'New Project',       icon: FolderKanban },
-    { label: 'Run Payroll',       icon: DollarSign },
-    { label: 'Open Calendar',     icon: Calendar },
+    { label: 'Add Employee', icon: UserPlus },
+    { label: 'New Project', icon: FolderKanban },
+    { label: 'Run Payroll', icon: DollarSign },
+    { label: 'Open Calendar', icon: Calendar },
   ];
 
   const upcomingEvents = [
-    { title: 'Monthly All-Hands Meeting',  date: 'Jul 25',  time: '10:00 AM', type: 'meeting',  color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
-    { title: 'Q3 Project Review',          date: 'Jul 26',  time: '2:00 PM',  type: 'review',   color: 'bg-primary/15 border-primary/30 text-primary' },
-    { title: 'July Payroll Processing',    date: 'Jul 31',  time: 'All Day',  type: 'payroll',  color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
-    { title: 'New Intern Orientation',     date: 'Aug 1',   time: '9:00 AM',  type: 'training', color: 'bg-pink-500/15 border-pink-500/30 text-pink-400' },
+    { title: 'Monthly All-Hands Meeting', date: 'Jul 25', time: '10:00 AM', type: 'meeting', color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
+    { title: 'Q3 Project Review', date: 'Jul 26', time: '2:00 PM', type: 'review', color: 'bg-primary/15 border-primary/30 text-primary' },
+    { title: 'July Payroll Processing', date: 'Jul 31', time: 'All Day', type: 'payroll', color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
+    { title: 'New Intern Orientation', date: 'Aug 1', time: '9:00 AM', type: 'training', color: 'bg-pink-500/15 border-pink-500/30 text-pink-400' },
   ];
 
   const taskOverview = [
-    { label: 'Completed',   value: 89,  color: 'text-green-400',  bg: 'bg-green-500' },
-    { label: 'In Progress', value: 67,  color: 'text-blue-400',   bg: 'bg-blue-500' },
-    { label: 'Pending',     value: 34,  color: 'text-yellow-400', bg: 'bg-yellow-500' },
-    { label: 'Overdue',     value: 12,  color: 'text-red-400',    bg: 'bg-red-500' },
+    { label: 'Completed', value: 89, color: 'text-green-400', bg: 'bg-green-500' },
+    { label: 'In Progress', value: 67, color: 'text-blue-400', bg: 'bg-blue-500' },
+    { label: 'Pending', value: 34, color: 'text-yellow-400', bg: 'bg-yellow-500' },
+    { label: 'Overdue', value: 12, color: 'text-red-400', bg: 'bg-red-500' },
   ];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
   const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
@@ -375,7 +374,7 @@ const AdminDashboard = () => {
 
       {/* ── CHARTS ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
+
         {/* Company Overview (Line Chart) */}
         <div className="lg:col-span-8 bg-white/4 border border-white/8 p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-6">
@@ -390,7 +389,7 @@ const AdminDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   itemStyle={{ color: '#fff' }}
                 />
@@ -431,7 +430,7 @@ const AdminDashboard = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
                 />
               </PieChart>
@@ -450,7 +449,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   <span className="font-semibold text-white">{t.value}</span>
-                  <span className="text-white/40">({Math.round((t.value/242)*100)}%)</span>
+                  <span className="text-white/40">({Math.round((t.value / 242) * 100)}%)</span>
                 </div>
               </div>
             ))}
@@ -533,12 +532,12 @@ const AdminDashboard = () => {
           <h2 className="text-sm font-bold text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3 flex-1">
             {[
-              { icon: UserPlus,    label: 'Add Employee' },
-              { icon: Briefcase,   label: 'Add Project' },
+              { icon: UserPlus, label: 'Add Employee' },
+              { icon: Briefcase, label: 'Add Project' },
               { icon: CheckSquare, label: 'Create Task' },
-              { icon: Calendar,    label: 'Mark Attendance' },
-              { icon: Activity,    label: 'Generate Report' },
-              { icon: Settings,    label: 'System Settings' },
+              { icon: Calendar, label: 'Mark Attendance' },
+              { icon: Activity, label: 'Generate Report' },
+              { icon: Settings, label: 'System Settings' },
             ].map(({ icon: Icon, label }, i) => (
               <button
                 key={i}
