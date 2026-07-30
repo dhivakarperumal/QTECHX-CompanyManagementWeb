@@ -1,4 +1,6 @@
   import { useAuth } from '../PrivateRouter/AuthContext';
+  import { useAdmin } from '../PrivateRouter/AdminContext';
+  import React, { useState, useEffect } from 'react';
 import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
@@ -177,16 +179,51 @@ const ActivityRow = ({ title, meta, time, user, avatar }) => (
 const AdminDashboard = () => {
   const { profileName } = useAuth();
   const name = profileName?.split(' ')[0] || 'Admin';
+  const { getDashboardData } = useAdmin();
+  const [dashboard, setDashboard] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getDashboardData();
+        if (mounted) setDashboard(data);
+      } catch (err) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Poll every 30s for near-real-time updates
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await getDashboardData(true);
+        setDashboard(fresh);
+      } catch (err) {
+        // ignore polling errors
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatPayroll = (amount) => {
+    if (!amount && amount !== 0) return '—';
+    const n = Number(amount || 0);
+    if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`;
+    return `₹${n.toLocaleString('en-IN')}`;
+  };
 
   const stats = [
-    { icon: Users,         label: 'Total Employees',      value: '124',  change: '+3 this month', changeType: 'up',   color: 'bg-blue-500/20 text-blue-400',    bgColor: 'bg-blue-500' },
-    { icon: FolderKanban,  label: 'Active Projects',       value: '18',   change: '+2 new',        changeType: 'up',   color: 'bg-primary/20 text-primary',      bgColor: 'bg-primary' },
-    { icon: CheckSquare,   label: 'Tasks In Progress',     value: '67',   change: '12 overdue',    changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
-    { icon: CalendarOff,   label: 'Pending Leave Requests',value: '9',    change: '3 urgent',      changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
-    { icon: GraduationCap, label: 'Active Trainees',       value: '34',   change: '+5 this week',  changeType: 'up',   color: 'bg-teal-500/20 text-teal-400',    bgColor: 'bg-teal-500' },
-    { icon: BookOpen,      label: 'Internship Students',   value: '12',   change: 'Batch Jul 2026',changeType: 'up',   color: 'bg-pink-500/20 text-pink-400',    bgColor: 'bg-pink-500' },
-    { icon: DollarSign,    label: 'Monthly Payroll',       value: '₹8.4L', change: 'Jul 31 due',   changeType: 'up',   color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
-    { icon: ClipboardCheck,label: 'Attendance Today',      value: '118/124', change: '6 absent',  changeType: 'down', color: 'bg-sky-500/20 text-sky-400',      bgColor: 'bg-sky-500' },
+    { icon: Users,         label: 'Total Employees',      value: dashboard ? String(dashboard.totalEmployees || 0) : '—',  change: '+3 this month', changeType: 'up',   color: 'bg-blue-500/20 text-blue-400',    bgColor: 'bg-blue-500' },
+    { icon: FolderKanban,  label: 'Active Projects',       value: dashboard ? String(dashboard.activeProjects || 0) : '—',   change: '+2 new',        changeType: 'up',   color: 'bg-primary/20 text-primary',      bgColor: 'bg-primary' },
+    { icon: CheckSquare,   label: 'Tasks In Progress',     value: dashboard ? String(dashboard.tasksInProgress || 0) : '—',   change: '12 overdue',    changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
+    { icon: CalendarOff,   label: 'Pending Leave Requests',value: dashboard ? String(dashboard.pendingLeaveRequests || 0) : '—',    change: '3 urgent',      changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: GraduationCap, label: 'Active Trainees',       value: dashboard ? String(dashboard.activeTrainees || 0) : '—',   change: '+5 this week',  changeType: 'up',   color: 'bg-teal-500/20 text-teal-400',    bgColor: 'bg-teal-500' },
+    { icon: BookOpen,      label: 'Internship Students',   value: dashboard ? String(dashboard.internshipStudents || 0) : '—',   change: 'Batch Jul 2026',changeType: 'up',   color: 'bg-pink-500/20 text-pink-400',    bgColor: 'bg-pink-500' },
+    { icon: DollarSign,    label: 'Monthly Payroll',       value: dashboard ? formatPayroll(dashboard.monthlyPayroll) : '—', change: 'Jul 31 due',   changeType: 'up',   color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
+    { icon: ClipboardCheck,label: 'Attendance Today',      value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—',  changeType: 'down', color: 'bg-sky-500/20 text-sky-400',      bgColor: 'bg-sky-500' },
   ];
 
   const heroMetrics = [
