@@ -37,9 +37,9 @@ const AdminProfile = () => {
               <User size={64} className="text-white/20" />
             )}
           </div>
-          <button className="absolute bottom-2 right-2 p-2 bg-primary text-white rounded-full shadow-lg hover:scale-105 transition-transform">
+          {/* <button className="absolute bottom-2 right-2 p-2 bg-primary text-white rounded-full shadow-lg hover:scale-105 transition-transform">
             <Edit3 size={16} />
-          </button>
+          </button> */}
         </div>
 
         {/* Info Section */}
