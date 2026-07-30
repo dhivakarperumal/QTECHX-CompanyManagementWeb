@@ -75,7 +75,7 @@ const AdminProfile = () => {
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <User size={20} className="text-primary" /> Personal Information
               </h2>
-              <button className="text-xs text-primary hover:underline font-medium">Edit Details</button>
+              {/* <button className="text-xs text-primary hover:underline font-medium">Edit Details</button> */}
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
