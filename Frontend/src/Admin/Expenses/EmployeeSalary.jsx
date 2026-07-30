@@ -687,7 +687,7 @@ export default function EmployeeSalary() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition shadow-sm"
+                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition shadow-sm"
                 >
                   <Printer size={15} />
                   Print
@@ -707,7 +707,7 @@ export default function EmployeeSalary() {
                   <p className="text-sm text-gray-500">City, State, ZIP</p>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-2xl font-bold text-blue-600 uppercase tracking-widest">Payslip</h2>
+                  <h2 className="text-2xl font-bold text-orange-600 uppercase tracking-widest">Payslip</h2>
                   <p className="text-sm font-medium text-gray-600 mt-1">
                     {new Date(0, selectedPayslip.salary_month - 1).toLocaleString('default', { month: 'long' })} {selectedPayslip.salary_year}
                   </p>
@@ -763,7 +763,7 @@ export default function EmployeeSalary() {
 
               <div className="flex justify-between items-center bg-gray-50 p-5 rounded-xl border border-gray-200">
                 <span className="font-bold text-gray-700 text-lg">Net Pay</span>
-                <span className="font-black text-2xl text-blue-700">₹{parseFloat(selectedPayslip.total_salary).toLocaleString('en-IN')}</span>
+                <span className="font-black text-2xl text-orange-700">₹{parseFloat(selectedPayslip.total_salary).toLocaleString('en-IN')}</span>
               </div>
 
               <div className="mt-12 pt-8 border-t border-gray-200 flex justify-between">
