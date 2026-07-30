@@ -1,6 +1,7 @@
 import { useAuth } from '../PrivateRouter/AuthContext';
 import { useAdmin } from '../PrivateRouter/AdminContext';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users, FolderKanban, CheckSquare, GraduationCap, BookOpen,
   DollarSign, CalendarOff, ClipboardCheck, TrendingUp,
@@ -155,12 +156,6 @@ const leaveRequestsData = [
 ];
 
 // Recent activity mock and ActivityRow component (used in Recent Activity section)
-const recentActivity = [
-  { title: 'New employee onboarded', meta: 'HR', time: '2h ago', user: 'Alex Morgan', avatar: 'https://i.pravatar.cc/150?u=21' },
-  { title: 'Database backup completed', meta: 'Ops', time: '5h ago', user: 'System', avatar: 'https://i.pravatar.cc/150?u=22' },
-  { title: 'Project kickoff created', meta: 'Projects', time: '1d ago', user: 'Sam Smith', avatar: 'https://i.pravatar.cc/150?u=23' },
-  { title: 'Payroll processed', meta: 'Finance', time: '2d ago', user: 'Finance Bot', avatar: 'https://i.pravatar.cc/150?u=24' },
-];
 
 const ActivityRow = ({ title, meta, time, user, avatar }) => (
   <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
@@ -176,6 +171,7 @@ const ActivityRow = ({ title, meta, time, user, avatar }) => (
    ADMIN DASHBOARD
 ══════════════════════════════════════════════ */
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { profileName } = useAuth();
   const name = profileName?.split(' ')[0] || 'Admin';
   const { getDashboardData } = useAdmin();
@@ -226,17 +222,17 @@ const AdminDashboard = () => {
   ];
 
   const heroMetrics = [
-    { icon: Users, label: 'Employees', value: '124', accent: 'bg-blue-500/10 text-blue-300' },
-    { icon: FolderKanban, label: 'Live Projects', value: '18', accent: 'bg-primary/10 text-primary' },
-    { icon: ClipboardCheck, label: 'Present Today', value: '118', accent: 'bg-emerald-500/10 text-emerald-300' },
-    { icon: Clock, label: 'Payroll Due', value: 'Jul 31', accent: 'bg-yellow-500/10 text-yellow-300' },
+    { icon: Users, label: 'Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
+    { icon: FolderKanban, label: 'Live Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', accent: 'bg-primary/10 text-primary' },
+    { icon: ClipboardCheck, label: 'Present Today', value: dashboard ? String(dashboard.attendanceToday?.present || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
+    { icon: Clock, label: 'Payroll Due', value: 'End of Month', accent: 'bg-yellow-500/10 text-yellow-300' },
   ];
 
   const quickActions = [
-    { label: 'Add Employee', icon: UserPlus },
-    { label: 'New Project', icon: FolderKanban },
-    { label: 'Run Payroll', icon: DollarSign },
-    { label: 'Open Calendar', icon: Calendar },
+    { label: 'Add Employee', icon: UserPlus, path: '/admin/employees' },
+    { label: 'New Project', icon: FolderKanban, path: '/admin/projects' },
+    { label: 'Run Payroll', icon: DollarSign, path: '/admin/payroll' },
+    { label: 'Open Calendar', icon: Calendar, path: '/admin/attendance' },
   ];
 
   const upcomingEvents = [
@@ -272,7 +268,7 @@ const AdminDashboard = () => {
               {quickActions.map((action, index) => {
                 const ActionIcon = action.icon;
                 return (
-                  <button key={index} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
+                  <button key={index} onClick={() => action.path && navigate(action.path)} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/80 transition hover:bg-white/10 hover:text-white cursor-pointer">
                     <ActionIcon size={14} />
                     {action.label}
                   </button>
@@ -306,7 +302,7 @@ const AdminDashboard = () => {
                   <div>
                     <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
                     <div className="flex items-center gap-3">
-                      <p className="text-3xl font-semibold text-white">₹8.4L</p>
+                      <p className="text-3xl font-semibold text-white">₹{dashboard ? (dashboard.currentMonthIncome / 100000).toFixed(1) : 0}L</p>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 rounded-full px-2 py-1">+12%</span>
                     </div>
                   </div>
@@ -328,7 +324,7 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.24em] text-white/40">Team availability</p>
-                      <p className="text-white font-semibold text-lg mt-2">118/124</p>
+                      <p className="text-white font-semibold text-lg mt-2">{dashboard?.attendanceToday?.present || 0}/{dashboard?.totalEmployees || 0}</p>
                     </div>
                     <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60 bg-white/5 rounded-full px-2 py-1">95% Up</span>
                   </div>
@@ -385,7 +381,7 @@ const AdminDashboard = () => {
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={overviewData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
+              <LineChart data={dashboard?.overviewData || []} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} />
@@ -393,19 +389,24 @@ const AdminDashboard = () => {
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   itemStyle={{ color: '#fff' }}
                 />
+                <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
                 <Line type="monotone" dataKey="projects" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="employees" stroke="#6b7280" strokeWidth={2} dot={{ r: 3, fill: '#6b7280' }} />
+                <Line type="monotone" dataKey="employees" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
           <div className="flex items-center justify-start gap-6 mt-4 ml-4">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-              <span className="text-xs text-white/60">Employees</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-xs text-white/60">Income</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-gray-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-primary" />
               <span className="text-xs text-white/60">Projects</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <span className="text-xs text-white/60">Employees</span>
             </div>
           </div>
         </div>
@@ -468,7 +469,15 @@ const AdminDashboard = () => {
             </h2>
             <button className="text-xs text-primary hover:underline">View All</button>
           </div>
-          {recentActivity.map((a, i) => <ActivityRow key={i} {...a} />)}
+          {(dashboard?.recentActivity || []).length > 0 ? (
+            dashboard.recentActivity.map((a, i) => {
+              const date = new Date(a.time);
+              const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return <ActivityRow key={i} title={a.title} meta={a.meta} time={timeStr} user={a.user} avatar={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user)}&background=random`} />
+            })
+          ) : (
+            <p className="text-sm text-white/50">No recent activity found.</p>
+          )}
         </div>
 
         {/* Employees by Dept — 4 cols */}
@@ -541,6 +550,11 @@ const AdminDashboard = () => {
             ].map(({ icon: Icon, label }, i) => (
               <button
                 key={i}
+                onClick={() => {
+                  if (label === 'Add Employee') navigate('/admin/employees');
+                  if (label === 'Add Project') navigate('/admin/projects');
+                  if (label === 'Mark Attendance') navigate('/admin/attendance');
+                }}
                 className="bg-white/5 hover:bg-white/10 cursor-pointer transition border border-white/5 rounded-xl flex flex-col items-center justify-center p-3 gap-2 min-h-[80px]"
               >
                 <Icon className="text-primary" size={22} />

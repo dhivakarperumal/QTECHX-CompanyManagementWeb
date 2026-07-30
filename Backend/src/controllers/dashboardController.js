@@ -43,8 +43,50 @@ async function getDashboardMetrics(req, res) {
     );
     const monthlyPayroll = payRows[0]?.total || 0;
 
-    // Total employees vs present => infer absent / pending leave
     const pendingLeaveRequests = Math.max(0, totalEmployees - presentToday);
+
+    // Recent Activity (Union of last 5 activities)
+    const [recentRows] = await db.execute(`
+      (SELECT 'New employee onboarded' as title, 'HR' as meta, created_at as time, first_name as user, profile_photo as avatar FROM employees)
+      UNION ALL
+      (SELECT 'Project added' as title, 'Projects' as meta, created_at as time, project_name as user, '' as avatar FROM projects)
+      UNION ALL
+      (SELECT CONCAT('New ', type, ' onboarded') as title, 'HR' as meta, created_at as time, full_name as user, profile_photo as avatar FROM trainee_intern)
+      UNION ALL
+      (SELECT 'Payroll processed' as title, 'Finance' as meta, created_at as time, 'System' as user, '' as avatar FROM employee_salaries)
+      ORDER BY time DESC
+      LIMIT 10
+    `);
+
+    // Graph Data (Last 6 Months)
+    const [overviewRows] = await db.execute(`
+      SELECT 
+        DATE_FORMAT(m.m_date, '%b %Y') as name,
+        IFNULL(e.emp_count, 0) as employees,
+        IFNULL(p.proj_count, 0) as projects,
+        IFNULL(i.inc_amount, 0) as income
+      FROM (
+        SELECT DATE_FORMAT(DATE_SUB(CURRENT_DATE(), INTERVAL n MONTH), '%Y-%m-01') as m_date
+        FROM (SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5) n
+      ) m
+      LEFT JOIN (
+        SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as emp_count FROM employees GROUP BY dt
+      ) e ON e.dt = m.m_date
+      LEFT JOIN (
+        SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as proj_count FROM projects GROUP BY dt
+      ) p ON p.dt = m.m_date
+      LEFT JOIN (
+        SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount) as inc_amount FROM incomes GROUP BY dt
+      ) i ON i.dt = m.m_date
+      ORDER BY m.m_date ASC
+    `);
+
+    // Current Month Income
+    const [currentIncRows] = await db.execute(
+      "SELECT IFNULL(SUM(amount), 0) AS total FROM incomes WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
+      [month, year]
+    );
+    const currentMonthIncome = currentIncRows[0]?.total || 0;
 
     return res.json({
       totalEmployees,
@@ -55,6 +97,9 @@ async function getDashboardMetrics(req, res) {
       internshipStudents,
       monthlyPayroll,
       attendanceToday: { present: presentToday, total: totalEmployees },
+      recentActivity: recentRows,
+      overviewData: overviewRows,
+      currentMonthIncome
     });
   } catch (err) {
     console.error('getDashboardMetrics error:', err);
