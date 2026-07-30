@@ -9,7 +9,7 @@ import api from '../../api';
 
 const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
 const SERVICE_TYPES      = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
-const FOLLOW_UP_STATUSES = ['Pending', 'Completed', 'Rescheduled', 'Cancelled'];
+const FOLLOW_UP_STATUSES = ['Pending', 'Follow Up', 'Completed', 'Rescheduled', 'Cancelled'];
 
 const statusColour = {
   Lead:      'bg-sky-500/15 text-sky-400',
