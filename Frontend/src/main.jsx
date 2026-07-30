@@ -36,6 +36,7 @@ import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
 import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
+import MyProjectDetails from './Admin/Projects/MyProjectDetails.jsx'
 import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
 import ProjectAssetsPage from './Admin/Projects/ProjectAssetsPage.jsx'
 import ProjectPlansPage from './Admin/Projects/ProjectPlansPage.jsx'
@@ -160,6 +161,10 @@ const router = createHashRouter([
           {
             path: 'myprojects',
             element: <CompletedProjects />,
+          },
+          {
+            path: 'myprojects/view/:id',
+            element: <MyProjectDetails />,
           },
           {
             path: 'myprojects/assets',

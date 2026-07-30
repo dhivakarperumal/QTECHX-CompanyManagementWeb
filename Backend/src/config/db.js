@@ -1067,24 +1067,7 @@ async function ensureExpenseSchema(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 
-  await pool.execute(
-    `CREATE TABLE IF NOT EXISTS expenses (
-      expense_id VARCHAR(36) NOT NULL,
-      expense_type VARCHAR(100) NOT NULL,
-      created_by VARCHAR(36) NULL,
-      updated_by VARCHAR(36) NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      date_of_payment DATE NOT NULL,
-      amount DECIMAL(15,2) NOT NULL,
-      payment_type VARCHAR(50) NOT NULL,
-      paid_to VARCHAR(255) NOT NULL,
-      description TEXT NULL,
-      invoice_number VARCHAR(100) NULL,
-      upload_bill VARCHAR(255) NULL,
-      PRIMARY KEY (expense_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-  );
+  // expenses table removed
 }
 
 async function ensureSalarySchema(pool) {
@@ -1109,8 +1092,7 @@ async function ensureSalarySchema(pool) {
       created_by VARCHAR(36) NULL,
       updated_by VARCHAR(36) NULL,
       PRIMARY KEY (id),
-      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE,
-      CONSTRAINT fk_employee_salaries_expense FOREIGN KEY (expense_id) REFERENCES expenses (expense_id) ON DELETE SET NULL
+      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 }

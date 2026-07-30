@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2, User, DollarSign, TrendingUp, FolderKanban, Users, Code2, Paperclip } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2, User, DollarSign, TrendingUp, FolderKanban, Users, Code2, Paperclip, LayoutDashboard, ListTodo } from 'lucide-react';
 import api from '../../api';
+import ProjectTasks from './ProjectTasks';
 
 const formatCurrency = (value) => {
   if (!value && value !== 0) return '—';
@@ -30,6 +31,7 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     (async () => {
@@ -88,9 +90,35 @@ export default function ProjectDetails() {
         <div className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white/70">
           {project.current_status || 'Planning'}
         </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="flex items-center gap-6 border-b border-white/10 pb-1">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 pb-3 text-sm font-medium transition border-b-2 ${
+            activeTab === 'overview'
+              ? 'border-orange-500 text-orange-400'
+              : 'border-transparent text-white/50 hover:text-white/80'
+          }`}
+        >
+          <LayoutDashboard size={16} /> Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('tasks')}
+          className={`flex items-center gap-2 pb-3 text-sm font-medium transition border-b-2 ${
+            activeTab === 'tasks'
+              ? 'border-orange-500 text-orange-400'
+              : 'border-transparent text-white/50 hover:text-white/80'
+          }`}
+        >
+          <ListTodo size={16} /> Tasks
+        </button>
+      </div>
+
+      {activeTab === 'overview' ? (
+        <>
+          <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <Building2 size={16} className="text-orange-400" />
@@ -161,14 +189,88 @@ export default function ProjectDetails() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <p className="text-xs uppercase tracking-wider text-white/40 mb-2">Objective</p>
-            <p className="text-sm leading-7 text-white/70">{project.objective || 'No objective provided.'}</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <Building2 size={16} className="text-orange-400" />
+                <h2 className="text-base font-semibold">Project Summary</h2>
+              </div>
+              <p className="text-sm leading-7 text-white/70">{project.description || 'No description provided.'}</p>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <InfoCard title="Project Code" value={project.project_code} icon={FileText} />
+                <InfoCard title="Category" value={project.project_category} icon={FolderKanban} />
+                <InfoCard title="Industry" value={project.industry} icon={Building2} />
+                <InfoCard title="Client" value={project.client_name} icon={Users} />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp size={16} className="text-emerald-400" />
+                <h2 className="text-base font-semibold">Progress</h2>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center justify-between text-sm text-white/60 mb-1">
+                    <span>Overall</span>
+                    <span>{project.overall_progress || 0}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/10">
+                    <div className="h-2 rounded-full bg-orange-500" style={{ width: `${project.overall_progress || 0}%` }} />
+                  </div>
+                </div>
+                <InfoCard title="Cost" value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
+                <InfoCard title="Start Date" value={fmtDate(project.project_start_date)} icon={CalendarDays} />
+                <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-2">Business Requirements</p>
-            <p className="text-sm leading-7 text-white/70">{project.business_requirements || 'No requirements provided.'}</p>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <User size={16} className="text-blue-400" />
+                <h2 className="text-base font-semibold">Client & Team</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <InfoCard title="Contact Person" value={project.contact_person} icon={User} />
+                <InfoCard title="Email" value={project.email} icon={FileText} />
+                <InfoCard title="Phone" value={project.phone_number} icon={FileText} />
+                <InfoCard title="Project Manager" value={project.project_manager} icon={Users} />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Code2 size={16} className="text-violet-400" />
+                <h2 className="text-base font-semibold">Tech & Documents</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <InfoCard title="Frontend Tech" value={project.frontend_tech} icon={Code2} />
+                <InfoCard title="Backend Tech" value={project.backend_tech} icon={Code2} />
+                <InfoCard title="Database" value={project.database_tech} icon={Code2} />
+                <InfoCard title="Agreement Uploaded" value={project.agreement_uploaded} icon={Paperclip} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle size={16} className="text-emerald-400" />
+              <h2 className="text-base font-semibold">Objectives & Requirements</h2>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-white/40 mb-2">Objective</p>
+                <p className="text-sm leading-7 text-white/70">{project.objective || 'No objective provided.'}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-white/40 mb-2">Business Requirements</p>
+                <p className="text-sm leading-7 text-white/70">{project.business_requirements || 'No requirements provided.'}</p>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <ProjectTasks projectUuid={project.uuid} />
+      )}
     </div>
   );
 }
