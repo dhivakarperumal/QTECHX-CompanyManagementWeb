@@ -43,6 +43,7 @@ import ProjectPlansPage from './Admin/Projects/ProjectPlansPage.jsx'
 import ProjectQuotationsPage from './Admin/Projects/ProjectQuotationsPage.jsx'
 import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
 import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
+import AssignmentView from './Admin/Projects/AssignmentView.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
 import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
 import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
@@ -117,6 +118,10 @@ const router = createHashRouter([
           {
             path: 'projects/assignments',
             element: <ProjectAssignments />,
+          },
+          {
+            path: 'projects/assignments/view/:id',
+            element: <AssignmentView />,
           },
           {
             path: 'tasks',
