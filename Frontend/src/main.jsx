@@ -7,7 +7,7 @@ import Home from './Componets/Home/Home.jsx'
 import Login from './Componets/Auth/Login.jsx'
 import Register from './Componets/Components/Register.jsx'
 import PrivateRoute from './PrivateRouter/PrivateRouter.jsx'
-import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
+
 import AdminDashboard from './Admin/AdminDashboard.jsx'
 import AdminLayout from './Admin/Adminpanel.jsx'
 import EmployeeList from './Admin/Employees/EmployeeList.jsx'
@@ -16,7 +16,7 @@ import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import AttendancePage from './Admin/AttendancePage.jsx'
 import AttendanceView from './Admin/AttendanceView.jsx'
-import EmployeeLayout from './Employees/EmployeePanel.jsx'
+
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
 import RouteError from './Componets/Components/RouteError.jsx'
@@ -271,20 +271,7 @@ const router = createHashRouter([
           },
         ],
       },
-      {
-        path: 'employee',
-        element: (
-          <PrivateRoute allowedRoles={["Manager", "Staff", "Employee"]}>
-            <EmployeeLayout />
-          </PrivateRoute>
-        ),
-        children: [
-          {
-            index: true,
-            element: <EmployeeDashboard />,
-          },
-        ],
-      },
+    
 
       {
         path: 'trainee',

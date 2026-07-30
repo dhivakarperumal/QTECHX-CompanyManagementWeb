@@ -92,8 +92,8 @@ function StatusPill({ status, onClick }) {
 // ─── Delete Confirm Modal ─────────────────────────────────────────────────────
 function DeleteModal({ client, onConfirm, onCancel, loading }) {
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onCancel} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
@@ -170,8 +170,8 @@ function ViewDrawer({ client, index, onClose, onEdit, onStatusClick }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex justify-end">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={drawerRef}
         className="relative w-full max-w-md bg-[#0d0f14] border-l border-white/10 h-full overflow-y-auto shadow-2xl flex flex-col"
