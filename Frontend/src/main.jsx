@@ -342,6 +342,10 @@ const router = createHashRouter([
             path: 'office-calendar',
             element: <OfficeCalendar />,
           },
+          {
+            path: 'my-calendar',
+            element: <MyCalendar />,
+          },
         ],
       },
     ],
