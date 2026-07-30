@@ -273,7 +273,7 @@ const OfficeCalendar = () => {
   const fetchEmployees = async () => {
     try {
       const res = await api.get('/employees');
-      setAllEmployees(res.data || []);
+      setAllEmployees(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (error) {
       console.error('Error fetching employees:', error);
     }
@@ -281,7 +281,7 @@ const OfficeCalendar = () => {
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/events');
+      const res = await api.get('/events');
       setEvents(res.data);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -422,18 +422,43 @@ const OfficeCalendar = () => {
     return [];
   };
 
+  const normalizeEventItem = (event) => ({
+    ...event,
+    participants: ensureArrayField(event?.participants),
+    departments: ensureArrayField(event?.departments),
+    teams: ensureArrayField(event?.teams),
+    guestEmailAddresses: ensureArrayField(event?.guestEmailAddresses),
+    attachments: ensureArrayField(event?.attachments),
+    comments: ensureArrayField(event?.comments),
+    activity: ensureArrayField(event?.activity),
+  });
+
+  const getEmployeeFullName = (employee) => {
+    if (!employee) return '';
+    if (typeof employee === 'string') return employee;
+    return employee.full_name || `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_code || employee.employee_id || '';
+  };
+
+  const handleRemoveParticipant = (participant) => {
+    setFormData((current) => ({
+      ...current,
+      participants: (current.participants || []).filter((item) => item !== participant),
+    }));
+  };
+
   const openEditModal = (event) => {
+    const normalizedEvent = normalizeEventItem(event);
     setMode('edit');
-    setSelectedEvent(event);
+    setSelectedEvent(normalizedEvent);
     setFormData({
-      ...event,
-      participants: ensureArrayField(event.participants),
-      departments: ensureArrayField(event.departments),
-      teams: ensureArrayField(event.teams),
-      guestEmailAddresses: ensureArrayField(event.guestEmailAddresses),
-      attachments: ensureArrayField(event.attachments),
-      comments: ensureArrayField(event.comments),
-      activity: ensureArrayField(event.activity),
+      ...normalizedEvent,
+      participants: normalizedEvent.participants,
+      departments: normalizedEvent.departments,
+      teams: normalizedEvent.teams,
+      guestEmailAddresses: normalizedEvent.guestEmailAddresses,
+      attachments: normalizedEvent.attachments,
+      comments: normalizedEvent.comments,
+      activity: normalizedEvent.activity,
     });
     setShowModal(true);
   };
@@ -463,14 +488,17 @@ const OfficeCalendar = () => {
         color: formData.color || getEventColor(formData.eventType, formData.color),
         updatedDate: dayjs().format('YYYY-MM-DD'),
       };
+      if (!payload.id || payload.id.toString().trim() === '') {
+        delete payload.id;
+      }
       if (mode === 'edit' && selectedEvent) {
-        const res = await axios.put(`http://localhost:5000/api/events/${selectedEvent._id}`, payload);
+        const res = await api.put(`/events/${selectedEvent._id}`, payload);
         setEvents((current) => current.map((item) => (item._id === selectedEvent._id ? res.data : item)));
         setSelectedEvent(res.data);
         toast.success('Event updated successfully.');
       } else {
         payload.createdDate = dayjs().format('YYYY-MM-DD');
-        const res = await axios.post('http://localhost:5000/api/events', payload);
+        const res = await api.post('/events', payload);
         setEvents((current) => [res.data, ...current]);
         setSelectedEvent(res.data);
         toast.success('Event created successfully.');
@@ -573,6 +601,11 @@ const OfficeCalendar = () => {
   const handleArrayInput = (event, fieldName) => {
     const values = event.target.value.split(',').map((item) => item.trim()).filter(Boolean);
     setFormData((current) => ({ ...current, [fieldName]: values }));
+  };
+
+  const handleParticipantsChange = (event) => {
+    const selected = Array.from(event.target.selectedOptions).map((option) => option.value);
+    setFormData((current) => ({ ...current, participants: selected }));
   };
 
   const isToday = (date) => dayjs(date).isSame(dayjs(), 'day');
@@ -886,8 +919,23 @@ const OfficeCalendar = () => {
                   <h4 className="font-semibold text-sky-400 border-b border-slate-800 pb-2">Participants & Departments</h4>
               </div>
               <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                <span className="text-sm font-semibold">Select Employees (Multi Select - comma separated)</span>
-                <input value={(formData.participants || []).join(', ')} onChange={(e) => handleArrayInput(e, 'participants')} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="e.g. Asha, Milan, Priya" />
+                <span className="text-sm font-semibold">Select Employees</span>
+                <select multiple value={Array.isArray(formData.participants) ? formData.participants : []} onChange={handleParticipantsChange} className={`min-h-[140px] rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`}>
+                  {Array.isArray(allEmployees) ? allEmployees.map((employee, index) => {
+                    const fullName = getEmployeeFullName(employee);
+                    const optionKey = employee.employee_id || employee.employee_code || `${fullName}-${index}`;
+                    return fullName ? <option key={optionKey} value={fullName}>{fullName}</option> : null;
+                  }) : null}
+                </select>
+                <p className="text-xs text-slate-400">Hold Ctrl/Cmd to select multiple employees.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(Array.isArray(formData.participants) ? formData.participants : []).map((participant, index) => (
+                    <button key={`${participant}-${index}`} type="button" onClick={() => handleRemoveParticipant(participant)} className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs text-white transition hover:border-slate-500">
+                      <span>{participant}</span>
+                      <span className="text-slate-400">×</span>
+                    </button>
+                  ))}
+                </div>
               </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-sm font-semibold">Departments (comma separated)</span>
@@ -1022,19 +1070,23 @@ const OfficeCalendar = () => {
             <div className={`rounded-[1.25rem] border border-slate-800 p-3 bg-slate-800/50`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Users size={14} /> Assigned Employees</div>
               <div className="flex flex-wrap gap-2">
-                {(selectedEvent.participants || []).map((employee) => <span key={employee} className="rounded-full border border-slate-800 bg-slate-800 px-2 py-1 text-xs">{employee}</span>)}
+                {ensureArrayField(selectedEvent?.participants).map((employee, index) => (
+                  <span key={`${employee}-${index}`} className="rounded-full border border-slate-800 bg-slate-800 px-2 py-1 text-xs">{employee}</span>
+                ))}
               </div>
             </div>
 
             <div className={`rounded-[1.25rem] border border-slate-800 p-3 bg-slate-800/50`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Paperclip size={14} /> Attachments</div>
-              {(selectedEvent.attachments || []).length > 0 ? <ul className="space-y-1 text-sm text-slate-200">{(selectedEvent.attachments || []).map((attachment) => <li key={attachment}>• {attachment}</li>)}</ul> : <p className="text-sm text-white/45">No attachments.</p>}
+              {ensureArrayField(selectedEvent?.attachments).length > 0 ? <ul className="space-y-1 text-sm text-slate-200">{ensureArrayField(selectedEvent?.attachments).map((attachment, index) => <li key={`${attachment}-${index}`}>• {attachment}</li>)}</ul> : <p className="text-sm text-white/45">No attachments.</p>}
             </div>
 
             <div className={`rounded-[1.25rem] border border-slate-800 p-3 bg-slate-800/50`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Eye size={14} /> Activity Timeline</div>
               <div className="space-y-2 text-sm text-slate-200">
-                {(selectedEvent.activity || []).map((item) => <div key={item} className="rounded-2xl border border-slate-800 bg-slate-800/50 px-2 py-2">{item}</div>)}
+                {ensureArrayField(selectedEvent?.activity).map((item, index) => (
+                  <div key={`${item}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-800/50 px-2 py-2">{item}</div>
+                ))}
               </div>
             </div>
 

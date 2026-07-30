@@ -1,11 +1,39 @@
 const { createEvent: createEventModel, getAllEvents: getAllEventsModel, getEventById: getEventByIdModel, updateEvent: updateEventModel, deleteEvent: deleteEventModel } = require('../models/eventModel');
 
+const validateEventPayload = (payload) => {
+  const requiredFields = ['title', 'eventType', 'startDate', 'endDate'];
+  const missingFields = requiredFields.filter((field) => {
+    const value = payload[field];
+    return value === undefined || value === null || value.toString().trim() === '';
+  });
+
+  if (missingFields.length) {
+    return `Missing required fields: ${missingFields.join(', ')}`;
+  }
+
+  if (payload.id !== undefined && payload.id !== null && payload.id.toString().trim() === '') {
+    return 'Event id must not be empty.';
+  }
+
+  if (payload._id !== undefined && payload._id !== null && payload._id.toString().trim() === '') {
+    return 'Event _id must not be empty.';
+  }
+
+  return null;
+};
+
 const createEvent = async (req, res) => {
+  const validationError = validateEventPayload(req.body);
+  if (validationError) {
+    return res.status(400).json({ message: validationError });
+  }
+
   try {
     const savedEvent = await createEventModel(req.body);
     res.status(201).json(savedEvent);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating event', error: error.message });
+    console.error('Event creation failed:', error);
+    res.status(500).json({ message: 'Unable to create event. Please try again later.' });
   }
 };
 

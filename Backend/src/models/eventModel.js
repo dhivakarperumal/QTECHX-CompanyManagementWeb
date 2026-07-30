@@ -51,12 +51,21 @@ async function createEvent(event) {
   const db = getDB();
   const payload = { ...event };
 
-  if (!payload.id && !payload._id) {
+  const normalizedId = payload.id?.toString().trim();
+  const normalizedOid = payload._id?.toString().trim();
+
+  if (!normalizedId && !normalizedOid) {
     payload.id = uuidv4();
-  } else if (payload._id && !payload.id) {
-    payload.id = payload._id;
+  } else if (!normalizedId && normalizedOid) {
+    payload.id = normalizedOid;
+  } else {
+    payload.id = normalizedId;
   }
   delete payload._id;
+
+  if (payload.id === '') {
+    delete payload.id;
+  }
 
   const fields = Object.keys(payload).filter((k) => payload[k] !== undefined);
   const values = fields.map((k) => normalizeEventValue(payload[k]));
