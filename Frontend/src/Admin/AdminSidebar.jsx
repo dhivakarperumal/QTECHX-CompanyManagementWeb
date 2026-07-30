@@ -144,11 +144,11 @@ const navItems = [
   },
 
   /* ---- ANALYTICS ---- */
-  {
-    path: "/admin/reports",
-    label: "Reports",
-    icon: BarChart3,
-  },
+  // {
+  //   path: "/admin/reports",
+  //   label: "Reports",
+  //   icon: BarChart3,
+  // },
 
   /* ---- CALENDAR ---- */
   {
