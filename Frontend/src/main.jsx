@@ -16,9 +16,12 @@ import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
 import AttendancePage from './Admin/AttendancePage.jsx'
 import AttendanceView from './Admin/AttendanceView.jsx'
+import OfficeCalendar from './Admin/OfficeCalendar.jsx'
+import MyCalendar from './Admin/MyCalendar.jsx'
 
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
+import { AdminProvider } from './PrivateRouter/AdminContext';
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
 import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
@@ -36,12 +39,14 @@ import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
 import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
+import MyProjectDetails from './Admin/Projects/MyProjectDetails.jsx'
 import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
 import ProjectAssetsPage from './Admin/Projects/ProjectAssetsPage.jsx'
 import ProjectPlansPage from './Admin/Projects/ProjectPlansPage.jsx'
 import ProjectQuotationsPage from './Admin/Projects/ProjectQuotationsPage.jsx'
 import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
 import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
+import AssignmentView from './Admin/Projects/AssignmentView.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
 import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
 import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
@@ -52,11 +57,13 @@ import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanc
 import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
 import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
 import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
+import ReportsPage from './Admin/ReportsPage.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
 const EmployeeSalary = lazy(() => import('./Admin/Expenses/EmployeeSalary.jsx'))
 const ProjectPayment = lazy(() => import('./Admin/Expenses/ProjectPayment.jsx'))
+const Incomes = lazy(() => import('./Admin/Expenses/Incomes.jsx'))
 
 
 
@@ -118,6 +125,10 @@ const router = createHashRouter([
             element: <ProjectAssignments />,
           },
           {
+            path: 'projects/assignments/view/:id',
+            element: <AssignmentView />,
+          },
+          {
             path: 'tasks',
             element: <TasksPage />,
           },
@@ -160,6 +171,10 @@ const router = createHashRouter([
           {
             path: 'myprojects',
             element: <CompletedProjects />,
+          },
+          {
+            path: 'myprojects/view/:id',
+            element: <MyProjectDetails />,
           },
           {
             path: 'myprojects/assets',
@@ -258,6 +273,18 @@ const router = createHashRouter([
             element: <AttendancePage />,
           },
           {
+            path: 'reports',
+            element: <ReportsPage />,
+          },
+          {
+            path: 'office-calendar',
+            element: <OfficeCalendar />,
+          },
+          {
+            path: 'my-calendar',
+            element: <MyCalendar />,
+          },
+          {
             path: 'expenses',
             element: <ExpensesPage />,
           },
@@ -268,6 +295,10 @@ const router = createHashRouter([
           {
             path: 'expenses/project-payment',
             element: <ProjectPayment />,
+          },
+          {
+            path: 'expenses/incomes',
+            element: <Incomes />,
           },
         ],
       },
@@ -285,6 +316,10 @@ const router = createHashRouter([
             index: true,
             element: <TraineeDashboard />,
           },
+          {
+            path: 'office-calendar',
+            element: <OfficeCalendar />,
+          },
         ],
       },
     ],
@@ -295,7 +330,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <StoreProvider>
-        <RouterProvider router={router} />
+        <AdminProvider>
+          <RouterProvider router={router} />
+        </AdminProvider>
       </StoreProvider>
     </AuthProvider>
   </StrictMode>,

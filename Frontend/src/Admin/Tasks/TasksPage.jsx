@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList } from 'lucide-react';
+import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download } from 'lucide-react';
 import api from '../../api';
 
 const tabs = [
@@ -34,6 +34,20 @@ const normalizeTaskStatus = (status) => {
   return value;
 };
 
+const formatDateForInput = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return "";
+  }
+};
+
 const mapTaskToViewModel = (task) => ({
   id: task.uuid,
   uuid: task.uuid,
@@ -42,15 +56,19 @@ const mapTaskToViewModel = (task) => ({
   project: task.project_name || task.project_id || "—",
   assignedTo: task.assigned_to_name || "Unassigned",
   assignedBy: task.assigned_by_name || "—",
+  // Raw IDs for form editing
+  assigned_to_raw: task.assigned_to || "",
+  assigned_by_raw: task.assigned_by || "",
   status: normalizeTaskStatus(task.status),
   progress: Number(task.progress || 0),
-  startDate: task.start_date || "",
-  dueDate: task.due_date || "—",
+  startDate: formatDateForInput(task.start_date),
+  dueDate: task.due_date !== undefined && task.due_date !== null ? formatDateForInput(task.due_date) : "—",
   priority: task.priority || "Medium",
   description: task.description || "",
   estimatedHours: task.estimated_hours || "",
   project_id: task.project_id,
   project_uuid: task.project_uuid,
+  attachments: (() => { try { return JSON.parse(task.attachments || '[]'); } catch { return []; } })(),
 });
 
 const EMPTY_TASK_FORM = {
@@ -64,6 +82,7 @@ const EMPTY_TASK_FORM = {
   due_date: '',
   estimated_hours: '',
   priority: '',
+  attachments: [],
 };
 
 const EMPTY_ASSIGN_FORM = {
@@ -184,13 +203,13 @@ export default function TasksPage() {
     const params = new URLSearchParams(location.search);
     return params.get('project') || params.get('project_id') || '';
   });
-  const [currentTaskUuid, setCurrentTaskUuid] = useState('');
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [taskActionMessage, setTaskActionMessage] = useState('');
 
   /* ── Add Task Modal ── */
   const [showAddModal, setShowAddModal] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
+  const [taskFile, setTaskFile] = useState(null);
   const [savingTask, setSavingTask] = useState(false);
   const [taskError, setTaskError] = useState('');
   const [taskSuccess, setTaskSuccess] = useState('');
@@ -198,6 +217,7 @@ export default function TasksPage() {
   /* ── Assign Task Modal ── */
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignForm, setAssignForm] = useState(EMPTY_ASSIGN_FORM);
+  const [assignFile, setAssignFile] = useState(null);
   const [assignedEmployees, setAssignedEmployees] = useState([]);
   const [projectEmployeesLoading, setProjectEmployeesLoading] = useState(false);
   const [assigningTask, setAssigningTask] = useState(false);
@@ -207,11 +227,15 @@ export default function TasksPage() {
   /* ── View Task Modal ── */
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  /* ── Update Task Modal (inline page) ── */
+  /* ── Edit Task Modal ── */
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTaskUuid, setEditingTaskUuid] = useState('');
   const [taskUpdateForm, setTaskUpdateForm] = useState(EMPTY_TASK_FORM);
+  const [loadingEditTask, setLoadingEditTask] = useState(false);
   const [updatingTask, setUpdatingTask] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState('');
+  const [updateTaskFile, setUpdateTaskFile] = useState(null);
 
   /* ─────────────── Data fetching ─────────────── */
 
@@ -245,9 +269,7 @@ export default function TasksPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const projectFromUrl = params.get('project') || params.get('project_id') || '';
-    const taskFromUrl = params.get('task') || '';
     setSelectedProject(projectFromUrl);
-    setCurrentTaskUuid(taskFromUrl);
   }, [location.search]);
 
   useEffect(() => {
@@ -294,40 +316,31 @@ export default function TasksPage() {
     }
   }, [pageKey, selectedProject, location.search]);
 
-  /* Load task for update page */
+  /* Load employees when edit modal project changes */
   useEffect(() => {
-    if (pageKey !== 'update') {
-      setSelectedTaskDetails(null);
-      return;
-    }
-
-    if (!currentTaskUuid) {
-      setSelectedTaskDetails(null);
-      setTaskUpdateForm(EMPTY_TASK_FORM);
-      return;
-    }
-
-    setSelectedTaskDetails(null);
+    if (!showEditModal || !editingTaskUuid) return;
+    setLoadingEditTask(true);
     const loadTask = async () => {
-      const task = await fetchTaskById(currentTaskUuid);
+      const task = await fetchTaskById(editingTaskUuid);
       if (task) {
-        setSelectedTaskDetails(task);
         setTaskUpdateForm({
           project_id: task.project_uuid || '',
-          module_name: task.module,
+          module_name: task.module !== '—' ? task.module : '',
           task_name: task.name,
           description: task.description,
-          assigned_to: task.assignedTo,
-          assigned_by: task.assignedBy,
+          assigned_to: task.assigned_to_raw || '',
+          assigned_by: task.assigned_by_raw || '',
           start_date: task.startDate || '',
-          due_date: task.dueDate || '',
+          due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
           priority: task.priority || '',
+          attachments: task.attachments || [],
         });
       }
+      setLoadingEditTask(false);
     };
     loadTask();
-  }, [pageKey, currentTaskUuid]);
+  }, [showEditModal, editingTaskUuid]);
 
   /* Load employees when assign modal project changes */
   useEffect(() => {
@@ -379,7 +392,14 @@ export default function TasksPage() {
   };
 
   const handleEditTask = (taskUuid) => {
-    navigate(`/admin/tasks/update?task=${encodeURIComponent(taskUuid)}${selectedProject ? `&project=${encodeURIComponent(selectedProject)}` : ''}`);
+    setUpdateError('');
+    setUpdateSuccess('');
+    setUpdateTaskFile(null);
+    setTaskUpdateForm(EMPTY_TASK_FORM);
+    setEditingTaskUuid(taskUuid);
+    setShowEditModal(true);
+    // close view modal if open
+    setIsTaskModalOpen(false);
   };
 
   const handleDeleteTask = async (taskUuid) => {
@@ -402,13 +422,34 @@ export default function TasksPage() {
 
     try {
       setSavingTask(true);
-      const payload = { ...taskForm };
+
+      let payload = { ...taskForm };
+
+      // Convert file to base64 and attach as JSON fields
+      if (taskFile) {
+        const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+        if (taskFile.size > MAX_SIZE) {
+          setSavingTask(false);
+          return setTaskError('File too large. Maximum allowed size is 50 MB.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(taskFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = taskFile.name;
+        payload.attachmentType = taskFile.type;
+      }
+
       const { data } = await api.post('/tasks', payload);
       if (data.success === false) {
         setTaskError(data.message || 'Failed to save task.');
       } else {
         setTaskSuccess(data.message || 'Task created successfully!');
         setTaskForm(EMPTY_TASK_FORM);
+        setTaskFile(null);
         await fetchTasks(selectedProject || '');
         setTimeout(() => {
           setShowAddModal(false);
@@ -422,7 +463,6 @@ export default function TasksPage() {
     }
   };
 
-  /* Update existing task */
   const handleUpdateTask = async () => {
     setUpdateError('');
     setUpdateSuccess('');
@@ -431,14 +471,39 @@ export default function TasksPage() {
 
     try {
       setUpdatingTask(true);
-      const { data } = await api.put(`/tasks/${currentTaskUuid}`, taskUpdateForm);
+      let payload = { ...taskUpdateForm };
+
+      // Convert file to base64 and attach as JSON fields
+      if (updateTaskFile) {
+        const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+        if (updateTaskFile.size > MAX_SIZE) {
+          setUpdatingTask(false);
+          return setUpdateError('File too large. Maximum allowed size is 50 MB.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(updateTaskFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = updateTaskFile.name;
+        payload.attachmentType = updateTaskFile.type;
+      }
+
+      const { data } = await api.put(`/tasks/${editingTaskUuid}`, payload);
       if (data.success === false) {
         setUpdateError(data.message || 'Failed to update task.');
       } else {
         setUpdateSuccess(data.message || 'Task updated successfully!');
-        const updated = mapTaskToViewModel(data.data);
-        setSelectedTaskDetails(updated);
         await fetchTasks(selectedProject || '');
+        // Close modal after brief success flash
+        setTimeout(() => {
+          setShowEditModal(false);
+          setUpdateSuccess('');
+          setEditingTaskUuid('');
+          setUpdateTaskFile(null);
+        }, 1500);
       }
     } catch (err) {
       setUpdateError(err?.response?.data?.message || err.message || 'Failed to update task.');
@@ -464,6 +529,25 @@ export default function TasksPage() {
         assigned_date: assignForm.assignment_date,
         status: assignForm.status,
       };
+
+      // Attach document as base64 if provided
+      if (assignFile) {
+        const MAX_SIZE = 50 * 1024 * 1024;
+        if (assignFile.size > MAX_SIZE) {
+          setAssigningTask(false);
+          return setAssignError('File too large. Maximum 50 MB allowed.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(assignFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = assignFile.name;
+        payload.attachmentType = assignFile.type;
+      }
+
       const { data } = await api.post('/tasks/assign', payload);
       if (data.success === false) {
         setAssignError(data.message || 'Failed to assign task.');
@@ -474,6 +558,7 @@ export default function TasksPage() {
           setShowAssignModal(false);
           setAssignSuccess('');
           setAssignForm(EMPTY_ASSIGN_FORM);
+          setAssignFile(null);
         }, 1800);
       }
     } catch (err) {
@@ -606,75 +691,7 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* ── Update Task page (route-based) ── */}
-      {pageKey === "update" && (
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <h2 className="text-xl font-semibold">Update Task</h2>
-          <p className="mt-2 text-sm text-slate-400">Modify task details and save your updates.</p>
-          {!currentTaskUuid ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
-              No task selected for editing. Choose a task from the list and click Edit.
-            </div>
-          ) : !selectedTaskDetails ? (
-            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
-              <Loader2 size={16} className="animate-spin" /> Loading task details...
-            </div>
-          ) : (
-            <>
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <FieldBox label="Project">
-                  <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
-                    <option value="" disabled>Select project</option>
-                    {projects.map((project) => (
-                      <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
-                    ))}
-                  </select>
-                </FieldBox>
-                <FieldBox label="Module">
-                  <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="Enter Module" />
-                </FieldBox>
-                <FieldBox label="Task Name">
-                  <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter Task Name" />
-                </FieldBox>
-                <FieldBox label="Description">
-                  <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Enter task description" />
-                </FieldBox>
-                <FieldBox label="Assigned To">
-                  <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Enter Assigned To" />
-                </FieldBox>
-                <FieldBox label="Assigned By">
-                  <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Enter Assigned By" />
-                </FieldBox>
-                <FieldBox label="Start Date">
-                  <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
-                </FieldBox>
-                <FieldBox label="Due Date">
-                  <input type="date" value={taskUpdateForm.due_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, due_date: e.target.value }))} className={inputCls} />
-                </FieldBox>
-                <FieldBox label="Estimated Hours">
-                  <input type="number" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="Enter Estimated Hours" />
-                </FieldBox>
-                <FieldBox label="Priority">
-                  <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
-                    <option value="" disabled>Select priority</option>
-                    {['Low', 'Medium', 'High', 'Critical'].map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </FieldBox>
-              </div>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <button type="button" onClick={handleUpdateTask} disabled={updatingTask}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
-                  {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : 'Update Task'}
-                </button>
-              </div>
-              {updateError && <p className="mt-3 flex items-center gap-2 text-sm text-rose-400"><AlertCircle size={14} />{updateError}</p>}
-              {updateSuccess && <p className="mt-3 flex items-center gap-2 text-sm text-emerald-400"><CheckCircle size={14} />{updateSuccess}</p>}
-            </>
-          )}
-        </div>
-      )}
+      {/* ── Edit Task Modal placeholder (rendered via portal below) ── */}
 
       {/* ── Kanban Board ── */}
       {pageKey === "board" && (
@@ -710,7 +727,7 @@ export default function TasksPage() {
             <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-slate-200">
               <thead className="bg-slate-900 text-slate-400">
                 <tr>
-                  {['Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
+                  {['S No', 'Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
                     <th key={heading} className="px-4 py-4 font-medium">{heading}</th>
                   ))}
                 </tr>
@@ -718,21 +735,22 @@ export default function TasksPage() {
               <tbody>
                 {tasksLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                       <div className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading tasks...</div>
                     </td>
                   </tr>
                 ) : visibleTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center gap-3">
                         <ClipboardList size={32} className="text-slate-700" />
                         <p>No tasks found. Click <strong className="text-white">Add New Task</strong> to get started.</p>
                       </div>
                     </td>
                   </tr>
-                ) : visibleTasks.map((task) => (
+                ) : visibleTasks.map((task, index) => (
                   <tr key={task.id} className="border-t border-white/5 hover:bg-white/[0.02] transition">
+                    <td className="px-4 py-4 text-slate-400">{index + 1}</td>
                     <td className="px-4 py-4">
                       <div className="font-semibold">{task.name}</div>
                       <div className="mt-1 text-xs text-slate-400">{task.module}</div>
@@ -849,6 +867,185 @@ export default function TasksPage() {
               <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Description</p>
               <p className="mt-2 text-sm text-slate-200 whitespace-pre-line">{selectedTaskDetails.description || 'No description provided.'}</p>
             </div>
+            {selectedTaskDetails.attachments && selectedTaskDetails.attachments.length > 0 && (
+              <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mb-3">Attachments</p>
+                <div className="flex flex-col gap-2">
+                  {selectedTaskDetails.attachments.map((att, i) => (
+                    <a
+                      key={i}
+                      href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 14px', borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.04)',
+                        color: '#94a3b8', textDecoration: 'none',
+                        fontSize: '13px', transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(249,115,22,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                    >
+                      <Paperclip size={14} style={{ color: '#f97316', flexShrink: 0 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name}</span>
+                      <Download size={14} style={{ flexShrink: 0 }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* ════════════════════════════════════════════════
+          MODAL: Edit Task
+      ════════════════════════════════════════════════ */}
+      <Modal
+        open={showEditModal}
+        onClose={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setEditingTaskUuid(''); setUpdateTaskFile(null); }}
+        title="Edit Task"
+        subtitle="Update task details and save your changes."
+        icon={Edit3}
+        iconColor="text-blue-400"
+        footer={
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={handleUpdateTask} disabled={updatingTask || loadingEditTask}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
+              {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : <><CheckCircle size={14} /> Update Task</>}
+            </button>
+            <button type="button" onClick={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setUpdateTaskFile(null); }}
+              className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-2.5 text-sm text-slate-300 hover:border-white/20 transition">
+              Cancel
+            </button>
+            {updateError && (
+              <span className="flex items-center gap-1.5 text-sm text-rose-400 ml-1">
+                <AlertCircle size={14} />{updateError}
+              </span>
+            )}
+            {updateSuccess && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-400 ml-1">
+                <CheckCircle size={14} />{updateSuccess}
+              </span>
+            )}
+          </div>
+        }
+      >
+        {loadingEditTask ? (
+          <div className="flex items-center justify-center gap-3 py-12 text-slate-400">
+            <Loader2 size={20} className="animate-spin" /> Loading task details...
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FieldBox label="Project *">
+              <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
+                <option value="" disabled>Select project</option>
+                {projects.map((project) => (
+                  <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
+                ))}
+              </select>
+            </FieldBox>
+            <FieldBox label="Module">
+              <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="e.g. Authentication" />
+            </FieldBox>
+            <FieldBox label="Task Name *">
+              <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter task name" />
+            </FieldBox>
+            <FieldBox label="Priority">
+              <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
+                <option value="" disabled>Select priority</option>
+                {['Low', 'Medium', 'High', 'Critical'].map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </FieldBox>
+            <FieldBox label="Start Date">
+              <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
+            </FieldBox>
+            <FieldBox label="Due Date">
+              <input type="date" value={taskUpdateForm.due_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, due_date: e.target.value }))} className={inputCls} />
+            </FieldBox>
+            <FieldBox label="Estimated Hours">
+              <input type="number" min="0" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
+            </FieldBox>
+            <FieldBox label="Assigned To">
+              <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee ID" />
+            </FieldBox>
+            <FieldBox label="Assigned By">
+              <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager ID" />
+            </FieldBox>
+            <div className="sm:col-span-2">
+              <FieldBox label="Description">
+                <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={4} className={inputCls + ' resize-none'} placeholder="Enter task description..." />
+              </FieldBox>
+            </div>
+            <div className="sm:col-span-2">
+              <FieldBox label="Attachments">
+                {taskUpdateForm.attachments && taskUpdateForm.attachments.length > 0 && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    {taskUpdateForm.attachments.map((att, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          padding: '10px 14px', borderRadius: '10px',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(255,255,255,0.04)',
+                          color: '#94a3b8', fontSize: '13px',
+                        }}
+                      >
+                        <Paperclip size={14} style={{ color: '#f97316', flexShrink: 0 }} />
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name}</span>
+                        <button
+                          type="button"
+                          title="Remove attachment"
+                          onClick={() => {
+                            const newAtts = [...taskUpdateForm.attachments];
+                            newAtts.splice(i, 1);
+                            setTaskUpdateForm((p) => ({ ...p, attachments: newAtts }));
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(244,63,94,0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label
+                  htmlFor="edit-task-file-upload"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                    border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                    padding: '14px 16px', transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+                >
+                  <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                  <span style={{ fontSize: '13px', color: updateTaskFile ? '#e2e8f0' : '#64748b' }}>
+                    {updateTaskFile ? updateTaskFile.name : 'Click to choose a file...'}
+                  </span>
+                  {updateTaskFile && (
+                    <button type="button" onClick={(e) => { e.preventDefault(); setUpdateTaskFile(null); }}
+                      style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      Remove
+                    </button>
+                  )}
+                </label>
+                <input
+                  id="edit-task-file-upload"
+                  type="file"
+                  style={{ display: 'none' }}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                  onChange={(e) => setUpdateTaskFile(e.target.files[0] || null)}
+                />
+              </FieldBox>
+            </div>
           </div>
         )}
       </Modal>
@@ -858,7 +1055,7 @@ export default function TasksPage() {
       ════════════════════════════════════════════════ */}
       <Modal
         open={showAddModal}
-        onClose={() => { setShowAddModal(false); setTaskError(''); setTaskSuccess(''); }}
+        onClose={() => { setShowAddModal(false); setTaskError(''); setTaskSuccess(''); setTaskFile(null); }}
         title="Create New Task"
         subtitle="Fill in the details below to create a new task."
         icon={Plus}
@@ -926,6 +1123,38 @@ export default function TasksPage() {
           <FieldBox label="Description">
             <textarea value={taskForm.description} onChange={(e) => setTaskForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Brief description of the task..." />
           </FieldBox>
+          <div className="sm:col-span-2">
+            <FieldBox label="Attachment (PDF, Word, Excel, etc.)">
+              <label
+                htmlFor="task-file-upload"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                  border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                  padding: '14px 16px', transition: 'border-color 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+              >
+                <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: taskFile ? '#e2e8f0' : '#64748b' }}>
+                  {taskFile ? taskFile.name : 'Click to choose a file...'}
+                </span>
+                {taskFile && (
+                  <button type="button" onClick={(e) => { e.preventDefault(); setTaskFile(null); }}
+                    style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                )}
+              </label>
+              <input
+                id="task-file-upload"
+                type="file"
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                onChange={(e) => setTaskFile(e.target.files[0] || null)}
+              />
+            </FieldBox>
+          </div>
         </div>
       </Modal>
 
@@ -934,7 +1163,7 @@ export default function TasksPage() {
       ════════════════════════════════════════════════ */}
       <Modal
         open={showAssignModal}
-        onClose={() => { setShowAssignModal(false); setAssignError(''); setAssignSuccess(''); }}
+        onClose={() => { setShowAssignModal(false); setAssignError(''); setAssignSuccess(''); setAssignFile(null); }}
         title="Assign Task to Employee"
         subtitle="Select a project, pick a task and assign it to an employee."
         icon={UserPlus}
@@ -1032,6 +1261,39 @@ export default function TasksPage() {
               ))}
             </select>
           </FieldBox>
+
+          <div className="sm:col-span-2">
+            <FieldBox label="Attachment (PDF, Word, Excel, etc.)">
+              <label
+                htmlFor="assign-file-upload"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                  border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                  padding: '14px 16px', transition: 'border-color 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+              >
+                <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', color: assignFile ? '#e2e8f0' : '#64748b' }}>
+                  {assignFile ? assignFile.name : 'Click to attach a document...'}
+                </span>
+                {assignFile && (
+                  <button type="button" onClick={(e) => { e.preventDefault(); setAssignFile(null); }}
+                    style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                )}
+              </label>
+              <input
+                id="assign-file-upload"
+                type="file"
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                onChange={(e) => setAssignFile(e.target.files[0] || null)}
+              />
+            </FieldBox>
+          </div>
         </div>
       </Modal>
     </div>

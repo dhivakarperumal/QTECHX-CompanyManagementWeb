@@ -68,7 +68,7 @@ const navItems = [
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
       { path: "/admin/projects/assignments", label: "Assigned Projects", icon: UserCheck },
-      { path: "/admin/projects/add", label: "Add Project", icon: FolderPlus },
+      
     ],
   },
 
@@ -91,9 +91,9 @@ const navItems = [
     icon: CheckSquare,
     children: [
       { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
-      { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
-      { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
-      { path: "/admin/tasks/update", label: "Update Task", icon: Edit3 },
+      // { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
+      // { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
+      // { path: "/admin/tasks/update", label: "Update Task", icon: Edit3 },
       { path: "/admin/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
     ],
   },
@@ -140,15 +140,16 @@ const navItems = [
       { path: "/admin/expenses", label: "All Expenses", icon: Receipt, exact: true },
       { path: "/admin/expenses/salary", label: "Employee Salary", icon: DollarSign },
       { path: "/admin/expenses/project-payment", label: "Project Payment", icon: DollarSign },
+      { path: "/admin/expenses/incomes", label: "Income", icon: DollarSign },
     ],
   },
 
   /* ---- ANALYTICS ---- */
-  {
-    path: "/admin/reports",
-    label: "Reports",
-    icon: BarChart3,
-  },
+  // {
+  //   path: "/admin/reports",
+  //   label: "Reports",
+  //   icon: BarChart3,
+  // },
 
   /* ---- CALENDAR ---- */
   {

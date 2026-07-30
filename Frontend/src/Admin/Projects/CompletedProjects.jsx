@@ -272,12 +272,7 @@ export default function CompletedProjects() {
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium px-5 py-3 rounded-2xl shadow-xl">
-          <CheckCircle size={16} /> {toast}
-        </div>
-      )}
+  
 
       {/* Delete Modal */}
       {deleteTarget && (
@@ -324,27 +319,7 @@ export default function CompletedProjects() {
             <p className="text-white/40 text-xs mt-0.5">{loading ? 'Loading…' : `${total} project${total !== 1 ? 's' : ''} total`}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchProjects}
-            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
-            <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
-          </button>
-          <button
-            onClick={() => {
-              setShowAssignmentModal(true);
-              setAssignmentError('');
-              setAssignmentSuccess('');
-            }}
-            className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
-          >
-            <User size={15} /> Assign Employees
-          </button>
-          <button onClick={() => navigate('/admin/projects/add')}
-            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
-            <Plus size={15} /> Add Project
-          </button>
-        </div>
+        
       </div>
 
       {/* Stats */}
@@ -658,7 +633,7 @@ export default function CompletedProjects() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View">
+                        <button onClick={() => navigate(`/admin/myprojects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View">
                           <Eye size={13} />
                         </button>
                         <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)}
@@ -713,7 +688,7 @@ export default function CompletedProjects() {
               <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
                 <span className="text-white/50 text-xs font-medium">{formatCurrency(p.total_project_cost)}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
+                  <button onClick={() => navigate(`/admin/myprojects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
                   <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition"><Edit2 size={13} /></button>
                   <button onClick={() => setDeleteTarget(p)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition"><Trash2 size={13} /></button>
                 </div>

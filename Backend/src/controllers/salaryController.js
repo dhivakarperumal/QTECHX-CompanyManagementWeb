@@ -188,3 +188,125 @@ exports.getSalaryHistory = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+exports.updateSalary = async (req, res) => {
+  const pool = getDB();
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+    const { total_salary } = req.body;
+
+    if (!total_salary || isNaN(total_salary)) {
+      return res.status(400).json({ success: false, message: "Valid total_salary is required" });
+    }
+
+    const newAmount = parseFloat(total_salary);
+
+    // Fetch existing salary to find the old amount and expense_id
+    const [existing] = await connection.query("SELECT total_salary, expense_id FROM employee_salaries WHERE id = ?", [id]);
+    if (existing.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Salary record not found" });
+    }
+
+    const oldAmount = parseFloat(existing[0].total_salary);
+    const expenseId = existing[0].expense_id;
+    const difference = newAmount - oldAmount;
+
+    // Adjust company funds
+    if (difference !== 0) {
+      const [fundRows] = await connection.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+      let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+      const new_fund = current_fund - difference;
+      
+      await connection.query(
+        "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+        [new_fund, actor]
+      );
+    }
+
+    // Update expenses table
+    if (expenseId) {
+      await connection.query("UPDATE expenses SET amount = ?, updated_by = ? WHERE expense_id = ?", [newAmount, actor, expenseId]);
+    }
+
+    // Update employee_salaries table
+    await connection.query(
+      `UPDATE employee_salaries SET 
+        total_salary = ?, updated_by = ?,
+        basic_salary = ?, present_days = ?, leave_days = ?, leave_deduction = ?,
+        incentive_percentage = ?, incentive_amount = ?, additional_deduction = ?
+      WHERE id = ?`,
+      [
+        newAmount, actor,
+        req.body.basic_salary || 0,
+        req.body.present_days || 0,
+        req.body.leave_days || 0,
+        req.body.leave_deduction || 0,
+        req.body.incentive_percentage || 0,
+        req.body.incentive_amount || 0,
+        req.body.additional_deduction || 0,
+        id
+      ]
+    );
+
+    await connection.commit();
+    res.status(200).json({ success: true, message: "Salary updated successfully" });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error updating salary:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  } finally {
+    connection.release();
+  }
+};
+
+exports.deleteSalary = async (req, res) => {
+  const pool = getDB();
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+
+    // Fetch existing salary
+    const [existing] = await connection.query("SELECT total_salary, expense_id FROM employee_salaries WHERE id = ?", [id]);
+    if (existing.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Salary record not found" });
+    }
+
+    const amount = parseFloat(existing[0].total_salary);
+    const expenseId = existing[0].expense_id;
+
+    // Add back to company funds
+    const [fundRows] = await connection.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+    let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+    const new_fund = current_fund + amount;
+    
+    await connection.query(
+      "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+      [new_fund, actor]
+    );
+
+    // Delete expense record
+    if (expenseId) {
+      await connection.query("DELETE FROM expenses WHERE expense_id = ?", [expenseId]);
+    }
+
+    // Delete salary record
+    await connection.query("DELETE FROM employee_salaries WHERE id = ?", [id]);
+
+    await connection.commit();
+    res.status(200).json({ success: true, message: "Salary deleted successfully" });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error deleting salary:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  } finally {
+    connection.release();
+  }
+};

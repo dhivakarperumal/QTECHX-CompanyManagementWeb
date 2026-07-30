@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X } from 'lucide-react';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud } from 'lucide-react';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -9,9 +9,12 @@ const TraineeTaskMaster = () => {
   
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
+  const [taskDocument, setTaskDocument] = useState(null);
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [taskSearch, setTaskSearch] = useState('');
 
   const [trainees, setTrainees] = useState([]);
 
@@ -42,6 +45,14 @@ const TraineeTaskMaster = () => {
     }
   };
 
+  const getDocumentUrl = (documentPath) => {
+    if (!documentPath) return null;
+    if (documentPath.startsWith('http://') || documentPath.startsWith('https://')) return documentPath;
+    const rawBase = import.meta.env.VITE_API_URL || '';
+    const baseUrl = rawBase.startsWith('http') ? rawBase.replace(/\/api\/?$/, '') : 'http://localhost:5000';
+    return `${baseUrl}${documentPath}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!taskName) {
@@ -50,11 +61,22 @@ const TraineeTaskMaster = () => {
     }
 
     try {
+      const formData = new FormData();
+      formData.append('task_name', taskName);
+      formData.append('description', description || '');
+      if (taskDocument) {
+        formData.append('task_document', taskDocument);
+      }
+
       if (editingUuid) {
-        await api.put(`/trainee-tasks/${editingUuid}`, { task_name: taskName, description });
+        await api.put(`/trainee-tasks/${editingUuid}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         toast.success('Task updated successfully');
       } else {
-        await api.post('/trainee-tasks', { task_name: taskName, description });
+        await api.post('/trainee-tasks', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         toast.success('Task created successfully');
       }
       resetForm();
@@ -89,8 +111,27 @@ const TraineeTaskMaster = () => {
     setEditingUuid(null);
     setTaskName('');
     setDescription('');
+    setTaskDocument(null);
     setShowForm(false);
   };
+
+  const filteredTrainees = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return trainees.filter((trainee) => {
+      if (!term) return true;
+      const haystack = `${trainee.full_name || ''} ${trainee.type || ''} ${trainee.person_id || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [trainees, searchTerm]);
+
+  const filteredTasks = useMemo(() => {
+    const term = taskSearch.trim().toLowerCase();
+    return tasks.filter((task) => {
+      if (!term) return true;
+      const haystack = `${task.task_name || ''} ${task.description || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [tasks, taskSearch]);
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -121,24 +162,30 @@ const TraineeTaskMaster = () => {
 
       {/* Trainee Cards Section */}
       <div className="mb-8 mt-2">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
-          <select 
-            value={typeFilter} 
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-          >
-            <option value="All" className="text-black">All Types</option>
-            <option value="Trainee" className="text-black">Trainee</option>
-            <option value="Intern" className="text-black">Intern</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee" className="w-48 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+            </div>
+            <select 
+              value={typeFilter} 
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+            >
+              <option value="All" className="text-black">All Types</option>
+              <option value="Trainee" className="text-black">Trainee</option>
+              <option value="Intern" className="text-black">Intern</option>
+            </select>
+          </div>
         </div>
         
-        {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
+        {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
           <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
+            {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
               <a 
                 key={trainee.uuid} 
                 href={`#/admin/trainees/tasks/view/${trainee.uuid}`}
@@ -165,8 +212,12 @@ const TraineeTaskMaster = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
+        <div className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+        </div>
       </div>
 
       {showForm && (
@@ -198,6 +249,16 @@ const TraineeTaskMaster = () => {
                 rows="4"
                 placeholder="Enter task description"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Upload Document</label>
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-3 text-sm text-white/70 transition hover:border-orange-500/50">
+                <span className="truncate">{taskDocument ? taskDocument.name : 'Choose a PDF, DOC, image, or ZIP file'}</span>
+                <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80">
+                  <UploadCloud size={14} /> Browse
+                </span>
+                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip,.rar" onChange={(e) => setTaskDocument(e.target.files?.[0] || null)} />
+              </label>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -237,16 +298,30 @@ const TraineeTaskMaster = () => {
                     <Loader2 size={18} className="mx-auto animate-spin" />
                   </td>
                 </tr>
-              ) : tasks.length === 0 ? (
+              ) : filteredTasks.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
                 </tr>
               ) : (
-                tasks.map((task, index) => (
+                filteredTasks.map((task, index) => (
                   <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
                     <td className="px-4 py-4 text-white/70">{index + 1}</td>
                     <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
-                    <td className="px-4 py-4 text-white/50">{task.description || "—"}</td>
+                    <td className="px-4 py-4 text-white/50">
+                      <div className="space-y-1">
+                        <div>{task.description || "—"}</div>
+                        {task.document_path ? (
+                          <a
+                            href={getDocumentUrl(task.document_path)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
+                          >
+                            <UploadCloud size={13} /> View Document
+                          </a>
+                        ) : null}
+                      </div>
+                    </td>
                     <td className="px-4 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button 

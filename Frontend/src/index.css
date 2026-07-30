@@ -51,18 +51,11 @@ body {
    CUSTOM SCROLLBAR
 ═══════════════════════════════════════════ */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  display: none;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(248, 116, 14, 0.35);
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(248, 116, 14, 0.6);
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* hide scrollbar utility */

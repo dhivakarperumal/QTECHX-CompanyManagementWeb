@@ -702,45 +702,76 @@ const ProjectQuotationsPage = () => {
             </div>
 
             {modalMode === "view" && activeQuotation ? (
-              <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{activeQuotation.project_name}</h3>
-                      <p className="mt-1 text-sm text-slate-400">{activeQuotation.company_name} • {activeQuotation.client_name}</p>
+              <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                <div className="space-y-4">
+                  <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(249,115,22,0.16),rgba(15,17,25,0.95)_45%,rgba(30,41,59,0.9))] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                    <div className="border-b border-white/10 p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-orange-300/80">Quotation preview</div>
+                          <h3 className="mt-2 text-xl font-semibold text-white">{activeQuotation.project_name}</h3>
+                          <p className="mt-1 text-sm text-slate-300">{activeQuotation.company_name} • {activeQuotation.client_name}</p>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[activeQuotation.status] || statusStyles.Draft}`}>{activeQuotation.status}</span>
+                      </div>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[activeQuotation.status] || statusStyles.Draft}`}>{activeQuotation.status}</span>
+                    <div className="grid gap-3 p-5 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-white/10 bg-[#0f1119]/80 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">Quotation number</p>
+                        <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.quotation_number}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-[#0f1119]/80 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">Grand total</p>
+                        <p className="mt-2 text-sm font-semibold text-white">{formatCurrency(activeQuotation.grand_total || 0, activeQuotation.currency || "INR")}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-[#0f1119]/80 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">Payment terms</p>
+                        <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.payment_terms || "—"}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-[#0f1119]/80 p-3">
+                        <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">Delivery timeline</p>
+                        <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.delivery_timeline || "—"}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-[#0f1119] p-3">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Quotation number</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.quotation_number}</p>
+
+                  <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">Scope of work</h3>
+                      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-slate-400">Engagement summary</div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-[#0f1119] p-3">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Grand total</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{formatCurrency(activeQuotation.grand_total || 0, activeQuotation.currency || "INR")}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-[#0f1119] p-3">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Payment terms</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.payment_terms}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-[#0f1119] p-3">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Delivery timeline</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{activeQuotation.delivery_timeline}</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-[#0f1119] p-4">
-                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Scope of work</h4>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{activeQuotation.scope_of_work || "No scope of work captured yet."}</p>
+                    <p className="mt-4 text-sm leading-7 text-slate-300">{activeQuotation.scope_of_work || "No scope of work captured yet."}</p>
                   </div>
                 </div>
+
                 <div className="space-y-4">
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-lg font-semibold text-white">Activity timeline</h3>
+                  <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+                    <h3 className="text-lg font-semibold text-white">Approval status</h3>
+                    <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-[#0f1119]/70 p-4 text-sm text-slate-300">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Current status</span>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${approvalStyles[activeQuotation.approval_status] || approvalStyles.Pending}`}>{activeQuotation.approval_status}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Approved by</span>
+                        <span className="text-white">{activeQuotation.approval?.approved_by || "Pending"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Comments</span>
+                        <span className="text-white">{activeQuotation.approval?.comments || "No comments yet."}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">Activity timeline</h3>
+                      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-slate-400">History</div>
+                    </div>
                     <div className="mt-4 space-y-3">
                       {(activeQuotation.activity_logs || []).slice().reverse().map((entry, index) => (
-                        <div key={`${entry.action}-${index}`} className="rounded-2xl border border-white/10 bg-[#0f1119] p-3">
-                          <div className="flex items-center justify-between">
+                        <div key={`${entry.action}-${index}`} className="rounded-2xl border border-white/10 bg-[#0f1119]/70 p-3">
+                          <div className="flex items-center justify-between gap-3">
                             <p className="text-sm font-semibold text-white">{entry.action}</p>
                             <p className="text-xs text-slate-500">{dayjs(entry.created_at).format("DD MMM YYYY")}</p>
                           </div>
@@ -748,14 +779,6 @@ const ProjectQuotationsPage = () => {
                           <p className="mt-2 text-xs text-slate-500">By {entry.user}</p>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <h3 className="text-lg font-semibold text-white">Approval details</h3>
-                    <div className="mt-3 space-y-2 text-sm text-slate-300">
-                      <p><span className="text-slate-500">Status:</span> {activeQuotation.approval_status}</p>
-                      <p><span className="text-slate-500">Approved by:</span> {activeQuotation.approval?.approved_by || "Pending"}</p>
-                      <p><span className="text-slate-500">Comments:</span> {activeQuotation.approval?.comments || "No comments yet."}</p>
                     </div>
                   </div>
                 </div>

@@ -11,5 +11,7 @@ router.post("/pay", authenticate, salaryController.paySalary);
 
 // Salary History route
 router.get("/history", authenticate, salaryController.getSalaryHistory);
+router.put("/pay/:id", authenticate, salaryController.updateSalary);
+router.delete("/pay/:id", authenticate, salaryController.deleteSalary);
 
 module.exports = router;
