@@ -902,6 +902,7 @@ async function ensureSchema(pool) {
       uuid VARCHAR(36) NOT NULL,
       task_name VARCHAR(255) NOT NULL,
       description TEXT NULL,
+      document_path VARCHAR(255) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       created_by VARCHAR(36) NULL,
@@ -910,6 +911,8 @@ async function ensureSchema(pool) {
       UNIQUE KEY uq_trainee_tasks_uuid (uuid)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(`ALTER TABLE trainee_tasks ADD COLUMN IF NOT EXISTS document_path VARCHAR(255) NULL`);
 
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS trainee_task_assignments (

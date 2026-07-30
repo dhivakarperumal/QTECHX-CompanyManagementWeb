@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search } from 'lucide-react';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud } from 'lucide-react';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -9,6 +9,7 @@ const TraineeTaskMaster = () => {
   
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
+  const [taskDocument, setTaskDocument] = useState(null);
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState('All');
@@ -52,11 +53,22 @@ const TraineeTaskMaster = () => {
     }
 
     try {
+      const formData = new FormData();
+      formData.append('task_name', taskName);
+      formData.append('description', description || '');
+      if (taskDocument) {
+        formData.append('task_document', taskDocument);
+      }
+
       if (editingUuid) {
-        await api.put(`/trainee-tasks/${editingUuid}`, { task_name: taskName, description });
+        await api.put(`/trainee-tasks/${editingUuid}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         toast.success('Task updated successfully');
       } else {
-        await api.post('/trainee-tasks', { task_name: taskName, description });
+        await api.post('/trainee-tasks', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         toast.success('Task created successfully');
       }
       resetForm();
@@ -91,6 +103,7 @@ const TraineeTaskMaster = () => {
     setEditingUuid(null);
     setTaskName('');
     setDescription('');
+    setTaskDocument(null);
     setShowForm(false);
   };
 
@@ -228,6 +241,16 @@ const TraineeTaskMaster = () => {
                 rows="4"
                 placeholder="Enter task description"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Upload Document</label>
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-3 text-sm text-white/70 transition hover:border-orange-500/50">
+                <span className="truncate">{taskDocument ? taskDocument.name : 'Choose a PDF, DOC, image, or ZIP file'}</span>
+                <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80">
+                  <UploadCloud size={14} /> Browse
+                </span>
+                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip,.rar" onChange={(e) => setTaskDocument(e.target.files?.[0] || null)} />
+              </label>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button
