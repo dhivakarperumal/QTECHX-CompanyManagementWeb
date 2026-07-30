@@ -82,6 +82,7 @@ const EMPTY_TASK_FORM = {
   due_date: '',
   estimated_hours: '',
   priority: '',
+  attachments: [],
 };
 
 const EMPTY_ASSIGN_FORM = {
@@ -234,6 +235,7 @@ export default function TasksPage() {
   const [updatingTask, setUpdatingTask] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState('');
+  const [updateTaskFile, setUpdateTaskFile] = useState(null);
 
   /* ─────────────── Data fetching ─────────────── */
 
@@ -332,6 +334,7 @@ export default function TasksPage() {
           due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
           priority: task.priority || '',
+          attachments: task.attachments || [],
         });
       }
       setLoadingEditTask(false);
@@ -391,6 +394,7 @@ export default function TasksPage() {
   const handleEditTask = (taskUuid) => {
     setUpdateError('');
     setUpdateSuccess('');
+    setUpdateTaskFile(null);
     setTaskUpdateForm(EMPTY_TASK_FORM);
     setEditingTaskUuid(taskUuid);
     setShowEditModal(true);
@@ -459,7 +463,6 @@ export default function TasksPage() {
     }
   };
 
-  /* Update existing task */
   const handleUpdateTask = async () => {
     setUpdateError('');
     setUpdateSuccess('');
@@ -468,7 +471,27 @@ export default function TasksPage() {
 
     try {
       setUpdatingTask(true);
-      const { data } = await api.put(`/tasks/${editingTaskUuid}`, taskUpdateForm);
+      let payload = { ...taskUpdateForm };
+
+      // Convert file to base64 and attach as JSON fields
+      if (updateTaskFile) {
+        const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
+        if (updateTaskFile.size > MAX_SIZE) {
+          setUpdatingTask(false);
+          return setUpdateError('File too large. Maximum allowed size is 50 MB.');
+        }
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(updateTaskFile);
+        });
+        payload.attachmentBase64 = base64;
+        payload.attachmentName = updateTaskFile.name;
+        payload.attachmentType = updateTaskFile.type;
+      }
+
+      const { data } = await api.put(`/tasks/${editingTaskUuid}`, payload);
       if (data.success === false) {
         setUpdateError(data.message || 'Failed to update task.');
       } else {
@@ -479,6 +502,7 @@ export default function TasksPage() {
           setShowEditModal(false);
           setUpdateSuccess('');
           setEditingTaskUuid('');
+          setUpdateTaskFile(null);
         }, 1500);
       }
     } catch (err) {
@@ -881,7 +905,7 @@ export default function TasksPage() {
       ════════════════════════════════════════════════ */}
       <Modal
         open={showEditModal}
-        onClose={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setEditingTaskUuid(''); }}
+        onClose={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setEditingTaskUuid(''); setUpdateTaskFile(null); }}
         title="Edit Task"
         subtitle="Update task details and save your changes."
         icon={Edit3}
@@ -892,7 +916,7 @@ export default function TasksPage() {
               className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
               {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : <><CheckCircle size={14} /> Update Task</>}
             </button>
-            <button type="button" onClick={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); }}
+            <button type="button" onClick={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setUpdateTaskFile(null); }}
               className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-2.5 text-sm text-slate-300 hover:border-white/20 transition">
               Cancel
             </button>
@@ -955,6 +979,71 @@ export default function TasksPage() {
             <div className="sm:col-span-2">
               <FieldBox label="Description">
                 <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={4} className={inputCls + ' resize-none'} placeholder="Enter task description..." />
+              </FieldBox>
+            </div>
+            <div className="sm:col-span-2">
+              <FieldBox label="Attachments">
+                {taskUpdateForm.attachments && taskUpdateForm.attachments.length > 0 && (
+                  <div className="mb-4 flex flex-col gap-2">
+                    {taskUpdateForm.attachments.map((att, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          padding: '10px 14px', borderRadius: '10px',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'rgba(255,255,255,0.04)',
+                          color: '#94a3b8', fontSize: '13px',
+                        }}
+                      >
+                        <Paperclip size={14} style={{ color: '#f97316', flexShrink: 0 }} />
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name}</span>
+                        <button
+                          type="button"
+                          title="Remove attachment"
+                          onClick={() => {
+                            const newAtts = [...taskUpdateForm.attachments];
+                            newAtts.splice(i, 1);
+                            setTaskUpdateForm((p) => ({ ...p, attachments: newAtts }));
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(244,63,94,0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label
+                  htmlFor="edit-task-file-upload"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                    border: '2px dashed rgba(255,255,255,0.12)', borderRadius: '12px',
+                    padding: '14px 16px', transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(251,146,60,0.5)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
+                >
+                  <Paperclip size={18} style={{ color: '#f97316', flexShrink: 0 }} />
+                  <span style={{ fontSize: '13px', color: updateTaskFile ? '#e2e8f0' : '#64748b' }}>
+                    {updateTaskFile ? updateTaskFile.name : 'Click to choose a file...'}
+                  </span>
+                  {updateTaskFile && (
+                    <button type="button" onClick={(e) => { e.preventDefault(); setUpdateTaskFile(null); }}
+                      style={{ marginLeft: 'auto', color: '#f43f5e', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      Remove
+                    </button>
+                  )}
+                </label>
+                <input
+                  id="edit-task-file-upload"
+                  type="file"
+                  style={{ display: 'none' }}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg"
+                  onChange={(e) => setUpdateTaskFile(e.target.files[0] || null)}
+                />
               </FieldBox>
             </div>
           </div>

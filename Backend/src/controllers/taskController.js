@@ -193,8 +193,20 @@ async function updateTaskHandler(req, res) {
 
     // Save new file if provided, merge with existing
     const fileEntry = saveBase64File(attachmentBase64, attachmentName, attachmentType);
+    
+    let baseList = [];
+    if (updates.attachments !== undefined) {
+      baseList = typeof updates.attachments === 'string' ? JSON.parse(updates.attachments || '[]') : updates.attachments;
+    } else {
+      baseList = task.attachments ? JSON.parse(task.attachments) : [];
+    }
+
     if (fileEntry) {
-      updates.attachments = mergeAttachments(task.attachments, fileEntry);
+      baseList.push(fileEntry);
+    }
+    
+    if (updates.attachments !== undefined || fileEntry) {
+      updates.attachments = JSON.stringify(baseList);
     }
 
     // Resolve project UUID → numeric id
@@ -210,9 +222,6 @@ async function updateTaskHandler(req, res) {
     }
     if (updates.status && !STATUSES.includes(updates.status)) {
       return fail(res, `Invalid status. Allowed: ${STATUSES.join(', ')}`, 400);
-    }
-    if (updates.attachments && typeof updates.attachments !== 'string') {
-      updates.attachments = JSON.stringify(updates.attachments);
     }
 
     // Recalculate is_overdue if due_date is being changed
