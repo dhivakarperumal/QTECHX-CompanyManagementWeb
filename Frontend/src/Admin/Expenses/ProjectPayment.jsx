@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, Plus
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -40,6 +40,7 @@ export default function ProjectPayment() {
 
   const [editId, setEditId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [projectSearch, setProjectSearch] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [modeFilter, setModeFilter] = useState('All');
@@ -155,6 +156,7 @@ export default function ProjectPayment() {
       setSuccess(`Project payment ${editId ? 'updated' : 'recorded'} successfully!`);
       fetchHistory(); // refresh table
       resetForm();
+      setShowForm(false);
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -164,6 +166,7 @@ export default function ProjectPayment() {
 
   const handleEdit = (record) => {
     setEditId(record.uuid);
+    setShowForm(true);
     setFormData({
       project_id: record.project_id || '',
       amount_paid: record.amount_paid || '',
@@ -193,6 +196,7 @@ export default function ProjectPayment() {
 
   const resetForm = () => {
     setEditId(null);
+    setShowForm(false);
     setFormData(BLANK);
     setError('');
   };
@@ -244,6 +248,155 @@ export default function ProjectPayment() {
           </p>
         </div>
       </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            if (showForm) {
+              resetForm();
+            } else {
+              setShowForm(true);
+              setError('');
+              setSuccess('');
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+        >
+          <Plus size={15} />
+          {showForm ? 'Close Form' : 'Record Payment'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSave} className="space-y-6">
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><FolderKanban size={15} className="text-blue-400" /></div>
+              <h2 className="text-base font-bold text-white">Select Project</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Project *</span>
+                <select className={fieldClass} name="project_id" value={formData.project_id} onChange={handleChange} required>
+                  <option value="">Select Project</option>
+                  {projectsLoading ? (
+                    <option value="">Loading...</option>
+                  ) : (
+                    projects.map(proj => (
+                      <option key={proj.id} value={proj.id}>
+                        {proj.project_name} ({proj.project_code})
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+            </div>
+            
+            {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading project details...</p>}
+
+            {selectedProjectDetails && (
+              <div className="mt-6 grid gap-4 md:grid-cols-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                <div>
+                  <span className="block text-xs text-white/50 mb-1">Project Name</span>
+                  <span className="font-semibold">{selectedProjectDetails.project_name}</span>
+                </div>
+                <div>
+                  <span className="block text-xs text-white/50 mb-1">Project UUID</span>
+                  <span className="font-semibold">{selectedProjectDetails.uuid}</span>
+                </div>
+                <div>
+                  <span className="block text-xs text-white/50 mb-1">Client Name</span>
+                  <span className="font-semibold">{selectedProjectDetails.client_name || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block text-xs text-white/50 mb-1">Total Project Cost</span>
+                  <span className="font-bold text-emerald-400">₹{parseFloat(selectedProjectDetails.total_project_cost || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            )}
+
+            {projectSummary && (
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center">
+                  <span className="text-emerald-400 text-sm font-medium">Total Paid So Far</span>
+                  <span className="text-xl font-bold text-emerald-400">₹{parseFloat(projectSummary.total_paid || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex justify-between items-center">
+                  <span className="text-orange-400 text-sm font-medium">Balance Remaining</span>
+                  <span className="text-xl font-bold text-orange-400">₹{parseFloat(projectSummary.balance || 0).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center"><DollarSign size={15} className="text-emerald-400" /></div>
+              <h2 className="text-base font-bold text-white">{editId ? 'Edit Project Payment' : 'Mark Project Payment'}</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Amount Paid (₹) *</span>
+                <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" value={formData.amount_paid} onChange={handleChange} required />
+              </label>
+              
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Payment Mode *</span>
+                <select className={fieldClass} name="payment_mode" value={formData.payment_mode} onChange={handleChange} required>
+                  <option value="">Select Mode</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+
+              <label className="text-sm text-white/60 lg:col-span-2">
+                <span className="mb-1.5 block font-medium">Reason for Payment</span>
+                <input className={fieldClass} type="text" name="reason_for_payment" placeholder="e.g. Advance, Milestone 1, Final Settlement" value={formData.reason_for_payment} onChange={handleChange} />
+              </label>
+
+              <label className="text-sm text-white/60 lg:col-span-2">
+                <span className="mb-1.5 block font-medium">From (Client)</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={selectedProjectDetails?.client_name || ''} placeholder="Autofilled from project" />
+              </label>
+
+              <label className="text-sm text-white/60 lg:col-span-2">
+                <span className="mb-1.5 block font-medium">To (Admin)</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={user?.username || user?.name || 'Admin'} />
+              </label>
+
+              <label className="text-sm text-white/60 lg:col-span-2">
+                <span className="mb-1.5 block font-medium">Date of Payment *</span>
+                <input className={fieldClass} type="date" name="date_of_payment" value={formData.date_of_payment} onChange={handleChange} required />
+              </label>
+
+              <label className="text-sm text-white/60 lg:col-span-2">
+                <span className="mb-1.5 block font-medium">Time of Payment *</span>
+                <input className={fieldClass} type="time" name="time_of_payment" value={formData.time_of_payment} onChange={handleChange} required />
+              </label>
+            </div>
+          </section>
+
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
+            <button type="button" onClick={resetForm}
+              className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
+              {editId ? 'Cancel' : 'Reset'}
+            </button>
+            <button type="submit" disabled={loading || !formData.project_id}
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
+              {loading ? 'Processing...' : (editId ? 'Update Payment' : 'Record Payment')}
+            </button>
+          </div>
+        </form>
+      )}
 
       <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -350,137 +503,6 @@ export default function ProjectPayment() {
           <AlertCircle size={16} /> {error}
         </div>
       )}
-
-      <form onSubmit={handleSave} className="space-y-6">
-
-        {/* Project Selection */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><FolderKanban size={15} className="text-blue-400" /></div>
-            <h2 className="text-base font-bold text-white">Select Project</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Project *</span>
-              <select className={fieldClass} name="project_id" value={formData.project_id} onChange={handleChange} required>
-                <option value="">Select Project</option>
-                {projectsLoading ? (
-                  <option value="">Loading...</option>
-                ) : (
-                  projects.map(proj => (
-                    <option key={proj.id} value={proj.id}>
-                      {proj.project_name} ({proj.project_code})
-                    </option>
-                  ))
-                )}
-              </select>
-            </label>
-          </div>
-          
-          {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading project details...</p>}
-
-          {selectedProjectDetails && (
-            <div className="mt-6 grid gap-4 md:grid-cols-4 bg-white/5 p-4 rounded-xl border border-white/10">
-              <div>
-                <span className="block text-xs text-white/50 mb-1">Project Name</span>
-                <span className="font-semibold">{selectedProjectDetails.project_name}</span>
-              </div>
-              <div>
-                <span className="block text-xs text-white/50 mb-1">Project UUID</span>
-                <span className="font-semibold">{selectedProjectDetails.uuid}</span>
-              </div>
-              <div>
-                <span className="block text-xs text-white/50 mb-1">Client Name</span>
-                <span className="font-semibold">{selectedProjectDetails.client_name || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="block text-xs text-white/50 mb-1">Total Project Cost</span>
-                <span className="font-bold text-emerald-400">₹{parseFloat(selectedProjectDetails.total_project_cost || 0).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          )}
-
-          {projectSummary && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center">
-                <span className="text-emerald-400 text-sm font-medium">Total Paid So Far</span>
-                <span className="text-xl font-bold text-emerald-400">₹{parseFloat(projectSummary.total_paid || 0).toLocaleString('en-IN')}</span>
-              </div>
-              <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex justify-between items-center">
-                <span className="text-orange-400 text-sm font-medium">Balance Remaining</span>
-                <span className="text-xl font-bold text-orange-400">₹{parseFloat(projectSummary.balance || 0).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Payment Details */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center"><DollarSign size={15} className="text-emerald-400" /></div>
-            <h2 className="text-base font-bold text-white">{editId ? 'Edit Project Payment' : 'Mark Project Payment'}</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Amount Paid (₹) *</span>
-              <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" value={formData.amount_paid} onChange={handleChange} required />
-            </label>
-            
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Payment Mode *</span>
-              <select className={fieldClass} name="payment_mode" value={formData.payment_mode} onChange={handleChange} required>
-                <option value="">Select Mode</option>
-                <option value="UPI">UPI</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Other">Other</option>
-              </select>
-            </label>
-
-            <label className="text-sm text-white/60 lg:col-span-2">
-              <span className="mb-1.5 block font-medium">Reason for Payment</span>
-              <input className={fieldClass} type="text" name="reason_for_payment" placeholder="e.g. Advance, Milestone 1, Final Settlement" value={formData.reason_for_payment} onChange={handleChange} />
-            </label>
-
-            <label className="text-sm text-white/60 lg:col-span-2">
-              <span className="mb-1.5 block font-medium">From (Client)</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={selectedProjectDetails?.client_name || ''} placeholder="Autofilled from project" />
-            </label>
-
-            <label className="text-sm text-white/60 lg:col-span-2">
-              <span className="mb-1.5 block font-medium">To (Admin)</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={user?.username || user?.name || 'Admin'} />
-            </label>
-
-            <label className="text-sm text-white/60 lg:col-span-2">
-              <span className="mb-1.5 block font-medium">Date of Payment *</span>
-              <input className={fieldClass} type="date" name="date_of_payment" value={formData.date_of_payment} onChange={handleChange} required />
-            </label>
-
-            <label className="text-sm text-white/60 lg:col-span-2">
-              <span className="mb-1.5 block font-medium">Time of Payment *</span>
-              <input className={fieldClass} type="time" name="time_of_payment" value={formData.time_of_payment} onChange={handleChange} required />
-            </label>
-          </div>
-        </section>
-
-        {/* Actions */}
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
-          <button type="button" onClick={resetForm}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
-            {editId ? 'Cancel' : 'Reset'}
-          </button>
-          <button type="submit" disabled={loading || !formData.project_id}
-            className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
-            {loading ? 'Processing...' : (editId ? 'Update Payment' : 'Record Payment')}
-          </button>
-        </div>
-      </form>
 
       {/* Payment History Table */}
       <section className={`${sectionClass} mt-10`}>

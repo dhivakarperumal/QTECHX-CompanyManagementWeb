@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
   AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
-  History, Printer, X, Edit, Trash2, Search
+  History, Printer, X, Edit, Trash2, Search, Plus
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -47,6 +47,7 @@ export default function EmployeeSalary() {
 
   const [editId, setEditId] = useState(null);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [historyMonthFilter, setHistoryMonthFilter] = useState('all');
   const [historyYearFilter, setHistoryYearFilter] = useState(String(new Date().getFullYear()));
@@ -214,6 +215,7 @@ export default function EmployeeSalary() {
       setSuccess(`Salary ${editId ? 'updated' : 'paid'} successfully!`);
       fetchHistory(); // refresh table
       resetForm();
+      setShowForm(false);
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -223,6 +225,7 @@ export default function EmployeeSalary() {
 
   const handleEdit = (record) => {
     setEditId(record.id);
+    setShowForm(true);
     setFormData({
       employee_id: record.employee_id,
       month: record.salary_month,
@@ -258,6 +261,7 @@ export default function EmployeeSalary() {
 
   const resetForm = () => {
     setEditId(null);
+    setShowForm(false);
     setFormData(BLANK);
     setError('');
   };
@@ -307,6 +311,175 @@ export default function EmployeeSalary() {
           </p>
         </div>
       </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            if (showForm) {
+              resetForm();
+            } else {
+              setShowForm(true);
+              setError('');
+              setSuccess('');
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+        >
+          <Plus size={15} />
+          {showForm ? 'Close Form' : 'Record Payment'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSave} className="space-y-6">
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><Users size={15} className="text-blue-400" /></div>
+              <h2 className="text-base font-bold text-white">{editId ? 'Edit Details' : 'Select Details'}</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Employee *</span>
+                <select className={editId ? readOnlyFieldClass : fieldClass} name="employee_id" value={formData.employee_id} onChange={handleChange} required disabled={editId}>
+                  <option value="">Select Employee</option>
+                  {employeeLoading ? (
+                    <option value="">Loading...</option>
+                  ) : (
+                    employees.map(emp => (
+                      <option key={emp.employee_id} value={emp.employee_id}>
+                        {emp.first_name} {emp.last_name} ({emp.employee_code || 'No Code'})
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Month *</span>
+                <select className={editId ? readOnlyFieldClass : fieldClass} name="month" value={formData.month} onChange={handleChange} required disabled={editId}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                    <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Year *</span>
+                <select className={editId ? readOnlyFieldClass : fieldClass} name="year" value={formData.year} onChange={handleChange} required disabled={editId}>
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading employee salary details...</p>}
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><DollarSign size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Salary Calculation</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Basic Salary (₹)</span>
+                <input className={readOnlyFieldClass} type="number" readOnly value={formData.basic_salary} />
+              </label>
+
+              <div className="grid gap-4 grid-cols-3">
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Present Days</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.present_days} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Leave Days</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_days} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Leave Deduct (₹)</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_deduction} />
+                </label>
+              </div>
+
+              <div className="grid gap-4 grid-cols-2">
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Incentive (%)</span>
+                  <input className={fieldClass} type="number" name="incentive_percentage" min="0" max="100" step="0.01" placeholder="0" value={formData.incentive_percentage} onChange={handleChange} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Incentive Amount (₹)</span>
+                  <input className={readOnlyFieldClass} type="number" readOnly value={formData.incentive_amount} />
+                </label>
+              </div>
+
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Additional Deduction (₹)</span>
+                <input className={fieldClass} type="number" name="additional_deduction" min="0" step="0.01" placeholder="0" value={formData.additional_deduction} onChange={handleChange} />
+              </label>
+
+              <label className="text-sm text-emerald-400 md:col-span-2">
+                <span className="mb-1.5 block font-bold text-lg">Total Calculated Salary (₹)</span>
+                <input className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xl font-bold text-emerald-400 outline-none" type="number" readOnly value={formData.total_salary} />
+                {(formData.present_days === 0 && formData.leave_days === 0) && (
+                  <p className="mt-2 text-xs text-rose-400">Warning: Attendance not marked for this month. Calculated salary is ₹0.</p>
+                )}
+              </label>
+            </div>
+          </section>
+
+          {!editId && (
+            <section className={sectionClass}>
+              <div className="mb-5 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center"><Briefcase size={15} className="text-violet-400" /></div>
+                <h2 className="text-base font-bold text-white">Bank Details</h2>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Bank Name</span>
+                  <input className={readOnlyFieldClass} type="text" readOnly value={formData.bank_name || 'Not provided'} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">Account Number</span>
+                  <input className={readOnlyFieldClass} type="text" readOnly value={formData.account_number || 'Not provided'} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">IFSC Code</span>
+                  <input className={readOnlyFieldClass} type="text" readOnly value={formData.ifsc_code || 'Not provided'} />
+                </label>
+
+                <label className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">UPI ID</span>
+                  <input className={readOnlyFieldClass} type="text" readOnly value={formData.upi_id || 'Not provided'} />
+                </label>
+              </div>
+            </section>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
+            <button type="button" onClick={resetForm} disabled={loading}
+              className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
+              {editId ? 'Cancel' : 'Reset'}
+            </button>
+            
+            <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || (formData.alreadyPaid && !editId)}
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
+              {loading ? 'Processing...' : (editId ? 'Update Salary' : 'Pay Salary')}
+            </button>
+          </div>
+        </form>
+      )}
 
       <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -426,158 +599,6 @@ export default function EmployeeSalary() {
           <AlertCircle size={16} /> {error}
         </div>
       )}
-
-      <form onSubmit={handleSave} className="space-y-6">
-
-        {/* Selection Details */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><Users size={15} className="text-blue-400" /></div>
-            <h2 className="text-base font-bold text-white">{editId ? 'Edit Details' : 'Select Details'}</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Employee *</span>
-              <select className={editId ? readOnlyFieldClass : fieldClass} name="employee_id" value={formData.employee_id} onChange={handleChange} required disabled={editId}>
-                <option value="">Select Employee</option>
-                {employeeLoading ? (
-                  <option value="">Loading...</option>
-                ) : (
-                  employees.map(emp => (
-                    <option key={emp.employee_id} value={emp.employee_id}>
-                      {emp.first_name} {emp.last_name} ({emp.employee_code || 'No Code'})
-                    </option>
-                  ))
-                )}
-              </select>
-            </label>
-
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Month *</span>
-              <select className={editId ? readOnlyFieldClass : fieldClass} name="month" value={formData.month} onChange={handleChange} required disabled={editId}>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                  <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Year *</span>
-              <select className={editId ? readOnlyFieldClass : fieldClass} name="year" value={formData.year} onChange={handleChange} required disabled={editId}>
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading employee salary details...</p>}
-        </section>
-
-        {/* Calculation */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><DollarSign size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Salary Calculation</h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Basic Salary (₹)</span>
-              <input className={readOnlyFieldClass} type="number" readOnly value={formData.basic_salary} />
-            </label>
-
-            <div className="grid gap-4 grid-cols-3">
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Present Days</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.present_days} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Leave Days</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_days} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Leave Deduct (₹)</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.leave_deduction} />
-              </label>
-            </div>
-
-            <div className="grid gap-4 grid-cols-2">
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Incentive (%)</span>
-                <input className={fieldClass} type="number" name="incentive_percentage" min="0" max="100" step="0.01" placeholder="0" value={formData.incentive_percentage} onChange={handleChange} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Incentive Amount (₹)</span>
-                <input className={readOnlyFieldClass} type="number" readOnly value={formData.incentive_amount} />
-              </label>
-            </div>
-
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Additional Deduction (₹)</span>
-              <input className={fieldClass} type="number" name="additional_deduction" min="0" step="0.01" placeholder="0" value={formData.additional_deduction} onChange={handleChange} />
-            </label>
-
-            <label className="text-sm text-emerald-400 md:col-span-2">
-              <span className="mb-1.5 block font-bold text-lg">Total Calculated Salary (₹)</span>
-              <input className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xl font-bold text-emerald-400 outline-none" type="number" readOnly value={formData.total_salary} />
-              {(formData.present_days === 0 && formData.leave_days === 0) && (
-                <p className="mt-2 text-xs text-rose-400">Warning: Attendance not marked for this month. Calculated salary is ₹0.</p>
-              )}
-            </label>
-          </div>
-        </section>
-
-        {/* Bank Details */}
-        {!editId && (
-          <section className={sectionClass}>
-            <div className="mb-5 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center"><Briefcase size={15} className="text-violet-400" /></div>
-              <h2 className="text-base font-bold text-white">Bank Details</h2>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Bank Name</span>
-                <input className={readOnlyFieldClass} type="text" readOnly value={formData.bank_name || 'Not provided'} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Account Number</span>
-                <input className={readOnlyFieldClass} type="text" readOnly value={formData.account_number || 'Not provided'} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">IFSC Code</span>
-                <input className={readOnlyFieldClass} type="text" readOnly value={formData.ifsc_code || 'Not provided'} />
-              </label>
-
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">UPI ID</span>
-                <input className={readOnlyFieldClass} type="text" readOnly value={formData.upi_id || 'Not provided'} />
-              </label>
-            </div>
-          </section>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
-          <button type="button" onClick={resetForm} disabled={loading}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
-            {editId ? 'Cancel' : 'Reset'}
-          </button>
-          
-          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || (formData.alreadyPaid && !editId)}
-            className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
-            {loading ? 'Processing...' : (editId ? 'Update Salary' : 'Pay Salary')}
-          </button>
-        </div>
-      </form>
 
       {/* Salary History Table */}
       <section className={`${sectionClass} mt-10`}>
