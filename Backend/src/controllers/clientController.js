@@ -304,10 +304,13 @@ async function addClientHistoryHandler(req, res) {
     const existing = await findClientByUUID(req.params.id);
     if (!existing) return fail(res, "Client not found", 404);
 
-    const { new_status, discussion_summary, next_follow_up_date, next_follow_up_time } = req.body;
+    const { new_status, follow_up_status, discussion_summary, next_follow_up_date, next_follow_up_time } = req.body;
     
     if (new_status && !CLIENT_STATUSES.includes(new_status)) {
       return fail(res, `Invalid client_status. Allowed: ${CLIENT_STATUSES.join(", ")}`, 400);
+    }
+    if (follow_up_status && !FOLLOW_UP_STATUSES.includes(follow_up_status)) {
+      return fail(res, `Invalid follow_up_status. Allowed: ${FOLLOW_UP_STATUSES.join(", ")}`, 400);
     }
 
     const actor = req.user?.user_id || "SYSTEM";
@@ -317,6 +320,10 @@ async function addClientHistoryHandler(req, res) {
     if (new_status && new_status !== existing.client_status) {
       updates.client_status = new_status;
       eventType = discussion_summary ? "Status Change & Follow-up" : "Status Change";
+    }
+    
+    if (follow_up_status && follow_up_status !== existing.follow_up_status) {
+      updates.follow_up_status = follow_up_status;
     }
     
     if (discussion_summary) updates.discussion_summary = discussion_summary;

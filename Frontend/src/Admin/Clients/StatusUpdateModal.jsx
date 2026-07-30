@@ -15,11 +15,21 @@ const statusColors = {
   Closed: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 
+const FOLLOW_UP_STATUSES = ['Pending', 'Follow Up', 'Completed', 'Rescheduled', 'Cancelled'];
+const followUpColors = {
+  Pending:     'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  'Follow Up': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  Completed:   'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  Rescheduled: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  Cancelled:   'bg-rose-500/10 text-rose-400 border-rose-500/20'
+};
+
 export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }) {
   const location = useLocation();
   const isFollowupsPage = location.pathname.includes('/followups');
 
   const [newStatus, setNewStatus] = useState('');
+  const [newFollowUpStatus, setNewFollowUpStatus] = useState('');
   const [discussion, setDiscussion] = useState('');
   const [nextDate, setNextDate] = useState('');
   const [nextTime, setNextTime] = useState('');
@@ -31,6 +41,7 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
   useEffect(() => {
     if (isOpen && client) {
       setNewStatus(client.client_status || 'Lead');
+      setNewFollowUpStatus(client.follow_up_status || 'Pending');
       setDiscussion('');
       setNextDate('');
       setNextTime('');
@@ -59,8 +70,8 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!discussion.trim() && newStatus === client.client_status) {
-      setError('Please provide a discussion summary or change the status.');
+    if (!discussion.trim() && newStatus === client.client_status && newFollowUpStatus === client.follow_up_status) {
+      setError('Please provide a discussion summary or change a status.');
       return;
     }
 
@@ -69,6 +80,7 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
     try {
       const payload = {
         new_status: newStatus,
+        follow_up_status: newFollowUpStatus,
         discussion_summary: discussion,
       };
       if (nextDate) payload.next_follow_up_date = nextDate;
@@ -95,9 +107,12 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
         style={{ animation: 'scaleIn 0.2s cubic-bezier(0.16,1,0.3,1)' }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02] shrink-0">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <ShieldCheck size={18} className="text-primary" /> Update Status & Log Follow-up
-          </h2>
+          <div>
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <ShieldCheck size={18} className="text-primary" /> Update Status & Log Follow-up
+            </h2>
+            <p className="text-xs text-white/50 mt-1 font-semibold">{client?.client_name}</p>
+          </div>
           <button type="button" onClick={onClose} className="text-white/40 hover:text-white transition">
             <X size={18} />
           </button>
@@ -124,6 +139,28 @@ export default function StatusUpdateModal({ isOpen, onClose, client, onSuccess }
                   className={`py-2 px-1 text-xs font-semibold rounded-lg border transition ${
                     newStatus === s 
                       ? statusColors[s] 
+                      : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">
+              <ShieldCheck size={12} /> Follow-up Status
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {FOLLOW_UP_STATUSES.map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setNewFollowUpStatus(s)}
+                  className={`py-2 px-1 text-xs font-semibold rounded-lg border transition ${
+                    newFollowUpStatus === s 
+                      ? followUpColors[s] || 'bg-white/10 text-white'
                       : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white'
                   }`}
                 >

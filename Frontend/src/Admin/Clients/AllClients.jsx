@@ -12,7 +12,6 @@ import toast from 'react-hot-toast';
 import api from '../../api';
 import ClientFormModal from './ClientFormModal';
 import StatusUpdateModal from './StatusUpdateModal';
-import FollowUpUpdateModal from './FollowUpUpdateModal';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
@@ -429,7 +428,6 @@ export default function AllClients({ defaultFuFilter = '' }) {
   const [isFormOpen, setIsFormOpen]     = useState(false);
   const [editClientTarget, setEditClientTarget] = useState(null);
   const [statusUpdateTarget, setStatusUpdateTarget] = useState(null);
-  const [fuUpdateTarget, setFuUpdateTarget] = useState(null);
 
   // ── Fetch clients ──
   const fetchClients = useCallback(async () => {
@@ -828,7 +826,7 @@ export default function AllClients({ defaultFuFilter = '' }) {
                     <td className="px-4 py-3.5">
                       <div className="space-y-1">
                         <span 
-                          onClick={() => setFuUpdateTarget(c)}
+                          onClick={() => setStatusUpdateTarget(c)}
                           className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
                           {c.follow_up_status || '—'}
                         </span>
@@ -941,7 +939,7 @@ export default function AllClients({ defaultFuFilter = '' }) {
                   )}
                   {c.follow_up_status && (
                     <span 
-                      onClick={() => setFuUpdateTarget(c)}
+                      onClick={() => setStatusUpdateTarget(c)}
                       className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer hover:opacity-80 transition ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
                       {c.follow_up_status}
                     </span>
@@ -1019,17 +1017,6 @@ export default function AllClients({ defaultFuFilter = '' }) {
           </div>
         </div>
       )}
-      {/* Follow Up Status Update Modal */}
-      <FollowUpUpdateModal
-        isOpen={!!fuUpdateTarget}
-        onClose={() => setFuUpdateTarget(null)}
-        client={fuUpdateTarget}
-        onSuccess={() => {
-          setFuUpdateTarget(null);
-          fetchClients();
-          toast.success("Follow-up status updated!");
-        }}
-      />
     </div>
   );
 }
