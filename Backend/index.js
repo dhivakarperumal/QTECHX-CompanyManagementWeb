@@ -44,7 +44,7 @@ app.use(
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
         if (isLocalhost) return callback(null, origin);
       } catch (err) {}
-      const allowed = ["https://dapfitt.com"];
+      const allowed = ["https://myqtechx.qtechx.com"];
       if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
     },
@@ -99,6 +99,37 @@ app.use(["/uploads", "/api/uploads"], (req, res, next) => {
 
   next();
 }, express.static(path.join(__dirname, "uploads")));
+
+// Serve frontend production build if available
+const potentialFrontendBuildPaths = [
+  path.join(__dirname, "Frontend", "dist"),
+  path.join(__dirname, "..", "Frontend", "dist"),
+  path.join(__dirname, "..", "..", "Frontend", "dist"),
+  path.join(__dirname, "..", "..", "..", "Frontend", "dist"),
+  path.join(__dirname, "dist"),
+  path.join(__dirname, "..", "dist"),
+  path.join(__dirname, "build"),
+  path.join(__dirname, "..", "build"),
+  path.join(__dirname, "public"),
+  path.join(__dirname, "..", "public"),
+];
+
+const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => fs.existsSync(buildPath));
+if (frontendBuildPath) {
+  console.log(`Serving static frontend from: ${frontendBuildPath}`);
+  app.use(express.static(frontendBuildPath));
+  app.get(["/", "/index.html"], (req, res) => {
+    return res.sendFile(path.join(frontendBuildPath, "index.html"));
+  });
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+      return next();
+    }
+    return res.sendFile(path.join(frontendBuildPath, "index.html"));
+  });
+} else {
+  console.warn("Frontend build directory not found. Backend will run in API-only mode.");
+}
 
 // ── Stub routes for features not yet implemented in this backend ──────────────
 // These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
