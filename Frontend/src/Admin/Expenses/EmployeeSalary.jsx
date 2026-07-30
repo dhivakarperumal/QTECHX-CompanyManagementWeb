@@ -34,7 +34,7 @@ const BLANK = {
 export default function EmployeeSalary() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [formData, setFormData] = useState(BLANK);
   const [employees, setEmployees] = useState([]);
   const [history, setHistory] = useState([]);
@@ -53,7 +53,7 @@ export default function EmployeeSalary() {
   const [historyYearFilter, setHistoryYearFilter] = useState(String(new Date().getFullYear()));
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const payslipRef = useRef();
-  
+
   const handlePrint = useReactToPrint({
     contentRef: payslipRef,
     documentTitle: selectedPayslip
@@ -164,11 +164,11 @@ export default function EmployeeSalary() {
     if (basic > 0 && pDays > 0) {
       earnedBasic = parseFloat(((basic / daysInMonth) * pDays).toFixed(2));
     }
-    
+
     // Total is calculated purely from earnedBasic (based on present days) + incentives - additional.
     // We ignore lDeduct here since leave days naturally deduct from the earned basic.
     const total = parseFloat((earnedBasic + incAmount - addDeduct).toFixed(2));
-    
+
     setFormData(prev => ({
       ...prev,
       incentive_amount: incAmount,
@@ -296,23 +296,33 @@ export default function EmployeeSalary() {
 
   return (
     <div className="space-y-6 text-white pb-10">
-      <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/admin/expenses')}
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
-          <ArrowLeft size={16} />
-        </button>
-        <div>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-            <DollarSign size={11} /> Salary Management
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Employee Salary</h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            Calculate, process monthly salaries, and print payslips.
-          </p>
-        </div>
-      </div>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        {/* Left Side */}
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => navigate("/admin/expenses")}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1"
+          >
+            <ArrowLeft size={16} />
+          </button>
 
-      <div className="flex justify-end">
+          <div>
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+              <DollarSign size={11} />
+              Salary Management
+            </div>
+
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Employee Salary
+            </h1>
+
+            <p className="text-sm text-white/40 mt-0.5">
+              Calculate, process monthly salaries, and print payslips.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side */}
         <button
           type="button"
           onClick={() => {
@@ -320,15 +330,15 @@ export default function EmployeeSalary() {
               resetForm();
             } else {
               setShowForm(true);
-              setError('');
-              setSuccess('');
+              setError("");
+              setSuccess("");
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 self-start"
+          style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
         >
           <Plus size={15} />
-          {showForm ? 'Close Form' : 'Record Payment'}
+          {showForm ? "Close Form" : "Record Payment"}
         </button>
       </div>
 
@@ -470,7 +480,7 @@ export default function EmployeeSalary() {
               className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
               {editId ? 'Cancel' : 'Reset'}
             </button>
-            
+
             <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || (formData.alreadyPaid && !editId)}
               className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>

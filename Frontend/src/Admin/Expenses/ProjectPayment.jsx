@@ -24,13 +24,13 @@ const BLANK = {
 export default function ProjectPayment() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [formData, setFormData] = useState(BLANK);
   const [projects, setProjects] = useState([]);
   const [selectedProjectDetails, setSelectedProjectDetails] = useState(null);
   const [projectSummary, setProjectSummary] = useState(null);
   const [history, setHistory] = useState([]);
-  
+
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ export default function ProjectPayment() {
   const [modeFilter, setModeFilter] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const receiptRef = useRef();
-  
+
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: selectedReceipt
@@ -233,23 +233,33 @@ export default function ProjectPayment() {
 
   return (
     <div className="space-y-6 text-white pb-10">
-      <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/admin/expenses')}
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
-          <ArrowLeft size={16} />
-        </button>
-        <div>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
-            <FolderKanban size={11} /> Project Finance
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Project Payment</h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            Record and manage payments received from clients for ongoing projects.
-          </p>
-        </div>
-      </div>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        {/* Left */}
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => navigate("/admin/expenses")}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1"
+          >
+            <ArrowLeft size={16} />
+          </button>
 
-      <div className="flex justify-end">
+          <div>
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
+              <FolderKanban size={11} />
+              Project Finance
+            </div>
+
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Project Payment
+            </h1>
+
+            <p className="text-sm text-white/40 mt-0.5">
+              Record and manage payments received from clients for ongoing projects.
+            </p>
+          </div>
+        </div>
+
+        {/* Right */}
         <button
           type="button"
           onClick={() => {
@@ -257,15 +267,15 @@ export default function ProjectPayment() {
               resetForm();
             } else {
               setShowForm(true);
-              setError('');
-              setSuccess('');
+              setError("");
+              setSuccess("");
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 self-start"
+          style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
         >
           <Plus size={15} />
-          {showForm ? 'Close Form' : 'Record Payment'}
+          {showForm ? "Close Form" : "Record Payment"}
         </button>
       </div>
 
@@ -294,7 +304,7 @@ export default function ProjectPayment() {
                 </select>
               </label>
             </div>
-            
+
             {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading project details...</p>}
 
             {selectedProjectDetails && (
@@ -343,7 +353,7 @@ export default function ProjectPayment() {
                 <span className="mb-1.5 block font-medium">Amount Paid (₹) *</span>
                 <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" value={formData.amount_paid} onChange={handleChange} required />
               </label>
-              
+
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Payment Mode *</span>
                 <select className={fieldClass} name="payment_mode" value={formData.payment_mode} onChange={handleChange} required>
@@ -640,17 +650,17 @@ export default function ProjectPayment() {
 
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
                 <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">PAYMENT SUMMARY</h3>
-                
+
                 <div className="flex justify-between text-sm mb-3">
                   <span className="text-gray-600">Total Project Cost</span>
                   <span className="font-medium">₹{parseFloat(selectedReceipt.total_project_cost || 0).toLocaleString('en-IN')}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center text-base mb-3 py-2 border-y border-gray-200">
                   <span className="font-bold text-gray-800">Amount Paid Now</span>
                   <span className="font-black text-xl text-emerald-600">₹{parseFloat(selectedReceipt.amount_paid).toLocaleString('en-IN')}</span>
                 </div>
-                
+
                 <p className="text-xs text-gray-500 italic mt-2">
                   * Note: This receipt acknowledges the payment received as per the details above. Balance amount may reflect other payments made separately.
                 </p>
