@@ -407,7 +407,7 @@ const EmployeeAdd = () => {
     }
   };
 
-  const inputClass = "w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30";
+  const inputClass = "w-full rounded-xl border  border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30";
   const labelClass = "mb-1.5 block text-sm font-medium text-white/70";
   const sectionClass = "rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6";
 
