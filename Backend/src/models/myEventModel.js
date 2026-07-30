@@ -65,6 +65,17 @@ function normalizeMyEventRow(row) {
   return normalized;
 }
 
+const ALLOWED_COLUMNS = new Set([
+  'planTitle','description','planDate','startTime','endTime','estimatedDuration',
+  'actualDuration','category','priority','status','project','module','task',
+  'milestone','sprint','assignedBy','assignedTo','team','dailyGoal','expectedOutcome',
+  'checklistItems','reminderDate','reminderTime','reminderType','repeatFrequency',
+  'repeatUntil','location','meetingLink','notes','attachments','tags','progress',
+  'plannedHours','workedHours','breakStartTime','breakEndTime','energyLevel',
+  'todaysAchievement','challenges','tomorrowsPlan','createdBy','createdDate',
+  'updatedDate','user_id','id',
+]);
+
 async function createMyEvent(event) {
   const db = getDB();
   const payload = { ...event };
@@ -72,7 +83,8 @@ async function createMyEvent(event) {
   payload.id = uuidv4();
   delete payload._id;
 
-  const fields = Object.keys(payload).filter((k) => payload[k] !== undefined);
+  // Only insert columns that actually exist in the table
+  const fields = Object.keys(payload).filter((k) => payload[k] !== undefined && ALLOWED_COLUMNS.has(k));
   const values = fields.map((k) => normalizeEventValue(payload[k]));
   const placeholders = fields.map(() => '?').join(', ');
 
