@@ -470,7 +470,7 @@ const AdminDashboard = () => {
             <button className="text-xs text-primary hover:underline">View All</button>
           </div>
           {(dashboard?.recentActivity || []).length > 0 ? (
-            dashboard.recentActivity.map((a, i) => {
+            dashboard.recentActivity.slice(0,5).map((a, i) => {
               const date = new Date(a.time);
               const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               return <ActivityRow key={i} title={a.title} meta={a.meta} time={timeStr} user={a.user} avatar={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user)}&background=random`} />
