@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { 
   User, 
@@ -9,19 +9,57 @@ import {
   Key,
   CalendarDays,
   CheckCircle2,
-  MapPin
+  MapPin,
+  X,
+  Loader2
 } from 'lucide-react';
+import api from '../../api';
+import toast from 'react-hot-toast';
 
 const AdminProfile = () => {
   const { user, profileName, role, email, phone } = useAuth();
   
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   // Fake data for visual completeness
   const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Jan 15, 2026';
   const location = 'Chennai, India';
   const status = 'Active';
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return toast.error("New passwords do not match.");
+    }
+    if (passwordForm.newPassword.length < 6) {
+      return toast.error("New password must be at least 6 characters.");
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await api.post('/users/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      toast.success(res.data.message || "Password changed successfully!");
+      setShowPasswordModal(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      console.error("Change password error:", error);
+      toast.error(error.response?.data?.message || "Failed to change password. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-6 text-white min-h-screen">
+    <div className="space-y-6 pb-6 text-white min-h-screen relative">
       
       {/* ── PROFILE BANNER ── */}
       <div className="relative rounded-[2rem] overflow-hidden p-6 md:p-8 border border-white/10 bg-[#12131a]/70 shadow-2xl shadow-black/40 flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -75,7 +113,6 @@ const AdminProfile = () => {
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <User size={20} className="text-primary" /> Personal Information
               </h2>
-              {/* <button className="text-xs text-primary hover:underline font-medium">Edit Details</button> */}
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -133,7 +170,10 @@ const AdminProfile = () => {
 
           <div className="rounded-[2rem] bg-white/5 border border-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
             <h2 className="text-sm font-bold text-white mb-5 uppercase tracking-wider text-white/50">Security</h2>
-            <button className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition border border-white/10 rounded-xl p-4 group">
+            <button 
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition border border-white/10 rounded-xl p-4 group"
+            >
               <div className="flex items-center gap-3 text-white/80 group-hover:text-white">
                 <Key size={18} className="text-primary" />
                 <span className="text-sm font-medium">Change Password</span>
@@ -144,6 +184,86 @@ const AdminProfile = () => {
 
         </div>
       </div>
+
+      {/* ── PASSWORD CHANGE MODAL ── */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#12131a] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl shadow-black/50 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Key size={20} className="text-primary" /> Change Password
+              </h2>
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="text-white/40 hover:text-white transition-colors p-1"
+                disabled={isChangingPassword}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handlePasswordChange} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/50 mb-2">Current Password</label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  placeholder="Enter current password"
+                  className="w-full bg-[#0d0e14] border border-white/10 rounded-xl p-3 text-white placeholder-white/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/50 mb-2">New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  placeholder="Enter new password"
+                  className="w-full bg-[#0d0e14] border border-white/10 rounded-xl p-3 text-white placeholder-white/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/50 mb-2">Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  placeholder="Confirm new password"
+                  className="w-full bg-[#0d0e14] border border-white/10 rounded-xl p-3 text-white placeholder-white/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  disabled={isChangingPassword}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 hover:text-white transition-colors text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-semibold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isChangingPassword ? (
+                    <><Loader2 size={16} className="animate-spin" /> Updating...</>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
