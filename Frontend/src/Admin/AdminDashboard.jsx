@@ -229,10 +229,10 @@ const AdminDashboard = () => {
   ];
 
   const quickActions = [
-    { label: 'Add Employee', icon: UserPlus, path: '/admin/employees' },
-    { label: 'New Project', icon: FolderKanban, path: '/admin/projects' },
-    { label: 'Run Payroll', icon: DollarSign, path: '/admin/payroll' },
-    { label: 'Open Calendar', icon: Calendar, path: '/admin/attendance' },
+    { label: 'Add Employee', icon: UserPlus, path: '/admin/employees/add' },
+    { label: 'New Project', icon: FolderKanban, path: '/admin/projects/add' },
+    { label: 'Run Payroll', icon: DollarSign, path: '/admin/expenses' },
+    { label: 'Open Calendar', icon: Calendar, path: '/admin/office-calendar' },
   ];
 
   const upcomingEvents = [
