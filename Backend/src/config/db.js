@@ -15,6 +15,128 @@ const dbConfig = {
   queueLimit: 0,
 };
 
+async function ensureMyEventsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'myevents'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS myevents (
+        id VARCHAR(100) NOT NULL,
+        planTitle VARCHAR(255) NOT NULL,
+        description TEXT NULL,
+        planDate DATE NULL,
+        startTime VARCHAR(20) NULL,
+        endTime VARCHAR(20) NULL,
+        estimatedDuration VARCHAR(50) NULL,
+        actualDuration VARCHAR(50) NULL,
+        category VARCHAR(100) NULL,
+        priority VARCHAR(50) NULL,
+        status VARCHAR(50) NULL,
+        project VARCHAR(255) NULL,
+        module VARCHAR(255) NULL,
+        task VARCHAR(255) NULL,
+        milestone VARCHAR(255) NULL,
+        sprint VARCHAR(255) NULL,
+        assignedBy VARCHAR(255) NULL,
+        assignedTo VARCHAR(255) NULL,
+        team VARCHAR(255) NULL,
+        dailyGoal TEXT NULL,
+        expectedOutcome TEXT NULL,
+        checklistItems JSON NULL,
+        reminderDate DATE NULL,
+        reminderTime VARCHAR(20) NULL,
+        reminderType VARCHAR(100) NULL,
+        repeatFrequency VARCHAR(100) NULL,
+        repeatUntil DATE NULL,
+        location VARCHAR(255) NULL,
+        meetingLink VARCHAR(500) NULL,
+        notes TEXT NULL,
+        attachments JSON NULL,
+        tags JSON NULL,
+        progress INT NULL,
+        plannedHours DECIMAL(10,2) NULL,
+        workedHours DECIMAL(10,2) NULL,
+        breakStartTime VARCHAR(20) NULL,
+        breakEndTime VARCHAR(20) NULL,
+        energyLevel VARCHAR(20) NULL,
+        todaysAchievement TEXT NULL,
+        challenges TEXT NULL,
+        tomorrowsPlan TEXT NULL,
+        createdBy VARCHAR(100) NULL,
+        createdDate DATE NULL,
+        updatedDate DATE NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        INDEX idx_myevents_plan_date (planDate),
+        INDEX idx_myevents_status (status),
+        INDEX idx_myevents_category (category)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM myevents");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('planTitle', 'VARCHAR(255) NOT NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('planDate', 'DATE NULL');
+  addColumn('startTime', 'VARCHAR(20) NULL');
+  addColumn('endTime', 'VARCHAR(20) NULL');
+  addColumn('estimatedDuration', 'VARCHAR(50) NULL');
+  addColumn('actualDuration', 'VARCHAR(50) NULL');
+  addColumn('category', 'VARCHAR(100) NULL');
+  addColumn('priority', 'VARCHAR(50) NULL');
+  addColumn('status', 'VARCHAR(50) NULL');
+  addColumn('project', 'VARCHAR(255) NULL');
+  addColumn('module', 'VARCHAR(255) NULL');
+  addColumn('task', 'VARCHAR(255) NULL');
+  addColumn('milestone', 'VARCHAR(255) NULL');
+  addColumn('sprint', 'VARCHAR(255) NULL');
+  addColumn('assignedBy', 'VARCHAR(255) NULL');
+  addColumn('assignedTo', 'VARCHAR(255) NULL');
+  addColumn('team', 'VARCHAR(255) NULL');
+  addColumn('dailyGoal', 'TEXT NULL');
+  addColumn('expectedOutcome', 'TEXT NULL');
+  addColumn('checklistItems', 'JSON NULL');
+  addColumn('reminderDate', 'DATE NULL');
+  addColumn('reminderTime', 'VARCHAR(20) NULL');
+  addColumn('reminderType', 'VARCHAR(100) NULL');
+  addColumn('repeatFrequency', 'VARCHAR(100) NULL');
+  addColumn('repeatUntil', 'DATE NULL');
+  addColumn('location', 'VARCHAR(255) NULL');
+  addColumn('meetingLink', 'VARCHAR(500) NULL');
+  addColumn('notes', 'TEXT NULL');
+  addColumn('attachments', 'JSON NULL');
+  addColumn('tags', 'JSON NULL');
+  addColumn('progress', 'INT NULL');
+  addColumn('plannedHours', 'DECIMAL(10,2) NULL');
+  addColumn('workedHours', 'DECIMAL(10,2) NULL');
+  addColumn('breakStartTime', 'VARCHAR(20) NULL');
+  addColumn('breakEndTime', 'VARCHAR(20) NULL');
+  addColumn('energyLevel', 'VARCHAR(20) NULL');
+  addColumn('todaysAchievement', 'TEXT NULL');
+  addColumn('challenges', 'TEXT NULL');
+  addColumn('tomorrowsPlan', 'TEXT NULL');
+  addColumn('createdBy', 'VARCHAR(100) NULL');
+  addColumn('createdDate', 'DATE NULL');
+  addColumn('updatedDate', 'DATE NULL');
+  addColumn('created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE myevents ${addColumnStatements.join(', ')}`);
+  }
+}
+
 let pool;
 
 async function ensureEventsSchema(pool) {
@@ -799,6 +921,7 @@ async function ensureSchema(pool) {
 
   // ── Events ────────────────────────────────────────────────────────────────
   await ensureEventsSchema(pool);
+  await ensureMyEventsSchema(pool);
 
   // ── Projects ──────────────────────────────────────────────────────────────
   await ensureProjectsSchema(pool);

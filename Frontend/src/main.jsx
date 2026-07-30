@@ -279,6 +279,10 @@ const router = createHashRouter([
             element: <OfficeCalendar />,
           },
           {
+            path: 'my-calendar',
+            element: <MyCalendar />,
+          },
+          {
             path: 'expenses',
             element: <ExpensesPage />,
           },

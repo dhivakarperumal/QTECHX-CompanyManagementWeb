@@ -488,12 +488,15 @@ const OfficeCalendar = () => {
         color: formData.color || getEventColor(formData.eventType, formData.color),
         updatedDate: dayjs().format('YYYY-MM-DD'),
       };
-      if (!payload.id || payload.id.toString().trim() === '') {
-        delete payload.id;
-      }
+
+      // Always remove id/_id from payload — let the backend generate the UUID on create
+      delete payload.id;
+      delete payload._id;
+
       if (mode === 'edit' && selectedEvent) {
-        const res = await api.put(`/events/${selectedEvent._id}`, payload);
-        setEvents((current) => current.map((item) => (item._id === selectedEvent._id ? res.data : item)));
+        const eventId = selectedEvent._id || selectedEvent.id;
+        const res = await api.put(`/events/${eventId}`, payload);
+        setEvents((current) => current.map((item) => (item._id === eventId ? res.data : item)));
         setSelectedEvent(res.data);
         toast.success('Event updated successfully.');
       } else {
