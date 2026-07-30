@@ -12,8 +12,8 @@ const ExpensesPage = () => {
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({
     expenseType: "",
-    paymentType: "",
     paymentMethod: "",
+    datePreset: "all",
     dateFrom: "",
     dateTo: "",
   });
@@ -29,6 +29,7 @@ const ExpensesPage = () => {
     description: "",
     invoice_number: "",
   });
+  const [customExpenseType, setCustomExpenseType] = useState("");
   const [billFile, setBillFile] = useState(null);
 
   const fetchFund = async () => {
@@ -103,19 +104,35 @@ const ExpensesPage = () => {
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
+
+    const finalExpenseType = expenseData.expense_type === "Other"
+      ? customExpenseType.trim()
+      : expenseData.expense_type;
+
+    if (!finalExpenseType) {
+      toast.error("Please enter a custom expense type", {
+        style: { background: '#ef4444', color: '#fff' },
+      });
+      return;
+    }
+
     const formData = new FormData();
-    Object.keys(expenseData).forEach((key) => {
-      formData.append(key, expenseData[key]);
-    });
+    formData.append("expense_type", finalExpenseType);
+    formData.append("date_of_payment", expenseData.date_of_payment);
+    formData.append("amount", expenseData.amount);
+    formData.append("payment_type", expenseData.payment_type);
+    formData.append("paid_to", expenseData.paid_to);
+    formData.append("description", expenseData.description);
+    formData.append("invoice_number", expenseData.invoice_number);
     if (billFile) {
       formData.append("upload_bill", billFile);
     }
 
     try {
       const { data } = await axios.post("http://localhost:5000/api/expenses", formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "multipart/form-data" 
+          "Content-Type": "multipart/form-data"
         }
       });
       if (data.success) {
@@ -132,6 +149,7 @@ const ExpensesPage = () => {
           description: "",
           invoice_number: "",
         });
+        setCustomExpenseType("");
         setBillFile(null);
         fetchFund();
         fetchExpenses();
@@ -144,6 +162,7 @@ const ExpensesPage = () => {
   };
 
   const expenseTypeOptions = [
+    "Salary",
     "Office Rent",
     "Electricity Bill",
     "Water Bill",
@@ -168,9 +187,19 @@ const ExpensesPage = () => {
     "Taxes",
     "Insurance",
     "Miscellaneous",
+    "Other",
   ];
   const paymentMethodOptions = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque"];
+  const datePresetOptions = [
+    { value: "all", label: "All" },
+    { value: "today", label: "Today" },
+    { value: "yesterday", label: "Yesterday" },
+    { value: "this_week", label: "This Week" },
+    { value: "this_month", label: "This Month" },
+    { value: "custom", label: "Custom Range" },
+  ];
   const isSalaryExpense = expenseData.expense_type === "Salary";
+  const isOtherExpenseType = expenseData.expense_type === "Other";
 
   const isCreditEntry = (entry) => {
     const type = String(entry?.expense_type || "").trim().toLowerCase();
@@ -179,15 +208,49 @@ const ExpensesPage = () => {
 
   const filteredExpenses = expenses.filter((exp) => {
     const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
-    const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
-    const toDate = filters.dateTo ? new Date(filters.dateTo) : null;
 
     if (filters.expenseType && exp.expense_type !== filters.expenseType) return false;
-    if (filters.paymentType && exp.payment_type !== filters.paymentType) return false;
     if (filters.paymentMethod && exp.payment_type !== filters.paymentMethod) return false;
-    if (fromDate && expenseDate && expenseDate < fromDate) return false;
-    if (toDate && expenseDate && expenseDate > toDate) return false;
-    return true;
+
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    let dateMatch = true;
+    if (filters.datePreset === "today") {
+      dateMatch = Boolean(expenseDate && expenseDate >= startOfToday && expenseDate <= endOfToday);
+    } else if (filters.datePreset === "yesterday") {
+      const yesterday = new Date(startOfToday);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayEnd = new Date(startOfToday);
+      yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+      dateMatch = Boolean(expenseDate && expenseDate >= yesterday && expenseDate <= yesterdayEnd);
+    } else if (filters.datePreset === "this_week") {
+      const weekStart = new Date(startOfToday);
+      weekStart.setDate(startOfToday.getDate() - startOfToday.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      dateMatch = Boolean(expenseDate && expenseDate >= weekStart && expenseDate <= weekEnd);
+    } else if (filters.datePreset === "this_month") {
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+      dateMatch = Boolean(expenseDate && expenseDate >= monthStart && expenseDate <= monthEnd);
+    } else if (filters.datePreset === "custom") {
+      const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
+      const toDate = filters.dateTo ? new Date(filters.dateTo) : null;
+      if (fromDate) {
+        fromDate.setHours(0, 0, 0, 0);
+      }
+      if (toDate) {
+        toDate.setHours(23, 59, 59, 999);
+      }
+      if (fromDate && expenseDate && expenseDate < fromDate) dateMatch = false;
+      if (toDate && expenseDate && expenseDate > toDate) dateMatch = false;
+    }
+
+    return dateMatch;
   });
 
   const filteredSpendEntries = filteredExpenses.filter((exp) => !isCreditEntry(exp));
@@ -209,8 +272,8 @@ const ExpensesPage = () => {
       })
     : ["#f97316 0% 100%"];
 
-  const monthlyTrend = Array.from({ length: 6 }, (_, index) => {
-    const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"][index];
+  const monthlyTrend = Array.from({ length: 12 }, (_, index) => {
+    const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][index];
     const monthValue = filteredSpendEntries.reduce((sum, exp) => {
       const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
       if (!expenseDate) return sum;
@@ -315,12 +378,32 @@ const ExpensesPage = () => {
               <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
               <select required
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-                value={expenseData.expense_type} onChange={(e) => setExpenseData({...expenseData, expense_type: e.target.value, paid_to: e.target.value === "Salary" ? expenseData.paid_to : ""})}>
+                value={expenseData.expense_type}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setExpenseData((prev) => ({ ...prev, expense_type: value, paid_to: value === "Salary" ? prev.paid_to : "" }));
+                  if (value !== "Other") {
+                    setCustomExpenseType("");
+                  }
+                }}>
                 <option value="" className="bg-[#111318]">Select Expense Type</option>
                 {expenseTypeOptions.map((option) => (
                   <option key={option} value={option} className="bg-[#111318]">{option}</option>
                 ))}
               </select>
+              {isOtherExpenseType && (
+                <div className="mt-2">
+                  <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Custom Expense Type</label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+                    placeholder="Enter expense type"
+                    value={customExpenseType}
+                    onChange={(e) => setCustomExpenseType(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
@@ -407,25 +490,15 @@ const ExpensesPage = () => {
         </div>
       )}
 
-      {/* ── Filters + Reports ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-5">
-        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
+      <div className="bg-[#111318] border border-white/10 rounded-2xl p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="flex flex-wrap gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-white">Expense Filters</h3>
-              <p className="text-xs text-white/40">Refine the list by category, payment mode, and date.</p>
-            </div>
-            <div className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
-              {filteredExpenses.length} matched
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
+              <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
               <select
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                className="w-40 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
                 value={filters.expenseType}
-                onChange={(e) => setFilters({ ...filters, expenseType: e.target.value })}
+                onChange={(e) => setFilters((prev) => ({ ...prev, expenseType: e.target.value }))}
               >
                 <option value="" className="bg-[#111318]">All Types</option>
                 {expenseTypeOptions.map((option) => (
@@ -433,13 +506,12 @@ const ExpensesPage = () => {
                 ))}
               </select>
             </div>
-
             <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Method</label>
+              <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Payment Method</label>
               <select
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                className="w-40 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
                 value={filters.paymentMethod}
-                onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value })}
+                onChange={(e) => setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))}
               >
                 <option value="" className="bg-[#111318]">All Methods</option>
                 {paymentMethodOptions.map((option) => (
@@ -447,38 +519,54 @@ const ExpensesPage = () => {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:col-span-2">
-              <div>
-                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">From Date</label>
-                <input
-                  type="date"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
-                  value={filters.dateFrom}
-                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">To Date</label>
-                <input
-                  type="date"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
-                  value={filters.dateTo}
-                  onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                />
+            <div>
+              <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Date Range</label>
+              <div className="flex flex-wrap gap-2">
+                {datePresetOptions.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => setFilters((prev) => ({ ...prev, datePreset: preset.value }))}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${filters.datePreset === preset.value ? "bg-primary text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
-          <div className="mt-4 flex justify-end">
+          <div className="flex flex-wrap items-center gap-3">
+            {filters.datePreset === "custom" && (
+              <div className="flex flex-wrap gap-2">
+                <input
+                  type="date"
+                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                />
+                <input
+                  type="date"
+                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                />
+              </div>
+            )}
             <button
               type="button"
-              onClick={() => setFilters({ expenseType: "", paymentType: "", paymentMethod: "", dateFrom: "", dateTo: "" })}
+              onClick={() => setFilters({ expenseType: "", paymentMethod: "", datePreset: "all", dateFrom: "", dateTo: "" })}
               className="text-sm text-white/60 hover:text-white transition"
             >
-              Clear Filters
+              Clear
             </button>
+            <div className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
+              {filteredExpenses.length} matched
+            </div>
           </div>
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -509,9 +597,7 @@ const ExpensesPage = () => {
             ))}
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-5">
         <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -542,30 +628,30 @@ const ExpensesPage = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Monthly Expense Trend</h3>
-              <p className="text-xs text-white/40">Jan to Jun comparison.</p>
-            </div>
+      <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Monthly Expense Trend</h3>
+            <p className="text-xs text-white/40">Full year comparison.</p>
           </div>
-          <div className="flex items-end gap-3 h-56 mt-3">
-            {monthlyTrend.map((item) => (
-              <div key={item.monthName} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full flex items-end justify-center h-44 rounded-2xl bg-white/5 p-2">
-                  <div
-                    className="w-full rounded-xl bg-gradient-to-t from-primary to-orange-400"
-                    style={{ height: `${Math.max((item.monthValue / maxMonthlyValue) * 100, 6)}%` }}
-                  />
-                </div>
-                <div className="text-center">
-                  <p className="text-[11px] text-white/40">{item.monthName}</p>
-                  <p className="text-sm font-semibold text-white">₹ {item.monthValue.toFixed(0)}</p>
-                </div>
+        </div>
+        <div className="flex items-end gap-2 h-56 mt-3 overflow-x-auto">
+          {monthlyTrend.map((item) => (
+            <div key={item.monthName} className="min-w-[44px] flex-1 flex flex-col items-center gap-2">
+              <div className="w-full flex items-end justify-center h-44 rounded-2xl bg-white/5 p-2">
+                <div
+                  className="w-full rounded-xl bg-gradient-to-t from-primary to-orange-400"
+                  style={{ height: `${Math.max((item.monthValue / maxMonthlyValue) * 100, 6)}%` }}
+                />
               </div>
-            ))}
-          </div>
+              <div className="text-center">
+                <p className="text-[11px] text-white/40">{item.monthName}</p>
+                <p className="text-sm font-semibold text-white">₹ {item.monthValue.toFixed(0)}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
