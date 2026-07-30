@@ -19,6 +19,7 @@ import AttendanceView from './Admin/AttendanceView.jsx'
 
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
+import { AdminProvider } from './PrivateRouter/AdminContext';
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
 import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
@@ -300,7 +301,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <StoreProvider>
-        <RouterProvider router={router} />
+        <AdminProvider>
+          <RouterProvider router={router} />
+        </AdminProvider>
       </StoreProvider>
     </AuthProvider>
   </StrictMode>,
