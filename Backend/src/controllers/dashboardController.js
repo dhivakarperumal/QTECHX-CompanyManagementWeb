@@ -97,6 +97,8 @@ async function getDashboardMetrics(req, res) {
     
     const [projectStatusRows] = await db.execute("SELECT current_status, COUNT(*) as count FROM projects GROUP BY current_status");
 
+    const [upcomingEventRows] = await db.execute("SELECT title, startDate, startTime, eventType FROM events WHERE startDate >= CURDATE() ORDER BY startDate ASC, startTime ASC LIMIT 4");
+
     return res.json({
       totalEmployees,
       activeProjects,
@@ -111,7 +113,8 @@ async function getDashboardMetrics(req, res) {
       currentMonthIncome,
       clientStats: { total: totalClients, breakdown: clientRows },
       traineeStats: traineeTypeRows,
-      projectStats: projectStatusRows
+      projectStats: projectStatusRows,
+      upcomingEvents: upcomingEventRows
     });
   } catch (err) {
     console.error('getDashboardMetrics error:', err);

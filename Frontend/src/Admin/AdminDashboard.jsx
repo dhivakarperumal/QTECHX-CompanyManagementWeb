@@ -235,12 +235,39 @@ const AdminDashboard = () => {
     { label: 'Open Calendar', icon: Calendar, path: '/admin/office-calendar' },
   ];
 
-  const upcomingEvents = [
-    { title: 'Monthly All-Hands Meeting', date: 'Jul 25', time: '10:00 AM', type: 'meeting', color: 'bg-blue-500/15 border-blue-500/30 text-blue-400' },
-    { title: 'Q3 Project Review', date: 'Jul 26', time: '2:00 PM', type: 'review', color: 'bg-primary/15 border-primary/30 text-primary' },
-    { title: 'July Payroll Processing', date: 'Jul 31', time: 'All Day', type: 'payroll', color: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
-    { title: 'New Intern Orientation', date: 'Aug 1', time: '9:00 AM', type: 'training', color: 'bg-pink-500/15 border-pink-500/30 text-pink-400' },
-  ];
+  const getEventStyle = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'meeting':
+      case 'client meeting':
+        return 'bg-blue-500/15 border-blue-500/30 text-blue-400';
+      case 'training':
+        return 'bg-pink-500/15 border-pink-500/30 text-pink-400';
+      case 'holiday':
+      case 'leave':
+        return 'bg-green-500/15 border-green-500/30 text-green-400';
+      default:
+        return 'bg-primary/15 border-primary/30 text-primary';
+    }
+  };
+
+  const upcomingEvents = (dashboard?.upcomingEvents || []).map(e => {
+    const dateObj = new Date(e.startDate);
+    const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    let timeStr = 'All Day';
+    if (e.startTime) {
+      const [hour, minute] = e.startTime.split(':');
+      const d = new Date();
+      d.setHours(hour, minute);
+      timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+    return {
+      title: e.title,
+      date: dateStr,
+      time: timeStr,
+      type: e.eventType,
+      color: getEventStyle(e.eventType)
+    };
+  });
 
   const taskOverview = [
     { label: 'Completed', value: 89, color: 'text-green-400', bg: 'bg-green-500' },
@@ -572,7 +599,7 @@ const AdminDashboard = () => {
               <p className="text-xs text-white/40">Stay ahead of the calendar</p>
             </div>
           </div>
-          <button onClick={() => navigate('/admin/calendar')} className="text-xs text-primary hover:underline">View Calendar</button>
+          <button onClick={() => navigate('/admin/office-calendar')} className="text-xs text-primary hover:underline">View Calendar</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingEvents.map((e, i) => (
