@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { UserCheck, Edit2, Trash2, Loader2, Save, X, Plus } from 'lucide-react';
+import { UserCheck, Edit2, Trash2, Loader2, Save, X, Plus, Search } from 'lucide-react';
 
 const TraineeTaskAssign = () => {
   const [assignments, setAssignments] = useState([]);
@@ -10,6 +10,7 @@ const TraineeTaskAssign = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Form State
   const [selectedTask, setSelectedTask] = useState('');
@@ -117,7 +118,15 @@ const TraineeTaskAssign = () => {
     setShowForm(false);
   };
 
-  const filteredAssignments = assignments.filter(a => typeFilter === 'All' || a.trainee_type === typeFilter);
+  const filteredAssignments = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return assignments.filter((assignment) => {
+      const matchesType = typeFilter === 'All' || assignment.trainee_type === typeFilter;
+      if (!term) return matchesType;
+      const haystack = `${assignment.trainee_name || ''} ${assignment.task_name || ''} ${assignment.status || ''} ${assignment.daily_report || ''}`.toLowerCase();
+      return matchesType && haystack.includes(term);
+    });
+  }, [assignments, searchTerm, typeFilter]);
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -241,17 +250,23 @@ const TraineeTaskAssign = () => {
 
       {/* Assignments Table */}
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
-        <div className="flex items-center justify-between mb-4 px-2">
+        <div className="flex flex-col gap-3 mb-4 px-2 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-lg font-semibold text-white">Assigned Tasks</h2>
-          <select 
-            value={typeFilter} 
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-          >
-            <option value="All" className="text-black">All Types</option>
-            <option value="Trainee" className="text-black">Trainee</option>
-            <option value="Intern" className="text-black">Intern</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search assignment" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+            </div>
+            <select 
+              value={typeFilter} 
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+            >
+              <option value="All" className="text-black">All Types</option>
+              <option value="Trainee" className="text-black">Trainee</option>
+              <option value="Intern" className="text-black">Intern</option>
+            </select>
+          </div>
         </div>
         
         <div className="overflow-x-auto rounded-2xl border border-white/10">

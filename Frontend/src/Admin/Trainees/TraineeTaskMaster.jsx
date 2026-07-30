@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X } from 'lucide-react';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search } from 'lucide-react';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -12,6 +12,8 @@ const TraineeTaskMaster = () => {
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [taskSearch, setTaskSearch] = useState('');
 
   const [trainees, setTrainees] = useState([]);
 
@@ -92,6 +94,24 @@ const TraineeTaskMaster = () => {
     setShowForm(false);
   };
 
+  const filteredTrainees = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return trainees.filter((trainee) => {
+      if (!term) return true;
+      const haystack = `${trainee.full_name || ''} ${trainee.type || ''} ${trainee.person_id || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [trainees, searchTerm]);
+
+  const filteredTasks = useMemo(() => {
+    const term = taskSearch.trim().toLowerCase();
+    return tasks.filter((task) => {
+      if (!term) return true;
+      const haystack = `${task.task_name || ''} ${task.description || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [tasks, taskSearch]);
+
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <Toaster position="top-right" />
@@ -121,24 +141,30 @@ const TraineeTaskMaster = () => {
 
       {/* Trainee Cards Section */}
       <div className="mb-8 mt-2">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
-          <select 
-            value={typeFilter} 
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-          >
-            <option value="All" className="text-black">All Types</option>
-            <option value="Trainee" className="text-black">Trainee</option>
-            <option value="Intern" className="text-black">Intern</option>
-          </select>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee" className="w-48 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+            </div>
+            <select 
+              value={typeFilter} 
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+            >
+              <option value="All" className="text-black">All Types</option>
+              <option value="Trainee" className="text-black">Trainee</option>
+              <option value="Intern" className="text-black">Intern</option>
+            </select>
+          </div>
         </div>
         
-        {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
+        {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
           <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {trainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
+            {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
               <a 
                 key={trainee.uuid} 
                 href={`#/admin/trainees/tasks/view/${trainee.uuid}`}
@@ -165,8 +191,12 @@ const TraineeTaskMaster = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
+        <div className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+        </div>
       </div>
 
       {showForm && (
@@ -237,12 +267,12 @@ const TraineeTaskMaster = () => {
                     <Loader2 size={18} className="mx-auto animate-spin" />
                   </td>
                 </tr>
-              ) : tasks.length === 0 ? (
+              ) : filteredTasks.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
                 </tr>
               ) : (
-                tasks.map((task, index) => (
+                filteredTasks.map((task, index) => (
                   <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
                     <td className="px-4 py-4 text-white/70">{index + 1}</td>
                     <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>

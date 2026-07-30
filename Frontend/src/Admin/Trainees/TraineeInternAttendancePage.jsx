@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap } from 'lucide-react';
+import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search } from 'lucide-react';
 import api from '../../api';
 
 const today = new Date();
@@ -12,6 +12,7 @@ export default function TraineeInternAttendancePage() {
   const [summary, setSummary] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -131,9 +132,16 @@ export default function TraineeInternAttendancePage() {
   };
 
   const cards = useMemo(() => {
-    if (summary.length) return summary;
-    return (members || []).map((member) => ({ trainee_intern_id: member.uuid, trainee_name: member.full_name, person_id: member.person_id, type: member.type, present_days: 0, absent_days: 0 }));
-  }, [summary, members]);
+    const baseCards = summary.length
+      ? summary
+      : (members || []).map((member) => ({ trainee_intern_id: member.uuid, trainee_name: member.full_name, person_id: member.person_id, type: member.type, present_days: 0, absent_days: 0 }));
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return baseCards;
+    return baseCards.filter((person) => {
+      const haystack = `${person.trainee_name || person.full_name || ''} ${person.person_id || ''} ${person.type || ''}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [summary, members, searchTerm]);
 
   return (
     <div className="space-y-6 text-white">
@@ -163,6 +171,13 @@ export default function TraineeInternAttendancePage() {
           <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
             <PlusCircle size={16} /> Add Attendance
           </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee or intern" className="w-64 rounded-full border border-white/10 bg-white/10 px-9 py-2 text-sm text-white outline-none focus:border-orange-500/70" />
         </div>
       </div>
 

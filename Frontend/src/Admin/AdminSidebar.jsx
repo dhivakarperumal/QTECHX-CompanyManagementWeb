@@ -140,6 +140,7 @@ const navItems = [
       { path: "/admin/expenses", label: "All Expenses", icon: Receipt, exact: true },
       { path: "/admin/expenses/salary", label: "Employee Salary", icon: DollarSign },
       { path: "/admin/expenses/project-payment", label: "Project Payment", icon: DollarSign },
+      { path: "/admin/expenses/incomes", label: "Income", icon: DollarSign },
     ],
   },
 
