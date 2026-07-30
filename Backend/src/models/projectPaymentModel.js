@@ -66,10 +66,42 @@ async function getProjectPaymentSummary(projectId) {
   };
 }
 
+async function updateProjectPayment(uuid, data) {
+  const db = getDB();
+  const actor = data.updated_by || null;
+  
+  await db.execute(
+    `UPDATE project_payments SET 
+      project_id = ?, project_name = ?, client_name = ?, paid_to = ?, amount_paid = ?, 
+      payment_mode = ?, reason_for_payment = ?, date_of_payment = ?, time_of_payment = ?, updated_by = ?
+    WHERE uuid = ?`,
+    [
+      data.project_id,
+      data.project_name || null,
+      data.client_name || null,
+      data.paid_to || null,
+      data.amount_paid,
+      data.payment_mode || null,
+      data.reason_for_payment || null,
+      data.date_of_payment,
+      data.time_of_payment,
+      actor,
+      uuid
+    ]
+  );
+}
+
+async function deleteProjectPayment(uuid) {
+  const db = getDB();
+  await db.execute('DELETE FROM project_payments WHERE uuid = ?', [uuid]);
+}
+
 module.exports = {
   createProjectPayment,
   getProjectPaymentById,
   getProjectPaymentsByProjectId,
   getAllProjectPayments,
-  getProjectPaymentSummary
+  getProjectPaymentSummary,
+  updateProjectPayment,
+  deleteProjectPayment
 };

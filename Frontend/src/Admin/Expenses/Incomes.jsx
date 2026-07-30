@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
+import { useReactToPrint } from "react-to-print";
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
-const readOnlyFieldClass = 'w-full rounded-xl border border-white/5 bg-[#0a0c10] px-3 py-2.5 text-sm text-white/70 outline-none cursor-not-allowed';
 
 const BLANK = {
   income_type: '',
   intern_id: '',
+  intern_name: '',
   income_reason: '',
   amount: '',
   payment_type: '',
@@ -34,6 +35,17 @@ export default function Incomes() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [editId, setEditId] = useState(null);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const receiptRef = useRef();
+  
+  const handlePrint = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: selectedReceipt
+      ? `Receipt_${selectedReceipt.income_type}_${selectedReceipt.date_of_payment}`
+      : "Receipt",
+  });
 
   // Fetch interns on mount
   useEffect(() => {
@@ -74,7 +86,14 @@ export default function Incomes() {
       // Reset fields when type changes
       if (name === 'income_type') {
         newData.intern_id = '';
+        newData.intern_name = '';
         newData.income_reason = '';
+      }
+      
+      // Auto-populate intern_name
+      if (name === 'intern_id') {
+        const intern = interns.find(i => (i.uuid || i.id) === value || String(i.id) === value);
+        if (intern) newData.intern_name = intern.full_name;
       }
       return newData;
     });
@@ -92,21 +111,65 @@ export default function Incomes() {
       const payload = {
         ...formData,
         amount: parseFloat(formData.amount),
+        updated_by: user?.user_id,
         created_by: user?.user_id
       };
 
-      const res = await api.post('/incomes', payload);
+      let res;
+      if (editId) {
+        res = await api.put(`/incomes/${editId}`, payload);
+      } else {
+        res = await api.post('/incomes', payload);
+      }
+
       if (!res.data.success) throw new Error(res.data.message || 'Payment failed');
 
-      setSuccess('Income recorded successfully!');
-      fetchHistory(); // refresh table
+      setSuccess(`Income ${editId ? 'updated' : 'recorded'} successfully!`);
+      fetchHistory();
       
-      setFormData({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' });
+      resetForm();
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to record income');
     } finally { setLoading(false); }
+  };
+
+  const handleEdit = (record) => {
+    setEditId(record.income_id);
+    setFormData({
+      income_type: record.income_type || '',
+      intern_id: record.intern_id || '',
+      intern_name: record.intern_name || '',
+      income_reason: record.income_reason || '',
+      amount: record.amount || '',
+      payment_type: record.payment_type || '',
+      date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split('T')[0] : '',
+      paid_to: record.paid_to || ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (record) => {
+    if (!window.confirm("Are you sure you want to delete this income record? This will adjust the company funds accordingly.")) return;
+    try {
+      const res = await api.delete(`/incomes/${record.income_id}`, { data: { updated_by: user?.user_id } });
+      if (res.data.success) {
+        setSuccess("Income record deleted.");
+        fetchHistory();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(res.data.message || "Failed to delete");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Failed to delete");
+    }
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setFormData({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' });
+    setError('');
   };
 
   return (
@@ -122,7 +185,7 @@ export default function Incomes() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Income</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            Record other company incomes.
+            Record and manage company incomes.
           </p>
         </div>
       </div>
@@ -144,7 +207,7 @@ export default function Incomes() {
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><Briefcase size={15} className="text-blue-400" /></div>
-            <h2 className="text-base font-bold text-white">Income Details</h2>
+            <h2 className="text-base font-bold text-white">{editId ? 'Edit Income Details' : 'Income Details'}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -163,7 +226,7 @@ export default function Incomes() {
                 <select className={fieldClass} name="intern_id" value={formData.intern_id} onChange={handleChange} required>
                   <option value="">Select Intern</option>
                   {internsLoading ? <option disabled>Loading interns...</option> : interns.map(intern => (
-                    <option key={intern.uuid || intern.id} value={intern.uuid || intern.id}>
+                    <option key={intern.uuid || intern.id} value={intern.uuid || String(intern.id)}>
                       {intern.full_name} ({intern.person_id})
                     </option>
                   ))}
@@ -212,14 +275,14 @@ export default function Incomes() {
           </div>
 
           <div className="mt-5 flex justify-end gap-3 pt-5 border-t border-white/10">
-            <button type="button" onClick={() => setFormData({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' })}
+            <button type="button" onClick={resetForm}
               className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
-              Reset
+              {editId ? 'Cancel' : 'Reset'}
             </button>
             <button type="submit" disabled={loading}
               className="px-6 py-2.5 rounded-xl text-sm font-bold bg-orange-500 hover:bg-orange-600 text-white transition flex items-center gap-2">
               {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-              Record Income
+              {editId ? 'Update Income' : 'Record Income'}
             </button>
           </div>
         </section>
@@ -246,19 +309,20 @@ export default function Incomes() {
                 <th className="px-4 py-3 font-medium">Details (Intern/Reason)</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">Mode</th>
-                <th className="px-4 py-3 font-medium rounded-r-xl">Received By</th>
+                <th className="px-4 py-3 font-medium">Received By</th>
+                <th className="px-4 py-3 font-medium rounded-r-xl text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-white/70">
               {historyLoading ? (
                 <tr>
-                  <td colSpan="6" className="py-10 text-center">
+                  <td colSpan="7" className="py-10 text-center">
                     <Loader2 size={20} className="animate-spin text-white/40 mx-auto" />
                   </td>
                 </tr>
               ) : history.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-10 text-center text-white/40">No income history found</td>
+                  <td colSpan="7" className="py-10 text-center text-white/40">No income history found</td>
                 </tr>
               ) : (
                 history.map((h, i) => (
@@ -275,6 +339,31 @@ export default function Incomes() {
                     <td className="px-4 py-3 font-bold text-emerald-400">₹{parseFloat(h.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3">{h.payment_type}</td>
                     <td className="px-4 py-3">{h.paid_to}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(h)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
+                          title="Edit"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(h)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedReceipt(h)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                          title="Receipt"
+                        >
+                          <Printer size={13} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -282,6 +371,106 @@ export default function Incomes() {
           </table>
         </div>
       </section>
+
+      {/* Receipt Modal */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-bold text-gray-800">Income Receipt Preview</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition shadow-sm"
+                >
+                  <Printer size={15} />
+                  Print
+                </button>
+                <button onClick={() => setSelectedReceipt(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Area */}
+            <div className="p-8 overflow-y-auto bg-white text-gray-800" ref={receiptRef}>
+              <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-6">
+                <div>
+                  <h1 className="text-3xl font-black text-gray-900 tracking-tight">Q-Techx Solutions</h1>
+                  <p className="text-sm text-gray-500 mt-1">123 Tech Avenue, Innovation Park</p>
+                  <p className="text-sm text-gray-500">City, State, ZIP</p>
+                </div>
+                <div className="text-right">
+                  <h2 className="text-2xl font-bold text-orange-600 uppercase tracking-widest">Income Receipt</h2>
+                  <p className="text-sm font-medium text-gray-600 mt-1">
+                    Date: {new Date(selectedReceipt.date_of_payment).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm font-medium text-gray-600 mt-1">
+                    Receipt ID: {selectedReceipt.income_id.split('-')[0].toUpperCase()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-10 gap-y-4 mb-8 text-sm">
+                <div>
+                  <span className="text-gray-500 block mb-1">Income Type</span>
+                  <span className="font-bold text-base">{selectedReceipt.income_type}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 block mb-1">Received By (Admin)</span>
+                  <span className="font-bold text-base">{selectedReceipt.paid_to || 'N/A'}</span>
+                </div>
+                
+                {selectedReceipt.income_type === 'Internship Payment' ? (
+                  <>
+                    <div>
+                      <span className="text-gray-500 block mb-1">Intern Name</span>
+                      <span className="font-semibold">{selectedReceipt.intern_name || 'N/A'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="text-gray-500 block mb-1">Reason for Income</span>
+                      <span className="font-semibold">{selectedReceipt.income_reason || '-'}</span>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <span className="text-gray-500 block mb-1">Payment Mode</span>
+                  <span className="font-semibold">{selectedReceipt.payment_type || '-'}</span>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">PAYMENT SUMMARY</h3>
+                
+                <div className="flex justify-between items-center text-base mb-3 py-2 border-y border-gray-200">
+                  <span className="font-bold text-gray-800">Amount Received</span>
+                  <span className="font-black text-xl text-emerald-600">₹{parseFloat(selectedReceipt.amount).toLocaleString('en-IN')}</span>
+                </div>
+                
+                <p className="text-xs text-gray-500 italic mt-2">
+                  * Note: This receipt acknowledges the payment received as per the details above.
+                </p>
+              </div>
+
+              <div className="mt-12 pt-8 flex justify-between">
+                <div className="text-center">
+                  <div className="w-40 border-b border-gray-400 mb-2"></div>
+                  <span className="text-xs text-gray-500 font-medium">Depositor Signature</span>
+                </div>
+                <div className="text-center">
+                  <div className="w-40 border-b border-gray-400 mb-2"></div>
+                  <span className="text-xs text-gray-500 font-medium">Authorized Signatory</span>
+                </div>
+              </div>
+              <p className="text-center text-xs text-gray-400 mt-8 italic">This is a system generated document and does not require a physical signature.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

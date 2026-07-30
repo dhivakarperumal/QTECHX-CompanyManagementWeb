@@ -100,5 +100,89 @@ async function getProjectPaymentSummary(req, res) {
 module.exports = {
   createProjectPayment,
   getProjectPayments,
-  getProjectPaymentSummary
+  getProjectPaymentSummary,
+  updateProjectPayment,
+  deleteProjectPayment
 };
+
+async function updateProjectPayment(req, res) {
+  try {
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+    const { amount_paid } = req.body;
+
+    if (!amount_paid || isNaN(amount_paid)) {
+      return res.status(400).json({ success: false, message: 'Valid amount is required' });
+    }
+
+    // Fetch existing payment to find the old amount
+    const existing = await projectPaymentModel.getProjectPaymentById(id);
+    // Wait, the param might be UUID. Let's use getProjectPaymentByUUID or if it's ID we need to fix it.
+    // I see in createProjectPayment it returns getProjectPaymentById(insertId), but the route parameter usually is uuid.
+    // Assuming UUID: I'll need to run a raw query or fetch it first.
+    const db = require('../config/db').getDB();
+    const [rows] = await db.query('SELECT amount_paid FROM project_payments WHERE uuid = ?', [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Project payment not found' });
+    }
+
+    const oldAmount = parseFloat(rows[0].amount_paid);
+    const newAmount = parseFloat(amount_paid);
+    const difference = newAmount - oldAmount;
+
+    // Adjust company funds
+    if (difference !== 0) {
+      const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+      let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+      const new_fund = current_fund + difference;
+      
+      await db.query(
+        "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+        [new_fund, actor]
+      );
+    }
+
+    // Update the record
+    await projectPaymentModel.updateProjectPayment(id, { ...req.body, updated_by: actor });
+
+    res.status(200).json({ success: true, message: 'Project payment updated successfully' });
+  } catch (error) {
+    console.error('Error updating project payment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+async function deleteProjectPayment(req, res) {
+  try {
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+
+    const db = require('../config/db').getDB();
+    const [rows] = await db.query('SELECT amount_paid FROM project_payments WHERE uuid = ?', [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Project payment not found' });
+    }
+
+    const amount = parseFloat(rows[0].amount_paid);
+
+    // Deduct from company funds
+    const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+    let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+    const new_fund = current_fund - amount;
+    
+    await db.query(
+      "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+      [new_fund, actor]
+    );
+
+    // Delete the record
+    await projectPaymentModel.deleteProjectPayment(id);
+
+    res.status(200).json({ success: true, message: 'Project payment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting project payment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}

@@ -1143,24 +1143,45 @@ async function ensureProjectPaymentSchema(pool) {
 }
 
 async function ensureIncomesSchema(pool) {
-  await pool.execute(
-    `CREATE TABLE IF NOT EXISTS incomes (
-      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-      income_id VARCHAR(36) NOT NULL,
-      income_type VARCHAR(100) NOT NULL,
-      intern_id VARCHAR(36) NULL,
-      income_reason TEXT NULL,
-      amount DECIMAL(15,2) NOT NULL,
-      payment_type VARCHAR(100) NULL,
-      date_of_payment DATE NULL,
-      paid_to VARCHAR(255) NULL,
-      created_by VARCHAR(36) NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (id),
-      UNIQUE KEY uq_incomes_id (income_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-  );
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'incomes'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS incomes (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        income_id VARCHAR(36) NOT NULL,
+        income_type VARCHAR(100) NOT NULL,
+        intern_id VARCHAR(36) NULL,
+        intern_name VARCHAR(255) NULL,
+        income_reason TEXT NULL,
+        amount DECIMAL(15,2) NOT NULL,
+        payment_type VARCHAR(100) NULL,
+        date_of_payment DATE NULL,
+        paid_to VARCHAR(255) NULL,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_incomes_id (income_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  } else {
+    const [columns] = await pool.execute("SHOW COLUMNS FROM incomes");
+    const columnNames = new Set(columns.map((column) => column.Field));
+    const addColumnStatements = [];
+
+    if (!columnNames.has('intern_name')) {
+      addColumnStatements.push('ADD COLUMN intern_name VARCHAR(255) NULL AFTER intern_id');
+    }
+    if (!columnNames.has('updated_by')) {
+      addColumnStatements.push('ADD COLUMN updated_by VARCHAR(36) NULL AFTER created_by');
+    }
+
+    if (addColumnStatements.length) {
+      await pool.execute(`ALTER TABLE incomes ${addColumnStatements.join(', ')}`);
+    }
+  }
 }
 
 async function initDB() {

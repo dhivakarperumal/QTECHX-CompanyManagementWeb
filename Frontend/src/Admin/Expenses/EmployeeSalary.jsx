@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
   AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
-  History, Printer, X
+  History, Printer, X, Edit, Trash2
 } from 'lucide-react';
 import api from '../../api';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
@@ -32,6 +33,8 @@ const BLANK = {
 
 export default function EmployeeSalary() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState(BLANK);
   const [employees, setEmployees] = useState([]);
   const [history, setHistory] = useState([]);
@@ -42,8 +45,10 @@ export default function EmployeeSalary() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [editId, setEditId] = useState(null);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const payslipRef = useRef();
+  
   const handlePrint = useReactToPrint({
     contentRef: payslipRef,
     documentTitle: selectedPayslip
@@ -85,7 +90,7 @@ export default function EmployeeSalary() {
 
   // Fetch salary details when employee, month or year changes
   useEffect(() => {
-    if (!formData.employee_id || !formData.month || !formData.year) return;
+    if (!formData.employee_id || !formData.month || !formData.year || editId) return; // skip if editing
 
     const fetchDetails = async () => {
       setDetailsLoading(true);
@@ -132,7 +137,7 @@ export default function EmployeeSalary() {
     };
 
     fetchDetails();
-  }, [formData.employee_id, formData.month, formData.year]);
+  }, [formData.employee_id, formData.month, formData.year, editId]);
 
   // Recalculate total salary whenever relevant fields change
   useEffect(() => {
@@ -189,20 +194,68 @@ export default function EmployeeSalary() {
         incentive_percentage: parseFloat(formData.incentive_percentage) || 0,
         incentive_amount: parseFloat(formData.incentive_amount) || 0,
         additional_deduction: parseFloat(formData.additional_deduction) || 0,
-        total_salary: parseFloat(formData.total_salary) || 0
+        total_salary: parseFloat(formData.total_salary) || 0,
+        updated_by: user?.user_id
       };
 
-      const res = await api.post('/salary/pay', payload);
+      let res;
+      if (editId) {
+        res = await api.put(`/salary/pay/${editId}`, payload);
+      } else {
+        res = await api.post('/salary/pay', payload);
+      }
+
       if (!res.data.success) throw new Error(res.data.message || 'Payment failed');
 
-      setSuccess('Salary paid successfully!');
+      setSuccess(`Salary ${editId ? 'updated' : 'paid'} successfully!`);
       fetchHistory(); // refresh table
-      setFormData(BLANK); // reset form
+      resetForm();
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to pay salary');
     } finally { setLoading(false); }
+  };
+
+  const handleEdit = (record) => {
+    setEditId(record.id);
+    setFormData({
+      employee_id: record.employee_id,
+      month: record.salary_month,
+      year: record.salary_year,
+      basic_salary: record.basic_salary,
+      present_days: record.present_days,
+      leave_days: record.leave_days,
+      leave_deduction: record.leave_deduction,
+      incentive_percentage: record.incentive_percentage,
+      incentive_amount: record.incentive_amount,
+      additional_deduction: record.additional_deduction,
+      total_salary: record.total_salary,
+      alreadyPaid: false
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (record) => {
+    if (!window.confirm("Are you sure you want to delete this salary record? This will add the funds back to the company.")) return;
+    try {
+      const res = await api.delete(`/salary/pay/${record.id}`, { data: { updated_by: user?.user_id } });
+      if (res.data.success) {
+        setSuccess("Salary record deleted.");
+        fetchHistory();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(res.data.message || "Failed to delete");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Failed to delete");
+    }
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setFormData(BLANK);
+    setError('');
   };
 
   return (
@@ -240,13 +293,13 @@ export default function EmployeeSalary() {
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center"><Users size={15} className="text-blue-400" /></div>
-            <h2 className="text-base font-bold text-white">Select Details</h2>
+            <h2 className="text-base font-bold text-white">{editId ? 'Edit Details' : 'Select Details'}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Employee *</span>
-              <select className={fieldClass} name="employee_id" value={formData.employee_id} onChange={handleChange} required>
+              <select className={editId ? readOnlyFieldClass : fieldClass} name="employee_id" value={formData.employee_id} onChange={handleChange} required disabled={editId}>
                 <option value="">Select Employee</option>
                 {employeeLoading ? (
                   <option value="">Loading...</option>
@@ -262,7 +315,7 @@ export default function EmployeeSalary() {
 
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Month *</span>
-              <select className={fieldClass} name="month" value={formData.month} onChange={handleChange} required>
+              <select className={editId ? readOnlyFieldClass : fieldClass} name="month" value={formData.month} onChange={handleChange} required disabled={editId}>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                   <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
                 ))}
@@ -271,7 +324,7 @@ export default function EmployeeSalary() {
 
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Year *</span>
-              <select className={fieldClass} name="year" value={formData.year} onChange={handleChange} required>
+              <select className={editId ? readOnlyFieldClass : fieldClass} name="year" value={formData.year} onChange={handleChange} required disabled={editId}>
                 {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -339,47 +392,49 @@ export default function EmployeeSalary() {
         </section>
 
         {/* Bank Details */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center"><Briefcase size={15} className="text-violet-400" /></div>
-            <h2 className="text-base font-bold text-white">Bank Details</h2>
-          </div>
+        {!editId && (
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center"><Briefcase size={15} className="text-violet-400" /></div>
+              <h2 className="text-base font-bold text-white">Bank Details</h2>
+            </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Bank Name</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={formData.bank_name || 'Not provided'} />
-            </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Bank Name</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={formData.bank_name || 'Not provided'} />
+              </label>
 
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Account Number</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={formData.account_number || 'Not provided'} />
-            </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Account Number</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={formData.account_number || 'Not provided'} />
+              </label>
 
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">IFSC Code</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={formData.ifsc_code || 'Not provided'} />
-            </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">IFSC Code</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={formData.ifsc_code || 'Not provided'} />
+              </label>
 
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">UPI ID</span>
-              <input className={readOnlyFieldClass} type="text" readOnly value={formData.upi_id || 'Not provided'} />
-            </label>
-          </div>
-        </section>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">UPI ID</span>
+                <input className={readOnlyFieldClass} type="text" readOnly value={formData.upi_id || 'Not provided'} />
+              </label>
+            </div>
+          </section>
+        )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-2">
-          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || formData.alreadyPaid}
+        <div className="flex flex-wrap justify-end gap-3 pt-2">
+          <button type="button" onClick={resetForm} disabled={loading}
+            className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
+            {editId ? 'Cancel' : 'Reset'}
+          </button>
+          
+          <button type="submit" disabled={loading || !formData.employee_id || formData.total_salary <= 0 || (formData.alreadyPaid && !editId)}
             className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
-            {loading ? 'Processing...' : 'Pay Salary'}
-          </button>
-
-          <button type="button" onClick={() => setFormData(BLANK)} disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-            <RefreshCw size={15} /> Reset
+            {loading ? 'Processing...' : (editId ? 'Update Salary' : 'Pay Salary')}
           </button>
         </div>
       </form>
@@ -420,12 +475,29 @@ export default function EmployeeSalary() {
                     <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setSelectedPayslip(record)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
-                      >
-                        <Printer size={13} /> Payslip
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
+                          title="Edit"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedPayslip(record)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                          title="Payslip"
+                        >
+                          <Printer size={13} /> Payslip
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

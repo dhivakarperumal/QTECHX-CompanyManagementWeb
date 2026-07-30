@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -38,6 +38,7 @@ export default function ProjectPayment() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [editId, setEditId] = useState(null);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const receiptRef = useRef();
   
@@ -93,7 +94,7 @@ export default function ProjectPayment() {
       setError('');
       try {
         // Find project from loaded projects
-        const proj = projects.find(p => p.id.toString() === formData.project_id);
+        const proj = projects.find(p => p.id.toString() === formData.project_id.toString());
         if (proj) {
           setSelectedProjectDetails(proj);
         }
@@ -111,7 +112,7 @@ export default function ProjectPayment() {
     };
 
     fetchDetails();
-  }, [formData.project_id, projects]);
+  }, [formData.project_id, projects, success]); // Added success to trigger refetch after update/delete
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -134,26 +135,62 @@ export default function ProjectPayment() {
         reason_for_payment: formData.reason_for_payment,
         date_of_payment: formData.date_of_payment,
         time_of_payment: formData.time_of_payment,
-        created_by: user?.user_id // Send the UUID of the user
+        created_by: user?.user_id, // Send the UUID of the user
+        updated_by: user?.user_id
       };
 
-      const res = await api.post('/project-payments', payload);
+      let res;
+      if (editId) {
+        res = await api.put(`/project-payments/${editId}`, payload);
+      } else {
+        res = await api.post('/project-payments', payload);
+      }
+
       if (!res.data.success) throw new Error(res.data.message || 'Payment failed');
 
-      setSuccess('Project payment recorded successfully!');
+      setSuccess(`Project payment ${editId ? 'updated' : 'recorded'} successfully!`);
       fetchHistory(); // refresh table
-      
-      // Update summary manually so UI reflects instantly without re-fetching
-      if (res.data.summary) {
-        setProjectSummary(res.data.summary);
-      }
-      
-      setFormData(BLANK); // reset form
+      resetForm();
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to record payment');
     } finally { setLoading(false); }
+  };
+
+  const handleEdit = (record) => {
+    setEditId(record.uuid);
+    setFormData({
+      project_id: record.project_id || '',
+      amount_paid: record.amount_paid || '',
+      payment_mode: record.payment_mode || '',
+      reason_for_payment: record.reason_for_payment || '',
+      date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split('T')[0] : '',
+      time_of_payment: record.time_of_payment || ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (record) => {
+    if (!window.confirm("Are you sure you want to delete this project payment? This will adjust the company funds accordingly.")) return;
+    try {
+      const res = await api.delete(`/project-payments/${record.uuid}`, { data: { updated_by: user?.user_id } });
+      if (res.data.success) {
+        setSuccess("Project payment deleted.");
+        fetchHistory();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(res.data.message || "Failed to delete");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Failed to delete");
+    }
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setFormData(BLANK);
+    setError('');
   };
 
   return (
@@ -169,7 +206,7 @@ export default function ProjectPayment() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Project Payment</h1>
           <p className="text-sm text-white/40 mt-0.5">
-            Record payments received from clients for ongoing projects.
+            Record and manage payments received from clients for ongoing projects.
           </p>
         </div>
       </div>
@@ -253,7 +290,7 @@ export default function ProjectPayment() {
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center"><DollarSign size={15} className="text-emerald-400" /></div>
-            <h2 className="text-base font-bold text-white">Mark Project Payment</h2>
+            <h2 className="text-base font-bold text-white">{editId ? 'Edit Project Payment' : 'Mark Project Payment'}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -302,12 +339,16 @@ export default function ProjectPayment() {
         </section>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-2">
+        <div className="flex flex-wrap justify-end gap-3 pt-2">
+          <button type="button" onClick={resetForm}
+            className="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/5 transition">
+            {editId ? 'Cancel' : 'Reset'}
+          </button>
           <button type="submit" disabled={loading || !formData.project_id}
             className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <DollarSign size={15} />}
-            {loading ? 'Processing...' : 'Record Payment'}
+            {loading ? 'Processing...' : (editId ? 'Update Payment' : 'Record Payment')}
           </button>
         </div>
       </form>
@@ -348,12 +389,29 @@ export default function ProjectPayment() {
                     <td className="px-4 py-3">{record.payment_mode || '-'}</td>
                     <td className="px-4 py-3">{new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}</td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setSelectedReceipt(record)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
-                      >
-                        <Printer size={13} /> Receipt
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
+                          title="Edit"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedReceipt(record)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                          title="Receipt"
+                        >
+                          <Printer size={13} /> Receipt
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
