@@ -144,7 +144,6 @@ const ExpensesPage = () => {
   };
 
   const expenseTypeOptions = [
-    "Salary",
     "Office Rent",
     "Electricity Bill",
     "Water Bill",
