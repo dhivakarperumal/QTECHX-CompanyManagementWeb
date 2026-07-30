@@ -57,6 +57,26 @@ exports.createIncome = async (req, res) => {
       ]
     );
 
+    const expense_id = uuidv4();
+    await connection.query(
+      `INSERT INTO expenses 
+       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, upload_bill)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        expense_id,
+        'Income',
+        actor,
+        actor,
+        date_of_payment || null,
+        incomeAmount,
+        payment_type || '',
+        paid_to || '',
+        income_reason || `Income entry for ${intern_name || intern_id || 'unknown'}`,
+        '',
+        null
+      ]
+    );
+
     await connection.commit();
     res.status(201).json({ success: true, message: "Income recorded successfully", income_id });
   } catch (error) {
