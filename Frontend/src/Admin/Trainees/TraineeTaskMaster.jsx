@@ -45,6 +45,14 @@ const TraineeTaskMaster = () => {
     }
   };
 
+  const getDocumentUrl = (documentPath) => {
+    if (!documentPath) return null;
+    if (documentPath.startsWith('http://') || documentPath.startsWith('https://')) return documentPath;
+    const rawBase = import.meta.env.VITE_API_URL || '';
+    const baseUrl = rawBase.startsWith('http') ? rawBase.replace(/\/api\/?$/, '') : 'http://localhost:5000';
+    return `${baseUrl}${documentPath}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!taskName) {
@@ -299,7 +307,21 @@ const TraineeTaskMaster = () => {
                   <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
                     <td className="px-4 py-4 text-white/70">{index + 1}</td>
                     <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
-                    <td className="px-4 py-4 text-white/50">{task.description || "—"}</td>
+                    <td className="px-4 py-4 text-white/50">
+                      <div className="space-y-1">
+                        <div>{task.description || "—"}</div>
+                        {task.document_path ? (
+                          <a
+                            href={getDocumentUrl(task.document_path)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
+                          >
+                            <UploadCloud size={13} /> View Document
+                          </a>
+                        ) : null}
+                      </div>
+                    </td>
                     <td className="px-4 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button 
