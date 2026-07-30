@@ -17,6 +17,108 @@ const dbConfig = {
 
 let pool;
 
+async function ensureEventsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'events'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS events (
+        id VARCHAR(100) NOT NULL,
+        title VARCHAR(255) NULL,
+        eventType VARCHAR(100) NULL,
+        description TEXT NULL,
+        startDate DATE NULL,
+        endDate DATE NULL,
+        startTime VARCHAR(20) NULL,
+        endTime VARCHAR(20) NULL,
+        allDay TINYINT(1) NOT NULL DEFAULT 0,
+        priority VARCHAR(50) NULL,
+        status VARCHAR(50) NULL,
+        location VARCHAR(255) NULL,
+        meetingLink VARCHAR(500) NULL,
+        project VARCHAR(255) NULL,
+        department VARCHAR(255) NULL,
+        participants JSON NULL,
+        departments JSON NULL,
+        teams JSON NULL,
+        externalGuests TINYINT(1) NOT NULL DEFAULT 0,
+        guestEmailAddresses JSON NULL,
+        attendanceRequired TINYINT(1) NOT NULL DEFAULT 1,
+        organizerName VARCHAR(255) NULL,
+        organizerDepartment VARCHAR(255) NULL,
+        organizerContactNumber VARCHAR(50) NULL,
+        organizerEmail VARCHAR(255) NULL,
+        reminder VARCHAR(100) NULL,
+        color VARCHAR(50) NULL,
+        attachments JSON NULL,
+        notes TEXT NULL,
+        comments JSON NULL,
+        activity JSON NULL,
+        createdBy VARCHAR(100) NULL,
+        createdDate DATE NULL,
+        updatedDate DATE NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        INDEX idx_events_start_date (startDate),
+        INDEX idx_events_end_date (endDate),
+        INDEX idx_events_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM events");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('title', 'VARCHAR(255) NULL');
+  addColumn('eventType', 'VARCHAR(100) NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('startDate', 'DATE NULL');
+  addColumn('endDate', 'DATE NULL');
+  addColumn('startTime', 'VARCHAR(20) NULL');
+  addColumn('endTime', 'VARCHAR(20) NULL');
+  addColumn('allDay', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('priority', 'VARCHAR(50) NULL');
+  addColumn('status', 'VARCHAR(50) NULL');
+  addColumn('location', 'VARCHAR(255) NULL');
+  addColumn('meetingLink', 'VARCHAR(500) NULL');
+  addColumn('project', 'VARCHAR(255) NULL');
+  addColumn('department', 'VARCHAR(255) NULL');
+  addColumn('participants', 'JSON NULL');
+  addColumn('departments', 'JSON NULL');
+  addColumn('teams', 'JSON NULL');
+  addColumn('externalGuests', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('guestEmailAddresses', 'JSON NULL');
+  addColumn('attendanceRequired', 'TINYINT(1) NOT NULL DEFAULT 1');
+  addColumn('organizerName', 'VARCHAR(255) NULL');
+  addColumn('organizerDepartment', 'VARCHAR(255) NULL');
+  addColumn('organizerContactNumber', 'VARCHAR(50) NULL');
+  addColumn('organizerEmail', 'VARCHAR(255) NULL');
+  addColumn('reminder', 'VARCHAR(100) NULL');
+  addColumn('color', 'VARCHAR(50) NULL');
+  addColumn('attachments', 'JSON NULL');
+  addColumn('notes', 'TEXT NULL');
+  addColumn('comments', 'JSON NULL');
+  addColumn('activity', 'JSON NULL');
+  addColumn('createdBy', 'VARCHAR(100) NULL');
+  addColumn('createdDate', 'DATE NULL');
+  addColumn('updatedDate', 'DATE NULL');
+  addColumn('created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE events ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureProjectAssignmentsSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'project_assignments'");
 
@@ -694,6 +796,9 @@ async function ensureSchema(pool) {
         ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  await ensureEventsSchema(pool);
 
   // ── Projects ──────────────────────────────────────────────────────────────
   await ensureProjectsSchema(pool);

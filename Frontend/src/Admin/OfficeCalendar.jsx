@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { Toaster, toast } from 'react-hot-toast';
+import axios from 'axios';
+import api from '../api';
 import {
   CalendarDays,
   ChevronLeft,
@@ -120,7 +122,7 @@ const makeSeedEvents = () => {
       meetingLink: 'https://meet.example.com/leadership',
       project: 'Q-Techx Web',
       department: 'Operations',
-      assignedEmployees: ['Asha', 'Milan'],
+      participants: ['Asha', 'Milan'],
       reminder: '30 min before',
       color: '#3b82f6',
       attachments: ['agenda.pdf'],
@@ -147,7 +149,7 @@ const makeSeedEvents = () => {
       meetingLink: 'https://zoom.us/j/123456789',
       project: 'Client Portal',
       department: 'Sales',
-      assignedEmployees: ['Neha', 'Ravi'],
+      participants: ['Neha', 'Ravi'],
       reminder: '1 hour before',
       color: '#6366f1',
       attachments: ['client-notes.docx'],
@@ -174,7 +176,7 @@ const makeSeedEvents = () => {
       meetingLink: '',
       project: '',
       department: 'HR',
-      assignedEmployees: ['HR Team'],
+      participants: ['HR Team'],
       reminder: '1 day before',
       color: '#f59e0b',
       attachments: [],
@@ -201,7 +203,7 @@ const makeSeedEvents = () => {
       meetingLink: '',
       project: 'Mobile App',
       department: 'Engineering',
-      assignedEmployees: ['Karan', 'Priya'],
+      participants: ['Karan', 'Priya'],
       reminder: 'At time of event',
       color: '#ef4444',
       attachments: ['release-checklist.pdf'],
@@ -229,10 +231,19 @@ const defaultForm = {
   location: '',
   meetingLink: '',
   project: '',
-  department: '',
-  assignedEmployees: [],
-  reminder: '30 min before',
   color: '',
+  reminder: '30 min before',
+  participants: [],
+  departments: [],
+  teams: [],
+  externalGuests: false,
+  guestEmailAddresses: [],
+  attendanceRequired: true,
+  organizerName: '',
+  organizerDepartment: '',
+  createdBy: '',
+  organizerContactNumber: '',
+  organizerEmail: '',
   attachments: [],
   notes: '',
 };
@@ -241,6 +252,7 @@ const getEventColor = (eventType, customColor) => customColor || EVENT_TYPE_COLO
 
 const OfficeCalendar = () => {
   const [events, setEvents] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState('month');
@@ -258,34 +270,52 @@ const OfficeCalendar = () => {
   const [resizingEventId, setResizingEventId] = useState(null);
   
 
-  useEffect(() => {
-    const saved = localStorage.getItem('office-calendar-events');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setEvents(parsed);
-      } catch (error) {
-        setEvents(makeSeedEvents());
-      }
-    } else {
-      setEvents(makeSeedEvents());
+  const fetchEmployees = async () => {
+    try {
+      const res = await api.get('/employees');
+      setAllEmployees(res.data || []);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
     }
-    const timer = window.setTimeout(() => setIsLoading(false), 450);
-    return () => window.clearTimeout(timer);
-  }, []);
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/events');
+      setEvents(res.data);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to load events from database.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('office-calendar-events', JSON.stringify(events));
-  }, [events]);
+    fetchEvents();
+    fetchEmployees();
+  }, []);
+
 
   const filteredEvents = useMemo(() => {
     const search = searchText.trim().toLowerCase();
     return events.filter((event) => {
-      const matchesSearch = !search || [event.title, event.description, event.project, event.department, event.assignedEmployees.join(' ')].some((value) => value?.toLowerCase().includes(search));
+      const normalizedParticipants = Array.isArray(event.participants)
+        ? event.participants.filter(Boolean)
+        : typeof event.participants === 'string' && event.participants
+          ? event.participants.split(',').map((name) => name.trim()).filter(Boolean)
+          : [];
+      const normalizedDepartments = Array.isArray(event.departments)
+        ? event.departments.filter(Boolean)
+        : typeof event.departments === 'string' && event.departments
+          ? event.departments.split(',').map((name) => name.trim()).filter(Boolean)
+          : [];
+      const searchTextValue = [event.title, event.description, event.project, normalizedDepartments[0], normalizedParticipants.join(' ')].filter(Boolean).join(' ');
+      const matchesSearch = !search || searchTextValue.toLowerCase().includes(search);
       const matchesType = filters.eventType === 'all' || event.eventType === filters.eventType;
       const matchesProject = filters.project === 'all' || event.project === filters.project;
-      const matchesDepartment = filters.department === 'all' || event.department === filters.department;
-      const matchesEmployee = filters.employee === 'all' || event.assignedEmployees.some((name) => name === filters.employee);
+      const matchesDepartment = filters.department === 'all' || normalizedDepartments[0] === filters.department;
+      const matchesEmployee = filters.employee === 'all' || normalizedParticipants.some((name) => name === filters.employee);
       const matchesPriority = filters.priority === 'all' || event.priority === filters.priority;
       const matchesStatus = filters.status === 'all' || event.status === filters.status;
       return matchesSearch && matchesType && matchesProject && matchesDepartment && matchesEmployee && matchesPriority && matchesStatus;
@@ -319,7 +349,9 @@ const OfficeCalendar = () => {
 
   const summaryCards = useMemo(() => {
     const today = dayjs().format('YYYY-MM-DD');
-    const upcoming = events.filter((event) => dayjs(event.startDate).valueOf() >= dayjs(today).valueOf()).sort((a, b) => a.startDate.localeCompare(b.startDate));
+    const upcoming = [...events]
+      .filter((event) => dayjs(event.startDate || today).valueOf() >= dayjs(today).valueOf())
+      .sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
     return [
       { label: 'Total Events', value: events.length, accent: 'from-sky-500/20 to-sky-500/5 text-sky-300', icon: CalendarDays },
       { label: "Today's Events", value: events.filter((event) => event.startDate === today || event.endDate === today).length, accent: 'from-emerald-500/20 to-emerald-500/5 text-emerald-300', icon: Sparkles },
@@ -350,11 +382,11 @@ const OfficeCalendar = () => {
   const dayEvents = useMemo(() => {
     const target = currentDate.format('YYYY-MM-DD');
     return visibleEvents.filter((event) => {
-      const start = dayjs(event.startDate).valueOf();
-      const end = dayjs(event.endDate).valueOf();
+      const start = dayjs(event.startDate || target).valueOf();
+      const end = dayjs(event.endDate || target).valueOf();
       const dayValue = dayjs(target).startOf('day').valueOf();
       return dayValue >= start && dayValue <= end;
-    }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    }).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
   }, [visibleEvents, currentDate]);
 
   const upcomingChronological = useMemo(() => {
@@ -365,9 +397,17 @@ const OfficeCalendar = () => {
     }).slice(0, 8);
   }, [events]);
 
-  const departments = useMemo(() => Array.from(new Set(events.map((event) => event.department).filter(Boolean))), [events]);
+  const departments = useMemo(() => Array.from(new Set(events.flatMap((event) => {
+    if (Array.isArray(event.departments)) return event.departments.filter(Boolean);
+    if (typeof event.departments === 'string' && event.departments) return [event.departments];
+    return [];
+  }))), [events]);
   const projects = useMemo(() => Array.from(new Set(events.map((event) => event.project).filter(Boolean))), [events]);
-  const employees = useMemo(() => Array.from(new Set(events.flatMap((event) => event.assignedEmployees).filter(Boolean))), [events]);
+  const employees = useMemo(() => Array.from(new Set(events.flatMap((event) => {
+    if (Array.isArray(event.participants)) return event.participants.filter(Boolean);
+    if (typeof event.participants === 'string' && event.participants) return event.participants.split(',').map((name) => name.trim()).filter(Boolean);
+    return [];
+  }))), [events]);
 
   const openCreateModal = (date = dayjs().format('YYYY-MM-DD')) => {
     setMode('create');
@@ -376,14 +416,29 @@ const OfficeCalendar = () => {
     setShowModal(true);
   };
 
+  const ensureArrayField = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === 'string') return value.split(',').map((item) => item.trim()).filter(Boolean);
+    return [];
+  };
+
   const openEditModal = (event) => {
     setMode('edit');
     setSelectedEvent(event);
-    setFormData({ ...event, assignedEmployees: event.assignedEmployees || [] });
+    setFormData({
+      ...event,
+      participants: ensureArrayField(event.participants),
+      departments: ensureArrayField(event.departments),
+      teams: ensureArrayField(event.teams),
+      guestEmailAddresses: ensureArrayField(event.guestEmailAddresses),
+      attachments: ensureArrayField(event.attachments),
+      comments: ensureArrayField(event.comments),
+      activity: ensureArrayField(event.activity),
+    });
     setShowModal(true);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const required = [formData.title, formData.eventType, formData.startDate, formData.endDate];
     if (required.some((value) => !value)) {
@@ -401,60 +456,63 @@ const OfficeCalendar = () => {
       return;
     }
 
-    const duplicate = events.some((item) => item.id !== selectedEvent?.id && item.title.toLowerCase() === formData.title.toLowerCase().trim() && item.startDate === formData.startDate && item.startTime === formData.startTime);
-    if (duplicate) {
-      toast.error('A similar event already exists on the same date and time.');
-      return;
-    }
-
     setIsSubmitting(true);
-    window.setTimeout(() => {
-      const finalEvent = {
-        ...selectedEvent,
+    try {
+      const payload = {
         ...formData,
-        id: selectedEvent?.id || createId(),
-        title: formData.title.trim(),
         color: formData.color || getEventColor(formData.eventType, formData.color),
-        attachments: formData.attachments || [],
-        assignedEmployees: formData.assignedEmployees || [],
-        comments: selectedEvent?.comments || ['New activity added'],
-        activity: selectedEvent?.activity || ['Created by Admin'],
-        createdBy: selectedEvent?.createdBy || 'Admin',
-        createdDate: selectedEvent?.createdDate || dayjs().format('YYYY-MM-DD'),
         updatedDate: dayjs().format('YYYY-MM-DD'),
       };
-
-      setEvents((current) => {
-        if (mode === 'edit' && selectedEvent) {
-          return current.map((item) => (item.id === selectedEvent.id ? finalEvent : item));
-        }
-        return [finalEvent, ...current];
-      });
-
+      if (mode === 'edit' && selectedEvent) {
+        const res = await axios.put(`http://localhost:5000/api/events/${selectedEvent._id}`, payload);
+        setEvents((current) => current.map((item) => (item._id === selectedEvent._id ? res.data : item)));
+        setSelectedEvent(res.data);
+        toast.success('Event updated successfully.');
+      } else {
+        payload.createdDate = dayjs().format('YYYY-MM-DD');
+        const res = await axios.post('http://localhost:5000/api/events', payload);
+        setEvents((current) => [res.data, ...current]);
+        setSelectedEvent(res.data);
+        toast.success('Event created successfully.');
+      }
       setShowModal(false);
-      setSelectedEvent(finalEvent);
       setShowDrawer(true);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      toast.error('Failed to save event.');
+    } finally {
       setIsSubmitting(false);
-      toast.success(mode === 'edit' ? 'Event updated successfully.' : 'Event created successfully.');
-    }, 600);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedEvent) return;
     const confirmed = window.confirm('Delete this event permanently?');
     if (!confirmed) return;
-    setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
-    setShowDrawer(false);
-    setSelectedEvent(null);
-    toast.success('Event deleted successfully.');
+    try {
+      await axios.delete(`http://localhost:5000/api/events/${selectedEvent._id}`);
+      setEvents((current) => current.filter((event) => event._id !== selectedEvent._id));
+      setShowDrawer(false);
+      setSelectedEvent(null);
+      toast.success('Event deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('Failed to delete event.');
+    }
   };
 
-  const handleDrop = (date) => {
+  const handleDrop = async (date) => {
     if (!draggingEventId) return;
     const targetDate = dayjs(date).format('YYYY-MM-DD');
-    setEvents((current) => current.map((event) => event.id === draggingEventId ? { ...event, startDate: targetDate, endDate: targetDate } : event));
-    setDraggingEventId(null);
-    toast.success('Event date updated.');
+    try {
+      const res = await axios.put(`http://localhost:5000/api/events/${draggingEventId}`, { startDate: targetDate, endDate: targetDate });
+      setEvents((current) => current.map((event) => event._id === draggingEventId ? res.data : event));
+      toast.success('Event date updated.');
+    } catch (error) {
+      toast.error('Failed to update event date.');
+    } finally {
+      setDraggingEventId(null);
+    }
   };
 
   const startResize = (event, eventId) => {
@@ -469,7 +527,7 @@ const OfficeCalendar = () => {
       if (!target) return;
       const nextDate = target.getAttribute('data-date');
       if (!nextDate) return;
-      setEvents((current) => current.map((item) => item.id === resizingEventId && dayjs(nextDate).isAfter(dayjs(item.startDate)) ? { ...item, endDate: nextDate } : item));
+      setEvents((current) => current.map((item) => item._id === resizingEventId && dayjs(nextDate).isAfter(dayjs(item.startDate)) ? { ...item, endDate: nextDate } : item));
     };
     const onUp = () => setResizingEventId(null);
     window.addEventListener('mousemove', onMove);
@@ -501,9 +559,20 @@ const OfficeCalendar = () => {
     setFormData((current) => ({ ...current, attachments: files }));
   };
 
-  const handleEmployeeInput = (event) => {
+    const handleParticipantToggle = (empName) => {
+    setFormData((current) => {
+      const exists = (current.participants || []).includes(empName);
+      if (exists) {
+        return { ...current, participants: (current.participants || []).filter(p => p !== empName) };
+      } else {
+        return { ...current, participants: [...(current.participants || []), empName] };
+      }
+    });
+  };
+
+  const handleArrayInput = (event, fieldName) => {
     const values = event.target.value.split(',').map((item) => item.trim()).filter(Boolean);
-    setFormData((current) => ({ ...current, assignedEmployees: values }));
+    setFormData((current) => ({ ...current, [fieldName]: values }));
   };
 
   const isToday = (date) => dayjs(date).isSame(dayjs(), 'day');
@@ -661,7 +730,7 @@ const OfficeCalendar = () => {
                   const Icon = EVENT_TYPE_ICON[event.eventType] || CalendarDays;
                   const meta = EVENT_TYPE_META[event.eventType] || EVENT_TYPE_META.Other;
                   return (
-                    <div key={event.id} onClick={() => { setSelectedEvent(event); setShowDrawer(true); }} className={`flex cursor-pointer items-start justify-between rounded-[1.25rem] border p-3 transition hover:-translate-y-0.5 border-slate-800 bg-slate-800/50 hover:bg-slate-800`}>
+                    <div key={event._id} onClick={() => { setSelectedEvent(event); setShowDrawer(true); }} className={`flex cursor-pointer items-start justify-between rounded-[1.25rem] border p-3 transition hover:-translate-y-0.5 border-slate-800 bg-slate-800/50 hover:bg-slate-800`}>
                       <div className="flex items-start gap-3">
                         <div className={`rounded-2xl border p-2 ${meta.accent}`}>
                           <Icon size={16} />
@@ -696,7 +765,7 @@ const OfficeCalendar = () => {
                 dayEvents.map((event) => {
                   const meta = EVENT_TYPE_META[event.eventType] || EVENT_TYPE_META.Other;
                   return (
-                    <div key={event.id} onClick={() => { setSelectedEvent(event); setShowDrawer(true); }} className={`rounded-[1.25rem] border p-3 ${meta.accent}`}>
+                    <div key={event._id} onClick={() => { setSelectedEvent(event); setShowDrawer(true); }} className={`rounded-[1.25rem] border p-3 ${meta.accent}`}>
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold">{event.title}</p>
@@ -736,12 +805,12 @@ const OfficeCalendar = () => {
                       {dayEventsForDate.slice(0, 3).map((event) => {
                         const meta = EVENT_TYPE_META[event.eventType] || EVENT_TYPE_META.Other;
                         return (
-                          <div key={event.id} draggable onDragStart={() => setDraggingEventId(event.id)} onClick={(itemEvent) => { itemEvent.stopPropagation(); setSelectedEvent(event); setShowDrawer(true); }} className={`flex cursor-pointer items-start justify-between rounded-xl border px-2 py-1 text-[10px] font-semibold ${meta.accent}`}>
+                          <div key={event._id} draggable onDragStart={() => setDraggingEventId(event._id)} onClick={(itemEvent) => { itemEvent.stopPropagation(); setSelectedEvent(event); setShowDrawer(true); }} className={`flex cursor-pointer items-start justify-between rounded-xl border px-2 py-1 text-[10px] font-semibold ${meta.accent}`}>
                             <div className="flex flex-col overflow-hidden">
                               <span className="truncate">{event.title}</span>
                               {event.startTime && <span className="truncate text-[9px] font-medium opacity-80">{dayjs(`2000-01-01 ${event.startTime}`).format('hh:mmA')}</span>}
                             </div>
-                            <span className="ml-1 cursor-ns-resize text-[10px] opacity-70" onMouseDown={(itemEvent) => { itemEvent.stopPropagation(); setResizingEventId(event.id); }} title="Resize event">↕</span>
+                            <span className="ml-1 cursor-ns-resize text-[10px] opacity-70" onMouseDown={(itemEvent) => { itemEvent.stopPropagation(); setResizingEventId(event._id); }} title="Resize event">↕</span>
                           </div>
                         );
                       })}
@@ -807,10 +876,68 @@ const OfficeCalendar = () => {
                 <span className="text-sm font-semibold">End Time</span>
                 <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} />
               </label>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
                 <input type="checkbox" name="allDay" checked={formData.allDay} onChange={handleFieldChange} className="h-4 w-4 rounded border-slate-300" />
                 <span>All Day Event</span>
               </label>
+
+              {/* Advanced Tracking & Organization Details */}
+              <div className="md:col-span-2 mt-4 mb-2">
+                  <h4 className="font-semibold text-sky-400 border-b border-slate-800 pb-2">Participants & Departments</h4>
+              </div>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="text-sm font-semibold">Select Employees (Multi Select - comma separated)</span>
+                <input value={(formData.participants || []).join(', ')} onChange={(e) => handleArrayInput(e, 'participants')} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="e.g. Asha, Milan, Priya" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Departments (comma separated)</span>
+                <input value={(formData.departments || []).join(', ')} onChange={(e) => handleArrayInput(e, 'departments')} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="e.g. Sales, Marketing" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Teams (comma separated)</span>
+                <input value={(formData.teams || []).join(', ')} onChange={(e) => handleArrayInput(e, 'teams')} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="e.g. Alpha, Beta" />
+              </label>
+
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
+                <input type="checkbox" name="externalGuests" checked={formData.externalGuests} onChange={handleFieldChange} className="h-4 w-4 rounded border-slate-300" />
+                <span>External Guests Allowed</span>
+              </label>
+              <label className="flex flex-col gap-1 text-sm md:col-span-2">
+                <span className="text-sm font-semibold">Guest Email Addresses (comma separated)</span>
+                <input value={(formData.guestEmailAddresses || []).join(', ')} onChange={(e) => handleArrayInput(e, 'guestEmailAddresses')} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="guest1@example.com, guest2@example.com" />
+              </label>
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
+                <input type="checkbox" name="attendanceRequired" checked={formData.attendanceRequired} onChange={handleFieldChange} className="h-4 w-4 rounded border-slate-300" />
+                <span>Attendance Required</span>
+              </label>
+
+              <div className="md:col-span-2 mt-4 mb-2">
+                  <h4 className="font-semibold text-sky-400 border-b border-slate-800 pb-2">Organizer Details</h4>
+              </div>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Organizer Name</span>
+                <input name="organizerName" value={formData.organizerName || ''} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Organizer Name" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Organizer Department</span>
+                <input name="organizerDepartment" value={formData.organizerDepartment || ''} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Department" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Created By</span>
+                <input name="createdBy" value={formData.createdBy || ''} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Created By Name" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Contact Number</span>
+                <input name="organizerContactNumber" value={formData.organizerContactNumber || ''} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Phone Number" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-sm font-semibold">Email</span>
+                <input name="organizerEmail" value={formData.organizerEmail || ''} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Email Address" />
+              </label>
+              
+              <div className="md:col-span-2 mt-4 mb-2">
+                  <h4 className="font-semibold text-sky-400 border-b border-slate-800 pb-2">Other Details</h4>
+              </div>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-sm font-semibold">Status</span>
                 <select name="status" value={formData.status} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`}>
@@ -828,14 +955,6 @@ const OfficeCalendar = () => {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-sm font-semibold">Project</span>
                 <input name="project" value={formData.project} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Optional project" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-sm font-semibold">Department</span>
-                <input name="department" value={formData.department} onChange={handleFieldChange} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Optional department" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm md:col-span-2">
-                <span className="text-sm font-semibold">Assign Employees</span>
-                <input value={formData.assignedEmployees.join(', ')} onChange={handleEmployeeInput} className={`rounded-2xl border px-3 py-2 outline-none border-slate-800 bg-slate-800/50 text-white`} placeholder="Asha, Milan, Priya" />
               </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-sm font-semibold">Reminder</span>
@@ -903,7 +1022,7 @@ const OfficeCalendar = () => {
             <div className={`rounded-[1.25rem] border border-slate-800 p-3 bg-slate-800/50`}>
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Users size={14} /> Assigned Employees</div>
               <div className="flex flex-wrap gap-2">
-                {(selectedEvent.assignedEmployees || []).map((employee) => <span key={employee} className="rounded-full border border-slate-800 bg-slate-800 px-2 py-1 text-xs">{employee}</span>)}
+                {(selectedEvent.participants || []).map((employee) => <span key={employee} className="rounded-full border border-slate-800 bg-slate-800 px-2 py-1 text-xs">{employee}</span>)}
               </div>
             </div>
 
