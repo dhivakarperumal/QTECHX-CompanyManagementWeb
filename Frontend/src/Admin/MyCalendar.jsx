@@ -288,7 +288,7 @@ const AgendaView = ({ currentDate, events, onEventClick }) => {
 
 // ────── MAIN COMPONENT ──────
 const MyCalendar = () => {
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [viewMode, setViewMode] = useState('Month');
@@ -297,12 +297,20 @@ const MyCalendar = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { fetchEvents(); }, [user]);
 
   const fetchEvents = async () => {
     try {
       const res = await api.get('/myevents');
-      setEvents(res.data);
+      const userId = user?.id || user?._id || user?.userId;
+      let userEvents = res.data;
+      if (userId) {
+        userEvents = res.data.filter(evt => {
+          const evtUserId = evt.user_id || evt.userId || evt.employeeId;
+          return String(evtUserId) === String(userId);
+        });
+      }
+      setEvents(userEvents);
     } catch (error) {
       toast.error('Failed to load events.');
     } finally {
@@ -326,7 +334,15 @@ const MyCalendar = () => {
 
   const handleSaveModal = async (eventData, documentFile) => {
     try {
-      const payload = { ...eventData, checklistItems: eventData.checklistItems || [], tags: eventData.tags || [], attachments: eventData.attachments || [], progress: eventData.progress ?? 0 };
+      const userId = user?.id || user?._id || user?.userId;
+      const payload = { 
+        ...eventData, 
+        checklistItems: eventData.checklistItems || [], 
+        tags: eventData.tags || [], 
+        attachments: eventData.attachments || [], 
+        progress: eventData.progress ?? 0,
+        user_id: eventData.user_id || userId
+      };
       if (documentFile) {
         const fd = new FormData();
         Object.entries(payload).forEach(([k, v]) => { if (v === undefined || v === null) return; fd.append(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v); });

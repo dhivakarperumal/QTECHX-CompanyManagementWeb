@@ -1,6 +1,5 @@
 import { useState, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import React from "react";
 import { PacmanLoader } from "react-spinners";
 import Sidebar from "./EmployeeSidebar";
 import Header from "./EmployeeHeader";
