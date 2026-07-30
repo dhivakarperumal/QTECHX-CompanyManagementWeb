@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2, User, DollarSign, TrendingUp, FolderKanban, Users, Code2, Paperclip } from 'lucide-react';
+import {
+  ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2,
+  User, DollarSign, TrendingUp, FolderKanban, Users, Code2, Paperclip,
+} from 'lucide-react';
 import api from '../../api';
 
 const formatCurrency = (value) => {
@@ -72,9 +75,14 @@ export default function ProjectDetails() {
 
   return (
     <div className="space-y-6 pb-10 text-white">
+
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/admin/projects')} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
+          <button
+            onClick={() => navigate('/admin/projects')}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
+          >
             <ArrowLeft size={16} />
           </button>
           <div>
@@ -90,6 +98,7 @@ export default function ProjectDetails() {
         </div>
       </div>
 
+      {/* Summary + Progress */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
@@ -99,9 +108,9 @@ export default function ProjectDetails() {
           <p className="text-sm leading-7 text-white/70">{project.description || 'No description provided.'}</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <InfoCard title="Project Code" value={project.project_code} icon={FileText} />
-            <InfoCard title="Category" value={project.project_category} icon={FolderKanban} />
-            <InfoCard title="Industry" value={project.industry} icon={Building2} />
-            <InfoCard title="Client" value={project.client_name} icon={Users} />
+            <InfoCard title="Category"     value={project.project_category} icon={FolderKanban} />
+            <InfoCard title="Industry"     value={project.industry} icon={Building2} />
+            <InfoCard title="Client"       value={project.client_name} icon={Users} />
           </div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -119,44 +128,46 @@ export default function ProjectDetails() {
                 <div className="h-2 rounded-full bg-orange-500" style={{ width: `${project.overall_progress || 0}%` }} />
               </div>
             </div>
-            <InfoCard title="Cost" value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
-            <InfoCard title="Start Date" value={fmtDate(project.project_start_date)} icon={CalendarDays} />
+            <InfoCard title="Cost"                 value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
+            <InfoCard title="Start Date"           value={fmtDate(project.project_start_date)} icon={CalendarDays} />
             <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
           </div>
         </div>
       </div>
 
+      {/* Client & Tech */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-4">
             <User size={16} className="text-blue-400" />
-            <h2 className="text-base font-semibold">Client & Team</h2>
+            <h2 className="text-base font-semibold">Client &amp; Team</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <InfoCard title="Contact Person" value={project.contact_person} icon={User} />
-            <InfoCard title="Email" value={project.email} icon={FileText} />
-            <InfoCard title="Phone" value={project.phone_number} icon={FileText} />
+            <InfoCard title="Contact Person"  value={project.contact_person} icon={User} />
+            <InfoCard title="Email"           value={project.email} icon={FileText} />
+            <InfoCard title="Phone"           value={project.phone_number} icon={FileText} />
             <InfoCard title="Project Manager" value={project.project_manager} icon={Users} />
           </div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-4">
             <Code2 size={16} className="text-violet-400" />
-            <h2 className="text-base font-semibold">Tech & Documents</h2>
+            <h2 className="text-base font-semibold">Tech &amp; Documents</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <InfoCard title="Frontend Tech" value={project.frontend_tech} icon={Code2} />
-            <InfoCard title="Backend Tech" value={project.backend_tech} icon={Code2} />
-            <InfoCard title="Database" value={project.database_tech} icon={Code2} />
+            <InfoCard title="Frontend Tech"      value={project.frontend_tech} icon={Code2} />
+            <InfoCard title="Backend Tech"       value={project.backend_tech} icon={Code2} />
+            <InfoCard title="Database"           value={project.database_tech} icon={Code2} />
             <InfoCard title="Agreement Uploaded" value={project.agreement_uploaded} icon={Paperclip} />
           </div>
         </div>
       </div>
 
+      {/* Objectives */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex items-center gap-2 mb-4">
           <CheckCircle size={16} className="text-emerald-400" />
-          <h2 className="text-base font-semibold">Objectives & Requirements</h2>
+          <h2 className="text-base font-semibold">Objectives &amp; Requirements</h2>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
@@ -169,6 +180,7 @@ export default function ProjectDetails() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

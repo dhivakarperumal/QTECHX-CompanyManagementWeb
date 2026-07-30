@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Search, Plus, Loader2, AlertCircle, Trash2, X,
   FolderKanban, CheckCircle, RefreshCw, ChevronDown, Edit3,
-  LayoutGrid, Table2,
+  LayoutGrid, Table2, Eye,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
@@ -241,6 +242,7 @@ function AssignModal({ onClose, onAssigned }) {
 
 // ── Main Assignments Page ─────────────────────────────────────────────────────
 export default function ProjectAssignments() {
+  const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
@@ -593,6 +595,13 @@ export default function ProjectAssignments() {
                 <div className="flex items-center gap-2">
                   <ProjectStatusPill status={status} />
                   <button
+                    onClick={() => navigate(`/admin/projects/assignments/view/${projectUuid}`)}
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
+                    title="View assignment details"
+                  >
+                    <Eye size={14} />
+                  </button>
+                  <button
                     onClick={() => setDeleteProjectTarget({ project_uuid: projectUuid, project_name })}
                     className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
                     title="Delete project"
@@ -662,6 +671,11 @@ export default function ProjectAssignments() {
                           </td>
                           <td className="px-5 py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              <button onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
+                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-300 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
+                                title="View Employee">
+                                <Eye size={13} />
+                              </button>
                               <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
                                 className="w-7 h-7 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
                                 title="Edit">
@@ -725,6 +739,11 @@ export default function ProjectAssignments() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-end gap-2">
+                        <button onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-300 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
+                          title="View Employee">
+                          <Eye size={14} />
+                        </button>
                         <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
                           title="Edit">

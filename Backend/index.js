@@ -24,6 +24,8 @@ const traineeTaskRouter = require("./src/routers/traineeTaskRouter");
 const salaryRouter = require("./src/routers/salaryRouter");
 const projectPaymentRouter = require("./src/routers/projectPaymentRouter");
 const incomeRouter = require("./src/routers/incomeRouter");
+const eventRouter = require("./src/routers/eventRouter");
+const myEventRouter = require("./src/routers/myEventRouter");
 const dashboardRouter = require("./src/routers/dashboardRouter");
 const app = express();
 const als = new AsyncLocalStorage();
@@ -56,8 +58,8 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use("/api/users",   usersRouter);
 app.use("/api/employees", employeesRouter);
 app.use("/api/quotations", quotationRouter);
@@ -66,7 +68,6 @@ app.use("/api/clients", clientRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/project-plans", projectPlanRouter);
 app.use("/api/project-expiries", projectExpiryRouter);
-console.log('Mounted backend route: /api/project-expiries');
 app.use("/api/tasks", taskRouter);
 app.use("/api/fund", fundRouter);
 app.use("/api/expenses", expenseRouter);
@@ -76,6 +77,8 @@ app.use("/api", traineeTaskRouter);
 app.use("/api/salary", salaryRouter);
 app.use("/api/project-payments", projectPaymentRouter);
 app.use("/api/incomes", incomeRouter);
+app.use("/api/events", eventRouter);
+app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
 
 // Serve uploaded files from the backend uploads directory as inline browser content

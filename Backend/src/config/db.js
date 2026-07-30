@@ -15,7 +15,231 @@ const dbConfig = {
   queueLimit: 0,
 };
 
+async function ensureMyEventsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'myevents'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS myevents (
+        id VARCHAR(100) NOT NULL,
+        planTitle VARCHAR(255) NOT NULL,
+        description TEXT NULL,
+        planDate DATE NULL,
+        startTime VARCHAR(20) NULL,
+        endTime VARCHAR(20) NULL,
+        estimatedDuration VARCHAR(50) NULL,
+        actualDuration VARCHAR(50) NULL,
+        category VARCHAR(100) NULL,
+        priority VARCHAR(50) NULL,
+        status VARCHAR(50) NULL,
+        project VARCHAR(255) NULL,
+        module VARCHAR(255) NULL,
+        task VARCHAR(255) NULL,
+        milestone VARCHAR(255) NULL,
+        sprint VARCHAR(255) NULL,
+        assignedBy VARCHAR(255) NULL,
+        assignedTo VARCHAR(255) NULL,
+        team VARCHAR(255) NULL,
+        dailyGoal TEXT NULL,
+        expectedOutcome TEXT NULL,
+        checklistItems JSON NULL,
+        reminderDate DATE NULL,
+        reminderTime VARCHAR(20) NULL,
+        reminderType VARCHAR(100) NULL,
+        repeatFrequency VARCHAR(100) NULL,
+        repeatUntil DATE NULL,
+        location VARCHAR(255) NULL,
+        meetingLink VARCHAR(500) NULL,
+        notes TEXT NULL,
+        attachments JSON NULL,
+        tags JSON NULL,
+        progress INT NULL,
+        plannedHours DECIMAL(10,2) NULL,
+        workedHours DECIMAL(10,2) NULL,
+        breakStartTime VARCHAR(20) NULL,
+        breakEndTime VARCHAR(20) NULL,
+        energyLevel VARCHAR(20) NULL,
+        todaysAchievement TEXT NULL,
+        challenges TEXT NULL,
+        tomorrowsPlan TEXT NULL,
+        createdBy VARCHAR(100) NULL,
+        createdDate DATE NULL,
+        updatedDate DATE NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        INDEX idx_myevents_plan_date (planDate),
+        INDEX idx_myevents_status (status),
+        INDEX idx_myevents_category (category)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM myevents");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('planTitle', 'VARCHAR(255) NOT NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('planDate', 'DATE NULL');
+  addColumn('startTime', 'VARCHAR(20) NULL');
+  addColumn('endTime', 'VARCHAR(20) NULL');
+  addColumn('estimatedDuration', 'VARCHAR(50) NULL');
+  addColumn('actualDuration', 'VARCHAR(50) NULL');
+  addColumn('category', 'VARCHAR(100) NULL');
+  addColumn('priority', 'VARCHAR(50) NULL');
+  addColumn('status', 'VARCHAR(50) NULL');
+  addColumn('project', 'VARCHAR(255) NULL');
+  addColumn('module', 'VARCHAR(255) NULL');
+  addColumn('task', 'VARCHAR(255) NULL');
+  addColumn('milestone', 'VARCHAR(255) NULL');
+  addColumn('sprint', 'VARCHAR(255) NULL');
+  addColumn('assignedBy', 'VARCHAR(255) NULL');
+  addColumn('assignedTo', 'VARCHAR(255) NULL');
+  addColumn('team', 'VARCHAR(255) NULL');
+  addColumn('dailyGoal', 'TEXT NULL');
+  addColumn('expectedOutcome', 'TEXT NULL');
+  addColumn('checklistItems', 'JSON NULL');
+  addColumn('reminderDate', 'DATE NULL');
+  addColumn('reminderTime', 'VARCHAR(20) NULL');
+  addColumn('reminderType', 'VARCHAR(100) NULL');
+  addColumn('repeatFrequency', 'VARCHAR(100) NULL');
+  addColumn('repeatUntil', 'DATE NULL');
+  addColumn('location', 'VARCHAR(255) NULL');
+  addColumn('meetingLink', 'VARCHAR(500) NULL');
+  addColumn('notes', 'TEXT NULL');
+  addColumn('attachments', 'JSON NULL');
+  addColumn('tags', 'JSON NULL');
+  addColumn('progress', 'INT NULL');
+  addColumn('plannedHours', 'DECIMAL(10,2) NULL');
+  addColumn('workedHours', 'DECIMAL(10,2) NULL');
+  addColumn('breakStartTime', 'VARCHAR(20) NULL');
+  addColumn('breakEndTime', 'VARCHAR(20) NULL');
+  addColumn('energyLevel', 'VARCHAR(20) NULL');
+  addColumn('todaysAchievement', 'TEXT NULL');
+  addColumn('challenges', 'TEXT NULL');
+  addColumn('tomorrowsPlan', 'TEXT NULL');
+  addColumn('createdBy', 'VARCHAR(100) NULL');
+  addColumn('createdDate', 'DATE NULL');
+  addColumn('updatedDate', 'DATE NULL');
+  addColumn('created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE myevents ${addColumnStatements.join(', ')}`);
+  }
+}
+
 let pool;
+
+async function ensureEventsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'events'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS events (
+        id VARCHAR(100) NOT NULL,
+        title VARCHAR(255) NULL,
+        eventType VARCHAR(100) NULL,
+        description TEXT NULL,
+        startDate DATE NULL,
+        endDate DATE NULL,
+        startTime VARCHAR(20) NULL,
+        endTime VARCHAR(20) NULL,
+        allDay TINYINT(1) NOT NULL DEFAULT 0,
+        priority VARCHAR(50) NULL,
+        status VARCHAR(50) NULL,
+        location VARCHAR(255) NULL,
+        meetingLink VARCHAR(500) NULL,
+        project VARCHAR(255) NULL,
+        department VARCHAR(255) NULL,
+        participants JSON NULL,
+        departments JSON NULL,
+        teams JSON NULL,
+        externalGuests TINYINT(1) NOT NULL DEFAULT 0,
+        guestEmailAddresses JSON NULL,
+        attendanceRequired TINYINT(1) NOT NULL DEFAULT 1,
+        organizerName VARCHAR(255) NULL,
+        organizerDepartment VARCHAR(255) NULL,
+        organizerContactNumber VARCHAR(50) NULL,
+        organizerEmail VARCHAR(255) NULL,
+        reminder VARCHAR(100) NULL,
+        color VARCHAR(50) NULL,
+        attachments JSON NULL,
+        notes TEXT NULL,
+        comments JSON NULL,
+        activity JSON NULL,
+        createdBy VARCHAR(100) NULL,
+        createdDate DATE NULL,
+        updatedDate DATE NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        INDEX idx_events_start_date (startDate),
+        INDEX idx_events_end_date (endDate),
+        INDEX idx_events_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM events");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('title', 'VARCHAR(255) NULL');
+  addColumn('eventType', 'VARCHAR(100) NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('startDate', 'DATE NULL');
+  addColumn('endDate', 'DATE NULL');
+  addColumn('startTime', 'VARCHAR(20) NULL');
+  addColumn('endTime', 'VARCHAR(20) NULL');
+  addColumn('allDay', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('priority', 'VARCHAR(50) NULL');
+  addColumn('status', 'VARCHAR(50) NULL');
+  addColumn('location', 'VARCHAR(255) NULL');
+  addColumn('meetingLink', 'VARCHAR(500) NULL');
+  addColumn('project', 'VARCHAR(255) NULL');
+  addColumn('department', 'VARCHAR(255) NULL');
+  addColumn('participants', 'JSON NULL');
+  addColumn('departments', 'JSON NULL');
+  addColumn('teams', 'JSON NULL');
+  addColumn('externalGuests', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('guestEmailAddresses', 'JSON NULL');
+  addColumn('attendanceRequired', 'TINYINT(1) NOT NULL DEFAULT 1');
+  addColumn('organizerName', 'VARCHAR(255) NULL');
+  addColumn('organizerDepartment', 'VARCHAR(255) NULL');
+  addColumn('organizerContactNumber', 'VARCHAR(50) NULL');
+  addColumn('organizerEmail', 'VARCHAR(255) NULL');
+  addColumn('reminder', 'VARCHAR(100) NULL');
+  addColumn('color', 'VARCHAR(50) NULL');
+  addColumn('attachments', 'JSON NULL');
+  addColumn('notes', 'TEXT NULL');
+  addColumn('comments', 'JSON NULL');
+  addColumn('activity', 'JSON NULL');
+  addColumn('createdBy', 'VARCHAR(100) NULL');
+  addColumn('createdDate', 'DATE NULL');
+  addColumn('updatedDate', 'DATE NULL');
+  addColumn('created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE events ${addColumnStatements.join(', ')}`);
+  }
+}
 
 async function ensureProjectAssignmentsSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'project_assignments'");
@@ -695,6 +919,10 @@ async function ensureSchema(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 
+  // ── Events ────────────────────────────────────────────────────────────────
+  await ensureEventsSchema(pool);
+  await ensureMyEventsSchema(pool);
+
   // ── Projects ──────────────────────────────────────────────────────────────
   await ensureProjectsSchema(pool);
   await ensureProjectExpirySchema(pool);
@@ -1070,24 +1298,7 @@ async function ensureExpenseSchema(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 
-  await pool.execute(
-    `CREATE TABLE IF NOT EXISTS expenses (
-      expense_id VARCHAR(36) NOT NULL,
-      expense_type VARCHAR(100) NOT NULL,
-      created_by VARCHAR(36) NULL,
-      updated_by VARCHAR(36) NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      date_of_payment DATE NOT NULL,
-      amount DECIMAL(15,2) NOT NULL,
-      payment_type VARCHAR(50) NOT NULL,
-      paid_to VARCHAR(255) NOT NULL,
-      description TEXT NULL,
-      invoice_number VARCHAR(100) NULL,
-      upload_bill VARCHAR(255) NULL,
-      PRIMARY KEY (expense_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
-  );
+  // expenses table removed
 }
 
 async function ensureSalarySchema(pool) {
@@ -1111,8 +1322,7 @@ async function ensureSalarySchema(pool) {
       created_by VARCHAR(36) NULL,
       updated_by VARCHAR(36) NULL,
       PRIMARY KEY (id),
-      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE,
-      CONSTRAINT fk_employee_salaries_expense FOREIGN KEY (expense_id) REFERENCES expenses (expense_id) ON DELETE SET NULL
+      CONSTRAINT fk_employee_salaries_employee FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
 }

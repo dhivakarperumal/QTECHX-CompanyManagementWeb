@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FolderKanban, Search, TrendingUp, RefreshCw, Plus,
   LayoutGrid, List, CheckCircle, AlertCircle, PlayCircle,
-  Eye, Edit2, Trash2, Building2, User, X, Loader2, ChevronLeft, ChevronRight,
+  Eye, Edit2, Trash2, Building2, User, X, Loader2, ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
@@ -273,12 +273,7 @@ export default function AllProjects() {
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium px-5 py-3 rounded-2xl shadow-xl">
-          <CheckCircle size={16} /> {toast}
-        </div>
-      )}
+   
 
       {/* Delete Modal */}
       {deleteTarget && (
@@ -326,10 +321,7 @@ export default function AllProjects() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchProjects}
-            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
-            <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
-          </button>
+       
           <button
             onClick={() => {
               setShowAssignmentModal(true);
@@ -338,7 +330,7 @@ export default function AllProjects() {
             }}
             className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
           >
-            <User size={15} /> Assign Employees
+            <User size={15} /> Project Assign 
           </button>
           <button onClick={() => navigate('/admin/projects/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
@@ -368,157 +360,119 @@ export default function AllProjects() {
 
       {showAssignmentModal && (
         <ModalPortal>
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
-          <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setShowAssignmentModal(false)}
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-lg text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              ×
-            </button>
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowAssignmentModal(false)} />
+          <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/8 shrink-0">
               <div>
-                <h2 className="text-lg font-semibold text-white">Assign Employees to Project</h2>
-                <p className="mt-1 text-sm text-white/45">Select a project, search active employees, and assign one or many people to it.</p>
+                <h3 className="text-white font-bold text-lg">Assign Employee to Project</h3>
+                <p className="text-white/40 text-xs mt-0.5">Select a project, employee and their role</p>
               </div>
-              <div className="w-full max-w-xs">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Select Project</label>
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
-                >
-                  <option value="">Choose a project</option>
-                  {assignmentProjects.map((project) => (
-                    <option key={project.uuid} value={project.uuid}>{project.project_name}</option>
-                  ))}
-                </select>
-              </div>
+              <button onClick={() => setShowAssignmentModal(false)} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
+                <X size={15} />
+              </button>
             </div>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Search Employee</label>
-                  <input
-                    type="text"
-                    value={assignmentSearch}
-                    onChange={(e) => handleEmployeeSearch(e.target.value)}
-                    placeholder="Search by name, ID, email, phone, designation"
-                    className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
-                  />
+            <div className="overflow-y-auto flex-1 p-5 space-y-5">
+              {/* Project selector */}
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Select Project</label>
+                <div className="relative">
+                  <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
+                    className="w-full bg-[#0e1118] border border-white/10 text-sm text-white rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-10">
+                    <option value="">— Choose a project —</option>
+                    {assignmentProjects.map(p => <option key={p.uuid} value={p.uuid}>{p.project_name}</option>)}
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
                 </div>
+              </div>
 
-                {assignmentError && (
-                  <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">{assignmentError}</div>
-                )}
-                {assignmentSuccess && (
-                  <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">{assignmentSuccess}</div>
-                )}
+              {/* Role selector */}
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Assign as Role</label>
+                <div className="flex flex-wrap gap-2">
+                  {ROLES.map(r => (
+                    <button key={r} type="button" onClick={() => setSelectedRole(r)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${
+                        selectedRole === r ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.04] border-white/10 text-white/50 hover:text-white hover:border-white/25'
+                      }`}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                {assignmentLoading ? (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">Searching active employees…</div>
-                ) : assignmentEmployees.length > 0 ? (
-                  <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                    {assignmentEmployees.map((employee) => {
-                      const isSelected = selectedEmployeeIds.includes(employee.employee_id);
-                      return (
-                        <button
-                          key={employee.employee_id}
-                          type="button"
-                          onClick={() => toggleEmployeeSelection(employee)}
-                          className={`flex w-full items-start justify-between rounded-xl border px-3 py-3 text-left transition ${isSelected ? 'border-orange-500/30 bg-orange-500/10' : 'border-transparent bg-white/[0.02] hover:border-white/10'}`}
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-white">{employee.first_name} {employee.last_name}</p>
-                            <p className="text-xs text-white/45">ID: {employee.employee_id} • {employee.designation || employee.role || 'Employee'}</p>
-                            <p className="text-xs text-white/35">{employee.personal_email || employee.official_email || 'No email provided'}</p>
-                          </div>
-                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'bg-orange-500/20 text-orange-400' : 'bg-white/10 text-white/55'}`}>
-                            {isSelected ? 'Selected' : 'Select'}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : assignmentSearch ? (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">No matching employees found.</div>
-                ) : null}
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/35">Assignment Role</label>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {ROLES.map((role) => (
-                      <button
-                        key={role}
-                        type="button"
-                        onClick={() => setSelectedRole(role)}
-                        className={`rounded-xl border px-3 py-2 text-left text-sm transition ${selectedRole === role ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/[0.05] hover:text-white'}`}>
-                        {role}
-                      </button>
-                    ))}
-                  </div>
+              {/* Employee selector */}
+              <div>
+                <label className="text-sm font-medium text-white/60 mb-1.5 block">Select Employees</label>
+                <div className="relative mb-2">
+                  <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                  <input value={assignmentSearch} onChange={e => handleEmployeeSearch(e.target.value)} placeholder="Search employees…"
+                    className="w-full bg-[#0e1118] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-orange-500/50 placeholder:text-white/20" />
                 </div>
                 {selectedEmployeeIds.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Selected Employees</p>
-                    <div className="flex flex-wrap gap-2">
-                      {assignmentEmployees.filter((employee) => selectedEmployeeIds.includes(employee.employee_id)).map((employee) => (
-                        <span key={employee.employee_id} className="inline-flex items-center gap-2 rounded-full border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-sm text-orange-300">
-                          {employee.first_name} {employee.last_name}
-                          <button type="button" onClick={() => toggleEmployeeSelection(employee)} className="text-orange-400 hover:text-white">×</button>
-                        </span>
-                      ))}
+                  <p className="text-xs text-white/50 mb-2">{selectedEmployeeIds.length} employee{selectedEmployeeIds.length !== 1 ? 's' : ''} selected</p>
+                )}
+                <div className="max-h-44 overflow-y-auto space-y-1 border border-white/8 rounded-xl p-2 bg-white/[0.02]">
+                  {assignmentLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 size={18} className="animate-spin text-orange-500/60" />
                     </div>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleAssignEmployees}
-                  disabled={assignmentSubmitting || !selectedProjectId || !selectedEmployeeIds.length}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {assignmentSubmitting ? 'Assigning…' : 'Assign Employees'}
-                </button>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-white">Assigned Employees</p>
-                    <p className="text-xs text-white/40">Current project members</p>
-                  </div>
-                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/60">{assignedLoading ? 'Loading…' : assignedEmployees.length}</span>
+                  ) : assignmentEmployees.length === 0 ? (
+                    <p className="text-center text-white/25 text-xs py-4">
+                      {assignmentSearch ? 'No employees found' : 'Type to search employees…'}
+                    </p>
+                  ) : assignmentEmployees.map((e, i) => {
+                    const isSelected = selectedEmployeeIds.includes(e.employee_id);
+                    return (
+                      <button key={e.employee_id} type="button"
+                        onClick={() => toggleEmployeeSelection(e)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-left ${
+                          isSelected ? 'bg-orange-500/20 border border-orange-500/30' : 'hover:bg-white/[0.04] border border-transparent'
+                        }`}>
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold shrink-0"
+                          style={{ background: '#f9731628', border: '1.5px solid #f9731644', color: '#f97316' }}>
+                          {(e.first_name?.[0] || '') + (e.last_name?.[0] || '')}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white text-xs font-semibold truncate">{e.first_name} {e.last_name}</p>
+                          <p className="text-white/35 text-[10px] truncate">{e.designation || 'No designation'}</p>
+                        </div>
+                        {isSelected && <CheckCircle size={14} className="ml-auto text-orange-400 shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {assignedLoading ? (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm text-white/45">Loading assigned employees…</div>
-                ) : assignedEmployees.length > 0 ? (
-                  <div className="space-y-2">
-                    {assignedEmployees.map((employee) => (
-                      <div key={`${employee.employee_id}-${employee.id}`} className="rounded-xl border border-white/10 bg-[#0d0f13] p-3">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-white">{employee.first_name} {employee.last_name}</p>
-                            <p className="text-xs text-white/45">{employee.employee_code || employee.employee_id} • {employee.designation || 'Employee'}</p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-300">{employee.role}</span>
-                            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/60">Assigned {employee.assigned_at ? new Date(employee.assigned_at).toLocaleDateString('en-IN') : '—'}</span>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => handleRemoveEmployee(employee.employee_id, employee.role)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">Remove</button>
-                          <button type="button" onClick={() => navigate(`/admin/employees/view/${employee.employee_id}`)} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/60 hover:text-white">View</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-3 text-sm text-white/40">No employees assigned yet.</div>
-                )}
               </div>
+
+              {assignmentError && (
+                <div className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-xs px-4 py-2.5 rounded-xl">
+                  <AlertCircle size={13} /> {assignmentError}
+                </div>
+              )}
+              {assignmentSuccess && (
+                <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs px-4 py-2.5 rounded-xl">
+                  <CheckCircle size={13} /> {assignmentSuccess}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 border-t border-white/8 shrink-0 flex gap-3">
+              <button onClick={() => setShowAssignmentModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition">
+                Cancel
+              </button>
+              <button
+                onClick={handleAssignEmployees}
+                disabled={assignmentSubmitting || !selectedProjectId || !selectedEmployeeIds.length}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition hover:opacity-90 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+                {assignmentSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                {assignmentSubmitting ? 'Assigning…' : 'Assign'}
+              </button>
             </div>
           </div>
         </div>
