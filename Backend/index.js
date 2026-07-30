@@ -30,7 +30,7 @@ const dashboardRouter = require("./src/routers/dashboardRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
-console.log("Starting backend index.js...");
+// console.log("Starting backend index.js...");
 
 // Request logging for debugging
 app.use((req, res, next) => {
@@ -123,7 +123,7 @@ const potentialFrontendBuildPaths = [
 
 const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => fs.existsSync(buildPath));
 if (frontendBuildPath) {
-  console.log(`Serving static frontend from: ${frontendBuildPath}`);
+  // console.log(`Serving static frontend from: ${frontendBuildPath}`);
   app.use(express.static(frontendBuildPath));
   app.get(["/", "/index.html"], (req, res) => {
     return res.sendFile(path.join(frontendBuildPath, "index.html"));
