@@ -34,6 +34,20 @@ const normalizeTaskStatus = (status) => {
   return value;
 };
 
+const formatDateForInput = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return "";
+  }
+};
+
 const mapTaskToViewModel = (task) => ({
   id: task.uuid,
   uuid: task.uuid,
@@ -47,8 +61,8 @@ const mapTaskToViewModel = (task) => ({
   assigned_by_raw: task.assigned_by || "",
   status: normalizeTaskStatus(task.status),
   progress: Number(task.progress || 0),
-  startDate: task.start_date || "",
-  dueDate: task.due_date !== undefined ? (task.due_date || "") : "—",
+  startDate: formatDateForInput(task.start_date),
+  dueDate: task.due_date !== undefined && task.due_date !== null ? formatDateForInput(task.due_date) : "—",
   priority: task.priority || "Medium",
   description: task.description || "",
   estimatedHours: task.estimated_hours || "",
@@ -188,7 +202,6 @@ export default function TasksPage() {
     const params = new URLSearchParams(location.search);
     return params.get('project') || params.get('project_id') || '';
   });
-  const [currentTaskUuid, setCurrentTaskUuid] = useState('');
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [taskActionMessage, setTaskActionMessage] = useState('');
 
@@ -213,8 +226,11 @@ export default function TasksPage() {
   /* ── View Task Modal ── */
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  /* ── Update Task Modal (inline page) ── */
+  /* ── Edit Task Modal ── */
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTaskUuid, setEditingTaskUuid] = useState('');
   const [taskUpdateForm, setTaskUpdateForm] = useState(EMPTY_TASK_FORM);
+  const [loadingEditTask, setLoadingEditTask] = useState(false);
   const [updatingTask, setUpdatingTask] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState('');
@@ -251,9 +267,7 @@ export default function TasksPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const projectFromUrl = params.get('project') || params.get('project_id') || '';
-    const taskFromUrl = params.get('task') || '';
     setSelectedProject(projectFromUrl);
-    setCurrentTaskUuid(taskFromUrl);
   }, [location.search]);
 
   useEffect(() => {
@@ -300,41 +314,30 @@ export default function TasksPage() {
     }
   }, [pageKey, selectedProject, location.search]);
 
-  /* Load task for update page */
+  /* Load employees when edit modal project changes */
   useEffect(() => {
-    if (pageKey !== 'update') {
-      setSelectedTaskDetails(null);
-      return;
-    }
-
-    if (!currentTaskUuid) {
-      setSelectedTaskDetails(null);
-      setTaskUpdateForm(EMPTY_TASK_FORM);
-      return;
-    }
-
-    setSelectedTaskDetails(null);
+    if (!showEditModal || !editingTaskUuid) return;
+    setLoadingEditTask(true);
     const loadTask = async () => {
-      const task = await fetchTaskById(currentTaskUuid);
+      const task = await fetchTaskById(editingTaskUuid);
       if (task) {
-        setSelectedTaskDetails(task);
         setTaskUpdateForm({
           project_id: task.project_uuid || '',
           module_name: task.module !== '—' ? task.module : '',
           task_name: task.name,
           description: task.description,
-          // Use raw IDs, not display names
           assigned_to: task.assigned_to_raw || '',
           assigned_by: task.assigned_by_raw || '',
           start_date: task.startDate || '',
           due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
-          priority: task.priority !== 'Medium' ? task.priority : (task.priority || ''),
+          priority: task.priority || '',
         });
       }
+      setLoadingEditTask(false);
     };
     loadTask();
-  }, [pageKey, currentTaskUuid]);
+  }, [showEditModal, editingTaskUuid]);
 
   /* Load employees when assign modal project changes */
   useEffect(() => {
@@ -386,7 +389,13 @@ export default function TasksPage() {
   };
 
   const handleEditTask = (taskUuid) => {
-    navigate(`/admin/tasks/update?task=${encodeURIComponent(taskUuid)}${selectedProject ? `&project=${encodeURIComponent(selectedProject)}` : ''}`);
+    setUpdateError('');
+    setUpdateSuccess('');
+    setTaskUpdateForm(EMPTY_TASK_FORM);
+    setEditingTaskUuid(taskUuid);
+    setShowEditModal(true);
+    // close view modal if open
+    setIsTaskModalOpen(false);
   };
 
   const handleDeleteTask = async (taskUuid) => {
@@ -459,21 +468,17 @@ export default function TasksPage() {
 
     try {
       setUpdatingTask(true);
-      const { data } = await api.put(`/tasks/${currentTaskUuid}`, taskUpdateForm);
+      const { data } = await api.put(`/tasks/${editingTaskUuid}`, taskUpdateForm);
       if (data.success === false) {
         setUpdateError(data.message || 'Failed to update task.');
       } else {
         setUpdateSuccess(data.message || 'Task updated successfully!');
-        if (data.data) {
-          setSelectedTaskDetails(mapTaskToViewModel(data.data));
-        }
         await fetchTasks(selectedProject || '');
-        // Navigate back to tasks list after a short delay so user sees the success message
+        // Close modal after brief success flash
         setTimeout(() => {
-          const backPath = selectedProject
-            ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}`
-            : '/admin/tasks';
-          navigate(backPath);
+          setShowEditModal(false);
+          setUpdateSuccess('');
+          setEditingTaskUuid('');
         }, 1500);
       }
     } catch (err) {
@@ -662,99 +667,7 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* ── Update Task page (route-based) ── */}
-      {pageKey === "update" && (
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-xl font-semibold">Update Task</h2>
-              <p className="mt-1 text-sm text-slate-400">Modify task details and save your updates.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate(selectedProject ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}` : '/admin/tasks')}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:bg-white/10 transition"
-            >
-              ← Back to Tasks
-            </button>
-          </div>
-
-          {!currentTaskUuid ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
-              No task selected for editing. Choose a task from the list and click Edit.
-            </div>
-          ) : !selectedTaskDetails ? (
-            <div className="mt-6 flex items-center gap-3 rounded-2xl border border-dashed border-white/10 bg-slate-900/80 p-6 text-slate-300">
-              <Loader2 size={16} className="animate-spin" /> Loading task details...
-            </div>
-          ) : (
-            <>
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <FieldBox label="Project *">
-                  <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
-                    <option value="" disabled>Select project</option>
-                    {projects.map((project) => (
-                      <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
-                    ))}
-                  </select>
-                </FieldBox>
-                <FieldBox label="Module">
-                  <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="Enter Module" />
-                </FieldBox>
-                <FieldBox label="Task Name *">
-                  <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter Task Name" />
-                </FieldBox>
-                <FieldBox label="Description">
-                  <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Enter task description" />
-                </FieldBox>
-                <FieldBox label="Assigned To">
-                  <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee ID or name" />
-                </FieldBox>
-                <FieldBox label="Assigned By">
-                  <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager ID or name" />
-                </FieldBox>
-                <FieldBox label="Start Date">
-                  <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
-                </FieldBox>
-                <FieldBox label="Due Date">
-                  <input type="date" value={taskUpdateForm.due_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, due_date: e.target.value }))} className={inputCls} />
-                </FieldBox>
-                <FieldBox label="Estimated Hours">
-                  <input type="number" min="0" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
-                </FieldBox>
-                <FieldBox label="Priority">
-                  <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
-                    <option value="" disabled>Select priority</option>
-                    {['Low', 'Medium', 'High', 'Critical'].map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </FieldBox>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-3 items-center">
-                <button type="button" onClick={handleUpdateTask} disabled={updatingTask}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
-                  {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : 'Update Task'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate(selectedProject ? `/admin/tasks?project=${encodeURIComponent(selectedProject)}` : '/admin/tasks')}
-                  className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-3 text-sm text-slate-300 hover:border-white/20 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-              {updateError && <p className="mt-3 flex items-center gap-2 text-sm text-rose-400"><AlertCircle size={14} />{updateError}</p>}
-              {updateSuccess && (
-                <p className="mt-3 flex items-center gap-2 text-sm text-emerald-400">
-                  <CheckCircle size={14} />{updateSuccess}
-                  <span className="text-slate-500 text-xs ml-1">(Redirecting back to tasks...)</span>
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {/* ── Edit Task Modal placeholder (rendered via portal below) ── */}
 
       {/* ── Kanban Board ── */}
       {pageKey === "board" && (
@@ -790,7 +703,7 @@ export default function TasksPage() {
             <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-slate-200">
               <thead className="bg-slate-900 text-slate-400">
                 <tr>
-                  {['Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
+                  {['S No', 'Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
                     <th key={heading} className="px-4 py-4 font-medium">{heading}</th>
                   ))}
                 </tr>
@@ -798,21 +711,22 @@ export default function TasksPage() {
               <tbody>
                 {tasksLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                       <div className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading tasks...</div>
                     </td>
                   </tr>
                 ) : visibleTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center gap-3">
                         <ClipboardList size={32} className="text-slate-700" />
                         <p>No tasks found. Click <strong className="text-white">Add New Task</strong> to get started.</p>
                       </div>
                     </td>
                   </tr>
-                ) : visibleTasks.map((task) => (
+                ) : visibleTasks.map((task, index) => (
                   <tr key={task.id} className="border-t border-white/5 hover:bg-white/[0.02] transition">
+                    <td className="px-4 py-4 text-slate-400">{index + 1}</td>
                     <td className="px-4 py-4">
                       <div className="font-semibold">{task.name}</div>
                       <div className="mt-1 text-xs text-slate-400">{task.module}</div>
@@ -958,6 +872,91 @@ export default function TasksPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* ════════════════════════════════════════════════
+          MODAL: Edit Task
+      ════════════════════════════════════════════════ */}
+      <Modal
+        open={showEditModal}
+        onClose={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); setEditingTaskUuid(''); }}
+        title="Edit Task"
+        subtitle="Update task details and save your changes."
+        icon={Edit3}
+        iconColor="text-blue-400"
+        footer={
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={handleUpdateTask} disabled={updatingTask || loadingEditTask}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
+              {updatingTask ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : <><CheckCircle size={14} /> Update Task</>}
+            </button>
+            <button type="button" onClick={() => { setShowEditModal(false); setUpdateError(''); setUpdateSuccess(''); }}
+              className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-2.5 text-sm text-slate-300 hover:border-white/20 transition">
+              Cancel
+            </button>
+            {updateError && (
+              <span className="flex items-center gap-1.5 text-sm text-rose-400 ml-1">
+                <AlertCircle size={14} />{updateError}
+              </span>
+            )}
+            {updateSuccess && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-400 ml-1">
+                <CheckCircle size={14} />{updateSuccess}
+              </span>
+            )}
+          </div>
+        }
+      >
+        {loadingEditTask ? (
+          <div className="flex items-center justify-center gap-3 py-12 text-slate-400">
+            <Loader2 size={20} className="animate-spin" /> Loading task details...
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FieldBox label="Project *">
+              <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
+                <option value="" disabled>Select project</option>
+                {projects.map((project) => (
+                  <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
+                ))}
+              </select>
+            </FieldBox>
+            <FieldBox label="Module">
+              <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="e.g. Authentication" />
+            </FieldBox>
+            <FieldBox label="Task Name *">
+              <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter task name" />
+            </FieldBox>
+            <FieldBox label="Priority">
+              <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
+                <option value="" disabled>Select priority</option>
+                {['Low', 'Medium', 'High', 'Critical'].map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </FieldBox>
+            <FieldBox label="Start Date">
+              <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
+            </FieldBox>
+            <FieldBox label="Due Date">
+              <input type="date" value={taskUpdateForm.due_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, due_date: e.target.value }))} className={inputCls} />
+            </FieldBox>
+            <FieldBox label="Estimated Hours">
+              <input type="number" min="0" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
+            </FieldBox>
+            <FieldBox label="Assigned To">
+              <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee ID" />
+            </FieldBox>
+            <FieldBox label="Assigned By">
+              <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager ID" />
+            </FieldBox>
+            <div className="sm:col-span-2">
+              <FieldBox label="Description">
+                <textarea value={taskUpdateForm.description} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, description: e.target.value }))} rows={4} className={inputCls + ' resize-none'} placeholder="Enter task description..." />
+              </FieldBox>
+            </div>
           </div>
         )}
       </Modal>
