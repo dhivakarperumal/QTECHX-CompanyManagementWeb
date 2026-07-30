@@ -106,7 +106,7 @@ const uploadSingle = upload.single("document");
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const CLIENT_STATUSES  = ["Active", "Inactive", "Lead", "Prospect", "Converted", "Closed"];
 const SERVICE_TYPES    = ["Website", "Mobile App", "Web App", "Software", "Other"];
-const FOLLOW_UP_STATUSES = ["Pending", "Completed", "Rescheduled", "Cancelled"];
+const FOLLOW_UP_STATUSES = ["Pending", "Follow Up", "Completed", "Rescheduled", "Cancelled"];
 const DOCUMENT_TYPES   = ["Requirement Document", "Project Quotation"];
 
 function ok(res, data, statusCode = 200) {

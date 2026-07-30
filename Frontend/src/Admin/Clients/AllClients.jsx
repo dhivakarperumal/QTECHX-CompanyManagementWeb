@@ -6,16 +6,18 @@ import {
   LayoutGrid, List, Loader2, RefreshCw, UserRoundPlus, Mail, Phone,
   Building2, Briefcase, Calendar, AlertCircle, ChevronLeft, ChevronRight,
   Clock, SlidersHorizontal, X, Trash2, CheckCircle2, FileText, MessageSquare,
-  Bell, Hash, ChevronDown, Shield, Paperclip, Download
+  Bell, Hash, ChevronDown, Shield, Paperclip, Download, MapPin, Target, History
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../api';
 import ClientFormModal from './ClientFormModal';
 import StatusUpdateModal from './StatusUpdateModal';
+import FollowUpUpdateModal from './FollowUpUpdateModal';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
 const SERVICE_TYPES      = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
-const FOLLOW_UP_STATUSES = ['Pending', 'Completed', 'Rescheduled', 'Cancelled'];
+const FOLLOW_UP_STATUSES = ['Pending', 'Follow Up', 'Completed', 'Rescheduled', 'Cancelled'];
 
 const STATUS_STYLES = {
   Lead:      { pill: 'bg-sky-500/15 text-sky-400 border border-sky-500/25',           dot: 'bg-sky-400'     },
@@ -28,6 +30,7 @@ const STATUS_STYLES = {
 
 const FOLLOW_STYLES = {
   Pending:     'bg-amber-500/15 text-amber-400',
+  'Follow Up': 'bg-indigo-500/15 text-indigo-400',
   Completed:   'bg-emerald-500/15 text-emerald-400',
   Rescheduled: 'bg-sky-500/15 text-sky-400',
   Cancelled:   'bg-rose-500/15 text-rose-400',
@@ -426,6 +429,7 @@ export default function AllClients({ defaultFuFilter = '' }) {
   const [isFormOpen, setIsFormOpen]     = useState(false);
   const [editClientTarget, setEditClientTarget] = useState(null);
   const [statusUpdateTarget, setStatusUpdateTarget] = useState(null);
+  const [fuUpdateTarget, setFuUpdateTarget] = useState(null);
 
   // ── Fetch clients ──
   const fetchClients = useCallback(async () => {
@@ -823,7 +827,9 @@ export default function AllClients({ defaultFuFilter = '' }) {
                     {/* Follow-up */}
                     <td className="px-4 py-3.5">
                       <div className="space-y-1">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
+                        <span 
+                          onClick={() => setFuUpdateTarget(c)}
+                          className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
                           {c.follow_up_status || '—'}
                         </span>
                         {c.follow_up_date && (
@@ -934,7 +940,9 @@ export default function AllClients({ defaultFuFilter = '' }) {
                     </span>
                   )}
                   {c.follow_up_status && (
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
+                    <span 
+                      onClick={() => setFuUpdateTarget(c)}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-full cursor-pointer hover:opacity-80 transition ${FOLLOW_STYLES[c.follow_up_status] || 'bg-white/10 text-white/40'}`}>
                       {c.follow_up_status}
                     </span>
                   )}
@@ -1011,6 +1019,17 @@ export default function AllClients({ defaultFuFilter = '' }) {
           </div>
         </div>
       )}
+      {/* Follow Up Status Update Modal */}
+      <FollowUpUpdateModal
+        isOpen={!!fuUpdateTarget}
+        onClose={() => setFuUpdateTarget(null)}
+        client={fuUpdateTarget}
+        onSuccess={() => {
+          setFuUpdateTarget(null);
+          fetchClients();
+          toast.success("Follow-up status updated!");
+        }}
+      />
     </div>
   );
 }
