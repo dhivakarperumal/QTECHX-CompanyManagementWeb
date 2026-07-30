@@ -465,7 +465,7 @@ const AdminDashboard = () => {
             <h2 className="text-white font-bold text-base flex items-center gap-2">
               <Activity size={17} className="text-primary" /> Recent Activity
             </h2>
-            <button className="text-xs text-primary hover:underline">View All</button>
+            {/* <button className="text-xs text-primary hover:underline">View All</button> */}
           </div>
           {(dashboard?.recentActivity || []).length > 0 ? (
             dashboard.recentActivity.slice(0,5).map((a, i) => {
@@ -572,7 +572,7 @@ const AdminDashboard = () => {
               <p className="text-xs text-white/40">Stay ahead of the calendar</p>
             </div>
           </div>
-          <button className="text-xs text-primary hover:underline">View Calendar</button>
+          <button onClick={() => navigate('/admin/calendar')} className="text-xs text-primary hover:underline">View Calendar</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingEvents.map((e, i) => (
