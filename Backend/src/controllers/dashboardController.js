@@ -88,6 +88,15 @@ async function getDashboardMetrics(req, res) {
     );
     const currentMonthIncome = currentIncRows[0]?.total || 0;
 
+    // New Stats for UI update
+    const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");
+    const [totalClientRows] = await db.execute("SELECT COUNT(*) as total FROM clients");
+    const totalClients = totalClientRows[0]?.total || 0;
+
+    const [traineeTypeRows] = await db.execute("SELECT type, COUNT(*) as count FROM trainee_intern GROUP BY type");
+    
+    const [projectStatusRows] = await db.execute("SELECT current_status, COUNT(*) as count FROM projects GROUP BY current_status");
+
     return res.json({
       totalEmployees,
       activeProjects,
@@ -99,7 +108,10 @@ async function getDashboardMetrics(req, res) {
       attendanceToday: { present: presentToday, total: totalEmployees },
       recentActivity: recentRows,
       overviewData: overviewRows,
-      currentMonthIncome
+      currentMonthIncome,
+      clientStats: { total: totalClients, breakdown: clientRows },
+      traineeStats: traineeTypeRows,
+      projectStats: projectStatusRows
     });
   } catch (err) {
     console.error('getDashboardMetrics error:', err);

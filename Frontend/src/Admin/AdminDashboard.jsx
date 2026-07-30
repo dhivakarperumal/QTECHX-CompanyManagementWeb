@@ -320,39 +320,31 @@ const AdminDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
+                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10 flex flex-col justify-between">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Team availability</p>
-                      <p className="text-white font-semibold text-lg mt-2">{dashboard?.attendanceToday?.present || 0}/{dashboard?.totalEmployees || 0}</p>
+                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Total Clients</p>
+                      <p className="text-white font-semibold text-2xl mt-2">{dashboard?.clientStats?.total || 0}</p>
                     </div>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60 bg-white/5 rounded-full px-2 py-1">95% Up</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-300">
+                      <Users size={18} />
+                    </div>
                   </div>
-                  <div className="mt-4 rounded-full bg-white/10 h-2.5 overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-400" style={{ width: '95%' }} />
-                  </div>
-                  <p className="mt-3 text-[11px] text-white/50">Realtime presence and attendance stability</p>
+                  <p className="mt-3 text-[11px] text-white/50">Across all service categories</p>
                 </div>
 
                 <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Next milestone</p>
-                      <p className="text-white font-semibold text-sm mt-2">Q3 Project Review — Jul 26</p>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-                      <Calendar size={18} />
+                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Client Status</p>
+                      <p className="text-white font-semibold text-sm mt-2">Active vs Leads</p>
                     </div>
                   </div>
-                  <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                    {[
-                      { label: 'Design', value: '72%' },
-                      { label: 'Dev', value: '54%' },
-                      { label: 'QA', value: '86%' },
-                    ].map((item, idx) => (
-                      <div key={idx} className="rounded-3xl bg-white/5 p-2">
-                        <p className="text-[10px] text-white/40 uppercase tracking-[0.18em]">{item.label}</p>
-                        <p className="text-sm font-semibold text-white mt-1">{item.value}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                    {(dashboard?.clientStats?.breakdown || []).slice(0, 2).map((item, idx) => (
+                      <div key={idx} className="rounded-2xl bg-white/5 p-2">
+                        <p className="text-[10px] text-white/40 uppercase tracking-[0.18em] truncate">{item.client_status}</p>
+                        <p className="text-sm font-semibold text-white mt-1">{item.count}</p>
                       </div>
                     ))}
                   </div>
@@ -411,49 +403,55 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Tasks by Status (Donut Chart) */}
+        {/* Trainee & Intern Details (Donut Chart) */}
         <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
-          <h2 className="text-sm font-bold text-white mb-2">Tasks by Status</h2>
+          <h2 className="text-sm font-bold text-white mb-2">Trainee & Interns</h2>
           <div className="flex-1 relative flex items-center justify-center h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={tasksStatusData}
+                  data={dashboard?.traineeStats || []}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={2}
-                  dataKey="value"
+                  dataKey="count"
                   stroke="none"
                 >
-                  {tasksStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {(dashboard?.traineeStats || []).map((entry, index) => {
+                    const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  formatter={(value, name, props) => [value, props.payload.type]}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-              <span className="text-2xl font-bold text-white">242</span>
+              <span className="text-2xl font-bold text-white">{(dashboard?.traineeStats || []).reduce((a, b) => a + b.count, 0)}</span>
               <span className="text-[10px] text-white/50">Total</span>
             </div>
           </div>
           <div className="space-y-3 mt-4">
-            {tasksStatusData.map((t, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                  <span className="text-white/70">{t.name}</span>
+            {(dashboard?.traineeStats || []).map((t, i) => {
+              const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
+              const total = (dashboard?.traineeStats || []).reduce((a, b) => a + b.count, 0);
+              return (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                    <span className="text-white/70">{t.type}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-semibold text-white">{t.count}</span>
+                    <span className="text-white/40">({total > 0 ? Math.round((t.count / total) * 100) : 0}%)</span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <span className="font-semibold text-white">{t.value}</span>
-                  <span className="text-white/40">({Math.round((t.value / 242) * 100)}%)</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -480,59 +478,54 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Employees by Dept — 4 cols */}
+        {/* Project Status Overview — 4 cols */}
         <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col gap-4">
-          <h2 className="text-sm font-bold text-white">Employees by Dept</h2>
+          <h2 className="text-sm font-bold text-white">Project Status Overview</h2>
 
-          {/* Donut chart */}
           <div className="relative flex items-center justify-center" style={{ height: 180 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={employeeDeptData}
+                  data={dashboard?.projectStats || []}
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
                   outerRadius={75}
                   paddingAngle={1}
-                  dataKey="value"
+                  dataKey="count"
                   stroke="none"
                 >
-                  {employeeDeptData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {(dashboard?.projectStats || []).map((entry, index) => {
+                    const colors = ['#f97316', '#6b7280', '#4b5563', '#374151', '#1f2937', '#111827'];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  formatter={(value, name, props) => [value, props.payload.current_status]}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-bold text-white">256</span>
-              <span className="text-[10px] text-white/50">Total</span>
+              <span className="text-2xl font-bold text-white">{(dashboard?.projectStats || []).reduce((a, b) => a + b.count, 0)}</span>
+              <span className="text-[10px] text-white/50">Total Projects</span>
             </div>
           </div>
 
-          {/* Task progress bar */}
-          <div className="overflow-hidden rounded-full bg-white/10 h-2.5">
-            <div className="flex h-full">
-              {taskOverview.map((t, i) => (
-                <div key={i} className={`${t.bg} transition-all duration-700`} style={{ width: `${(t.value / totalTasks) * 100}%` }} />
-              ))}
-            </div>
-          </div>
-
-          {/* Task stats grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {taskOverview.map((t, i) => (
-              <div key={i} className="rounded-2xl bg-[#0d1018]/80 border border-white/10 p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${t.bg}`} />
-                  <span className="text-white/60 text-xs">{t.label}</span>
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            {(dashboard?.projectStats || []).slice(0, 4).map((t, i) => {
+              const colors = ['bg-orange-500', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700', 'bg-gray-800'];
+              const textColors = ['text-orange-400', 'text-gray-400', 'text-gray-400', 'text-gray-400', 'text-gray-400'];
+              return (
+                <div key={i} className="rounded-2xl bg-[#0d1018]/80 border border-white/10 p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${colors[i % colors.length]}`} />
+                    <span className="text-white/60 text-[10px] truncate max-w-[60px]">{t.current_status}</span>
+                  </div>
+                  <span className={`text-sm font-bold ${textColors[i % textColors.length]}`}>{t.count}</span>
                 </div>
-                <span className={`text-sm font-bold ${t.color}`}>{t.value}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
