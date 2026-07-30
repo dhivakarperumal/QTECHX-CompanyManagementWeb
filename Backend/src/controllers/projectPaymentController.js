@@ -10,16 +10,24 @@ const projectModel = require('../models/projectModel');
 // Instead, let's extract user from req directly if possible, or assume the client sends the logged in username via req.body.paid_to. The instruction said "to is admin always that is logged in user name auto fill in the field", so the frontend will send it in `paid_to`.
 
 async function createProjectPayment(req, res) {
+  const pool = require('../config/db').getDB();
+  const connection = await pool.getConnection();
+
   try {
+    await connection.beginTransaction();
+
     const { project_id, payment_mode, created_by, client_name, paid_to, amount_paid, reason_for_payment, date_of_payment, time_of_payment } = req.body;
-    
+    const actor = req.user?.user_id || created_by || null;
+
     if (!project_id || !amount_paid || !date_of_payment || !time_of_payment) {
+      await connection.rollback();
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     // Verify project exists
     const project = await projectModel.findProjectById(project_id);
     if (!project) {
+      await connection.rollback();
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
@@ -33,34 +41,80 @@ async function createProjectPayment(req, res) {
       reason_for_payment,
       date_of_payment,
       time_of_payment,
-      created_by // this will be userProfile.user_id
+      created_by: actor
     };
 
-    const newPayment = await projectPaymentModel.createProjectPayment(paymentData);
-    
+    const paymentUuid = require('uuid').v4();
+    const [paymentResult] = await connection.query(
+      `INSERT INTO project_payments (
+        uuid, project_id, project_name, client_name, paid_to, amount_paid, payment_mode, reason_for_payment, date_of_payment, time_of_payment, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        paymentUuid,
+        paymentData.project_id,
+        paymentData.project_name || null,
+        paymentData.client_name || null,
+        paymentData.paid_to || null,
+        paymentData.amount_paid,
+        paymentData.payment_mode || null,
+        paymentData.reason_for_payment || null,
+        paymentData.date_of_payment,
+        paymentData.time_of_payment,
+        paymentData.created_by || null,
+        paymentData.created_by || null
+      ]
+    );
+
+    const expenseId = require('uuid').v4();
+    await connection.query(
+      `INSERT INTO expenses (
+        expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, upload_bill
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        expenseId,
+        'Project Payment',
+        actor,
+        actor,
+        paymentData.date_of_payment,
+        parseFloat(paymentData.amount_paid),
+        paymentData.payment_mode || '',
+        paymentData.paid_to || '',
+        paymentData.reason_for_payment || `Project payment for ${project.project_name}`,
+        '',
+        null
+      ]
+    );
+
     // Add amount_paid to company_funds
-    const db = require('../config/db').getDB();
-    const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+    const [fundRows] = await connection.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
     const currentFund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
     const newFundTotal = currentFund + parseFloat(amount_paid);
-    
-    await db.query(
+
+    await connection.query(
       "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
-      [newFundTotal, created_by]
+      [newFundTotal, actor]
     );
+
+    await connection.commit();
+
+    const [rows] = await connection.query('SELECT * FROM project_payments WHERE id = ?', [paymentResult.insertId]);
+    const newPayment = rows[0] || null;
 
     // Get updated summary
     const summary = await projectPaymentModel.getProjectPaymentSummary(project_id);
 
-    res.status(201).json({ 
-      success: true, 
-      message: 'Project payment recorded successfully', 
+    res.status(201).json({
+      success: true,
+      message: 'Project payment recorded successfully',
       data: newPayment,
       summary
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Error creating project payment:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
+  } finally {
+    connection.release();
   }
 }
 
@@ -100,5 +154,89 @@ async function getProjectPaymentSummary(req, res) {
 module.exports = {
   createProjectPayment,
   getProjectPayments,
-  getProjectPaymentSummary
+  getProjectPaymentSummary,
+  updateProjectPayment,
+  deleteProjectPayment
 };
+
+async function updateProjectPayment(req, res) {
+  try {
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+    const { amount_paid } = req.body;
+
+    if (!amount_paid || isNaN(amount_paid)) {
+      return res.status(400).json({ success: false, message: 'Valid amount is required' });
+    }
+
+    // Fetch existing payment to find the old amount
+    const existing = await projectPaymentModel.getProjectPaymentById(id);
+    // Wait, the param might be UUID. Let's use getProjectPaymentByUUID or if it's ID we need to fix it.
+    // I see in createProjectPayment it returns getProjectPaymentById(insertId), but the route parameter usually is uuid.
+    // Assuming UUID: I'll need to run a raw query or fetch it first.
+    const db = require('../config/db').getDB();
+    const [rows] = await db.query('SELECT amount_paid FROM project_payments WHERE uuid = ?', [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Project payment not found' });
+    }
+
+    const oldAmount = parseFloat(rows[0].amount_paid);
+    const newAmount = parseFloat(amount_paid);
+    const difference = newAmount - oldAmount;
+
+    // Adjust company funds
+    if (difference !== 0) {
+      const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+      let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+      const new_fund = current_fund + difference;
+      
+      await db.query(
+        "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+        [new_fund, actor]
+      );
+    }
+
+    // Update the record
+    await projectPaymentModel.updateProjectPayment(id, { ...req.body, updated_by: actor });
+
+    res.status(200).json({ success: true, message: 'Project payment updated successfully' });
+  } catch (error) {
+    console.error('Error updating project payment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+async function deleteProjectPayment(req, res) {
+  try {
+    const { id } = req.params;
+    const actor = req.user?.user_id || req.body.updated_by || null;
+
+    const db = require('../config/db').getDB();
+    const [rows] = await db.query('SELECT amount_paid FROM project_payments WHERE uuid = ?', [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Project payment not found' });
+    }
+
+    const amount = parseFloat(rows[0].amount_paid);
+
+    // Deduct from company funds
+    const [fundRows] = await db.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
+    let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
+    const new_fund = current_fund - amount;
+    
+    await db.query(
+      "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
+      [new_fund, actor]
+    );
+
+    // Delete the record
+    await projectPaymentModel.deleteProjectPayment(id);
+
+    res.status(200).json({ success: true, message: 'Project payment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting project payment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}

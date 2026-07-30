@@ -173,6 +173,11 @@ const ExpensesPage = () => {
   const paymentMethodOptions = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque"];
   const isSalaryExpense = expenseData.expense_type === "Salary";
 
+  const isCreditEntry = (entry) => {
+    const type = String(entry?.expense_type || "").trim().toLowerCase();
+    return type === "income" || type === "project payment";
+  };
+
   const filteredExpenses = expenses.filter((exp) => {
     const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
     const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
@@ -186,9 +191,10 @@ const ExpensesPage = () => {
     return true;
   });
 
-  const totalSpent = filteredExpenses.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
+  const filteredSpendEntries = filteredExpenses.filter((exp) => !isCreditEntry(exp));
+  const totalSpent = filteredSpendEntries.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
   const categoryBreakdown = Object.entries(
-    filteredExpenses.reduce((acc, exp) => {
+    filteredSpendEntries.reduce((acc, exp) => {
       const key = exp.expense_type || "Miscellaneous";
       acc[key] = (acc[key] || 0) + parseFloat(exp.amount || 0);
       return acc;
@@ -206,7 +212,7 @@ const ExpensesPage = () => {
 
   const monthlyTrend = Array.from({ length: 6 }, (_, index) => {
     const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"][index];
-    const monthValue = filteredExpenses.reduce((sum, exp) => {
+    const monthValue = filteredSpendEntries.reduce((sum, exp) => {
       const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
       if (!expenseDate) return sum;
       return expenseDate.getMonth() === index ? sum + parseFloat(exp.amount || 0) : sum;
@@ -294,7 +300,7 @@ const ExpensesPage = () => {
               <p className="text-2xl font-bold text-rose-400 mt-1">₹ {totalSpent.toFixed(2)}</p>
             </div>
           </div>
-          <p className="text-[11px] text-white/30 mt-4 relative z-10">{expenses.length} total expenses recorded.</p>
+          <p className="text-[11px] text-white/30 mt-4 relative z-10">{expenses.length} total transactions recorded.</p>
         </div>
       </div>
 
@@ -626,7 +632,10 @@ const ExpensesPage = () => {
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <p className="text-rose-400 font-bold text-sm">₹ {parseFloat(exp.amount).toFixed(2)}</p>
+                      <p className={`${isCreditEntry(exp) ? "text-emerald-400" : "text-rose-400"} font-bold text-sm`}>
+                        {isCreditEntry(exp) ? "+" : "-"} ₹ {parseFloat(exp.amount).toFixed(2)}
+                      </p>
+                      <p className="text-[10px] text-white/30 mt-1">{isCreditEntry(exp) ? "Added" : "Spent"}</p>
                     </td>
                     <td className="px-5 py-4 text-right">
                       {exp.upload_bill ? (
