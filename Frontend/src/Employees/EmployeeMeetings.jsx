@@ -21,18 +21,46 @@ const EmployeeMeetings = () => {
 
   const fetchMeetings = async () => {
     try {
-      const res = await api.get('/myevents');
-      const userId = user?.id || user?._id || user?.userId;
-      let userEvents = res.data;
+      const [resPersonal, resOffice] = await Promise.all([
+        api.get('/myevents').catch(() => ({ data: [] })),
+        api.get('/events').catch(() => ({ data: [] }))
+      ]);
+      
+      const userId = user?.id || user?._id || user?.userId || user?.employee_id || user?.employeeId || user?.user_id;
+      const userName = user?.profileName || user?.name || '';
+      
+      let personalEvents = resPersonal.data || [];
+      let officeEvents = resOffice.data || [];
+      
       if (userId) {
-        userEvents = res.data.filter(evt => {
+        // Filter personal events
+        personalEvents = personalEvents.filter(evt => {
           const evtUserId = evt.user_id || evt.userId || evt.employeeId;
           return String(evtUserId) === String(userId);
         });
+        
+        // Filter office events where the user is a participant
+        officeEvents = officeEvents.filter(evt => {
+          let parts = evt.participants;
+          if (!parts) return false;
+          if (typeof parts === 'string') {
+            try { parts = JSON.parse(parts); } catch (e) { return false; }
+          }
+          if (!Array.isArray(parts)) return false;
+          
+          return parts.some(p => {
+            if (typeof p === 'object' && p !== null) {
+              return String(p.user_id) === String(userId);
+            }
+            return typeof p === 'string' && userName && p.toLowerCase() === userName.toLowerCase();
+          });
+        });
       }
       
+      const allEvents = [...personalEvents, ...officeEvents];
+      
       // Filter only meetings (Meeting, Client Call)
-      let filteredMeetings = userEvents.filter(e => 
+      let filteredMeetings = allEvents.filter(e => 
         e.eventType === 'Meeting' || e.eventType === 'Client Call' ||
         e.category === 'Meeting' || e.category === 'Client Call'
       );

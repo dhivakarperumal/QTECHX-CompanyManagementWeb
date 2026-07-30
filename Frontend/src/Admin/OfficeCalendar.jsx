@@ -172,7 +172,7 @@ const OfficeCalendar = () => {
     const search = searchText.trim().toLowerCase();
     return events.filter(ev => {
       const parts = Array.isArray(ev.participants)
-        ? ev.participants.filter(Boolean)
+        ? ev.participants.map(p => typeof p === 'object' ? p.name : p).filter(Boolean)
         : typeof ev.participants === 'string' && ev.participants
           ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : [];
       const depts = Array.isArray(ev.departments)
@@ -257,8 +257,8 @@ const OfficeCalendar = () => {
   ))), [events]);
 
   const projects  = useMemo(() => Array.from(new Set(events.map(ev => ev.project).filter(Boolean))), [events]);
-  const employees = useMemo(() => Array.from(new Set(events.flatMap(ev =>
-    Array.isArray(ev.participants) ? ev.participants.filter(Boolean)
+  const employees = useMemo(() => Array.from(new Set(events.flatMap(ev => 
+    Array.isArray(ev.participants) ? ev.participants.map(p => typeof p === 'object' ? p.name : p).filter(Boolean)
     : typeof ev.participants === 'string' && ev.participants
       ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : []
   ))), [events]);
@@ -308,16 +308,30 @@ const OfficeCalendar = () => {
     setFormData(c => ({ ...c, [field]: vals }));
   };
 
-  const handleToggleParticipant = (name) => {
+  const handleToggleParticipant = (empObj) => {
     setFormData(c => {
       const parts = c.participants || [];
-      if (parts.includes(name)) return { ...c, participants: parts.filter(x => x !== name) };
-      return { ...c, participants: [...parts, name] };
+      const empName = getEmployeeFullName(empObj);
+      const exists = parts.some(p => typeof p === 'object' ? p.user_id === empObj.employee_id : p === empName);
+      if (exists) {
+        return { ...c, participants: parts.filter(p => typeof p === 'object' ? p.user_id !== empObj.employee_id : p !== empName) };
+      }
+      const newParticipant = {
+        user_id: empObj.employee_id,
+        name: empName,
+        email: empObj.email || '',
+        phone: empObj.phone_number || empObj.phone || '',
+        role: empObj.role || ''
+      };
+      return { ...c, participants: [...parts, newParticipant] };
     });
   };
 
   const handleRemoveParticipant = (p) =>
-    setFormData(c => ({ ...c, participants: (c.participants || []).filter(x => x !== p) }));
+    setFormData(c => ({ 
+      ...c, 
+      participants: (c.participants || []).filter(x => typeof x === 'object' && typeof p === 'object' ? x.user_id !== p.user_id : x !== p) 
+    }));
 
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files || []).map(f => f.name);
@@ -1145,11 +1159,14 @@ const OfficeCalendar = () => {
                 <label className="oc-flbl">Participants</label>
                 
                 <div className="oc-chips" style={{ marginBottom: 12 }}>
-                  {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => (
-                    <span key={`${p}-${i}`} className="oc-c-chip">
-                      {p}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
+                  {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => {
+                    const displayName = typeof p === 'object' ? p.name : p;
+                    return (
+                    <span key={typeof p === 'object' ? p.user_id : `${p}-${i}`} className="oc-c-chip">
+                      {displayName}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
                     </span>
-                  ))}
+                    );
+                  })}
                   <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(248,116,14,0.15)', color:'#F8740E', border:'1px dashed rgba(248,116,14,0.4)', borderRadius:20, padding:'4px 10px', fontSize:11.5, fontWeight:600, cursor:'pointer' }}>
                     <Plus size={12} /> Add Employee
                   </button>
@@ -1162,9 +1179,9 @@ const OfficeCalendar = () => {
                       {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
                         const name = getEmployeeFullName(emp);
                         if (!name) return null;
-                        const isSel = (formData.participants||[]).includes(name);
+                        const isSel = (formData.participants||[]).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
                         return (
-                          <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(name)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
+                          <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(emp)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
                             <div style={{ width:12, height:12, borderRadius:3, border:`1px solid ${isSel?'#F8740E':'rgba(255,255,255,0.3)'}`, background:isSel?'#F8740E':'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:'bold', color:'#fff' }}>
                               {isSel && '✓'}
                             </div>
@@ -1322,7 +1339,10 @@ const OfficeCalendar = () => {
               <div className="oc-dr-card-ttl"><Users size={12} /> Participants</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                 {ensureArrayField(selectedEvent?.participants).length > 0
-                  ? ensureArrayField(selectedEvent.participants).map((p,i) => <span key={`${p}-${i}`} className="oc-tag">{p}</span>)
+                  ? ensureArrayField(selectedEvent.participants).map((p,i) => {
+                      const displayName = typeof p === 'object' ? p.name : p;
+                      return <span key={`${displayName}-${i}`} className="oc-tag">{displayName}</span>;
+                    })
                   : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No participants.</span>
                 }
               </div>
