@@ -128,6 +128,7 @@ const OfficeCalendar = () => {
   const [draggingEventId,  setDraggingEventId]  = useState(null);
   const [resizingEventId,  setResizingEventId]  = useState(null);
   const [miniCalDate,      setMiniCalDate]      = useState(dayjs());
+  const [showEmpSelector,  setShowEmpSelector]  = useState(false);
 
   /* ── data fetching ── */
   const fetchEmployees = async () => {
@@ -307,9 +308,12 @@ const OfficeCalendar = () => {
     setFormData(c => ({ ...c, [field]: vals }));
   };
 
-  const handleParticipantsChange = e => {
-    const sel = Array.from(e.target.selectedOptions).map(o => o.value);
-    setFormData(c => ({ ...c, participants: sel }));
+  const handleToggleParticipant = (name) => {
+    setFormData(c => {
+      const parts = c.participants || [];
+      if (parts.includes(name)) return { ...c, participants: parts.filter(x => x !== name) };
+      return { ...c, participants: [...parts, name] };
+    });
   };
 
   const handleRemoveParticipant = (p) =>
@@ -900,7 +904,20 @@ const OfficeCalendar = () => {
                             </div>
                           );
                         })}
-                        {dEvs.length > 3 && <div className="oc-more">+{dEvs.length-3} more</div>}
+                        {dEvs.length > 3 && (
+                          <div
+                            className="oc-more"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentDate(dayjs(dateStr));
+                              setSelectedDate(dateStr);
+                              setViewMode('day');
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            +{dEvs.length-3} more
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1124,22 +1141,40 @@ const OfficeCalendar = () => {
               </div>
 
               <div className="oc-section-ttl">Participants & Departments</div>
-              <div className="oc-full">
-                <label className="oc-flbl">Select Employees</label>
-                <select multiple value={Array.isArray(formData.participants)?formData.participants:[]} onChange={handleParticipantsChange} className="oc-fsel" style={{ minHeight:120 }}>
-                  {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
-                    const name = getEmployeeFullName(emp);
-                    return name ? <option key={emp.employee_id||`${name}-${i}`} value={name}>{name}</option> : null;
-                  }) : null}
-                </select>
-                <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:4 }}>Hold Ctrl/Cmd to select multiple.</div>
-                <div className="oc-chips">
+              <div className="oc-full" style={{ position: 'relative' }}>
+                <label className="oc-flbl">Participants</label>
+                
+                <div className="oc-chips" style={{ marginBottom: 12 }}>
                   {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => (
                     <span key={`${p}-${i}`} className="oc-c-chip">
                       {p}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
                     </span>
                   ))}
+                  <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(248,116,14,0.15)', color:'#F8740E', border:'1px dashed rgba(248,116,14,0.4)', borderRadius:20, padding:'4px 10px', fontSize:11.5, fontWeight:600, cursor:'pointer' }}>
+                    <Plus size={12} /> Add Employee
+                  </button>
                 </div>
+
+                {showEmpSelector && (
+                  <div style={{ position:'absolute', zIndex:999, top:'100%', left:0, right:0, background:'#1e1e24', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:12, boxShadow:'0 10px 30px rgba(0,0,0,0.5)', maxHeight:220, overflowY:'auto' }}>
+                    <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Select Employees</div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
+                      {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
+                        const name = getEmployeeFullName(emp);
+                        if (!name) return null;
+                        const isSel = (formData.participants||[]).includes(name);
+                        return (
+                          <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(name)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
+                            <div style={{ width:12, height:12, borderRadius:3, border:`1px solid ${isSel?'#F8740E':'rgba(255,255,255,0.3)'}`, background:isSel?'#F8740E':'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:'bold', color:'#fff' }}>
+                              {isSel && '✓'}
+                            </div>
+                            <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</span>
+                          </div>
+                        );
+                      }) : null}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="oc-flbl">Departments</label>
@@ -1315,6 +1350,11 @@ const OfficeCalendar = () => {
                   : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No activity recorded.</span>
                 }
               </div>
+            </div>
+
+            <div style={{ marginTop: 8, padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              <div>Created: {selectedEvent.createdDate ? dayjs(selectedEvent.createdDate).format('MMM D, YYYY') : 'N/A'} {selectedEvent.createdBy ? `by ${selectedEvent.createdBy}` : ''}</div>
+              <div>Updated: {selectedEvent.updatedDate ? dayjs(selectedEvent.updatedDate).format('MMM D, YYYY') : 'N/A'}</div>
             </div>
 
             <div className="oc-dr-actions">
