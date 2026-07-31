@@ -8,7 +8,7 @@ import { PacmanLoader } from 'react-spinners';
 
 const EmployeeMeetings = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profileName } = useAuth();
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -26,17 +26,17 @@ const EmployeeMeetings = () => {
         api.get('/events').catch(() => ({ data: [] }))
       ]);
       
-      const userId = user?.id || user?._id || user?.userId || user?.employee_id || user?.employeeId || user?.user_id;
-      const userName = user?.profileName || user?.name || '';
+      const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
+      const userName = profileName || user?.name || user?.full_name || user?.username || '';
       
       let personalEvents = resPersonal.data || [];
       let officeEvents = resOffice.data || [];
       
-      if (userId) {
+      if (possibleIds.length > 0) {
         // Filter personal events
         personalEvents = personalEvents.filter(evt => {
-          const evtUserId = evt.user_id || evt.userId || evt.employeeId;
-          return String(evtUserId) === String(userId);
+          const evtUserId = String(evt.user_id || evt.userId || evt.employeeId);
+          return possibleIds.includes(evtUserId);
         });
         
         // Filter office events where the user is a participant
@@ -50,7 +50,9 @@ const EmployeeMeetings = () => {
           
           return parts.some(p => {
             if (typeof p === 'object' && p !== null) {
-              const matchById = String(p.user_id) === String(userId) || String(p.employee_id) === String(userId);
+              const pId1 = String(p.user_id);
+              const pId2 = String(p.employee_id);
+              const matchById = possibleIds.includes(pId1) || possibleIds.includes(pId2);
               const matchByName = userName && p.name && p.name.toLowerCase() === userName.toLowerCase();
               return matchById || matchByName;
             }
