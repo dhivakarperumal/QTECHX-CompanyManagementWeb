@@ -136,7 +136,9 @@ const AttendanceView = () => {
                   <div key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-sm font-semibold">{item.attendance_date}</p>
+                        <p className="text-sm font-semibold">
+                          {new Date(item.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
                         <p className="text-sm text-white/60">Status: {item.attendance_status}</p>
                       </div>
                       <div className="grid gap-3 text-sm md:grid-cols-4">
