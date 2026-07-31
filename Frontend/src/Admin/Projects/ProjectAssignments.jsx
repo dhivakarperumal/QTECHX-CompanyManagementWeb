@@ -499,7 +499,7 @@ export default function ProjectAssignments() {
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" placeholder="Search by employee, project, designation…"
             value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-1/2 bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
+            className="w-full bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
           {search && <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
         </div>
         <div className="relative">
@@ -541,7 +541,54 @@ export default function ProjectAssignments() {
       </div>
       </div>
 
-      
+      {/* Stats Cards */}
+      {!loading && !error && assignments.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              label: 'Total Assignments',
+              value: total,
+              icon: Users,
+              bg: 'bg-blue-500/10 border border-blue-500/20',
+              cls: 'text-blue-400'
+            },
+            {
+              label: 'Projects',
+              value: Object.keys(grouped).length,
+              icon: FolderKanban,
+              bg: 'bg-orange-500/10 border border-orange-500/20',
+              cls: 'text-orange-400'
+            },
+            {
+              label: 'Active Members',
+              value: assignments.filter(a => ['In Progress', 'Planning', 'Live'].includes(a.current_status)).length,
+              icon: CheckCircle,
+              bg: 'bg-emerald-500/10 border border-emerald-500/20',
+              cls: 'text-emerald-400'
+            },
+            {
+              label: 'Unique Roles',
+              value: [...new Set(assignments.map(a => a.role).filter(Boolean))].length,
+              icon: LayoutGrid,
+              bg: 'bg-purple-500/10 border border-purple-500/20',
+              cls: 'text-purple-400'
+            },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <div key={s.label} className="bg-[#111318] border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.02] transition">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
+                  <Icon size={18} className={s.cls} />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-white">{s.value}</p>
+                  <p className="text-white/50 text-xs">{s.label}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -694,69 +741,88 @@ export default function ProjectAssignments() {
                   </table>
                 </div>
               ) : (
-                <div className="grid gap-4 p-4 xl:grid-cols-2">
-                  {members.map((m, i) => (
-                    <div key={`${m.employee_id}-${m.role}-${projectUuid}`} className="rounded-2xl border border-white/10 bg-[#0e1118]/70 p-4 shadow-lg shadow-black/20">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <Avatar
-                            name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
-                            image={m.profile_photo}
-                            index={i}
-                            size={10}
-                          />
-                          <div className="min-w-0">
-                            <p className="text-white font-semibold text-sm truncate">
-                              {m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_name || m.employee_code || '—'}
-                            </p>
-                            {(m.designation || m.role) && (
-                              <p className="text-white/40 text-[10px] mt-0.5 truncate">{m.designation || m.role}</p>
-                            )}
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {members.map((m, i) => {
+                    const fullName = m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_name || m.employee_code || '—';
+                    const avatarColor = AVATAR_COLOURS[(i) % AVATAR_COLOURS.length];
+                    return (
+                      <div
+                        key={`${m.employee_id}-${m.role}-${projectUuid}`}
+                        className="group relative bg-[#0e1118] border border-white/8 rounded-2xl overflow-hidden hover:border-white/[0.15] hover:-translate-y-0.5 transition-all duration-200 shadow-lg shadow-black/20"
+                      >
+                        {/* Coloured top accent */}
+                        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${avatarColor}99, ${avatarColor}22)` }} />
+
+                        <div className="p-4">
+                          {/* Top row: Avatar + Name + Role badge */}
+                          <div className="flex items-start justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Avatar
+                                name={fullName}
+                                image={m.profile_photo}
+                                index={i}
+                                size={11}
+                              />
+                              <div className="min-w-0">
+                                <p className="text-white font-bold text-sm leading-tight truncate">{fullName}</p>
+                                {m.designation && (
+                                  <p className="text-white/40 text-[10px] mt-0.5 truncate">{m.designation}</p>
+                                )}
+                              </div>
+                            </div>
+                            {m.role && <RoleBadge role={m.role} />}
+                          </div>
+
+                          {/* Info rows */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
+                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">EMP ID</span>
+                              <span className="text-white/80 text-xs font-bold truncate">{m.employee_code || '—'}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
+                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Email</span>
+                              <span className="text-white/60 text-[10px] truncate max-w-[140px]">{m.personal_email || m.email || m.official_email || 'No email'}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
+                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Phone</span>
+                              <span className="text-white/60 text-xs">{m.mobile_number || m.phone_number || m.alternate_mobile || 'No phone'}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
+                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Assigned</span>
+                              <span className="text-white/60 text-xs">
+                                {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="mt-4 flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+                            <button
+                              onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-300 border border-transparent hover:border-blue-500/25 text-xs font-semibold transition"
+                              title="View Employee"
+                            >
+                              <Eye size={12} /> View
+                            </button>
+                            <button
+                              onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/40 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 text-xs font-semibold transition"
+                              title="Edit Role"
+                            >
+                              <Edit3 size={12} /> Edit
+                            </button>
+                            <button
+                              onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/40 hover:text-rose-400 border border-transparent hover:border-rose-500/25 text-xs font-semibold transition"
+                              title="Remove"
+                            >
+                              <Trash2 size={12} /> Remove
+                            </button>
                           </div>
                         </div>
-                        {m.role && <RoleBadge role={m.role} />}
                       </div>
-
-                      <div className="mt-4 space-y-2 text-sm text-white/60">
-                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
-                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Employee ID</span>
-                          <span className="font-semibold text-white/80">{m.employee_code || '—'}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
-                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Email</span>
-                          <span className="font-semibold text-white/80 truncate">{m.personal_email || m.email || m.official_email || 'No email'}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
-                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Phone</span>
-                          <span className="font-semibold text-white/80">{m.mobile_number || m.phone_number || m.alternate_mobile || 'No phone'}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
-                          <span className="text-white/35 text-[10px] uppercase tracking-widest">Assigned On</span>
-                          <span className="font-semibold text-white/80">
-                            {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-end gap-2">
-                        <button onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-300 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
-                          title="View Employee">
-                          <Eye size={14} />
-                        </button>
-                        <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
-                          title="Edit">
-                          <Edit3 size={14} />
-                        </button>
-                        <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
-                          title="Remove">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
