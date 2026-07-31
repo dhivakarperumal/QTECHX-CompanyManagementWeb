@@ -71,6 +71,9 @@ import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
 import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
 
+import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
+import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
+
 import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
 import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
 import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
@@ -418,6 +421,14 @@ const router = createHashRouter([
           {
             path: 'payroll/slips',
             element: <EmployeePayrollSlips />,
+          },
+          {
+            path: 'attendance',
+            element: <EmployeeAttendance />,
+          },
+          {
+            path: 'attendance/summary',
+            element: <EmployeeAttendanceSummary />,
           },
         ],
       },
