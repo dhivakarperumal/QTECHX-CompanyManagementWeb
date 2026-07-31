@@ -22,14 +22,14 @@ const EmployeeAttendanceSummary = () => {
     setLoading(true);
     setError(null);
     try {
-      const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
+      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
       if (possibleIds.length === 0) {
         setError("Could not identify employee profile.");
         setLoading(false);
         return;
       }
 
-      const targetId = possibleIds[0];
+      const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
       const res = await api.get(`/attendance/${targetId}?month=${selectedMonth}&year=${selectedYear}`);
       if (res.data && res.data.data) {
         // the backend already filters for this employee
