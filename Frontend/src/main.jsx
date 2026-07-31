@@ -33,8 +33,17 @@ import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
 import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
 import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
-import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
-import TraineeLayout from './Trainee/TraineePanel.jsx'
+
+import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
+import EmployeeLayout from './Employees/EmployeePanel.jsx'
+import EmployeeMeetings from './Employees/EmployeeMeetings.jsx'
+import EmployeeProjects from './Employees/Employee Projects/EmployeeProjects.jsx'
+import EmployeeProjectDetails from './Employees/Employee Projects/EmployeeProjectDetails.jsx'
+import EmployeeTasks from './Employees/EmployeeTasks.jsx'
+import EmployeeTaskDetails from './Employees/EmployeeTaskDetails.jsx'
+import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
+import PendingTasksPage from './Employees/PendingTasksPage.jsx'
+import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -307,23 +316,76 @@ const router = createHashRouter([
           },
         ],
       },
-    
 
+
+       
       {
-        path: 'trainee',
+        path: 'employee',
         element: (
-          <PrivateRoute allowedRoles={["Trainee"]}>
-            <TraineeLayout />
+          <PrivateRoute allowedRoles={["Employee"]}>
+            <EmployeeLayout />
           </PrivateRoute>
         ),
         children: [
           {
             index: true,
-            element: <TraineeDashboard />,
+            element: <EmployeeDashboard />,
           },
           {
             path: 'office-calendar',
             element: <OfficeCalendar />,
+          },
+          {
+            path: 'my-calendar',
+            element: <MyCalendar />,
+          },
+          {
+            path: 'meetings',
+            element: <EmployeeMeetings />,
+          },
+          {
+            path: 'meetings/upcoming',
+            element: <EmployeeMeetings />,
+          },
+          {
+            path: 'projects',
+            element: <EmployeeProjects />,
+          },
+          {
+            path: 'projects/view/:id',
+            element: <EmployeeProjectDetails />,
+          },
+          {
+            path: 'tasks',
+            element: <EmployeeTasks />,
+          },
+          {
+            path: 'tasks/board',
+            element: <EmployeeTasks />,
+          },
+          {
+            path: 'tasks/pending',
+            element: <PendingTasksPage />,
+          },
+          {
+            path: 'tasks/completed',
+            element: <CompletedTasksPage />,
+          },
+          {
+            path: 'tasks/cancelled',
+            element: <CancelledTasksPage />,
+          },
+          {
+            path: 'tasks/today',
+            element: <EmployeeTasks />,
+          },
+          {
+            path: 'tasks/processing',
+            element: <EmployeeTasks />,
+          },
+          {
+            path: 'tasks/view/:id',
+            element: <EmployeeTaskDetails />,
           },
         ],
       },
