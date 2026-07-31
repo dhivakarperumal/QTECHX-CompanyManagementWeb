@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
 import { CalendarDays, Loader2, RefreshCw, Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const LeaveHistory = () => {
   const [leaves, setLeaves] = useState([]);
@@ -13,6 +14,7 @@ const LeaveHistory = () => {
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
   const [dateFilter, setDateFilter] = useState("All");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchLeaves();
@@ -149,8 +151,22 @@ const LeaveHistory = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchLeaves} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
-            <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
+          <button
+            onClick={() => navigate("/employee/leaves/apply")}
+            className="h-9 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition flex items-center gap-2"
+          >
+            <CalendarDays size={15} />
+            Apply Leave
+          </button>
+
+          <button
+            onClick={fetchLeaves}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
+          >
+            <RefreshCw
+              size={15}
+              className={loading ? "animate-spin text-orange-500" : ""}
+            />
           </button>
         </div>
       </div>
@@ -211,25 +227,25 @@ const LeaveHistory = () => {
               ))}
             </select>
 
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
+            >
+              <option
+                value="Newest"
+                className="bg-[#1a1d24] text-white"
               >
-                <option
-                  value="Newest"
-                  className="bg-[#1a1d24] text-white"
-                >
-                  Newest First
-                </option>
+                Newest First
+              </option>
 
-                <option
-                  value="Oldest"
-                  className="bg-[#1a1d24] text-white"
-                >
-                  Oldest First
-                </option>
-              </select>
+              <option
+                value="Oldest"
+                className="bg-[#1a1d24] text-white"
+              >
+                Oldest First
+              </option>
+            </select>
 
 
             <select
@@ -287,7 +303,7 @@ const LeaveHistory = () => {
 
             <div className="flex gap-2">
 
-            
+
               <button
                 onClick={() => {
                   setSearchTerm("");

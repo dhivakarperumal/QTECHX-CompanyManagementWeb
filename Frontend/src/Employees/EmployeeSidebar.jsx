@@ -44,12 +44,9 @@ const navItems = [
 
   /* ---- LEAVE ---- */
   {
+    path: "/employee/leaves/history",
     label: "My Leave",
-    icon: CalendarOff,
-    children: [
-      { path: "/employee/leaves/apply", label: "Apply Leave", icon: FileText },
-      { path: "/employee/leaves/history", label: "Leave History", icon: CalendarDays },
-    ],
+    icon: CalendarDays,
   },
 
   /* ---- PROJECTS ---- */
