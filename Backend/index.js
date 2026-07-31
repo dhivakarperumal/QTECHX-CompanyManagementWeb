@@ -34,6 +34,7 @@ const incomeRouter = require("./src/routers/incomeRouter");
 const eventRouter = require("./src/routers/eventRouter");
 const myEventRouter = require("./src/routers/myEventRouter");
 const dashboardRouter = require("./src/routers/dashboardRouter");
+const employeeLeaveRouter = require("./src/routers/employeeLeaveRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -87,6 +88,7 @@ app.use("/api/incomes", incomeRouter);
 app.use("/api/events", eventRouter);
 app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/employee-leaves", employeeLeaveRouter);
 
 // Explicit API 404 to prevent API paths from being handled by frontend fallback
 app.use("/api/*", (req, res) => {
