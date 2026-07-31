@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
 
 const AdminLeaveManagement = () => {
   const [leaves, setLeaves] = useState([]);
@@ -9,6 +9,8 @@ const AdminLeaveManagement = () => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [actionModal, setActionModal] = useState({ show: false, action: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
     fetchLeaves();
@@ -66,6 +68,15 @@ const AdminLeaveManagement = () => {
     }
   };
 
+  const filteredLeaves = leaves.filter(leave => {
+    const fullName = `${leave.first_name || ''} ${leave.last_name || ''}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) || 
+                          (leave.employee_code || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || leave.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -82,6 +93,32 @@ const AdminLeaveManagement = () => {
           <button onClick={fetchLeaves} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
             <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
           </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <input
+            type="text"
+            placeholder="Search by name or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500 transition"
+          />
+        </div>
+        <div className="relative">
+          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appearance-none rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-10 text-sm text-white outline-none focus:border-orange-500 transition cursor-pointer"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
         </div>
       </div>
 
@@ -104,12 +141,12 @@ const AdminLeaveManagement = () => {
                 <tr>
                   <td colSpan="7" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
                 </tr>
-              ) : leaves.length === 0 ? (
+              ) : filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found.</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found matching filters.</td>
                 </tr>
               ) : (
-                leaves.map((leave) => (
+                filteredLeaves.map((leave) => (
                   <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>

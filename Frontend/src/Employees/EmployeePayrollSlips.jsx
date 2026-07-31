@@ -3,6 +3,7 @@ import { DollarSign, Printer, X, Loader2, FileText, AlertCircle, Search } from '
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
+import { Link } from 'react-router-dom';
 
 const EmployeePayrollSlips = () => {
   const { user } = useAuth();
@@ -72,6 +73,12 @@ const EmployeePayrollSlips = () => {
 
         {/* Right */}
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/employee/payroll"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-400 hover:bg-orange-500/20 transition border border-orange-500/30"
+          >
+            View Full History
+          </Link>
           {/* Search */}
           <div className="relative">
             <Search
