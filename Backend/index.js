@@ -5,6 +5,13 @@ const path = require("path");
 const { AsyncLocalStorage } = require("async_hooks");
 const jwt = require("jsonwebtoken");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+console.table({
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: process.env.DB_PORT,
+  DB_NAME: process.env.DB_NAME,
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+});
 
 const { initDB } = require("./src/config/db");
 const usersRouter = require("./src/routers/usersRouter");
@@ -47,7 +54,7 @@ app.use(
         const url = new URL(origin);
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
         if (isLocalhost) return callback(null, origin);
-      } catch (err) {}
+      } catch (err) { }
       const allowed = ["https://myqtechx.qtechx.com"];
       if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
@@ -60,7 +67,7 @@ app.use(
 
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
-app.use("/api/users",   usersRouter);
+app.use("/api/users", usersRouter);
 app.use("/api/employees", employeesRouter);
 app.use("/api/quotations", quotationRouter);
 app.use("/api/attendance", attendanceRouter);
@@ -140,14 +147,14 @@ if (frontendBuildPath) {
 
 // ── Stub routes for features not yet implemented in this backend ──────────────
 // These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
-app.get("/api/cart/:userId",           (req, res) => res.json({ success: true, data: [] }));
-app.get("/api/wishlist/:userId",       (req, res) => res.json({ success: true, data: [] }));
-app.post("/api/cart",                  (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
-app.post("/api/wishlist",              (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
-app.delete("/api/cart/:id",            (req, res) => res.json({ success: true }));
-app.put("/api/cart/:id",               (req, res) => res.json({ success: true }));
-app.delete("/api/cart/clear/:userId",  (req, res) => res.json({ success: true }));
-app.delete("/api/wishlist/:uid/:pid",  (req, res) => res.json({ success: true }));
+app.get("/api/cart/:userId", (req, res) => res.json({ success: true, data: [] }));
+app.get("/api/wishlist/:userId", (req, res) => res.json({ success: true, data: [] }));
+app.post("/api/cart", (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
+app.post("/api/wishlist", (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
+app.delete("/api/cart/:id", (req, res) => res.json({ success: true }));
+app.put("/api/cart/:id", (req, res) => res.json({ success: true }));
+app.delete("/api/cart/clear/:userId", (req, res) => res.json({ success: true }));
+app.delete("/api/wishlist/:uid/:pid", (req, res) => res.json({ success: true }));
 
 
 // Global Context Middleware for tracking created_by / updated_by
