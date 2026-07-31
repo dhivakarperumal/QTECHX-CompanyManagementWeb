@@ -117,7 +117,14 @@ async function login(req, res) {
     }
 
     const token = jwt.sign(
-      { user_id: user.user_id, username: user.username, role: user.role, email: user.email },
+      {
+        user_id: user.user_id,
+        employee_id: user.user_id,
+        id: user.user_id,
+        username: user.username,
+        role: user.role,
+        email: user.email,
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
