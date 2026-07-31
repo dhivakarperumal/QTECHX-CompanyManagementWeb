@@ -46,6 +46,8 @@ import TodayTasksPage from './Employees/TodayTasksPage.jsx'
 import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
 import PendingTasksPage from './Employees/PendingTasksPage.jsx'
 import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
+import EmployeePayroll from './Employees/EmployeePayroll.jsx'
+import EmployeePayrollSlips from './Employees/EmployeePayrollSlips.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -69,6 +71,9 @@ import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
 import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
+
+import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
+import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
 
 import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
 import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
@@ -411,12 +416,20 @@ const router = createHashRouter([
             element: <EmployeeTaskDetails />,
           },
           {
-            path: 'timesheet',
-            element: <EmployeeTimesheetPage />,
+            path: 'payroll',
+            element: <EmployeePayroll />,
           },
           {
-            path: 'timesheet/log',
-            element: <EmployeeTimesheetPage />,
+            path: 'payroll/slips',
+            element: <EmployeePayrollSlips />,
+          },
+          {
+            path: 'attendance',
+            element: <EmployeeAttendance />,
+          },
+          {
+            path: 'attendance/summary',
+            element: <EmployeeAttendanceSummary />,
           },
         ],
       },
