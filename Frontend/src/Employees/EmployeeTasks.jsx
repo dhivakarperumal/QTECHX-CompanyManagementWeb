@@ -58,6 +58,14 @@ function initials(name = '') {
   return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'T';
 }
 
+const getCancelReason = (comments) => {
+  if (!comments) return null;
+  const matches = comments.match(/\[Cancelled\]:\s*(.*)/g);
+  if (!matches || matches.length === 0) return null;
+  const lastMatch = matches[matches.length - 1];
+  return lastMatch.replace(/\[Cancelled\]:\s*/, '').trim();
+};
+
 function TaskAvatar({ name, index }) {
   const c = AVATAR_COLOURS[(index || 0) % AVATAR_COLOURS.length];
   return (
@@ -141,6 +149,10 @@ export default function EmployeeTasks() {
   const [viewMode, setViewMode] = useState('table');
   const [updatingTaskId, setUpdatingTaskId] = useState('');
   const [statusMessage, setStatusMessage] = useState({ text: '', type: 'success' });
+  const [cancelModal, setCancelModal] = useState({ isOpen: false, task: null, reason: '' });
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
 
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id;
 
@@ -154,25 +166,32 @@ export default function EmployeeTasks() {
   }, [location.pathname]);
 
   /* load ─────────────────────────────────────────────────────── */
-  const loadTasks = async (customSearch = searchQuery) => {
+  const loadTasks = async (customSearch = searchQuery, customPage = page) => {
     if (!employeeId) { setLoading(false); setError('Unable to resolve your employee profile.'); return; }
     try {
       setLoading(true); setError('');
       const { data } = await api.get('/tasks', {
-        params: { page: 1, limit: 120, assigned_to: employeeId, search: customSearch || undefined },
+        params: {
+          page: customPage,
+          limit,
+          assigned_to: employeeId,
+          search: customSearch || undefined,
+        },
       });
       setTasks((data?.data || []).map(task => ({
         ...task,
         status: normalizeStatus(task.status),
         attachments: parseAttachments(task.attachments),
       })));
+      setPagination(data?.pagination || { page: customPage, limit, total: 0, pages: 1 });
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load your assigned tasks.');
       setTasks([]);
+      setPagination({ page: customPage, limit, total: 0, pages: 1 });
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { loadTasks(searchQuery); }, [employeeId, searchQuery]);
+  useEffect(() => { loadTasks(searchQuery, page); }, [employeeId, searchQuery, page, filterKey]);
 
   /* derived ──────────────────────────────────────────────────── */
   const visibleTasks = useMemo(() => {
@@ -189,11 +208,11 @@ export default function EmployeeTasks() {
   }, [filterKey, searchQuery, tasks]);
 
   const counts = useMemo(() => ({
-    total:      tasks.length,
+    total:      pagination.total || tasks.length,
     completed:  tasks.filter(t => t.status === 'Completed').length,
     pending:    tasks.filter(t => ['Pending', 'To Do'].includes(t.status)).length,
     inProgress: tasks.filter(t => ['In Progress', 'Review', 'Testing'].includes(t.status)).length,
-  }), [tasks]);
+  }), [pagination.total, tasks]);
 
   const boardColumns = useMemo(() => ({
     'Pending':     visibleTasks.filter(t => t.status === 'Pending'),
@@ -207,13 +226,16 @@ export default function EmployeeTasks() {
     setTimeout(() => setStatusMessage({ text: '', type: 'success' }), 3500);
   };
 
-  const updateTaskStatus = async (task, nextStatus = 'Completed', zipFile = null) => {
+  const updateTaskStatus = async (task, nextStatus = 'Completed', zipFile = null, reason = null) => {
     try {
       setUpdatingTaskId(task.uuid);
       const payload = {
         status: nextStatus,
         completion_date: nextStatus === 'Completed' ? new Date().toISOString() : task.completion_date,
       };
+      if (reason) {
+        payload.comments = task.comments ? `${task.comments}\n[Cancelled]: ${reason}` : `[Cancelled]: ${reason}`;
+      }
       if (zipFile) {
         const base64 = await readFileAsBase64(zipFile);
         payload.attachmentBase64 = base64;
@@ -232,6 +254,14 @@ export default function EmployeeTasks() {
     if (!attachment?.path) return;
     const safePath = attachment.path.replace(/\\/g, '/');
     window.open(`${api.defaults.baseURL}/${safePath}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleStatusChange = (task, newStatus) => {
+    if (newStatus === 'Cancelled') {
+      setCancelModal({ isOpen: true, task, reason: '' });
+    } else {
+      updateTaskStatus(task, newStatus);
+    }
   };
 
   /* stat cards ───────────────────────────────────────────────── */
@@ -307,6 +337,7 @@ export default function EmployeeTasks() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            setPage(1);
             const params = new URLSearchParams(location.search);
             if (searchQuery.trim()) params.set('search', searchQuery.trim());
             else params.delete('search');
@@ -332,7 +363,10 @@ export default function EmployeeTasks() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => navigate(`/employee/tasks${tab.key === 'all' ? '' : `/${tab.key}`}`)}
+                  onClick={() => {
+                    setPage(1);
+                    navigate(`/employee/tasks${tab.key === 'all' ? '' : `/${tab.key}`}`);
+                  }}
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     active ? 'bg-primary text-black shadow-[0_2px_8px_rgba(248,116,14,0.35)]' : 'text-white/55 hover:text-white hover:bg-white/6'
                   }`}
@@ -427,6 +461,12 @@ export default function EmployeeTasks() {
                             {task.module_name && (
                               <div className="mt-0.5 text-[11px] text-white/40">{task.module_name}</div>
                             )}
+                            {task.status === 'Cancelled' && getCancelReason(task.comments) && (
+                              <div className="mt-1.5 text-[11px] text-rose-300/80 bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-500/20 max-w-sm line-clamp-2" title={getCancelReason(task.comments)}>
+                                <span className="font-semibold mr-1">Reason:</span>
+                                {getCancelReason(task.comments)}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -464,7 +504,7 @@ export default function EmployeeTasks() {
                           <select
                             value={task.status}
                             disabled={isUpdating}
-                            onChange={async (e) => updateTaskStatus(task, e.target.value)}
+                            onChange={(e) => handleStatusChange(task, e.target.value)}
                             className={`appearance-none rounded-full border text-[10px] font-bold pl-6 pr-5 py-1 outline-none cursor-pointer transition-all ${
                               (STATUS_STYLES[task.status] || STATUS_STYLES.Pending).pill
                             } bg-transparent`}
@@ -581,6 +621,14 @@ export default function EmployeeTasks() {
                   <StatusPill status={task.status} />
                 </div>
 
+                {/* cancel reason */}
+                {task.status === 'Cancelled' && getCancelReason(task.comments) && (
+                  <div className="mt-0.5 mb-1 text-[11px] text-rose-300/80 bg-rose-500/10 px-2.5 py-1.5 rounded-lg border border-rose-500/20 line-clamp-3">
+                    <span className="font-semibold block mb-0.5 text-rose-400/80">Cancellation Reason:</span>
+                    {getCancelReason(task.comments)}
+                  </div>
+                )}
+
                 {/* meta */}
                 <div className="space-y-1.5 text-[12px] text-white/50">
                   <div className="flex items-center gap-2">
@@ -661,6 +709,85 @@ export default function EmployeeTasks() {
           })}
         </div>
       ) : null}
+
+      {!loading && !error && pagination.pages > 1 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
+          <p className="text-xs text-white/30">
+            Page <span className="text-white/55 font-semibold">{page}</span> / <span className="text-white/55 font-semibold">{pagination.pages}</span>
+            &nbsp;·&nbsp;{pagination.total} total
+          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
+            >
+              <ChevronDown size={14} className="rotate-90" />
+            </button>
+            {Array.from({ length: Math.min(5, pagination.pages) }, (_, idx) => {
+              const pg = Math.max(1, Math.min(page - 2, pagination.pages - 4)) + idx;
+              const safePg = Math.min(pg, pagination.pages);
+              return (
+                <button
+                  key={safePg}
+                  type="button"
+                  onClick={() => setPage(safePg)}
+                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${
+                    safePg === page ? 'bg-primary text-white shadow-md' : 'bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {safePg}
+                </button>
+              );
+            })}
+            <button
+              disabled={page >= pagination.pages}
+              onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+              className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition"
+            >
+              <ChevronDown size={14} className="-rotate-90" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* cancel modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d24] p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-rose-400 mb-2">Cancel Task</h3>
+            <p className="text-sm text-white/50 mb-4">
+              Please provide a reason for cancelling <strong>{cancelModal.task?.task_name}</strong>.
+            </p>
+            <textarea
+              className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-rose-500/50 min-h-[100px]"
+              placeholder="Enter cancellation reason..."
+              value={cancelModal.reason}
+              onChange={(e) => setCancelModal(prev => ({ ...prev, reason: e.target.value }))}
+            />
+            <div className="flex items-center justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setCancelModal({ isOpen: false, task: null, reason: '' })}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                disabled={!cancelModal.reason.trim()}
+                onClick={() => {
+                  updateTaskStatus(cancelModal.task, 'Cancelled', null, cancelModal.reason);
+                  setCancelModal({ isOpen: false, task: null, reason: '' });
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-rose-500 text-white hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

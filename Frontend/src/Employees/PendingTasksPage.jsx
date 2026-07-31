@@ -121,6 +121,7 @@ export default function PendingTasksPage() {
   const [viewMode,   setViewMode]         = useState('table');
   const [updatingId, setUpdatingId]       = useState('');
   const [toast,      setToast]            = useState({ text: '', type: 'success' });
+  const [cancelModal, setCancelModal]     = useState({ isOpen: false, task: null, reason: '' });
 
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id;
 
@@ -165,10 +166,16 @@ export default function PendingTasksPage() {
 
   const showToast = (text, type = 'success') => { setToast({ text, type }); setTimeout(() => setToast({ text: '', type: 'success' }), 3200); };
 
-  const markComplete = async (task, zipFile = null) => {
+  const updateTaskStatus = async (task, nextStatus = 'Completed', zipFile = null, reason = null) => {
     try {
       setUpdatingId(task.uuid);
-      const payload = { status: 'Completed', completion_date: new Date().toISOString() };
+      const payload = {
+        status: nextStatus,
+        completion_date: nextStatus === 'Completed' ? new Date().toISOString() : task.completion_date,
+      };
+      if (reason) {
+        payload.comments = task.comments ? `${task.comments}\n[Cancelled]: ${reason}` : `[Cancelled]: ${reason}`;
+      }
       if (zipFile) {
         const base64 = await readFileAsBase64(zipFile);
         payload.attachmentBase64 = base64;
@@ -176,11 +183,19 @@ export default function PendingTasksPage() {
         payload.attachmentType   = zipFile.type || 'application/zip';
       }
       await api.put(`/tasks/${task.uuid}`, payload);
-      showToast(`"${task.task_name}" marked as Completed!`);
+      showToast(`"${task.task_name}" marked as ${nextStatus}!`);
       await load();
     } catch (err) {
       showToast(err?.response?.data?.message || 'Unable to update task.', 'error');
     } finally { setUpdatingId(''); }
+  };
+
+  const handleStatusChange = (task, newStatus) => {
+    if (newStatus === 'Cancelled') {
+      setCancelModal({ isOpen: true, task, reason: '' });
+    } else {
+      updateTaskStatus(task, newStatus);
+    }
   };
 
   const handleDownload = (att) => {
@@ -409,12 +424,30 @@ export default function PendingTasksPage() {
                         </span>
                       </td>
 
-                      {/* status pill */}
+                      {/* status dropdown */}
                       <td className="px-5 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full ${sStyle.pill}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${sStyle.dot}`} />
-                          {task.status}
-                        </span>
+                        <div className="relative inline-block">
+                          <select
+                            value={task.status}
+                            disabled={updating}
+                            onChange={(e) => handleStatusChange(task, e.target.value)}
+                            className={`appearance-none rounded-full border text-[10px] font-bold pl-6 pr-5 py-1 outline-none cursor-pointer transition-all ${
+                              sStyle.pill
+                            } bg-transparent`}
+                          >
+                            {STATUS_OPTIONS.map((v) => (
+                              <option key={v} value={v} className="bg-[#111318] text-white font-normal text-xs">{v}</option>
+                            ))}
+                          </select>
+                          <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                            sStyle.dot
+                          }`} />
+                          {updating ? (
+                            <Loader2 size={10} className="absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-white/50" />
+                          ) : (
+                            <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none" />
+                          )}
+                        </div>
                       </td>
 
                       {/* actions */}
@@ -441,7 +474,7 @@ export default function PendingTasksPage() {
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
-                                await markComplete(task, file);
+                                await updateTaskStatus(task, 'Completed', file);
                                 e.target.value = '';
                               }}
                             />
@@ -451,7 +484,7 @@ export default function PendingTasksPage() {
                             type="button"
                             title="Mark complete"
                             disabled={updating}
-                            onClick={() => markComplete(task)}
+                            onClick={() => updateTaskStatus(task, 'Completed')}
                             className="w-8 h-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                           >
                             {updating ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={14} />}
@@ -505,10 +538,23 @@ export default function PendingTasksPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${sStyle.pill}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${sStyle.dot}`} />
-                      {task.status}
-                    </span>
+                    <div className="relative inline-block">
+                      <select
+                        value={task.status}
+                        disabled={updating}
+                        onChange={(e) => handleStatusChange(task, e.target.value)}
+                        className={`appearance-none rounded-full border text-[9px] font-bold pl-5 pr-4 py-0.5 outline-none cursor-pointer transition-all ${
+                          sStyle.pill
+                        } bg-transparent`}
+                      >
+                        {STATUS_OPTIONS.map((v) => (
+                          <option key={v} value={v} className="bg-[#111318] text-white font-normal text-xs">{v}</option>
+                        ))}
+                      </select>
+                      <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                        sStyle.dot
+                      }`} />
+                    </div>
                     {overdue && (
                       <span className="text-[9px] font-bold text-rose-400 flex items-center gap-0.5">
                         <Flame size={8} /> Overdue
@@ -560,7 +606,7 @@ export default function PendingTasksPage() {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        await markComplete(task, file);
+                        await updateTaskStatus(task, 'Completed', file);
                         e.target.value = '';
                       }}
                     />
@@ -570,7 +616,7 @@ export default function PendingTasksPage() {
                     type="button"
                     title="Mark complete"
                     disabled={updating}
-                    onClick={() => markComplete(task)}
+                    onClick={() => updateTaskStatus(task, 'Completed')}
                     className="w-9 h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50 shrink-0"
                   >
                     {updating ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
@@ -579,6 +625,44 @@ export default function PendingTasksPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* cancel modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d24] p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-rose-400 mb-2">Cancel Task</h3>
+            <p className="text-sm text-white/50 mb-4">
+              Please provide a reason for cancelling <strong>{cancelModal.task?.task_name}</strong>.
+            </p>
+            <textarea
+              className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-rose-500/50 min-h-[100px]"
+              placeholder="Enter cancellation reason..."
+              value={cancelModal.reason}
+              onChange={(e) => setCancelModal(prev => ({ ...prev, reason: e.target.value }))}
+            />
+            <div className="flex items-center justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setCancelModal({ isOpen: false, task: null, reason: '' })}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                disabled={!cancelModal.reason.trim()}
+                onClick={() => {
+                  updateTaskStatus(cancelModal.task, 'Cancelled', null, cancelModal.reason);
+                  setCancelModal({ isOpen: false, task: null, reason: '' });
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-rose-500 text-white hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

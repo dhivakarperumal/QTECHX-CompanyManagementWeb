@@ -41,6 +41,7 @@ import EmployeeProjects from './Employees/Employee Projects/EmployeeProjects.jsx
 import EmployeeProjectDetails from './Employees/Employee Projects/EmployeeProjectDetails.jsx'
 import EmployeeTasks from './Employees/EmployeeTasks.jsx'
 import EmployeeTaskDetails from './Employees/EmployeeTaskDetails.jsx'
+import TodayTasksPage from './Employees/TodayTasksPage.jsx'
 import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
 import PendingTasksPage from './Employees/PendingTasksPage.jsx'
 import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
@@ -377,7 +378,7 @@ const router = createHashRouter([
           },
           {
             path: 'tasks/today',
-            element: <EmployeeTasks />,
+            element: <TodayTasksPage />,
           },
           {
             path: 'tasks/processing',

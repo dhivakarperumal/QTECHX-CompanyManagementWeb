@@ -62,9 +62,10 @@ const navItems = [
     label: "My Tasks",
     icon: CheckSquare,
     children: [
+      { path: "/employee/tasks/today", label: "New Tasks", icon: CalendarDays },
       { path: "/employee/tasks", label: "All Tasks", icon: CheckSquare, exact: true },
-      { path: "/employee/tasks/completed", label: "Completed Tasks", icon: FolderKanban },
       { path: "/employee/tasks/pending", label: "Pending Tasks", icon: FileText },
+      { path: "/employee/tasks/completed", label: "Completed Tasks", icon: FolderKanban },
       { path: "/employee/tasks/cancelled", label: "Cancelled Tasks", icon: FileText },
     ],
   },

@@ -74,6 +74,15 @@ const formatDate = (value) => {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+const getCancelReason = (comments) => {
+  if (!comments) return null;
+  // Match the last occurrence if multiple exist
+  const matches = comments.match(/\[Cancelled\]:\s*(.*)/g);
+  if (!matches || matches.length === 0) return null;
+  const lastMatch = matches[matches.length - 1];
+  return lastMatch.replace(/\[Cancelled\]:\s*/, '').trim();
+};
+
 /* ═══════════════════════════════════════════════════════════════ */
 export default function CancelledTasksPage() {
   const { user } = useAuth();
@@ -287,7 +296,7 @@ export default function CancelledTasksPage() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/6">
-                  {['TASK', 'PROJECT', 'DUE DATE', 'PRIORITY', 'ATTACHMENTS', 'ACTIONS'].map(col => (
+                  {['TASK', 'PROJECT', 'DUE DATE', 'PRIORITY', 'REASON', 'ATTACHMENTS', 'ACTIONS'].map(col => (
                     <th key={col} className="px-5 py-3.5 text-[10px] font-bold tracking-widest text-white/35 uppercase whitespace-nowrap">
                       {col}
                     </th>
@@ -339,6 +348,17 @@ export default function CancelledTasksPage() {
                       <span className={`text-xs font-bold ${PRIORITY_STYLES[task.priority] || 'text-white/45'}`}>
                         {task.priority || 'Medium'}
                       </span>
+                    </td>
+
+                    {/* cancel reason */}
+                    <td className="px-5 py-4">
+                      {getCancelReason(task.comments) ? (
+                        <div className="text-[12px] text-rose-300/90 max-w-[200px] line-clamp-2" title={getCancelReason(task.comments)}>
+                          {getCancelReason(task.comments)}
+                        </div>
+                      ) : (
+                        <span className="text-[12px] text-white/20">—</span>
+                      )}
                     </td>
 
                     {/* attachments */}
@@ -409,6 +429,14 @@ export default function CancelledTasksPage() {
                   <XCircle size={9} /> Cancelled
                 </span>
               </div>
+
+              {/* cancel reason */}
+              {getCancelReason(task.comments) && (
+                <div className="mt-1 text-[11px] text-rose-300/80 bg-rose-500/10 px-2.5 py-1.5 rounded-lg border border-rose-500/20 line-clamp-3">
+                  <span className="font-semibold block mb-0.5 text-rose-400/80">Cancellation Reason:</span>
+                  {getCancelReason(task.comments)}
+                </div>
+              )}
 
               {/* meta */}
               <div className="space-y-1.5 text-[12px] text-white/45">
