@@ -131,25 +131,100 @@ const AttendancePage = () => {
     setIsModalOpen(true);
   };
 
+  // const handleLocation = () => {
+  //   if (!navigator.geolocation) {
+  //     setForm((prev) => ({ ...prev, location: "Geolocation not supported" }));
+  //     return;
+  //   }
+
+  //   navigator.geolocation.getCurrentPosition(
+  //     (position) => {
+  //       setForm((prev) => ({
+  //         ...prev,
+  //         location: `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`,
+  //       }));
+  //     },
+  //     () => {
+  //       setForm((prev) => ({ ...prev, location: "Location permission denied" }));
+  //     }
+  //   );
+  // };
+
+
   const handleLocation = () => {
     if (!navigator.geolocation) {
-      setForm((prev) => ({ ...prev, location: "Geolocation not supported" }));
+      setForm((prev) => ({
+        ...prev,
+        location: "Geolocation not supported",
+      }));
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setForm((prev) => ({
-          ...prev,
-          location: `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`,
-        }));
+      async (position) => {
+        try {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+
+          const data = await response.json();
+
+          const address = data.address || {};
+
+          const fullAddress = [
+            address.house_number,
+            address.road,
+            address.neighbourhood,
+            address.suburb,
+            address.village,
+            address.town,
+            address.city,
+            address.county,
+            address.state,
+            address.postcode,
+            address.country,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+          setForm((prev) => ({
+            ...prev,
+            location: `Latitude: ${latitude}
+Longitude: ${longitude}
+
+Address: ${fullAddress}`,
+          }));
+
+          console.log({
+            latitude,
+            longitude,
+            address: fullAddress,
+          });
+        } catch (err) {
+          console.error(err);
+
+          setForm((prev) => ({
+            ...prev,
+            location: `Latitude: ${position.coords.latitude}
+Longitude: ${position.coords.longitude}`,
+          }));
+        }
       },
-      () => {
-        setForm((prev) => ({ ...prev, location: "Location permission denied" }));
+      (error) => {
+        console.error(error);
+        alert("Unable to fetch location");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };
-
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
