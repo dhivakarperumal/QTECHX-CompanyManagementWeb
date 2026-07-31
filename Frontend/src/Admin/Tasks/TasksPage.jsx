@@ -89,8 +89,7 @@ const EMPTY_TASK_FORM = {
   module_name: '',
   task_name: '',
   description: '',
-  assigned_to: '',
-  assigned_by: '',
+  status: '',
   start_date: '',
   due_date: '',
   estimated_hours: '',
@@ -344,8 +343,7 @@ export default function TasksPage({ initialPageKey = null }) {
           module_name: task.module !== '—' ? task.module : '',
           task_name: task.name,
           description: task.description,
-          assigned_to: task.assigned_to_raw || '',
-          assigned_by: task.assigned_by_raw || '',
+          status: task.status || '',
           start_date: task.startDate || '',
           due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
@@ -1143,6 +1141,14 @@ export default function TasksPage({ initialPageKey = null }) {
                 ))}
               </select>
             </FieldBox>
+            <FieldBox label="Status">
+              <select value={taskUpdateForm.status} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, status: e.target.value }))} className={inputCls}>
+                <option value="" disabled>Select status</option>
+                {['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </FieldBox>
             <FieldBox label="Start Date">
               <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
             </FieldBox>
@@ -1151,12 +1157,6 @@ export default function TasksPage({ initialPageKey = null }) {
             </FieldBox>
             <FieldBox label="Estimated Hours">
               <input type="number" min="0" value={taskUpdateForm.estimated_hours} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
-            </FieldBox>
-            <FieldBox label="Assigned To">
-              <input value={taskUpdateForm.assigned_to} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee ID" />
-            </FieldBox>
-            <FieldBox label="Assigned By">
-              <input value={taskUpdateForm.assigned_by} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager ID" />
             </FieldBox>
             <div className="sm:col-span-2">
               <FieldBox label="Description">
@@ -1242,7 +1242,7 @@ export default function TasksPage({ initialPageKey = null }) {
         subtitle="Fill in the details below to create a new task."
         icon={Plus}
         footer={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button type="button" onClick={handleSaveTask} disabled={savingTask}
               className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
               {savingTask ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Plus size={14} /> Save Task</>}
@@ -1287,11 +1287,13 @@ export default function TasksPage({ initialPageKey = null }) {
               ))}
             </select>
           </FieldBox>
-          <FieldBox label="Assigned To">
-            <input value={taskForm.assigned_to} onChange={(e) => setTaskForm((p) => ({ ...p, assigned_to: e.target.value }))} className={inputCls} placeholder="Employee name or ID" />
-          </FieldBox>
-          <FieldBox label="Assigned By">
-            <input value={taskForm.assigned_by} onChange={(e) => setTaskForm((p) => ({ ...p, assigned_by: e.target.value }))} className={inputCls} placeholder="Manager name or ID" />
+          <FieldBox label="Status">
+            <select value={taskForm.status} onChange={(e) => setTaskForm((p) => ({ ...p, status: e.target.value }))} className={inputCls}>
+              <option value="" disabled>Select status</option>
+              {['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
           </FieldBox>
           <FieldBox label="Start Date">
             <input type="date" value={taskForm.start_date} onChange={(e) => setTaskForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
@@ -1302,9 +1304,11 @@ export default function TasksPage({ initialPageKey = null }) {
           <FieldBox label="Estimated Hours">
             <input type="number" min="0" value={taskForm.estimated_hours} onChange={(e) => setTaskForm((p) => ({ ...p, estimated_hours: e.target.value }))} className={inputCls} placeholder="e.g. 8" />
           </FieldBox>
-          <FieldBox label="Description">
-            <textarea value={taskForm.description} onChange={(e) => setTaskForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Brief description of the task..." />
-          </FieldBox>
+          <div className="sm:col-span-2">
+            <FieldBox label="Description">
+              <textarea value={taskForm.description} onChange={(e) => setTaskForm((p) => ({ ...p, description: e.target.value }))} rows={3} className={inputCls + ' resize-none'} placeholder="Brief description of the task..." />
+            </FieldBox>
+          </div>
           <div className="sm:col-span-2">
             <FieldBox label="Attachment (PDF, Word, Excel, etc.)">
               <label
@@ -1350,7 +1354,7 @@ export default function TasksPage({ initialPageKey = null }) {
         subtitle="Select a project, pick a task and assign it to an employee."
         icon={UserPlus}
         footer={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button type="button" onClick={handleAssignTask} disabled={assigningTask}
               className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
               {assigningTask ? <><Loader2 size={14} className="animate-spin" /> Assigning...</> : <><UserPlus size={14} /> Assign Task</>}
