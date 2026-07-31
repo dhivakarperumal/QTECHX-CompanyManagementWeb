@@ -301,18 +301,29 @@ const MyCalendar = () => {
 
   const fetchEvents = async () => {
     try {
+      setIsLoading(true);
       const res = await api.get('/myevents');
-      const userId = user?.id || user?._id || user?.userId;
-      let userEvents = res.data;
+      const payload = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+          ? res.data.data
+          : [];
+
+      const userId = user?.id || user?._id || user?.userId || user?.employee_id || user?.employeeId || user?.uuid;
+      let userEvents = payload;
+
       if (userId) {
-        userEvents = res.data.filter(evt => {
-          const evtUserId = evt.user_id || evt.userId || evt.employeeId;
-          return String(evtUserId) === String(userId);
+        userEvents = payload.filter((evt) => {
+          const evtUserId = evt.user_id || evt.userId || evt.employeeId || evt.employee_id;
+          return evtUserId != null && String(evtUserId) === String(userId);
         });
       }
+
       setEvents(userEvents);
     } catch (error) {
+      console.error('Failed to load my calendar events', error);
       toast.error('Failed to load events.');
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
