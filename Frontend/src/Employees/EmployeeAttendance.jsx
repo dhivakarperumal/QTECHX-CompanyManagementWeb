@@ -26,14 +26,14 @@ const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
 const EmployeeAttendance = () => {
   const { user } = useAuth();
   const todayDate = new Date().toISOString().slice(0, 10);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [hasMarkedToday, setHasMarkedToday] = useState(false);
-  
+
   const [form, setForm] = useState({
     date: todayDate,
     check_in_time: '09:30',
@@ -176,7 +176,7 @@ const EmployeeAttendance = () => {
             ...prev,
             location: `Latitude: ${latitude}\nLongitude: ${longitude}\n\nAddress: ${fullAddress}`,
           }));
-          
+
           if (distance > ALLOWED_RADIUS_METERS) {
             setError(`You are ${Math.round(distance)}m away from the office. You must be within ${ALLOWED_RADIUS_METERS}m to mark attendance.`);
           } else {
@@ -209,7 +209,7 @@ const EmployeeAttendance = () => {
       alert(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to mark attendance. Please fetch your location.`);
       return;
     }
-    
+
     setSubmitting(true);
     try {
       // Prioritize UUID for DB insertion to prevent integer/string mismatch
@@ -249,7 +249,7 @@ const EmployeeAttendance = () => {
           <p className="mt-2 text-sm text-white/60">Mark your daily check-in/out while present at the office.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button 
+          <button
             onClick={() => {
               if (hasMarkedToday) {
                 alert("You have already marked your attendance for today.");
@@ -257,7 +257,7 @@ const EmployeeAttendance = () => {
               }
               setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
               setIsModalOpen(true);
-            }} 
+            }}
             disabled={hasMarkedToday}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-medium text-white transition ${hasMarkedToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
           >
@@ -281,100 +281,104 @@ const EmployeeAttendance = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f172a] p-6 shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Daily Record</p>
-                <h3 className="text-xl font-semibold">Mark My Attendance</h3>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
-                <X size={16} />
-              </button>
-            </div>
-
-            {error && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-rose-500/40 bg-rose-900/20 p-4 text-sm text-rose-200">
-                <AlertCircle size={16} className="shrink-0" /> {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Date (Today only)</label>
-                <input 
-                  type="date" 
-                  name="date" 
-                  value={form.date} 
-                  disabled 
-                  className="w-full rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/50 cursor-not-allowed" 
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                  <option value="Present" className="bg-slate-900">Present</option>
-                  <option value="Absent" className="bg-slate-900">Absent</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Working Hours</label>
-                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
-                  <Clock3 size={16} className="text-orange-400" />
-                  <span>{metrics.working_hours}</span>
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70 p-4">
+          <div className="flex min-h-full items-start justify-center py-8">
+            <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 max-h-[90vh] overflow-hidden">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0f172a] px-6 py-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Daily Record</p>
+                  <h3 className="text-xl font-semibold">Mark My Attendance</h3>
                 </div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Late Entry</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Early Exit</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Overtime</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/70">Office Location Verification *</label>
-                <div className="flex flex-col gap-3 md:flex-row">
-                  <textarea 
-                    name="location" 
-                    value={form.location} 
-                    readOnly 
-                    rows={3}
-                    placeholder="Use the button to verify you are at the office" 
-                    className="flex-1 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/60 resize-none cursor-not-allowed" 
-                  />
-                  <button type="button" onClick={handleLocation} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10">
-                    <MapPin size={16} /> Fetch Location
-                  </button>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 flex justify-end gap-3 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                <button 
-                  type="submit" 
-                  disabled={submitting || !isWithinRadius} 
-                  className={`rounded-2xl px-4 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
-                >
-                  {submitting ? "Saving..." : "Save Attendance"}
+                <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
+                  <X size={16} />
                 </button>
               </div>
-            </form>
+
+              <div className="max-h-[calc(90vh-80px)] overflow-y-auto px-6 py-5">
+                {error && (
+                  <div className="mt-4 flex items-center gap-2 rounded-2xl border border-rose-500/40 bg-rose-900/20 p-4 text-sm text-rose-200">
+                    <AlertCircle size={16} className="shrink-0" /> {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Date (Today only)</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={form.date}
+                      disabled
+                      className="w-full rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/50 cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
+                    <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
+                      <option value="Present" className="bg-slate-900">Present</option>
+                      <option value="Absent" className="bg-slate-900">Absent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
+                    <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
+                    <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Working Hours</label>
+                    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
+                      <Clock3 size={16} className="text-orange-400" />
+                      <span>{metrics.working_hours}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Late Entry</label>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Early Exit</label>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Overtime</label>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-sm text-white/70">Office Location Verification *</label>
+                    <div className="flex flex-col gap-3 md:flex-row">
+                      <textarea
+                        name="location"
+                        value={form.location}
+                        readOnly
+                        rows={3}
+                        placeholder="Use the button to verify you are at the office"
+                        className="flex-1 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/60 resize-none cursor-not-allowed"
+                      />
+                      <button type="button" onClick={handleLocation} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10">
+                        <MapPin size={16} /> Fetch Location
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 sticky bottom-0 bg-[#0f172a] border-t border-white/10 pt-4 mt-6 flex justify-end gap-3">
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
+                    <button
+                      type="submit"
+                      disabled={submitting || !isWithinRadius}
+                      className={`rounded-2xl px-4 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
+                    >
+                      {submitting ? "Saving..." : "Save Attendance"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       )}
