@@ -56,7 +56,7 @@ async function createTraineeInternHandler(req, res) {
       try {
         const hashedPassword = await bcrypt.hash(userPassword, 12);
         await createUser({
-          user_id: trainee.person_id || null, // Fixed: use returned trainee's person_id
+          user_id: trainee.uuid || null, // Fixed: use returned trainee's uuid
           username: username || null,
           email: req.body.official_email || traineeData.email_address || null,
           mobile: traineeData.mobile_number || null,
@@ -157,7 +157,7 @@ async function updateTraineeInternHandler(req, res) {
         if (userPassword) {
           userUpdates.password = await bcrypt.hash(userPassword, 12);
         }
-        await updateUser(existing.person_id, userUpdates); // Note: using existing.person_id
+        await updateUser(existing.uuid, userUpdates); // Note: using existing.uuid
       } catch (err) {
         console.error('Failed to update associated user account:', err);
       }
