@@ -81,6 +81,15 @@ app.use("/api/events", eventRouter);
 app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
 
+// Explicit API 404 to prevent API paths from being handled by frontend fallback
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+    path: req.originalUrl,
+  });
+});
+
 // Serve uploaded files from the backend uploads directory as inline browser content
 app.use(["/uploads", "/api/uploads"], (req, res, next) => {
   res.setHeader("Content-Disposition", "inline");
