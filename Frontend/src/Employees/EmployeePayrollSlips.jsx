@@ -53,38 +53,73 @@ const EmployeePayrollSlips = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl shadow-lg">
-        <div className="w-12 h-12 bg-orange-500/20 text-orange-400 rounded-xl flex items-center justify-center border border-orange-500/30">
-          <FileText size={24} />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">My Payroll Slips</h1>
-          <p className="text-xs text-white/50">View and print your monthly payslips</p>
-        </div>
-      </div>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl shadow-lg">
+        {/* Left */}
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-orange-500/20 text-orange-400 rounded-xl flex items-center justify-center border border-orange-500/30">
+            <FileText size={24} />
+          </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-end">
-        <div className="relative w-full sm:w-64">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search month, year, or amount"
-            className="w-full rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70"
-          />
+          <div>
+            <h1 className="text-xl font-bold text-white">
+              My Payroll Slips
+            </h1>
+            <p className="text-xs text-white/50">
+              View and print your monthly payslips
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="w-full sm:w-auto rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+
+        {/* Right */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"
+            />
+
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-60 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500"
+            />
+          </div>
+
+          {/* Month */}
+          <select
+            value={monthFilter}
+            onChange={(e) => setMonthFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500"
+          >
             <option value="all">All Months</option>
+
             {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-              <option key={month} value={month}>{new Date(0, month - 1).toLocaleString('default', { month: 'long' })}</option>
+              <option key={month} value={month}>
+                {new Date(0, month - 1).toLocaleString("default", {
+                  month: "long",
+                })}
+              </option>
             ))}
           </select>
-          <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="w-full sm:w-auto rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+
+          {/* Year */}
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500"
+          >
             <option value="all">All Years</option>
-            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-              <option key={year} value={year}>{year}</option>
+
+            {Array.from(
+              { length: 5 },
+              (_, i) => new Date().getFullYear() - i
+            ).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
             ))}
           </select>
         </div>
@@ -94,10 +129,10 @@ const EmployeePayrollSlips = () => {
         {(() => {
           const filteredHistory = history.filter(record => {
             const recordMonth = new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' }).toLowerCase();
-            const searchMatch = !search || 
-                                recordMonth.includes(search.toLowerCase()) || 
-                                String(record.salary_year).includes(search) || 
-                                String(record.total_salary).includes(search);
+            const searchMatch = !search ||
+              recordMonth.includes(search.toLowerCase()) ||
+              String(record.salary_year).includes(search) ||
+              String(record.total_salary).includes(search);
             const monthMatch = monthFilter === 'all' || Number(record.salary_month) === Number(monthFilter);
             const yearMatch = yearFilter === 'all' || Number(record.salary_year) === Number(yearFilter);
             return searchMatch && monthMatch && yearMatch;
