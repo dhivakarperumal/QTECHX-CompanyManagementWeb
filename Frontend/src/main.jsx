@@ -33,8 +33,7 @@ import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
 import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
 import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
-import TraineeDashboard from './Trainee/TraineeDashboard.jsx'
-import TraineeLayout from './Trainee/TraineePanel.jsx'
+
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
 import EmployeeMeetings from './Employees/EmployeeMeetings.jsx'
@@ -319,26 +318,7 @@ const router = createHashRouter([
       },
 
 
-       {
-        path: 'trainee',
-        element: (
-          <PrivateRoute allowedRoles={["Trainee"]}>
-            <TraineeLayout />
-          </PrivateRoute>
-        ),
-        children: [
-          {
-            index: true,
-            element: <TraineeDashboard />,
-          },
-          {
-            path: 'office-calendar',
-            element: <OfficeCalendar />,
-          },
-        ],
-      },
-    
-
+       
       {
         path: 'employee',
         element: (
