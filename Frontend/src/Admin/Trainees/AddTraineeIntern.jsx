@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Save, Loader2, CheckCircle, AlertCircle, UserCircle2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, Save, Loader2, CheckCircle, AlertCircle, UserCircle2, RefreshCw, KeyRound, Eye, EyeOff } from 'lucide-react';
 import api from '../../api';
 
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -14,6 +14,7 @@ const BLANK = {
   emergency_contact_name: '', emergency_contact_number: '', college_university: '', course: '',
   academic_department: '', year_semester: '', college_id_number: '', guide_name: '',
   profile_photo: '', resume: '', college_id_doc: '', offer_letter: '', internship_letter: '',
+  username: '', official_email: '', password: '', confirm_password: ''
 };
 
 const toForm = (item) => ({
@@ -22,6 +23,7 @@ const toForm = (item) => ({
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
+  username: item.username || '', official_email: item.official_email || item.email_address || '', password: '', confirm_password: ''
 });
 
 function buildUploadUrl(filePath) {
@@ -44,6 +46,8 @@ export default function AddTraineeIntern() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -76,7 +80,24 @@ export default function AddTraineeIntern() {
     })();
   }, [isEdit, formData.person_id]);
 
-  const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      if (!isEdit) {
+        if (name === 'full_name') {
+          const parts = value.trim().split(/\s+/);
+          const first = parts[0] || '';
+          const last = parts.length > 1 ? parts[parts.length - 1] : '';
+          newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/[^a-z0-9.]/g, '');
+        }
+        if (name === 'email_address') {
+          newData.official_email = value;
+        }
+      }
+      return newData;
+    });
+  };
   const handleFile = (e) => {
     const { name, files: selectedFiles } = e.target;
     if (!selectedFiles?.length) return;
@@ -87,6 +108,14 @@ export default function AddTraineeIntern() {
     e.preventDefault();
     if (!formData.full_name?.trim()) {
       setError('Full name is required.');
+      return;
+    }
+    if (!isEdit && formData.password !== formData.confirm_password) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (isEdit && formData.password && formData.password !== formData.confirm_password) {
+      setError('Passwords do not match.');
       return;
     }
     setLoading(true); setError(''); setSuccess('');
@@ -197,6 +226,43 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} /></label>
+          </div>
+        </section>
+
+        <section className={sectionClass}>
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><KeyRound size={15} className="text-orange-400" /></div>
+            <h2 className="text-base font-bold text-white">Login Credentials</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-white/60">
+              <span className="mb-1.5 block font-medium">Username {isEdit ? "" : <span className="text-red-500">*</span>}</span>
+              <input className={fieldClass} name="username" required={!isEdit} value={formData.username} onChange={handleChange} placeholder="Enter username for login" />
+            </label>
+            <label className="text-sm text-white/60">
+              <span className="mb-1.5 block font-medium">Official Email {isEdit ? "" : <span className="text-red-500">*</span>}</span>
+              <input className={fieldClass} type="email" name="official_email" required={!isEdit} value={formData.official_email} onChange={handleChange} placeholder="Enter official email" />
+            </label>
+            
+            <label className="text-sm text-white/60 relative">
+              <span className="mb-1.5 block font-medium">Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
+              <div className="relative">
+                <input className={fieldClass} type={showPassword ? "text" : "password"} name="password" required={!isEdit} value={formData.password} onChange={handleChange} placeholder={isEdit ? "Leave blank to keep unchanged" : "Enter password"} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </label>
+            
+            <label className="text-sm text-white/60 relative">
+              <span className="mb-1.5 block font-medium">Confirm Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
+              <div className="relative">
+                <input className={fieldClass} type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEdit && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} placeholder="Confirm password" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </label>
           </div>
         </section>
 
