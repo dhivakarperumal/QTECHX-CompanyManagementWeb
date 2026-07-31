@@ -1420,6 +1420,44 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensureEmployeeLeavesSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'employee_leaves'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS employee_leaves (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        employee_id VARCHAR(36) NOT NULL,
+        leave_type VARCHAR(50) NOT NULL,
+        from_date DATE NOT NULL,
+        to_date DATE NOT NULL,
+        no_of_days DECIMAL(5,2) NOT NULL,
+        day_type ENUM('Full Day', 'Half Day') DEFAULT 'Full Day',
+        half_day_type ENUM('Morning', 'Afternoon') NULL,
+        reason TEXT NOT NULL,
+        status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+        admin_reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36),
+        updated_by VARCHAR(36)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  } else {
+    const [columns] = await pool.execute("SHOW COLUMNS FROM employee_leaves");
+    const columnNames = new Set(columns.map((column) => column.Field));
+    const addColumnStatements = [];
+
+    if (!columnNames.has('half_day_type')) {
+      addColumnStatements.push("ADD COLUMN half_day_type ENUM('Morning', 'Afternoon') NULL");
+    }
+    
+    if (addColumnStatements.length) {
+      await pool.execute(`ALTER TABLE employee_leaves ${addColumnStatements.join(', ')}`);
+    }
+  }
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -1431,6 +1469,7 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
+    await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);
     await ensureExpenseSchema(pool);
     await ensureProjectPlanSchema(pool);

@@ -47,7 +47,6 @@ const navItems = [
     label: "My Leave",
     icon: CalendarOff,
     children: [
-      { path: "/employee/leaves", label: "My Leaves", icon: CalendarOff },
       { path: "/employee/leaves/apply", label: "Apply Leave", icon: FileText },
       { path: "/employee/leaves/history", label: "Leave History", icon: CalendarDays },
     ],
@@ -55,7 +54,7 @@ const navItems = [
 
   /* ---- PROJECTS ---- */
   { path: "/employee/projects", label: "My Projects", icon: FolderKanban },
-  
+
 
   /* ---- TASKS ---- */
   {
@@ -83,9 +82,9 @@ const navItems = [
   },
 
   /* ---- MEETINGS ---- */
-  { label: "Meetings",path: "/employee/meetings", label: "All Meetings", icon: Video },
-    
-    
+  { label: "Meetings", path: "/employee/meetings", label: "All Meetings", icon: Video },
+
+
 
   /* ---- CALENDAR ---- */
   {
@@ -108,34 +107,43 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
   useEffect(() => {
-    navItems.forEach((item) => {
-      if (item.children) {
-        const isChildActive = item.children.some(
-          (child) => {
-            if (child.exact) return location.pathname === child.path;
-            return location.pathname === child.path || location.pathname.startsWith(child.path + "/");
-          }
+    const activeMenu = navItems.find((item) => {
+      if (!item.children) return false;
+
+      return item.children.some((child) => {
+        if (child.exact) {
+          return location.pathname === child.path;
+        }
+
+        return (
+          location.pathname === child.path ||
+          location.pathname.startsWith(child.path + "/")
         );
-        if (isChildActive) setOpenMenu(item.label);
-      }
+      });
     });
+
+    setOpenMenu(activeMenu ? activeMenu.label : null);
   }, [location.pathname]);
 
-  const isRouteActive = (path, exact) => {
-    if (exact || path === "/employee" || path === "/") return location.pathname === path;
-    return location.pathname === path || location.pathname.startsWith(path + "/");
+  const isRouteActive = (path, exact = false) => {
+    if (exact) {
+      return location.pathname === path;
+    }
+
+    return location.pathname === path;
   };
 
-  const toggleMenu = (label) => setOpenMenu(openMenu === label ? null : label);
+  const toggleMenu = (label) => {
+    setOpenMenu((prev) => (prev === label ? null : label));
+  };
 
   return (
     <>
       {/* ========== MOBILE OVERLAY ========== */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${
-          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
       />
 
       {/* ========== SIDEBAR ========== */}
@@ -152,9 +160,8 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         {/* ========== LOGO ========== */}
         <div
-          className={`flex items-center gap-3 border-b border-white/10 shrink-0 ${
-            collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
-          }`}
+          className={`flex items-center gap-3 border-b border-white/10 shrink-0 ${collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
+            }`}
         >
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 p-1"
             style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.2) 0%, rgba(249,115,22,0.05) 100%)', border: '1px solid rgba(249,115,22,0.25)', boxShadow: '0 0 18px rgba(249,115,22,0.15), inset 0 1px 0 rgba(255,255,255,0.08)' }}
@@ -201,17 +208,15 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     className={`
                       w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-sm
                       transition-all duration-200
-                      ${
-                        isAnyChildActive
-                          ? "bg-primary/15 text-primary"
-                          : "text-white/60 hover:text-white hover:bg-white/8"
+                      ${isAnyChildActive
+                        ? "bg-primary/15 text-primary"
+                        : "text-white/60 hover:text-white hover:bg-white/8"
                       }
                     `}
                   >
                     <Icon
-                      className={`w-[18px] h-[18px] shrink-0 ${
-                        isAnyChildActive ? "text-primary" : ""
-                      }`}
+                      className={`w-[18px] h-[18px] shrink-0 ${isAnyChildActive ? "text-primary" : ""
+                        }`}
                     />
                     {!collapsed && (
                       <>
@@ -219,9 +224,8 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           {item.label}
                         </span>
                         <ChevronDown
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                            isMenuOpen ? "rotate-180" : ""
-                          }`}
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${isMenuOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </>
                     )}
@@ -230,15 +234,14 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-8 mt-1.5 space-y-1.5 overflow-hidden transition-all duration-200 ${
-                        isMenuOpen
-                          ? "max-h-60 opacity-100"
-                          : "max-h-0 opacity-0"
-                      }`}
+                      className={`ml-8 mt-1.5 space-y-1.5 overflow-hidden transition-all duration-200 ${isMenuOpen
+                        ? "max-h-60 opacity-100"
+                        : "max-h-0 opacity-0"
+                        }`}
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = isRouteActive(sub.path, sub.exact);
+                        const isActive = location.pathname === sub.path;
                         return (
                           <NavLink
                             key={sub.path}
@@ -247,10 +250,9 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             className={`
                               flex items-center gap-2.5 px-3 py-3 rounded-lg text-xs
                               transition-all duration-200
-                              ${
-                                isActive
-                                  ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
-                                  : "text-white/50 hover:text-white hover:bg-white/8"
+                              ${isActive
+                                ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
+                                : "text-white/50 hover:text-white hover:bg-white/8"
                               }
                             `}
                           >
@@ -277,10 +279,9 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 className={`
                   flex items-center gap-3 px-3 py-3.5 rounded-xl text-sm
                   transition-all duration-200
-                  ${
-                    isActive
-                      ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
-                      : "text-white/60 hover:text-white hover:bg-white/8"
+                  ${isActive
+                    ? "bg-primary text-white font-semibold shadow-md shadow-primary/30"
+                    : "text-white/60 hover:text-white hover:bg-white/8"
                   }
                   ${collapsed ? "justify-center" : ""}
                 `}
@@ -304,9 +305,8 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           "
         >
           <ChevronLeft
-            className={`w-3.5 h-3.5 transition-transform ${
-              collapsed ? "rotate-180" : ""
-            }`}
+            className={`w-3.5 h-3.5 transition-transform ${collapsed ? "rotate-180" : ""
+              }`}
           />
         </button>
 

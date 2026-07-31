@@ -14,6 +14,7 @@ import EmployeeList from './Admin/Employees/EmployeeList.jsx'
 import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
 // import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
 import EmployeeView from './Admin/Employees/EmployeeView.jsx'
+import AdminLeaveManagement from './Admin/Employees/AdminLeaveManagement.jsx'
 import AttendancePage from './Admin/AttendancePage.jsx'
 import AttendanceView from './Admin/AttendanceView.jsx'
 import OfficeCalendar from './Admin/OfficeCalendar.jsx'
@@ -48,6 +49,8 @@ import PendingTasksPage from './Employees/PendingTasksPage.jsx'
 import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
 import EmployeePayroll from './Employees/EmployeePayroll.jsx'
 import EmployeePayrollSlips from './Employees/EmployeePayrollSlips.jsx'
+import ApplyLeave from './Employees/Leaves/ApplyLeave.jsx'
+import LeaveHistory from './Employees/Leaves/LeaveHistory.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -255,6 +258,10 @@ const router = createHashRouter([
             element: <EmployeeView />,
           },
           {
+            path: 'employees/leave',
+            element: <AdminLeaveManagement />,
+          },
+          {
             path: 'trainees',
             element: <AllTraineeInterns />,
           },
@@ -430,6 +437,14 @@ const router = createHashRouter([
           {
             path: 'attendance/summary',
             element: <EmployeeAttendanceSummary />,
+          },
+          {
+            path: 'leaves/apply',
+            element: <ApplyLeave />,
+          },
+          {
+            path: 'leaves/history',
+            element: <LeaveHistory />,
           },
         ],
       },
