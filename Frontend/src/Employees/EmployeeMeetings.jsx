@@ -12,7 +12,7 @@ const EmployeeMeetings = () => {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('today');
   const [customDate, setCustomDate] = useState({ start: '', end: '' });
 
   const isUpcomingRoute = location.pathname.includes('/upcoming');
