@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 import api from '../api';
+import OfficeCalendarViewModal from './OfficeCalendarViewModal.jsx';
 import {
   CalendarDays,
   ChevronLeft,
@@ -1293,97 +1294,16 @@ const OfficeCalendar = () => {
         document.body
       )}
 
-      {/* ═══════════════════════ DRAWER ═══════════════════════ */}
-      {showDrawer && selectedEvent && createPortal(
-        <>
-          <div style={{ position:'fixed', inset:0, zIndex:9997, background:'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} onClick={() => setShowDrawer(false)} />
-          <div className="oc-drawer">
-            <div className="oc-drawer-hdr">
-              <div>
-                <div className="oc-drawer-sub">Event Details</div>
-                <div className="oc-drawer-ttl">{selectedEvent.title}</div>
-              </div>
-              <button className="oc-dr-close" onClick={() => setShowDrawer(false)}><X size={15} /></button>
-            </div>
-
-            {/* Type + Priority */}
-            <div className="oc-dr-card">
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                {(() => {
-                  const color = selectedEvent.color || EVENT_TYPE_META[selectedEvent.eventType]?.light || '#64748b';
-                  return (
-                    <span className="oc-type-badge" style={{ background:`${color}22`, color, borderColor:`${color}55` }}>
-                      {selectedEvent.eventType}
-                    </span>
-                  );
-                })()}
-                <span className={`oc-pri-badge ${selectedEvent.priority==='Critical'?'oc-pri-critical':selectedEvent.priority==='High'?'oc-pri-high':selectedEvent.priority==='Low'?'oc-pri-low':'oc-pri-medium'}`}>
-                  {selectedEvent.priority}
-                </span>
-              </div>
-              <div style={{ fontSize:13, color:'rgba(255,255,255,0.9)' }}>{selectedEvent.description||'No description provided.'}</div>
-            </div>
-
-            {/* Schedule */}
-            <div className="oc-dr-card">
-              <div className="oc-dr-card-ttl"><CalendarDays size={12} /> Schedule & Location</div>
-              <div className="oc-dr-row"><CalendarDays size={13} color="rgba(255,255,255,0.5)" /> {dayjs(selectedEvent.startDate).format('MMMM D, YYYY')}</div>
-              {!selectedEvent.allDay && <div className="oc-dr-row"><Clock3 size={13} color="rgba(255,255,255,0.5)" /> {selectedEvent.startTime} – {selectedEvent.endTime}</div>}
-              {selectedEvent.location  && <div className="oc-dr-row"><MapPin    size={13} color="rgba(255,255,255,0.5)" /> {selectedEvent.location}</div>}
-              {selectedEvent.project   && <div className="oc-dr-row"><Briefcase size={13} color="rgba(255,255,255,0.5)" /> {selectedEvent.project}</div>}
-              {selectedEvent.department&& <div className="oc-dr-row"><Building2 size={13} color="rgba(255,255,255,0.5)" /> {selectedEvent.department}</div>}
-            </div>
-
-            {/* Participants */}
-            <div className="oc-dr-card">
-              <div className="oc-dr-card-ttl"><Users size={12} /> Participants</div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                {ensureArrayField(selectedEvent?.participants).length > 0
-                  ? ensureArrayField(selectedEvent.participants).map((p,i) => {
-                      const displayName = typeof p === 'object' ? p.name : p;
-                      return <span key={`${displayName}-${i}`} className="oc-tag">{displayName}</span>;
-                    })
-                  : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No participants.</span>
-                }
-              </div>
-            </div>
-
-            {/* Attachments */}
-            <div className="oc-dr-card">
-              <div className="oc-dr-card-ttl"><Paperclip size={12} /> Attachments</div>
-              {ensureArrayField(selectedEvent?.attachments).length > 0
-                ? <ul style={{ paddingLeft:14, margin:0, fontSize:13, color:'rgba(255,255,255,0.9)' }}>
-                    {ensureArrayField(selectedEvent.attachments).map((a,i) => <li key={`${a}-${i}`}>{a}</li>)}
-                  </ul>
-                : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No attachments.</span>
-              }
-            </div>
-
-            {/* Activity */}
-            <div className="oc-dr-card">
-              <div className="oc-dr-card-ttl"><Eye size={12} /> Activity</div>
-              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                {ensureArrayField(selectedEvent?.activity).length > 0
-                  ? ensureArrayField(selectedEvent.activity).map((item,i) => (
-                      <div key={`${item}-${i}`} style={{ fontSize:12.5, color:'rgba(255,255,255,0.7)', background:'rgba(255,255,255,0.05)', borderRadius:8, padding:'5px 10px', border:'1px solid rgba(255,255,255,0.1)' }}>{item}</div>
-                    ))
-                  : <span style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)' }}>No activity recorded.</span>
-                }
-              </div>
-            </div>
-
-            <div style={{ marginTop: 8, padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-              <div>Created: {selectedEvent.createdDate ? dayjs(selectedEvent.createdDate).format('MMM D, YYYY') : 'N/A'} {selectedEvent.createdBy ? `by ${selectedEvent.createdBy}` : ''}</div>
-              <div>Updated: {selectedEvent.updatedDate ? dayjs(selectedEvent.updatedDate).format('MMM D, YYYY') : 'N/A'}</div>
-            </div>
-
-            <div className="oc-dr-actions">
-              <button className="oc-btn-edit" onClick={() => { setShowDrawer(false); openEditModal(selectedEvent); }}><Pencil size={14} /> Edit</button>
-              <button className="oc-btn-del" onClick={handleDelete}><Trash2 size={14} /> Delete</button>
-            </div>
-          </div>
-        </>,
-        document.body
+      {/* ═══════════════════════ DRAWER / VIEW MODAL ═══════════════════════ */}
+      {showDrawer && selectedEvent && (
+        <OfficeCalendarViewModal
+          open={showDrawer}
+          onClose={() => setShowDrawer(false)}
+          event={selectedEvent}
+          onEdit={(evt) => { setShowDrawer(false); openEditModal(evt); }}
+          onDelete={() => handleDelete()}
+          canEdit={true}
+        />
       )}
     </>
   );

@@ -14,6 +14,8 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '../PrivateRouter/AuthContext';
+import { useState, useEffect } from 'react';
+import api from '../api';
 
 /* ── stat card ── */
 const StatCard = ({ icon: Icon, label, value, sub, color, bg }) => (
@@ -75,8 +77,44 @@ const LeaveRow = ({ type, dates, status }) => {
 
 /* ── main ── */
 const EmployeeDashboard = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const name = userProfile?.displayName?.split(' ')[0] || 'Employee';
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || userProfile?.employee_id;
+
+  const [todayTasks, setTodayTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+
+  useEffect(() => {
+    if (!employeeId) return;
+    setTasksLoading(true);
+    api.get('/tasks', { params: { page: 1, limit: 100, assigned_to: employeeId } })
+      .then(({ data }) => {
+        const all = data?.data || [];
+        const today = new Date();
+        const isSameDay = (val) => {
+          if (!val) return false;
+          const d = new Date(val);
+          if (isNaN(d.getTime())) return false;
+          return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+        };
+        const filtered = all.filter(t => isSameDay(t.due_date) || isSameDay(t.assignment_date) || isSameDay(t.start_date));
+        setTodayTasks(filtered.slice(0, 5));
+      })
+      .catch(err => console.error(err))
+      .finally(() => setTasksLoading(false));
+  }, [employeeId]);
+
+  const getBadgeStatus = (st) => {
+    if (['Completed', 'Done'].includes(st)) return 'Done';
+    if (['In Progress', 'Review', 'Testing'].includes(st)) return 'In Progress';
+    return 'Pending';
+  };
+
+  const formatDate = (val) => {
+    if (!val) return '—';
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+  };
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -134,17 +172,24 @@ const EmployeeDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* My Tasks */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-[300px]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
-              <CheckSquare size={18} className="text-primary" /> My Tasks
+              <CheckSquare size={18} className="text-primary" /> Today's Assigned Tasks
             </h2>
             <span className="text-xs text-primary cursor-pointer hover:underline">View All</span>
           </div>
-          <TaskRow title="Design Login UI Revamp"      project="CMS Web App"    status="In Progress" due="Jul 25" />
-          <TaskRow title="API Integration – Employee"  project="Backend Module"  status="Pending"     due="Jul 27" />
-          <TaskRow title="Dashboard Statistics Cards"  project="CMS Web App"    status="Done"        due="Jul 22" />
-          <TaskRow title="Write Unit Tests"            project="QA Module"      status="Pending"     due="Jul 30" />
+          <div className="flex-1 flex flex-col">
+            {tasksLoading ? (
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm">Loading tasks...</div>
+            ) : todayTasks.length === 0 ? (
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No tasks assigned for today.</div>
+            ) : (
+              todayTasks.map(t => (
+                <TaskRow key={t.uuid} title={t.task_name} project={t.project_name || '—'} status={getBadgeStatus(t.status)} due={formatDate(t.due_date)} />
+              ))
+            )}
+          </div>
         </div>
 
         {/* Leave Summary */}
