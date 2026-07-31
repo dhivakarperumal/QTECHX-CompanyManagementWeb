@@ -62,9 +62,10 @@ const navItems = [
     label: "My Tasks",
     icon: CheckSquare,
     children: [
-      { path: "/employee/tasks", label: "All Tasks", icon: CheckSquare },
-      { path: "/employee/tasks/board", label: "Task Board", icon: FolderKanban },
+      { path: "/employee/tasks", label: "All Tasks", icon: CheckSquare, exact: true },
+      { path: "/employee/tasks/completed", label: "Completed Tasks", icon: FolderKanban },
       { path: "/employee/tasks/pending", label: "Pending Tasks", icon: FileText },
+      { path: "/employee/tasks/cancelled", label: "Cancelled Tasks", icon: FileText },
     ],
   },
 
@@ -117,17 +118,18 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     navItems.forEach((item) => {
       if (item.children) {
         const isChildActive = item.children.some(
-          (child) =>
-            location.pathname === child.path ||
-            location.pathname.startsWith(child.path + "/")
+          (child) => {
+            if (child.exact) return location.pathname === child.path;
+            return location.pathname === child.path || location.pathname.startsWith(child.path + "/");
+          }
         );
         if (isChildActive) setOpenMenu(item.label);
       }
     });
   }, [location.pathname]);
 
-  const isRouteActive = (path) => {
-    if (path === "/employee" || path === "/") return location.pathname === path;
+  const isRouteActive = (path, exact) => {
+    if (exact || path === "/employee" || path === "/") return location.pathname === path;
     return location.pathname === path || location.pathname.startsWith(path + "/");
   };
 
@@ -195,7 +197,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             if (item.children) {
               const isMenuOpen = openMenu === item.label;
               const isAnyChildActive = item.children.some((c) =>
-                isRouteActive(c.path)
+                isRouteActive(c.path, c.exact)
               );
 
               return (
@@ -243,7 +245,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = isRouteActive(sub.path);
+                        const isActive = isRouteActive(sub.path, sub.exact);
                         return (
                           <NavLink
                             key={sub.path}
