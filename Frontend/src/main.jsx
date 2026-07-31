@@ -45,6 +45,8 @@ import TodayTasksPage from './Employees/TodayTasksPage.jsx'
 import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
 import PendingTasksPage from './Employees/PendingTasksPage.jsx'
 import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
+import EmployeePayroll from './Employees/EmployeePayroll.jsx'
+import EmployeePayrollSlips from './Employees/EmployeePayrollSlips.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -408,6 +410,14 @@ const router = createHashRouter([
           {
             path: 'tasks/view/:id',
             element: <EmployeeTaskDetails />,
+          },
+          {
+            path: 'payroll',
+            element: <EmployeePayroll />,
+          },
+          {
+            path: 'payroll/slips',
+            element: <EmployeePayrollSlips />,
           },
         ],
       },
