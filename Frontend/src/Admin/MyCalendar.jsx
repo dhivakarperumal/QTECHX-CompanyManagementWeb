@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MyCalendarEventModal from './MyCalendarEventModal.jsx';
+import MyCalendarViewModal from './MyCalendarViewModal.jsx';
 
 dayjs.extend(isBetween);
 
@@ -296,6 +297,8 @@ const MyCalendar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewModalData, setViewModalData] = useState(null);
 
   useEffect(() => { fetchEvents(); }, [user]);
 
@@ -340,7 +343,8 @@ const MyCalendar = () => {
   });
 
   const openNewEventModal = (date) => { setModalData(createEmptyModalData(date)); setShowModal(true); };
-  const openEditEventModal = (evt) => { setModalData({ ...evt }); setShowModal(true); };
+  const openEditEventModal = (evt) => { setShowViewModal(false); setModalData({ ...evt }); setShowModal(true); };
+  const openViewModal = (evt) => { setViewModalData(evt); setShowViewModal(true); };
   const closeModal = () => { setShowModal(false); setModalData(null); };
 
   const handleSaveModal = async (eventData, documentFile) => {
@@ -512,13 +516,13 @@ const MyCalendar = () => {
           <div className="flex-1 flex items-center justify-center text-white/40 text-sm">Loading events…</div>
         ) : viewMode === 'Month' ? (
           <MonthView currentDate={currentDate} selectedDate={selectedDate} setSelectedDate={setSelectedDate} events={events}
-            onDayClick={openNewEventModal} onEventClick={openEditEventModal} />
+            onDayClick={openNewEventModal} onEventClick={openViewModal} />
         ) : viewMode === 'Week' ? (
-          <WeekView currentDate={currentDate} events={events} onSlotClick={openNewEventModal} onEventClick={openEditEventModal} />
+          <WeekView currentDate={currentDate} events={events} onSlotClick={openNewEventModal} onEventClick={openViewModal} />
         ) : viewMode === 'Day' ? (
-          <DayView currentDate={currentDate} events={events} onSlotClick={openNewEventModal} onEventClick={openEditEventModal} />
+          <DayView currentDate={currentDate} events={events} onSlotClick={openNewEventModal} onEventClick={openViewModal} />
         ) : (
-          <AgendaView currentDate={currentDate} events={events} onEventClick={openEditEventModal} />
+          <AgendaView currentDate={currentDate} events={events} onEventClick={openViewModal} />
         )}
       </div>
 
@@ -541,7 +545,7 @@ const MyCalendar = () => {
               {todayEvents.map((evt, i) => {
                 const dot = CATEGORY_DOT[evt.eventType] || CATEGORY_DOT['Other'];
                 return (
-                  <div key={i} className="relative pl-6 cursor-pointer" onClick={() => openEditEventModal(evt)}>
+                  <div key={i} className="relative pl-6 cursor-pointer" onClick={() => openViewModal(evt)}>
                     <div className="absolute left-[5px] top-2 w-2 h-2 rounded-full ring-4 ring-[#0d0d12]" style={{ background: dot }} />
                     <div className="text-[11px] font-semibold text-white/60">{evt.allDay ? 'All Day' : evt.startTime}</div>
                     <div className="text-sm font-bold mt-0.5 truncate">{evt.planTitle || evt.title}</div>
@@ -567,7 +571,7 @@ const MyCalendar = () => {
                 const dot = CATEGORY_DOT[evt.eventType] || CATEGORY_DOT['Other'];
                 const { start } = getEventDates(evt);
                 return (
-                  <div key={i} className="flex gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => openEditEventModal(evt)}>
+                  <div key={i} className="flex gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => openViewModal(evt)}>
                     <div className="flex flex-col items-center justify-center bg-white/5 rounded-xl w-11 h-11 border border-white/5 flex-shrink-0">
                       <span className="text-[9px] font-bold text-white/40 uppercase">{start.format('MMM')}</span>
                       <span className="text-sm font-bold text-primary">{start.format('D')}</span>
@@ -619,7 +623,7 @@ const MyCalendar = () => {
                 )}
               </div>
               <div className="flex gap-2 mt-4">
-                <button className="flex-1 py-2 text-xs font-semibold rounded-xl border border-white/10 hover:bg-white/5 transition-all">View</button>
+                <button onClick={() => openViewModal(evt)} className="flex-1 py-2 text-xs font-semibold rounded-xl border border-white/10 hover:bg-white/5 transition-all">View</button>
                 <button onClick={() => openEditEventModal(evt)} className="flex-1 py-2 text-xs font-semibold rounded-xl bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20 transition-all">Edit</button>
               </div>
             </div>
@@ -635,6 +639,15 @@ const MyCalendar = () => {
           initialData={modalData}
           onSave={handleSaveModal}
           onDelete={handleDeleteModal}
+        />
+      )}
+
+      {showViewModal && (
+        <MyCalendarViewModal
+          open={showViewModal}
+          onClose={() => { setShowViewModal(false); setViewModalData(null); }}
+          event={viewModalData}
+          onEdit={openEditEventModal}
         />
       )}
     </div>
