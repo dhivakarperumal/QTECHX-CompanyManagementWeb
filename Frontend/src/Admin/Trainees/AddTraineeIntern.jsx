@@ -221,7 +221,7 @@ export default function AddTraineeIntern() {
             <h2 className="text-base font-bold text-white">Contact Information</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number</span><input className={fieldClass} name="mobile_number" value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number {isEdit ? "" : <span className="text-red-500">*</span>}</span><input className={fieldClass} name="mobile_number" required={!isEdit} value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Email Address</span><input className={fieldClass} type="email" name="email_address" value={formData.email_address} onChange={handleChange} placeholder="name@email.com" /></label>
             <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} /></label>

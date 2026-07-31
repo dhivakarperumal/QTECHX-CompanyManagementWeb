@@ -56,15 +56,15 @@ async function createTraineeInternHandler(req, res) {
       try {
         const hashedPassword = await bcrypt.hash(userPassword, 12);
         await createUser({
-          user_id: trainee.person_id, // Fixed: use returned trainee's person_id
-          username: username,
-          email: req.body.official_email || traineeData.email_address,
-          mobile: traineeData.mobile_number,
+          user_id: trainee.person_id || null, // Fixed: use returned trainee's person_id
+          username: username || null,
+          email: req.body.official_email || traineeData.email_address || null,
+          mobile: traineeData.mobile_number || null,
           password: hashedPassword,
           role: traineeData.type || 'Trainee',
           status: traineeData.status || 'Active',
-          created_by: actor,
-          updated_by: actor,
+          created_by: actor || null,
+          updated_by: actor || null,
         });
       } catch (err) {
         console.error('Failed to create associated user account:', err);
@@ -127,6 +127,7 @@ async function updateTraineeInternHandler(req, res) {
       'emergency_contact_number', 'profile_photo', 'resume', 'college_id_doc',
       'offer_letter', 'internship_letter', 'college_university', 'course',
       'academic_department', 'year_semester', 'college_id_number', 'guide_name',
+      'username', 'official_email',
     ];
     const updates = {};
     allowedFields.forEach((field) => {
