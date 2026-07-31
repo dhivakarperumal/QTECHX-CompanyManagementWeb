@@ -26,17 +26,51 @@ function getUploadedFiles(req) {
   return uploadedFiles;
 }
 
+const bcrypt = require('bcrypt');
+const { createUser, updateUser } = require('../models/userModel');
+
 async function createTraineeInternHandler(req, res) {
   try {
     const actor = req.user?.user_id || 'SYSTEM';
     const uploadedFiles = getUploadedFiles(req);
+    
+    // Extract user credentials
+    const userPassword = req.body.password;
+    const username = req.body.username;
+    
+    // We don't want to save these into the trainee_interns table
+    const traineeData = { ...req.body };
+    delete traineeData.password;
+    delete traineeData.confirm_password;
+
     const trainee = await createTraineeIntern({
       uuid: uuidv4(),
-      ...req.body,
+      ...traineeData,
       ...uploadedFiles,
       created_by: actor,
       updated_by: actor,
     });
+
+    // Create User record
+    if (username && userPassword) {
+      try {
+        const hashedPassword = await bcrypt.hash(userPassword, 12);
+        await createUser({
+          user_id: trainee.uuid || null, // Fixed: use returned trainee's uuid
+          username: username || null,
+          email: req.body.official_email || traineeData.email_address || null,
+          mobile: traineeData.mobile_number || null,
+          password: hashedPassword,
+          role: traineeData.type || 'Trainee',
+          status: traineeData.status || 'Active',
+          created_by: actor || null,
+          updated_by: actor || null,
+        });
+      } catch (err) {
+        console.error('Failed to create associated user account:', err);
+      }
+    }
+
     return ok(res, { message: 'Trainee/Intern created successfully', data: trainee }, 201);
   } catch (err) {
     console.error('createTraineeInternHandler:', err);
@@ -93,6 +127,7 @@ async function updateTraineeInternHandler(req, res) {
       'emergency_contact_number', 'profile_photo', 'resume', 'college_id_doc',
       'offer_letter', 'internship_letter', 'college_university', 'course',
       'academic_department', 'year_semester', 'college_id_number', 'guide_name',
+      'username', 'official_email',
     ];
     const updates = {};
     allowedFields.forEach((field) => {
@@ -102,7 +137,32 @@ async function updateTraineeInternHandler(req, res) {
       updates[field] = value;
     });
     updates.updated_by = req.user?.user_id || 'SYSTEM';
+
+    const userPassword = req.body.password;
+    const username = req.body.username;
+    const officialEmail = req.body.official_email;
+
     const trainee = await updateTraineeIntern(req.params.id, updates);
+
+    // Update User record
+    if (username || officialEmail || updates.email_address || userPassword || updates.type || updates.status || updates.mobile_number) {
+      try {
+        const userUpdates = {};
+        if (username) userUpdates.username = username;
+        if (officialEmail) userUpdates.email = officialEmail;
+        else if (updates.email_address && !officialEmail) userUpdates.email = updates.email_address;
+        if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
+        if (updates.type) userUpdates.role = updates.type;
+        if (updates.status) userUpdates.status = updates.status;
+        if (userPassword) {
+          userUpdates.password = await bcrypt.hash(userPassword, 12);
+        }
+        await updateUser(existing.uuid, userUpdates); // Note: using existing.uuid
+      } catch (err) {
+        console.error('Failed to update associated user account:', err);
+      }
+    }
+
     return ok(res, { message: 'Trainee/Intern updated successfully', data: trainee });
   } catch (err) {
     console.error('updateTraineeInternHandler:', err);

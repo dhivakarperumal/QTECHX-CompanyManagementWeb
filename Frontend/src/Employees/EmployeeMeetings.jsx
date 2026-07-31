@@ -8,10 +8,12 @@ import { PacmanLoader } from 'react-spinners';
 
 const EmployeeMeetings = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profileName } = useAuth();
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('today');
+  const [customDate, setCustomDate] = useState({ start: '', end: '' });
 
   const isUpcomingRoute = location.pathname.includes('/upcoming');
 
@@ -26,17 +28,17 @@ const EmployeeMeetings = () => {
         api.get('/events').catch(() => ({ data: [] }))
       ]);
       
-      const userId = user?.id || user?._id || user?.userId || user?.employee_id || user?.employeeId || user?.user_id;
-      const userName = user?.profileName || user?.name || '';
+      const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
+      const userName = profileName || user?.name || user?.full_name || user?.username || '';
       
       let personalEvents = resPersonal.data || [];
       let officeEvents = resOffice.data || [];
       
-      if (userId) {
+      if (possibleIds.length > 0) {
         // Filter personal events
         personalEvents = personalEvents.filter(evt => {
-          const evtUserId = evt.user_id || evt.userId || evt.employeeId;
-          return String(evtUserId) === String(userId);
+          const evtUserId = String(evt.user_id || evt.userId || evt.employeeId);
+          return possibleIds.includes(evtUserId);
         });
         
         // Filter office events where the user is a participant
@@ -50,7 +52,11 @@ const EmployeeMeetings = () => {
           
           return parts.some(p => {
             if (typeof p === 'object' && p !== null) {
-              return String(p.user_id) === String(userId);
+              const pId1 = String(p.user_id);
+              const pId2 = String(p.employee_id);
+              const matchById = possibleIds.includes(pId1) || possibleIds.includes(pId2);
+              const matchByName = userName && p.name && p.name.toLowerCase() === userName.toLowerCase();
+              return matchById || matchByName;
             }
             return typeof p === 'string' && userName && p.toLowerCase() === userName.toLowerCase();
           });
@@ -82,10 +88,33 @@ const EmployeeMeetings = () => {
 
   const filteredData = meetings.filter(m => {
     const titleMatch = (m.planTitle || m.title || '').toLowerCase().includes(search.toLowerCase());
-    const isUpcoming = dayjs(m.planDate || m.startDate || m.plan_date).isAfter(dayjs().subtract(1, 'day'));
+    const mDate = m.planDate || m.startDate || m.plan_date;
+    const isUpcoming = dayjs(mDate).isAfter(dayjs().subtract(1, 'day'));
     
     if (isUpcomingRoute && !isUpcoming) return false;
-    return titleMatch;
+    if (!titleMatch) return false;
+
+    if (dateFilter === 'today') {
+      return dayjs(mDate).isSame(dayjs(), 'day');
+    }
+    if (dateFilter === 'tomorrow') {
+      return dayjs(mDate).isSame(dayjs().add(1, 'day'), 'day');
+    }
+    if (dateFilter === 'this_week') {
+      return dayjs(mDate).isSame(dayjs(), 'week');
+    }
+    if (dateFilter === 'this_month') {
+      return dayjs(mDate).isSame(dayjs(), 'month');
+    }
+    if (dateFilter === 'custom') {
+      if (customDate.start && customDate.end) {
+        return (dayjs(mDate).isAfter(dayjs(customDate.start).subtract(1, 'day')) && dayjs(mDate).isBefore(dayjs(customDate.end).add(1, 'day')));
+      } else if (customDate.start) {
+        return dayjs(mDate).isSame(dayjs(customDate.start), 'day');
+      }
+    }
+    
+    return true;
   });
 
   return (
@@ -103,8 +132,29 @@ const EmployeeMeetings = () => {
             <p className="text-xs text-white/50">View and join your scheduled meetings</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap justify-end">
+          <select 
+            value={dateFilter} 
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="bg-black/20 border border-white/10 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+          >
+            <option value="all" className="bg-[#13141a]">All Meetings</option>
+            <option value="today" className="bg-[#13141a]">Today</option>
+            <option value="tomorrow" className="bg-[#13141a]">Tomorrow</option>
+            <option value="this_week" className="bg-[#13141a]">This Week</option>
+            <option value="this_month" className="bg-[#13141a]">This Month</option>
+            <option value="custom" className="bg-[#13141a]">Custom Date</option>
+          </select>
+
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input type="date" value={customDate.start} onChange={e => setCustomDate({...customDate, start: e.target.value})} className="bg-black/20 border border-white/10 rounded-xl py-1.5 px-3 text-sm text-white focus:outline-none focus:border-primary/50 [&::-webkit-calendar-picker-indicator]:invert-[1] opacity-70" />
+              <span className="text-white/50 text-xs">to</span>
+              <input type="date" value={customDate.end} onChange={e => setCustomDate({...customDate, end: e.target.value})} className="bg-black/20 border border-white/10 rounded-xl py-1.5 px-3 text-sm text-white focus:outline-none focus:border-primary/50 [&::-webkit-calendar-picker-indicator]:invert-[1] opacity-70" />
+            </div>
+          )}
+
+          <div className="relative flex-1 sm:w-64 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
             <input 
               type="text" 
@@ -170,16 +220,19 @@ const EmployeeMeetings = () => {
                    
                    {/* Action */}
                    <div className="p-4 pt-0 mt-auto">
-                     {m.meetingLink ? (
-                       <a href={m.meetingLink.startsWith('http') ? m.meetingLink : `https://${m.meetingLink}`} target="_blank" rel="noreferrer" 
-                          className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-                         Join Meeting <ExternalLink size={14} />
-                       </a>
-                     ) : (
-                       <button disabled className="w-full py-2.5 rounded-xl bg-white/5 text-white/30 text-sm font-semibold border border-white/5 cursor-not-allowed">
-                         No Link Provided
-                       </button>
-                     )}
+                     {(() => {
+                       const link = m.meetingLink || m.link || (m.location && String(m.location).startsWith('http') ? m.location : null);
+                       return link ? (
+                         <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noreferrer" 
+                            className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                           Join Meeting <ExternalLink size={14} />
+                         </a>
+                       ) : (
+                         <button disabled className="w-full py-2.5 rounded-xl bg-white/5 text-white/30 text-sm font-semibold border border-white/5 cursor-not-allowed">
+                           No Link Provided
+                         </button>
+                       );
+                     })()}
                    </div>
                  </div>
                );
