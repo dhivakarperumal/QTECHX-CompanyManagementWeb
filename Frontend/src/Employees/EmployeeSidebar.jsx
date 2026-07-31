@@ -70,15 +70,7 @@ const navItems = [
     ],
   },
 
-  /* ---- TIMESHEET ---- */
-  {
-    label: "Timesheet",
-    icon: Clock,
-    children: [
-      { path: "/employee/timesheet", label: "My Timesheet", icon: Clock },
-      { path: "/employee/timesheet/log", label: "Log Hours", icon: FileText },
-    ],
-  },
+
 
   /* ---- PAYROLL ---- */
   {

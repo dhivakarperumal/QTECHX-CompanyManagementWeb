@@ -55,7 +55,7 @@ app.use(
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
         if (isLocalhost) return callback(null, origin);
       } catch (err) { }
-      const allowed = ["https://myqtechx.qtechx.com"];
+      const allowed = ["https://qt1.qtechx.com"];
       if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
     },
@@ -88,7 +88,22 @@ app.use("/api/events", eventRouter);
 app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
 
+// Health check (must be before the catch-all /api/* 404 handler)
+app.get("/api/health", (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));
+
+// ── Stub routes for features not yet implemented in this backend ──────────────
+// These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
+app.get("/api/cart/:userId", (req, res) => res.json({ success: true, data: [] }));
+app.get("/api/wishlist/:userId", (req, res) => res.json({ success: true, data: [] }));
+app.post("/api/cart", (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
+app.post("/api/wishlist", (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
+app.delete("/api/cart/:id", (req, res) => res.json({ success: true }));
+app.put("/api/cart/:id", (req, res) => res.json({ success: true }));
+app.delete("/api/cart/clear/:userId", (req, res) => res.json({ success: true }));
+app.delete("/api/wishlist/:uid/:pid", (req, res) => res.json({ success: true }));
+
 // Explicit API 404 to prevent API paths from being handled by frontend fallback
+// ⚠️ This MUST be the LAST /api route — anything registered after this will never be reached
 app.use("/api/*", (req, res) => {
   res.status(404).json({
     success: false,
@@ -133,13 +148,34 @@ const potentialFrontendBuildPaths = [
   path.join(__dirname, "..", "dist"),
   path.join(__dirname, "build"),
   path.join(__dirname, "..", "build"),
-  path.join(__dirname, "public"),
-  path.join(__dirname, "..", "public"),
 ];
 
-const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => fs.existsSync(buildPath));
+const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => {
+  return fs.existsSync(buildPath) && fs.existsSync(path.join(buildPath, "index.html"));
+});
+
+const frontendPublicPath = path.join(__dirname, "..", "Frontend", "public");
+
+const faviconCandidates = [
+  path.join(frontendPublicPath, "favicon.ico"),
+  path.join(frontendPublicPath, "images", "favicon.ico"),
+  frontendBuildPath ? path.join(frontendBuildPath, "favicon.ico") : null,
+].filter(Boolean);
+
+app.get("/favicon.ico", (req, res) => {
+  try {
+    const faviconPath = faviconCandidates.find((candidate) => fs.existsSync(candidate));
+    if (!faviconPath) {
+      return res.status(404).json({ success: false, message: "favicon.ico not found" });
+    }
+    return res.sendFile(faviconPath);
+  } catch (error) {
+    console.error("Favicon Error:", error);
+    return res.status(500).json({ success: false, message: "Error serving favicon" });
+  }
+});
+
 if (frontendBuildPath) {
-  // console.log(`Serving static frontend from: ${frontendBuildPath}`);
   app.use(express.static(frontendBuildPath));
   app.get(["/", "/index.html"], (req, res) => {
     return res.sendFile(path.join(frontendBuildPath, "index.html"));
@@ -154,17 +190,9 @@ if (frontendBuildPath) {
   console.warn("Frontend build directory not found. Backend will run in API-only mode.");
 }
 
-// ── Stub routes for features not yet implemented in this backend ──────────────
-// These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
-app.get("/api/cart/:userId", (req, res) => res.json({ success: true, data: [] }));
-app.get("/api/wishlist/:userId", (req, res) => res.json({ success: true, data: [] }));
-app.post("/api/cart", (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
-app.post("/api/wishlist", (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
-app.delete("/api/cart/:id", (req, res) => res.json({ success: true }));
-app.put("/api/cart/:id", (req, res) => res.json({ success: true }));
-app.delete("/api/cart/clear/:userId", (req, res) => res.json({ success: true }));
-app.delete("/api/wishlist/:uid/:pid", (req, res) => res.json({ success: true }));
-
+if (fs.existsSync(frontendPublicPath)) {
+  app.use(express.static(frontendPublicPath));
+}
 
 // Global Context Middleware for tracking created_by / updated_by
 app.use((req, res, next) => {
@@ -181,9 +209,6 @@ app.use((req, res, next) => {
 
   als.run(new Map([['user', user]]), next);
 });
-
-// Health check
-app.get("/api/health", (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));
 
 async function startServer() {
   try {
