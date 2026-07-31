@@ -48,8 +48,8 @@ function Modal({ open, onClose, title, subtitle, children }) {
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <div className="relative max-h-[90vh] w-full max-w-6xl overflow-hidden overflow-y-auto rounded-3xl bg-slate-950/95 shadow-2xl border border-white/10 p-6 backdrop-saturate-150">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden overflow-y-auto rounded-3xl bg-[#0d0d12] shadow-2xl border border-white/10 p-6 backdrop-saturate-150">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white">{title}</h2>
@@ -100,13 +100,13 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     rows={field.rows || 3}
                     placeholder={placeholder}
-                    className="rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 ) : field.type === 'select' ? (
                   <select
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   >
                     <option value="">Select {field.label}</option>
                     {field.options.map((option) => (
@@ -122,7 +122,7 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
                     placeholder={placeholder}
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 )}
               </div>
