@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
 
 const AdminLeaveManagement = () => {
   const [leaves, setLeaves] = useState([]);
@@ -9,6 +9,12 @@ const AdminLeaveManagement = () => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [actionModal, setActionModal] = useState({ show: false, action: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   useEffect(() => {
     fetchLeaves();
@@ -66,6 +72,53 @@ const AdminLeaveManagement = () => {
     }
   };
 
+  const uniqueLeaveTypes = [...new Set(leaves.map(l => l.leave_type).filter(Boolean))];
+
+  const filteredLeaves = leaves.filter(leave => {
+    const fullName = `${leave.first_name || ''} ${leave.last_name || ''}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) || 
+                          (leave.employee_code || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || leave.status === statusFilter;
+    
+    const matchesType = leaveTypeFilter === 'All' || leave.leave_type === leaveTypeFilter;
+
+    let matchesDate = true;
+    if (dateFilter !== 'All') {
+      const from = new Date(leave.from_date);
+      const to = new Date(leave.to_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (dateFilter === 'Today') {
+        matchesDate = from <= today && to >= today;
+      } else if (dateFilter === 'Tomorrow') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        matchesDate = from <= tomorrow && to >= tomorrow;
+      } else if (dateFilter === 'This Week') {
+        const firstDayOfWeek = new Date(today);
+        firstDayOfWeek.setDate(today.getDate() - today.getDay());
+        const lastDayOfWeek = new Date(today);
+        lastDayOfWeek.setDate(today.getDate() - today.getDay() + 6);
+        matchesDate = from <= lastDayOfWeek && to >= firstDayOfWeek;
+      } else if (dateFilter === 'This Month') {
+        matchesDate = from.getMonth() === today.getMonth() && from.getFullYear() === today.getFullYear();
+      } else if (dateFilter === 'This Year') {
+        matchesDate = from.getFullYear() === today.getFullYear();
+      } else if (dateFilter === 'Custom') {
+        if (customStartDate && customEndDate) {
+            const cStart = new Date(customStartDate);
+            const cEnd = new Date(customEndDate);
+            cStart.setHours(0,0,0,0);
+            cEnd.setHours(23,59,59,999);
+            matchesDate = from <= cEnd && to >= cStart;
+        }
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
+  });
+
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -83,6 +136,79 @@ const AdminLeaveManagement = () => {
             <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <input
+            type="text"
+            placeholder="Search by name or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500 transition"
+          />
+        </div>
+        <div className="relative min-w-[140px]">
+          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <select
+            value={leaveTypeFilter}
+            onChange={(e) => setLeaveTypeFilter(e.target.value)}
+            className="w-full appearance-none rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-10 text-sm text-white outline-none focus:border-orange-500 transition cursor-pointer"
+          >
+            <option value="All">All Types</option>
+            {uniqueLeaveTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+        <div className="relative min-w-[140px]">
+          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full appearance-none rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-10 text-sm text-white outline-none focus:border-orange-500 transition cursor-pointer"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="relative min-w-[140px]">
+          <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full appearance-none rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-10 text-sm text-white outline-none focus:border-orange-500 transition cursor-pointer"
+          >
+            <option value="All">All Dates</option>
+            <option value="Today">Today</option>
+            <option value="Tomorrow">Tomorrow</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="This Year">This Year</option>
+            <option value="Custom">Custom Range</option>
+          </select>
+        </div>
+        
+        {dateFilter === 'Custom' && (
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <input 
+              type="date" 
+              value={customStartDate} 
+              onChange={(e) => setCustomStartDate(e.target.value)} 
+              className="rounded-xl border border-white/10 bg-[#111318] py-2.5 px-3 text-sm text-white outline-none focus:border-orange-500 transition" 
+            />
+            <span className="text-white/40 text-sm">to</span>
+            <input 
+              type="date" 
+              value={customEndDate} 
+              onChange={(e) => setCustomEndDate(e.target.value)} 
+              className="rounded-xl border border-white/10 bg-[#111318] py-2.5 px-3 text-sm text-white outline-none focus:border-orange-500 transition" 
+            />
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
@@ -104,12 +230,12 @@ const AdminLeaveManagement = () => {
                 <tr>
                   <td colSpan="7" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
                 </tr>
-              ) : leaves.length === 0 ? (
+              ) : filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found.</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found matching filters.</td>
                 </tr>
               ) : (
-                leaves.map((leave) => (
+                filteredLeaves.map((leave) => (
                   <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>

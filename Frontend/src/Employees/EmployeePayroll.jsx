@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Calendar, Clock, CreditCard, AlertCircle, Loader2, Search } from 'lucide-react';
+import { DollarSign, Calendar, Clock, CreditCard, AlertCircle, Loader2, Search, ArrowLeft } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
+import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 const EmployeePayroll = () => {
@@ -58,6 +59,12 @@ const EmployeePayroll = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-2xl shadow-lg">
         <div className="flex items-center gap-4">
+          <Link
+            to="/employee/payroll/slips"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
           <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/30">
             <DollarSign size={24} />
           </div>

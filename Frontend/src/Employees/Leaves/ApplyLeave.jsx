@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { FileText, Loader2, Send } from 'lucide-react';
+import { FileText, Loader2, Send, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const leaveTypes = [
   "Casual Leave",
@@ -82,7 +83,13 @@ const ApplyLeave = () => {
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/employee/leaves/history"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
           <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
             <FileText size={22} className="text-orange-500" />
           </div>

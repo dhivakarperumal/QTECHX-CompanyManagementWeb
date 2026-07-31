@@ -34,22 +34,16 @@ const navItems = [
 
   /* ---- ATTENDANCE ---- */
   {
+    path: "/employee/attendance/summary",
     label: "My Attendance",
     icon: ClipboardCheck,
-    children: [
-      { path: "/employee/attendance", label: "Attendance Log", icon: ClipboardCheck },
-      { path: "/employee/attendance/summary", label: "Summary", icon: TrendingUp },
-    ],
   },
 
   /* ---- LEAVE ---- */
   {
+    path: "/employee/leaves/history",
     label: "My Leave",
-    icon: CalendarOff,
-    children: [
-      { path: "/employee/leaves/apply", label: "Apply Leave", icon: FileText },
-      { path: "/employee/leaves/history", label: "Leave History", icon: CalendarDays },
-    ],
+    icon: CalendarDays,
   },
 
   /* ---- PROJECTS ---- */
@@ -73,16 +67,13 @@ const navItems = [
 
   /* ---- PAYROLL ---- */
   {
+    path: "/employee/payroll/slips",
     label: "Salary & Payroll",
     icon: DollarSign,
-    children: [
-      { path: "/employee/payroll", label: "My Salary", icon: DollarSign },
-      { path: "/employee/payroll/slips", label: "Pay Slips", icon: FileText },
-    ],
   },
 
   /* ---- MEETINGS ---- */
-  { label: "Meetings", path: "/employee/meetings", label: "All Meetings", icon: Video },
+  { label: "Meetings", path: "/employee/meetings", icon: Video },
 
 
 
@@ -128,6 +119,14 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const isRouteActive = (path, exact = false) => {
     if (exact) {
       return location.pathname === path;
+    }
+
+    if (path === "/employee/leaves/history" && location.pathname.startsWith("/employee/leaves")) {
+      return true;
+    }
+
+    if (path === "/employee/payroll/slips" && location.pathname.startsWith("/employee/payroll")) {
+      return true;
     }
 
     return location.pathname === path;
