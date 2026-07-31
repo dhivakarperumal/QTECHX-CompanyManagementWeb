@@ -12,6 +12,7 @@ const LeaveHistory = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
+  const [dateFilter, setDateFilter] = useState("All");
 
   useEffect(() => {
     fetchLeaves();
@@ -65,18 +66,66 @@ const LeaveHistory = () => {
 
       const leaveFrom = new Date(leave.from_date);
 
-      const matchesFrom =
-        !fromDate || leaveFrom >= new Date(fromDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-      const matchesTo =
-        !toDate || leaveFrom <= new Date(toDate);
+      const leaveDate = new Date(leave.from_date);
+      leaveDate.setHours(0, 0, 0, 0);
+
+      let matchesDate = true;
+
+      switch (dateFilter) {
+        case "Today":
+          matchesDate =
+            leaveDate.getTime() === today.getTime();
+          break;
+
+        case "Yesterday":
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          matchesDate =
+            leaveDate.getTime() === yesterday.getTime();
+          break;
+
+        case "This Week":
+          const startWeek = new Date(today);
+          startWeek.setDate(today.getDate() - today.getDay());
+
+          const endWeek = new Date(startWeek);
+          endWeek.setDate(startWeek.getDate() + 6);
+
+          matchesDate =
+            leaveDate >= startWeek &&
+            leaveDate <= endWeek;
+          break;
+
+        case "This Month":
+          matchesDate =
+            leaveDate.getMonth() === today.getMonth() &&
+            leaveDate.getFullYear() === today.getFullYear();
+          break;
+
+        case "This Year":
+          matchesDate =
+            leaveDate.getFullYear() === today.getFullYear();
+          break;
+
+        case "Custom":
+          matchesDate =
+            (!fromDate || leaveDate >= new Date(fromDate)) &&
+            (!toDate || leaveDate <= new Date(toDate));
+          break;
+
+        default:
+          matchesDate = true;
+      }
 
       return (
         matchesSearch &&
         matchesStatus &&
         matchesLeaveType &&
-        matchesFrom &&
-        matchesTo
+        matchesDate
       );
     })
     .sort((a, b) => {
@@ -129,40 +178,83 @@ const LeaveHistory = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-11 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white"
+              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
             >
-              <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
+              <option className="bg-[#1a1d24] text-white" value="All">
+                All Status
+              </option>
+              <option className="bg-[#1a1d24] text-white" value="Pending">
+                Pending
+              </option>
+              <option className="bg-[#1a1d24] text-white" value="Approved">
+                Approved
+              </option>
+              <option className="bg-[#1a1d24] text-white" value="Rejected">
+                Rejected
+              </option>
             </select>
 
             {/* Leave Type */}
             <select
               value={leaveTypeFilter}
               onChange={(e) => setLeaveTypeFilter(e.target.value)}
-              className="h-11 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white"
+              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
             >
               {leaveTypes.map((type) => (
-                <option key={type}>{type}</option>
+                <option
+                  key={type}
+                  value={type}
+                  className="bg-[#1a1d24] text-white"
+                >
+                  {type}
+                </option>
               ))}
             </select>
 
-            {/* From */}
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="h-11 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white"
-            />
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
+            >
+              <option value="All" className="bg-[#1a1d24] text-white">
+                All Dates
+              </option>
+              <option value="Today" className="bg-[#1a1d24] text-white">
+                Today
+              </option>
+              <option value="Yesterday" className="bg-[#1a1d24] text-white">
+                Yesterday
+              </option>
+              <option value="This Week" className="bg-[#1a1d24] text-white">
+                This Week
+              </option>
+              <option value="This Month" className="bg-[#1a1d24] text-white">
+                This Month
+              </option>
+              <option value="This Year" className="bg-[#1a1d24] text-white">
+                This Year
+              </option>
+              <option value="Custom" className="bg-[#1a1d24] text-white">
+                Custom Range
+              </option>
+            </select>
+            {dateFilter === "Custom" && (
+              <>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white"
+                />
 
-            {/* To */}
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="h-11 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white"
-            />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white"
+                />
+              </>
+            )}
 
           </div>
 
@@ -177,10 +269,21 @@ const LeaveHistory = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="h-10 rounded-xl bg-white/5 border border-white/10 px-3 text-sm text-white"
+                className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
               >
-                <option value="Newest">Newest First</option>
-                <option value="Oldest">Oldest First</option>
+                <option
+                  value="Newest"
+                  className="bg-[#1a1d24] text-white"
+                >
+                  Newest First
+                </option>
+
+                <option
+                  value="Oldest"
+                  className="bg-[#1a1d24] text-white"
+                >
+                  Oldest First
+                </option>
               </select>
 
               <button
@@ -201,7 +304,7 @@ const LeaveHistory = () => {
             </div>
 
           </div>
-          <table className="min-w-full text-sm">
+          <table className="min-w-full mt-5 text-sm">
             <thead className="bg-white/4 text-white/60">
               <tr>
                 <th className="px-4 py-3 text-left">Leave Type</th>
