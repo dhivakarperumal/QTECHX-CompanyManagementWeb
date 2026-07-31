@@ -113,7 +113,7 @@ const ApplyLeave = () => {
                 type="text" 
                 value={user?.employee_code || ''} 
                 disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
+                className="w-full text-white rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm  cursor-not-allowed outline-none" 
               />
             </div>
 
