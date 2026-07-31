@@ -133,6 +133,10 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       return true;
     }
 
+    if (path === "/employee/payroll/slips" && location.pathname.startsWith("/employee/payroll")) {
+      return true;
+    }
+
     return location.pathname === path;
   };
 
