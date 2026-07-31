@@ -59,11 +59,11 @@ const EmployeeMeetings = () => {
       
       const allEvents = [...personalEvents, ...officeEvents];
       
-      // Filter only meetings (Meeting, Client Call)
-      let filteredMeetings = allEvents.filter(e => 
-        e.eventType === 'Meeting' || e.eventType === 'Client Call' ||
-        e.category === 'Meeting' || e.category === 'Client Call'
-      );
+      // Filter only meetings (Meeting, Client Call, or typos like Meating)
+      let filteredMeetings = allEvents.filter(e => {
+        const typeStr = String(e.eventType || e.category || '').toLowerCase();
+        return typeStr.includes('meeting') || typeStr.includes('meating') || typeStr.includes('call');
+      });
       
       // Sort by date/time ascending
       filteredMeetings.sort((a, b) => {

@@ -22,7 +22,7 @@ router.post('/', authenticate, managers, createTaskHandler);
 router.post('/assign', authenticate, managers, assignTaskHandler);
 router.get('/assignments', authenticate, allStaff, listTaskAssignmentsHandler);
 router.get('/:id', authenticate, allStaff, getTaskByIdHandler);
-router.put('/:id', authenticate, managers, updateTaskHandler);
+router.put('/:id', authenticate, allStaff, updateTaskHandler);
 router.delete('/:id', authenticate, managers, deleteTaskHandler);
 
 module.exports = router;

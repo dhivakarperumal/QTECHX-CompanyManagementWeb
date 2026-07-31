@@ -65,6 +65,7 @@ async function ensureMyEventsSchema(pool) {
         createdBy VARCHAR(100) NULL,
         createdDate DATE NULL,
         updatedDate DATE NULL,
+        user_id VARCHAR(100) NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
@@ -129,6 +130,7 @@ async function ensureMyEventsSchema(pool) {
   addColumn('createdBy', 'VARCHAR(100) NULL');
   addColumn('createdDate', 'DATE NULL');
   addColumn('updatedDate', 'DATE NULL');
+  addColumn('user_id', 'VARCHAR(100) NULL');
   addColumn('created_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
   addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
 

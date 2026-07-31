@@ -41,6 +41,7 @@ import EmployeeProjects from './Employees/Employee Projects/EmployeeProjects.jsx
 import EmployeeProjectDetails from './Employees/Employee Projects/EmployeeProjectDetails.jsx'
 import EmployeeTasks from './Employees/EmployeeTasks.jsx'
 import EmployeeTaskDetails from './Employees/EmployeeTaskDetails.jsx'
+import TodayTasksPage from './Employees/TodayTasksPage.jsx'
 import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
 import PendingTasksPage from './Employees/PendingTasksPage.jsx'
 import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
@@ -57,6 +58,11 @@ import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
 import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
 import AssignmentView from './Admin/Projects/AssignmentView.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
+import AdminTodayTasksPage from './Admin/Tasks/AdminTodayTasksPage.jsx'
+import AdminNewTasksPage from './Admin/Tasks/AdminNewTasksPage.jsx'
+import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
+import AdminCompletedTasksPage from './Admin/Tasks/AdminCompletedTasksPage.jsx'
+import AdminCancelledTasksPage from './Admin/Tasks/AdminCancelledTasksPage.jsx'
 import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
 import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
@@ -164,7 +170,23 @@ const router = createHashRouter([
           },
           {
             path: 'tasks/completed',
-            element: <TasksPage />,
+            element: <AdminCompletedTasksPage />,
+          },
+          {
+            path: 'tasks/pending',
+            element: <AdminPendingTasksPage />,
+          },
+          {
+            path: 'tasks/cancelled',
+            element: <AdminCancelledTasksPage />,
+          },
+          {
+            path: 'tasks/today',
+            element: <AdminTodayTasksPage />,
+          },
+          {
+            path: 'tasks/new',
+            element: <AdminNewTasksPage />,
           },
           {
             path: 'projects/add',
@@ -377,7 +399,7 @@ const router = createHashRouter([
           },
           {
             path: 'tasks/today',
-            element: <EmployeeTasks />,
+            element: <TodayTasksPage />,
           },
           {
             path: 'tasks/processing',
