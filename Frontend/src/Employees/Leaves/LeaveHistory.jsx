@@ -211,6 +211,27 @@ const LeaveHistory = () => {
               ))}
             </select>
 
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
+              >
+                <option
+                  value="Newest"
+                  className="bg-[#1a1d24] text-white"
+                >
+                  Newest First
+                </option>
+
+                <option
+                  value="Oldest"
+                  className="bg-[#1a1d24] text-white"
+                >
+                  Oldest First
+                </option>
+              </select>
+
+
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
@@ -266,26 +287,7 @@ const LeaveHistory = () => {
 
             <div className="flex gap-2">
 
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-              >
-                <option
-                  value="Newest"
-                  className="bg-[#1a1d24] text-white"
-                >
-                  Newest First
-                </option>
-
-                <option
-                  value="Oldest"
-                  className="bg-[#1a1d24] text-white"
-                >
-                  Oldest First
-                </option>
-              </select>
-
+            
               <button
                 onClick={() => {
                   setSearchTerm("");
