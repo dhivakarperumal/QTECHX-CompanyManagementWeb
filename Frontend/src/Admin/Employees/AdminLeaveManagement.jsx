@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
+import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminLeaveManagement = () => {
   const [leaves, setLeaves] = useState([]);
@@ -15,6 +16,7 @@ const AdminLeaveManagement = () => {
 
   const fetchLeaves = async () => {
     try {
+      setLoading(true);
       const { data } = await api.get('/employee-leaves/all');
       if (data.success) {
         setLeaves(data.data);
@@ -56,93 +58,102 @@ const AdminLeaveManagement = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Approved':
-        return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Approved</span>;
+        return <span className="rounded-full border border-emerald-500/25 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-emerald-400 uppercase">Approved</span>;
       case 'Rejected':
-        return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>;
+        return <span className="rounded-full border border-rose-500/25 bg-rose-500/15 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-rose-400 uppercase">Rejected</span>;
       default:
-        return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>;
+        return <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-orange-300 uppercase">Pending</span>;
     }
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Employee Leave Requests</h2>
+    <div className="space-y-5 pb-10 text-white min-h-screen">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+            <Briefcase size={22} className="text-orange-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Leave Requests</h1>
+            <p className="text-white/40 text-xs mt-0.5">Manage employee leave applications</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchLeaves} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
+            <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="min-w-full text-sm">
+            <thead className="bg-white/4 text-white/60">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left">Employee</th>
+                <th className="px-4 py-3 text-left">Leave Type</th>
+                <th className="px-4 py-3 text-left">Date Range</th>
+                <th className="px-4 py-3 text-left">Days</th>
+                <th className="px-4 py-3 text-left">Reason</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">Loading...</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
                 </tr>
               ) : leaves.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">No leave requests found.</td>
+                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found.</td>
                 </tr>
               ) : (
                 leaves.map((leave) => (
-                  <tr key={leave.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{leave.first_name} {leave.last_name}</div>
-                          <div className="text-sm text-gray-500">{leave.employee_code}</div>
-                        </div>
-                      </div>
+                  <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
+                      <div className="text-white/40 text-xs">{leave.employee_code}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{leave.leave_type}</div>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-white">{leave.leave_type}</div>
                       {leave.day_type === 'Half Day' && (
-                        <div className="text-xs text-gray-500">Half Day ({leave.half_day_type})</div>
+                        <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(leave.from_date).toLocaleDateString()} 
-                        {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
-                      </div>
+                    <td className="px-4 py-3 text-white/70">
+                      {new Date(leave.from_date).toLocaleDateString()} 
+                      {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-3 font-medium text-white">
                       {leave.no_of_days}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={leave.reason}>
+                    <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.reason}>
                       {leave.reason}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3">
                       {getStatusBadge(leave.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-3 text-right">
                       {leave.status === 'Pending' ? (
-                        <div className="flex space-x-2">
+                        <div className="flex justify-end gap-2">
                           <button 
                             onClick={() => handleActionClick(leave, 'Approved')}
-                            className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-md transition"
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
+                            title="Approve"
                           >
-                            Approve
+                            <CheckCircle size={14} />
                           </button>
                           <button 
                             onClick={() => handleActionClick(leave, 'Rejected')}
-                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition"
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                            title="Reject"
                           >
-                            Reject
+                            <XCircle size={14} />
                           </button>
                         </div>
                       ) : (
-                        <span className="text-gray-500">Processed</span>
+                        <span className="text-white/40 text-xs">Processed</span>
                       )}
                     </td>
                   </tr>
@@ -155,42 +166,42 @@ const AdminLeaveManagement = () => {
 
       {/* Action Modal */}
       {actionModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
-            <h3 className={`text-xl font-bold mb-4 ${actionModal.action === 'Approved' ? 'text-green-600' : 'text-red-600'}`}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="rounded-2xl border border-white/10 bg-[#111318] max-w-md w-full p-6 animate-fade-in-up">
+            <h3 className={`text-xl font-bold mb-4 tracking-tight ${actionModal.action === 'Approved' ? 'text-emerald-400' : 'text-rose-400'}`}>
               {actionModal.action === 'Approved' ? 'Approve Leave' : 'Reject Leave'}
             </h3>
             
-            <div className="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-700 font-semibold mb-1">
-                {selectedLeave?.first_name} {selectedLeave?.last_name} ({selectedLeave?.employee_code})
+            <div className="mb-4 rounded-xl border border-white/10 bg-white/4 p-4">
+              <p className="text-sm text-white font-semibold mb-1">
+                {selectedLeave?.first_name} {selectedLeave?.last_name} <span className="text-white/40">({selectedLeave?.employee_code})</span>
               </p>
-              <p className="text-sm text-gray-600 mb-1">
-                <span className="font-medium">Type:</span> {selectedLeave?.leave_type} ({selectedLeave?.no_of_days} days)
+              <p className="text-sm text-white/70 mb-1">
+                <span className="font-medium text-white/50">Type:</span> {selectedLeave?.leave_type} ({selectedLeave?.no_of_days} days)
               </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Date:</span> {new Date(selectedLeave?.from_date).toLocaleDateString()} to {new Date(selectedLeave?.to_date).toLocaleDateString()}
+              <p className="text-sm text-white/70">
+                <span className="font-medium text-white/50">Date:</span> {new Date(selectedLeave?.from_date).toLocaleDateString()} to {new Date(selectedLeave?.to_date).toLocaleDateString()}
               </p>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason / Remarks {actionModal.action === 'Rejected' && <span className="text-red-500">*</span>}
+            <div className="mb-6 space-y-2">
+              <label className="text-sm font-semibold text-white/70">
+                Reason / Remarks {actionModal.action === 'Rejected' && <span className="text-rose-500">*</span>}
               </label>
               <textarea
                 value={actionModal.reason}
                 onChange={(e) => setActionModal({ ...actionModal, reason: e.target.value })}
                 placeholder="Enter any remarks or reasons..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 resize-none transition"
                 rows="3"
                 required={actionModal.action === 'Rejected'}
               ></textarea>
             </div>
             
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setActionModal({ show: false, action: '', reason: '' })}
-                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
                 disabled={submitting}
               >
                 Cancel
@@ -198,12 +209,13 @@ const AdminLeaveManagement = () => {
               <button
                 onClick={submitAction}
                 disabled={submitting}
-                className={`px-4 py-2 text-white rounded-lg transition flex items-center ${
+                className={`inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90 ${
                   actionModal.action === 'Approved' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
+                    ? 'bg-emerald-600' 
+                    : 'bg-rose-600'
                 }`}
               >
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
                 {submitting ? 'Processing...' : `Confirm ${actionModal.action}`}
               </button>
             </div>
