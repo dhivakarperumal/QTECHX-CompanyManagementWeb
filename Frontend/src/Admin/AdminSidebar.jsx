@@ -35,6 +35,8 @@ import {
   Edit3,
   UserCheck,
   Layers,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -91,10 +93,10 @@ const navItems = [
     icon: CheckSquare,
     children: [
       { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
-      // { path: "/admin/tasks/add", label: "Add Task", icon: PlusSquare },
-      // { path: "/admin/tasks/assign", label: "Assign Task", icon: UserCheck },
-      // { path: "/admin/tasks/update", label: "Update Task", icon: Edit3 },
+      { path: "/admin/tasks/new", label: "New Tasks", icon: PlusSquare },
+      { path: "/admin/tasks/pending", label: "Pending Tasks", icon: AlertCircle },
       { path: "/admin/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
+      { path: "/admin/tasks/cancelled", label: "Cancelled Tasks", icon: XCircle },
     ],
   },
 

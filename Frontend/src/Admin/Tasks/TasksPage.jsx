@@ -6,9 +6,12 @@ import api from '../../api';
 
 const tabs = [
   { key: "overview", label: "All Tasks" },
-  { key: "board", label: "Task Board" },
-  { key: "graph", label: "Task Graph" },
+  { key: "today", label: "Today Tasks" },
+  { key: "new", label: "New Tasks" },
+  { key: "pending", label: "Pending Tasks" },
   { key: "completed", label: "Completed Tasks" },
+  { key: "cancelled", label: "Cancelled Tasks" },
+
 ];
 
 const getPageKey = (pathname) => {
@@ -23,6 +26,16 @@ const statusStyles = {
   "Completed": "bg-emerald-100 text-emerald-700",
   "On Hold": "bg-yellow-100 text-yellow-700",
   "Cancelled": "bg-red-100 text-red-700",
+};
+
+const isSameDay = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  return date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate();
 };
 
 const normalizeTaskStatus = (status) => {
@@ -191,10 +204,10 @@ function Modal({ open, onClose, title, subtitle, icon: Icon, iconColor = "text-p
   return createPortal(modalContent, document.body);
 }
 
-export default function TasksPage() {
+export default function TasksPage({ initialPageKey = null }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const pageKey = getPageKey(location.pathname);
+  const pageKey = initialPageKey || getPageKey(location.pathname);
 
   const [projects, setProjects] = useState([]);
   const [tasksList, setTasksList] = useState([]);
@@ -311,10 +324,8 @@ export default function TasksPage() {
     };
 
     fetchProjects();
-    if (['overview', 'board', 'completed'].includes(pageKey)) {
-      fetchTasks(selectedProject);
-    }
-  }, [pageKey, selectedProject, location.search]);
+    fetchTasks(selectedProject);
+  }, [pageKey, selectedProject, location.search, fetchTasks]);
 
   /* Load employees when edit modal project changes */
   useEffect(() => {
@@ -377,8 +388,9 @@ export default function TasksPage() {
 
   const handleProjectChange = (projectUuid) => {
     setSelectedProject(projectUuid);
-    if (['overview', 'board', 'completed'].includes(pageKey)) {
-      const nextPath = `/admin/tasks${projectUuid ? `?project=${encodeURIComponent(projectUuid)}` : ''}`;
+    if (['overview', 'board', 'completed', 'pending', 'cancelled', 'today', 'new'].includes(pageKey)) {
+      const routeBase = pageKey === 'overview' ? '/admin/tasks' : `/admin/tasks/${pageKey}`;
+      const nextPath = `${routeBase}${projectUuid ? `?project=${encodeURIComponent(projectUuid)}` : ''}`;
       navigate(nextPath, { replace: true });
     }
   };
@@ -576,6 +588,10 @@ export default function TasksPage() {
       : tasksList;
 
     if (pageKey === "completed") return baseTasks.filter((task) => task.status === "Completed");
+    if (pageKey === "pending") return baseTasks.filter((task) => !['Completed', 'Cancelled'].includes(task.status));
+    if (pageKey === "cancelled") return baseTasks.filter((task) => task.status === "Cancelled");
+    if (pageKey === "today") return baseTasks.filter((task) => isSameDay(task.dueDate) || isSameDay(task.startDate));
+    if (pageKey === "new") return baseTasks.filter((task) => isSameDay(task.startDate) || isSameDay(task.dueDate));
     return baseTasks;
   }, [pageKey, selectedProject, tasksList]);
 
@@ -665,33 +681,7 @@ export default function TasksPage() {
       )}
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex bg-[#111318] border border-white/10 rounded-xl p-1 flex-1 overflow-x-auto">
-          {tabs.map((tab) => (
-            <NavLink
-              key={tab.key}
-              to={tab.key === "overview" ? "/admin/tasks" : `/admin/tasks/${tab.key}`}
-              className={({ isActive }) =>
-                `whitespace-nowrap px-4 py-1.5 rounded-lg text-sm transition ${isActive ? "bg-orange-500 text-white font-semibold" : "text-white/40 hover:text-white"}`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
-        </div>
-        {['overview', 'board', 'completed'].includes(pageKey) && (
-          <select
-            value={selectedProject}
-            onChange={(e) => handleProjectChange(e.target.value)}
-            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50"
-          >
-            <option value="">All Projects</option>
-            {availableTaskProjects.map((project) => (
-              <option key={project.uuid} value={project.uuid}>{project.name}</option>
-            ))}
-          </select>
-        )}
-      </div>
+      
 
       {/* ── Edit Task Modal placeholder (rendered via portal below) ── */}
 
