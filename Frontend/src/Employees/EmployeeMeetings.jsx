@@ -50,7 +50,9 @@ const EmployeeMeetings = () => {
           
           return parts.some(p => {
             if (typeof p === 'object' && p !== null) {
-              return String(p.user_id) === String(userId);
+              const matchById = String(p.user_id) === String(userId) || String(p.employee_id) === String(userId);
+              const matchByName = userName && p.name && p.name.toLowerCase() === userName.toLowerCase();
+              return matchById || matchByName;
             }
             return typeof p === 'string' && userName && p.toLowerCase() === userName.toLowerCase();
           });
@@ -170,16 +172,19 @@ const EmployeeMeetings = () => {
                    
                    {/* Action */}
                    <div className="p-4 pt-0 mt-auto">
-                     {m.meetingLink ? (
-                       <a href={m.meetingLink.startsWith('http') ? m.meetingLink : `https://${m.meetingLink}`} target="_blank" rel="noreferrer" 
-                          className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-                         Join Meeting <ExternalLink size={14} />
-                       </a>
-                     ) : (
-                       <button disabled className="w-full py-2.5 rounded-xl bg-white/5 text-white/30 text-sm font-semibold border border-white/5 cursor-not-allowed">
-                         No Link Provided
-                       </button>
-                     )}
+                     {(() => {
+                       const link = m.meetingLink || m.link || (m.location && String(m.location).startsWith('http') ? m.location : null);
+                       return link ? (
+                         <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noreferrer" 
+                            className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                           Join Meeting <ExternalLink size={14} />
+                         </a>
+                       ) : (
+                         <button disabled className="w-full py-2.5 rounded-xl bg-white/5 text-white/30 text-sm font-semibold border border-white/5 cursor-not-allowed">
+                           No Link Provided
+                         </button>
+                       );
+                     })()}
                    </div>
                  </div>
                );
