@@ -29,12 +29,13 @@ const EmployeeAttendanceSummary = () => {
         return;
       }
 
-      const res = await api.get(`/attendance?month=${selectedMonth}&year=${selectedYear}`);
+      const targetId = possibleIds[0];
+      const res = await api.get(`/attendance/${targetId}?month=${selectedMonth}&year=${selectedYear}`);
       if (res.data && res.data.data) {
-        // filter for current employee
-        const myData = res.data.data.filter(a => possibleIds.includes(String(a.employee_id)));
+        // the backend already filters for this employee
+        const myData = res.data.data;
         // sort by date descending
-        myData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        myData.sort((a, b) => new Date(b.date || b.attendance_date) - new Date(a.date || a.attendance_date));
         setHistory(myData);
       }
     } catch (err) {
@@ -124,7 +125,7 @@ const EmployeeAttendanceSummary = () => {
                     {history.map((record, i) => (
                       <tr key={record.id || i} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-5 py-4 font-medium text-white">
-                          {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          {new Date(record.date || record.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                         </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>

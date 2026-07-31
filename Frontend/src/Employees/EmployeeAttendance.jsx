@@ -59,20 +59,21 @@ const EmployeeAttendance = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
+      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
       if (possibleIds.length === 0) return;
+      const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
 
       const d = new Date();
       const month = d.getMonth() + 1;
       const year = d.getFullYear();
+      const dateStr = d.toISOString().slice(0, 10);
 
-      const res = await api.get(`/attendance/summary?month=${month}&year=${year}`);
+      const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
       if (res.data && res.data.data) {
-        // Find if this user already marked attendance for today
-        // Wait, the API returns summary which might not have the daily details easily checkable without fetching employee records.
-        // Let's just allow them to try checking in. If the backend blocks duplicates, it will throw an error.
-        // Actually, we can fetch all attendance or just rely on backend constraints.
-        // Let's rely on backend constraints for now.
+        const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+        if (todayRecord) {
+          setHasMarkedToday(true);
+        }
       }
     } catch (err) {
       console.warn("Could not fetch attendance summary", err);
@@ -211,8 +212,9 @@ const EmployeeAttendance = () => {
     
     setSubmitting(true);
     try {
-      // Find suitable ID
-      const employee_id = user?.employee_id || user?.uuid || user?.id || user?._id || user?.userId || user?.user_id;
+      // Prioritize UUID for DB insertion to prevent integer/string mismatch
+      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
+      const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
 
       await api.post("/attendance", {
         employee_id: employee_id,
@@ -249,10 +251,15 @@ const EmployeeAttendance = () => {
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => {
+              if (hasMarkedToday) {
+                alert("You have already marked your attendance for today.");
+                return;
+              }
               setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
               setIsModalOpen(true);
             }} 
-            className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600"
+            disabled={hasMarkedToday}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-medium text-white transition ${hasMarkedToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
           >
             <PlusCircle size={16} /> Mark Attendance Today
           </button>
