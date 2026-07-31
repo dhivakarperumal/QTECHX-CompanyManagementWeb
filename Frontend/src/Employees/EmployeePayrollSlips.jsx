@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, Printer, X, Loader2, FileText, AlertCircle } from 'lucide-react';
+import { DollarSign, Printer, X, Loader2, FileText, AlertCircle, Search } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
@@ -10,6 +10,9 @@ const EmployeePayrollSlips = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [monthFilter, setMonthFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const payslipRef = useRef();
 
   const handlePrint = useReactToPrint({
@@ -60,55 +63,95 @@ const EmployeePayrollSlips = () => {
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-end">
+        <div className="relative w-full sm:w-64">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search month, year, or amount"
+            className="w-full rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70"
+          />
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} className="w-full sm:w-auto rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+            <option value="all">All Months</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+              <option key={month} value={month}>{new Date(0, month - 1).toLocaleString('default', { month: 'long' })}</option>
+            ))}
+          </select>
+          <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="w-full sm:w-auto rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
+            <option value="all">All Years</option>
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-lg">
-        {loading ? (
-          <div className="flex justify-center items-center h-48 text-white/50">
-            <Loader2 className="animate-spin" size={24} />
-          </div>
-        ) : error ? (
-          <div className="flex justify-center items-center h-48 text-rose-400">
-            <AlertCircle size={24} className="mr-2" /> {error}
-          </div>
-        ) : history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-white/50">
-            <FileText size={48} className="mb-4 opacity-20" />
-            <p>No payslips found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-white/70">
-              <thead className="bg-white/5 text-white/50">
-                <tr>
-                  <th className="px-4 py-3 rounded-l-lg font-medium">Month & Year</th>
-                  <th className="px-4 py-3 font-medium">Basic (₹)</th>
-                  <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
-                  <th className="px-4 py-3 font-medium">Credited On</th>
-                  <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {history.map((record) => (
-                  <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3 font-medium text-white">
-                      {new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' })} {record.salary_year}
-                    </td>
-                    <td className="px-4 py-3">{parseFloat(record.basic_salary).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setSelectedPayslip(record)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
-                      >
-                        <Printer size={13} /> View Slip
-                      </button>
-                    </td>
+        {(() => {
+          const filteredHistory = history.filter(record => {
+            const recordMonth = new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' }).toLowerCase();
+            const searchMatch = !search || 
+                                recordMonth.includes(search.toLowerCase()) || 
+                                String(record.salary_year).includes(search) || 
+                                String(record.total_salary).includes(search);
+            const monthMatch = monthFilter === 'all' || Number(record.salary_month) === Number(monthFilter);
+            const yearMatch = yearFilter === 'all' || Number(record.salary_year) === Number(yearFilter);
+            return searchMatch && monthMatch && yearMatch;
+          });
+
+          return loading ? (
+            <div className="flex justify-center items-center h-48 text-white/50">
+              <Loader2 className="animate-spin" size={24} />
+            </div>
+          ) : error ? (
+            <div className="flex justify-center items-center h-48 text-rose-400">
+              <AlertCircle size={24} className="mr-2" /> {error}
+            </div>
+          ) : filteredHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-white/50">
+              <FileText size={48} className="mb-4 opacity-20" />
+              <p>No payslips found for the selected filters.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-white/70">
+                <thead className="bg-white/5 text-white/50">
+                  <tr>
+                    <th className="px-4 py-3 rounded-l-lg font-medium">Month & Year</th>
+                    <th className="px-4 py-3 font-medium">Basic (₹)</th>
+                    <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
+                    <th className="px-4 py-3 font-medium">Credited On</th>
+                    <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredHistory.map((record) => (
+                    <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-4 py-3 font-medium text-white">
+                        {new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' })} {record.salary_year}
+                      </td>
+                      <td className="px-4 py-3">{parseFloat(record.basic_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => setSelectedPayslip(record)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                        >
+                          <Printer size={13} /> View Slip
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Payslip Modal */}

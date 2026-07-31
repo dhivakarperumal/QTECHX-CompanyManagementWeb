@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Video, Clock, MapPin, CalendarDays, ExternalLink, Search } from 'lucide-react';
+import { Video, Clock, MapPin, CalendarDays, ExternalLink, Search, LayoutGrid, List } from 'lucide-react';
 import dayjs from 'dayjs';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
@@ -14,6 +14,7 @@ const EmployeeMeetings = () => {
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('today');
   const [customDate, setCustomDate] = useState({ start: '', end: '' });
+  const [viewMode, setViewMode] = useState('table');
 
   const isUpcomingRoute = location.pathname.includes('/upcoming');
 
@@ -133,6 +134,20 @@ const EmployeeMeetings = () => {
           </div>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap justify-end">
+          <div className="flex bg-black/20 border border-white/10 rounded-xl p-1 shrink-0">
+            <button 
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-primary text-white' : 'text-white/40 hover:text-white'}`}
+            >
+              <List size={16} />
+            </button>
+            <button 
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-primary text-white' : 'text-white/40 hover:text-white'}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
           <select 
             value={dateFilter} 
             onChange={(e) => setDateFilter(e.target.value)}
@@ -178,6 +193,53 @@ const EmployeeMeetings = () => {
           <div className="flex flex-col items-center justify-center h-64 text-white/40">
             <Video size={48} className="mb-4 opacity-20" />
             <p className="text-sm font-medium">No meetings found</p>
+          </div>
+        ) : viewMode === 'table' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-white/70">
+              <thead className="bg-white/5 text-white/50 border-b border-white/10">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Meeting</th>
+                  <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Time</th>
+                  <th className="px-4 py-3 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredData.map((m, i) => {
+                  const date = m.planDate || m.startDate || m.plan_date;
+                  const isPast = dayjs(date).isBefore(dayjs(), 'day');
+                  const type = m.eventType || m.category;
+                  const link = m.meetingLink || m.link || (m.location && String(m.location).startsWith('http') ? m.location : null);
+                  return (
+                    <tr key={i} className={`hover:bg-white/[0.02] transition-colors ${isPast ? 'opacity-50' : ''}`}>
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-white">{m.planTitle || m.title}</div>
+                        {m.location && !String(m.location).startsWith('http') && <div className="text-xs text-white/40">{m.location}</div>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase ${type === 'Client Call' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                          {type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{dayjs(date).format('MMM D, YYYY')}</td>
+                      <td className="px-4 py-3">{m.allDay ? 'All Day' : `${m.startTime || '--'} – ${m.endTime || '--'}`}</td>
+                      <td className="px-4 py-3 text-right">
+                        {link ? (
+                          <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noreferrer" 
+                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold">
+                            Join <ExternalLink size={12} />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-white/30">No Link</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
