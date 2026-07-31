@@ -485,28 +485,47 @@ export default function EmployeeProjectDetails() {
                 {assignments.length === 0 ? (
                   <p className="text-sm text-white/40 text-center py-4">No team members assigned.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {assignments.map((emp, i) => {
-                      const fullName = emp.full_name || [emp.first_name, emp.last_name].filter(Boolean).join(' ') || 'Unknown';
-                      return (
-                        <div key={emp.employee_id || i}
-                          className="flex items-center gap-4 bg-white/[0.03] border border-white/8 rounded-xl p-4 hover:bg-white/[0.06] transition">
-                          <Avatar name={fullName} size={11} index={i} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-white text-sm font-semibold truncate">{fullName}</p>
-                            <p className="text-white/40 text-xs truncate mt-0.5">{emp.designation || emp.role || 'Team Member'}</p>
-                            {emp.email && (
-                              <p className="text-white/30 text-xs truncate mt-1 flex items-center gap-1.5">
-                                <Mail size={10}/> {emp.email}
-                              </p>
-                            )}
-                          </div>
-                          <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-widest shrink-0">
-                            {emp.status || 'Assigned'}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="overflow-x-auto rounded-2xl border border-white/8 bg-[#111318]">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-white/6">
+                          {['S No', 'Member', 'Role', 'Email', 'Status'].map((col) => (
+                            <th key={col} className="px-4 py-3 text-[10px] font-bold tracking-widest text-white/40 uppercase whitespace-nowrap">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assignments.map((emp, i) => {
+                          const fullName = emp.full_name || [emp.first_name, emp.last_name].filter(Boolean).join(' ') || 'Unknown';
+                          return (
+                            <tr key={emp.employee_id || i} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                              <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{i + 1}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <Avatar name={fullName} size={11} index={i} />
+                                  <div>
+                                    <p className="text-white text-sm font-semibold truncate">{fullName}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-white/60 text-xs whitespace-nowrap">
+                                {emp.designation || emp.role || 'Team Member'}
+                              </td>
+                              <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">
+                                {emp.email || '—'}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-widest shrink-0 inline-flex">
+                                  {emp.status || 'Assigned'}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </Section>
@@ -520,34 +539,47 @@ export default function EmployeeProjectDetails() {
                 {tasks.length === 0 ? (
                   <p className="text-sm text-white/40 text-center py-4">No tasks assigned to you for this project yet.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {tasks.map((task) => (
-                      <div key={task.id || task.uuid} className="bg-white/[0.03] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.05] transition">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-semibold text-sm truncate">{task.task_name}</h3>
-                          <p className="text-white/50 text-xs mt-1 line-clamp-2 leading-relaxed">
-                            {task.description || 'No description provided.'}
-                          </p>
-                          <div className="flex items-center gap-3 mt-3">
-                            <div className="flex items-center gap-1.5 text-xs text-white/40">
-                              <Clock size={12} className="text-orange-400" />
+                  <div className="overflow-x-auto rounded-2xl border border-white/8 bg-[#111318]">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-white/6">
+                          {['S No', 'Task', 'Description', 'Due Date', 'Priority', 'Status'].map((col) => (
+                            <th key={col} className="px-4 py-3 text-[10px] font-bold tracking-widest text-white/40 uppercase whitespace-nowrap">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tasks.map((task, index) => (
+                          <tr key={task.id || task.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                            <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{index + 1}</td>
+                            <td className="px-4 py-3 text-white text-sm font-semibold whitespace-nowrap">
+                              {task.task_name}
+                            </td>
+                            <td className="px-4 py-3 text-white/60 text-xs max-w-[260px]">
+                              {task.description || 'No description provided.'}
+                            </td>
+                            <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">
                               {fmtDate(task.due_date)}
-                            </div>
-                            {task.priority && (
-                              <div className={`text-[10px] uppercase tracking-widest font-bold ${
-                                task.priority.toLowerCase() === 'high' ? 'text-rose-400' : 
-                                task.priority.toLowerCase() === 'medium' ? 'text-orange-400' : 'text-emerald-400'
-                              }`}>
-                                {task.priority} Priority
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="shrink-0">
-                          <StatusBadge status={task.status} />
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {task.priority && (
+                                <span className={`text-[10px] uppercase tracking-widest font-bold ${
+                                  task.priority.toLowerCase() === 'high' ? 'text-rose-400' : 
+                                  task.priority.toLowerCase() === 'medium' ? 'text-orange-400' : 'text-emerald-400'
+                                }`}>
+                                  {task.priority}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <StatusBadge status={task.status} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </Section>

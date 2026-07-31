@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download } from 'lucide-react';
+import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download, User, Play } from 'lucide-react';
 import api from '../../api';
 
 const tabs = [
@@ -591,29 +591,18 @@ export default function TasksPage() {
   return (
     <div className="space-y-6">
       {/* ── Page header ── */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-white/40">Task Management</p>
-          <h1 className="text-3xl font-bold">{tabs.find((tab) => tab.key === pageKey)?.label || "Tasks"}</h1>
-          <p className="mt-1 text-sm text-slate-400">Manage tasks, assignments, progress and timesheet workflows from one place.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+            <ClipboardList size={22} className="text-orange-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">{tabs.find((tab) => tab.key === pageKey)?.label || "Tasks"}</h1>
+            <p className="text-white/40 text-xs mt-0.5">{tasksLoading ? 'Loading…' : `${visibleTasks.length} task${visibleTasks.length !== 1 ? 's' : ''} total`}</p>
+          </div>
         </div>
 
-        {/* ── Right-side quick action buttons ── */}
-        <div className="flex flex-shrink-0 flex-wrap items-center gap-3">
-          <button
-            type="button"
-            id="btn-add-new-task"
-            onClick={() => {
-              setTaskError('');
-              setTaskSuccess('');
-              setTaskForm(EMPTY_TASK_FORM);
-              setShowAddModal(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-orange-600 hover:shadow-primary/30 active:scale-95"
-          >
-            <Plus size={16} />
-            Add New Task
-          </button>
+        <div className="flex items-center gap-2">
           <button
             type="button"
             id="btn-assign-task"
@@ -623,32 +612,48 @@ export default function TasksPage() {
               setAssignForm(projects.length > 0 ? { ...EMPTY_ASSIGN_FORM, project_id: projects[0].uuid } : EMPTY_ASSIGN_FORM);
               setShowAssignModal(true);
             }}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/20 hover:bg-white/10 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
           >
-            <UserPlus size={16} />
-            Assign Task
+            <UserPlus size={15} /> Task Assign
+          </button>
+          <button
+            type="button"
+            id="btn-add-new-task"
+            onClick={() => {
+              setTaskError('');
+              setTaskSuccess('');
+              setTaskForm(EMPTY_TASK_FORM);
+              setShowAddModal(true);
+            }}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+          >
+            <Plus size={15} /> Add Task
           </button>
         </div>
       </div>
 
       {/* ── Stats ── */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-          <p className="text-sm text-slate-400">Total Tasks</p>
-          <p className="mt-3 text-3xl font-semibold">{visibleTasks.length}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-          <p className="text-sm text-slate-400">Completed</p>
-          <p className="mt-3 text-3xl font-semibold text-emerald-400">{visibleTasks.filter((task) => task.status === "Completed").length}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-          <p className="text-sm text-slate-400">Pending</p>
-          <p className="mt-3 text-3xl font-semibold text-orange-400">{visibleTasks.filter((task) => task.status === "Pending").length}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
-          <p className="text-sm text-slate-400">In Progress</p>
-          <p className="mt-3 text-3xl font-semibold text-blue-400">{visibleTasks.filter((task) => task.status === "In Progress").length}</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total', value: visibleTasks.length, icon: ClipboardList, bg: 'bg-blue-500/10 border border-blue-500/20', cls: 'text-blue-500' },
+          { label: 'In Progress', value: visibleTasks.filter((t) => t.status === "In Progress").length, icon: Edit3, bg: 'bg-emerald-500/10 border border-emerald-500/20', cls: 'text-emerald-500' },
+          { label: 'Completed', value: visibleTasks.filter((t) => t.status === "Completed").length, icon: CheckCircle, bg: 'bg-purple-500/10 border border-purple-500/20', cls: 'text-purple-500' },
+          { label: 'Pending', value: visibleTasks.filter((t) => t.status === "Pending").length, icon: AlertCircle, bg: 'bg-orange-500/10 border border-orange-500/20', cls: 'text-orange-500' }
+        ].map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-[#111318] border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.02] transition">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
+                <Icon size={18} className={s.cls} />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white">{s.value}</p>
+                <p className="text-white/50 text-xs">{s.label}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Action message banner ── */}
@@ -659,15 +664,15 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* ── Tabs ── */}
-      <div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/70">
-        <div className="flex flex-wrap gap-2 p-4">
+      {/* ── Toolbar ── */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex bg-[#111318] border border-white/10 rounded-xl p-1 flex-1 overflow-x-auto">
           {tabs.map((tab) => (
             <NavLink
               key={tab.key}
               to={tab.key === "overview" ? "/admin/tasks" : `/admin/tasks/${tab.key}`}
               className={({ isActive }) =>
-                `rounded-full border px-4 py-2 text-sm transition ${isActive ? "border-primary bg-primary/10 text-primary" : "border-white/10 text-slate-300 hover:border-white/20 hover:bg-white/5"}`
+                `whitespace-nowrap px-4 py-1.5 rounded-lg text-sm transition ${isActive ? "bg-orange-500 text-white font-semibold" : "text-white/40 hover:text-white"}`
               }
             >
               {tab.label}
@@ -675,19 +680,16 @@ export default function TasksPage() {
           ))}
         </div>
         {['overview', 'board', 'completed'].includes(pageKey) && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 px-4 pb-4 pt-2">
-            <label className="text-sm font-medium text-slate-400">Project</label>
-            <select
-              value={selectedProject}
-              onChange={(e) => handleProjectChange(e.target.value)}
-              className="rounded-2xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary"
-            >
-              <option value="">All Projects</option>
-              {availableTaskProjects.map((project) => (
-                <option key={project.uuid} value={project.uuid}>{project.name}</option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedProject}
+            onChange={(e) => handleProjectChange(e.target.value)}
+            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50"
+          >
+            <option value="">All Projects</option>
+            {availableTaskProjects.map((project) => (
+              <option key={project.uuid} value={project.uuid}>{project.name}</option>
+            ))}
+          </select>
         )}
       </div>
 
@@ -722,67 +724,86 @@ export default function TasksPage() {
 
       {/* ── Tasks Table ── */}
       {pageKey !== "board" && pageKey !== "update" && (
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/70">
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 text-left text-sm text-slate-200">
-              <thead className="bg-slate-900 text-slate-400">
-                <tr>
-                  {['S No', 'Task', 'Project', 'Assigned To', 'Status', 'Progress', 'Due Date', 'Priority', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-4 py-4 font-medium">{heading}</th>
-                  ))}
+            <table className="w-full min-w-[820px] text-sm">
+              <thead>
+                <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Task</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Project</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Assigned To</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Progress</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Due Date</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {tasksLoading ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
-                      <div className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading tasks...</div>
+                    <td colSpan={7} className="px-4 py-8 text-center text-white/40">
+                      <div className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin text-orange-500/70" /> Loading tasks...</div>
                     </td>
                   </tr>
                 ) : visibleTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-12 text-center text-white/30">
                       <div className="flex flex-col items-center gap-3">
-                        <ClipboardList size={32} className="text-slate-700" />
-                        <p>No tasks found. Click <strong className="text-white">Add New Task</strong> to get started.</p>
+                        <ClipboardList size={30} className="opacity-40" />
+                        <p className="text-base font-semibold text-white/40">No tasks found</p>
                       </div>
                     </td>
                   </tr>
                 ) : visibleTasks.map((task, index) => (
-                  <tr key={task.id} className="border-t border-white/5 hover:bg-white/[0.02] transition">
-                    <td className="px-4 py-4 text-slate-400">{index + 1}</td>
-                    <td className="px-4 py-4">
-                      <div className="font-semibold">{task.name}</div>
-                      <div className="mt-1 text-xs text-slate-400">{task.module}</div>
+                  <tr key={task.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold shrink-0 bg-white/5 text-white/40 border border-white/10">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="text-white font-semibold text-sm leading-tight">{task.name}</div>
+                          {task.module && task.module !== "—" && (
+                            <p className="text-white/35 text-xs mt-0.5">{task.module}</p>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-4">{task.project}</td>
-                    <td className="px-4 py-4">{task.assignedTo}</td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[task.status] || 'bg-slate-600 text-slate-100'}`}>
+                    <td className="px-4 py-3.5 text-white/60 text-xs">{task.project}</td>
+                    <td className="px-4 py-3.5">
+                      <p className="text-white/50 text-xs flex items-center gap-1.5"><User size={10} className="text-white/25 shrink-0" /> {task.assignedTo}</p>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusStyles[task.status] || 'bg-slate-600 text-slate-100'}`}>
                         {task.status}
                       </span>
                     </td>
-                    <td className="px-4 py-4 min-w-[100px]">
-                      <div className="h-2 rounded-full bg-white/10">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${task.progress}%` }} />
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${task.progress}%` }} />
+                        </div>
+                        <span className="text-white/50 text-xs">{task.progress}%</span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-400">{task.progress}%</div>
                     </td>
-                    <td className="px-4 py-4">{task.dueDate}</td>
-                    <td className="px-4 py-4">{task.priority}</td>
-                    <td className="flex flex-wrap gap-2 px-4 py-4">
-                      <button type="button" onClick={() => handleViewTask(task.uuid)} title="View task" aria-label="View task"
-                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-slate-200 hover:border-white/20 hover:bg-white/10 transition">
-                        <Eye size={14} />
-                      </button>
-                      <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
-                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 p-2 text-slate-200 hover:border-white/20 hover:bg-white/10 transition">
-                        <Edit3 size={14} />
-                      </button>
-                      <button type="button" onClick={() => handleDeleteTask(task.uuid)} title="Delete task" aria-label="Delete task"
-                        className="inline-flex items-center justify-center rounded-full border border-rose-500 bg-rose-500/10 p-2 text-rose-200 hover:bg-rose-500/20 transition">
-                        <Trash2 size={14} />
-                      </button>
+                    <td className="px-4 py-3.5">
+                      <span className="text-white/35 text-xs">{task.dueDate}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button type="button" onClick={() => handleViewTask(task.uuid)} title="View task" aria-label="View task"
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition">
+                          <Eye size={13} />
+                        </button>
+                        <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
+                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
+                          <Edit3 size={13} />
+                        </button>
+                        <button type="button" onClick={() => handleDeleteTask(task.uuid)} title="Delete task" aria-label="Delete task"
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
