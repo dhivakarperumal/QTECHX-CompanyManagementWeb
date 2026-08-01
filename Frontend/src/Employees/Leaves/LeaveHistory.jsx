@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 const LeaveHistory = () => {
   const [leaves, setLeaves] = useState([]);
+  const [leaveSettings, setLeaveSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -24,9 +25,17 @@ const LeaveHistory = () => {
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/employee-leaves/my-leaves');
-      if (data.success) {
-        setLeaves(data.data);
+      const [leaveResponse, settingsResponse] = await Promise.all([
+        api.get('/employee-leaves/my-leaves'),
+        api.get('/leave-settings')
+      ]);
+
+      if (leaveResponse.data.success) {
+        setLeaves(leaveResponse.data.data || []);
+      }
+
+      if (settingsResponse.data.success) {
+        setLeaveSettings(settingsResponse.data.data || []);
       }
     } catch (error) {
       toast.error('Failed to fetch leave history');
@@ -39,6 +48,33 @@ const LeaveHistory = () => {
     "All",
     ...new Set(leaves.map((l) => l.leave_type)),
   ];
+
+  const leaveSummary = leaveSettings
+    .filter((setting) => Number(setting.is_active ?? 1) === 1)
+    .map((setting) => {
+      const totalAllowed = Number(setting.max_days || 0);
+      const taken = leaves
+        .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+        .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+      const remaining = Math.max(totalAllowed - taken, 0);
+
+      return {
+        leave_type: setting.leave_type,
+        totalAllowed,
+        taken,
+        remaining,
+      };
+    })
+    .sort((a, b) => a.leave_type.localeCompare(b.leave_type));
+
+  const overallSummary = leaveSummary.reduce(
+    (acc, item) => ({
+      totalAllowed: acc.totalAllowed + item.totalAllowed,
+      taken: acc.taken + item.taken,
+      remaining: acc.remaining + item.remaining,
+    }),
+    { totalAllowed: 0, taken: 0, remaining: 0 }
+  );
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -173,6 +209,48 @@ const LeaveHistory = () => {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Total Allowed</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{overallSummary.totalAllowed}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Taken</p>
+            <p className="mt-2 text-2xl font-semibold text-orange-400">{overallSummary.taken}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Remaining</p>
+            <p className="mt-2 text-2xl font-semibold text-emerald-400">{overallSummary.remaining}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {leaveSummary.map((item) => (
+            <div key={item.leave_type} className="rounded-2xl border border-white/10 bg-[#0f1117] p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-white">{item.leave_type}</p>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
+                  {item.remaining} left
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Total</p>
+                  <p className="mt-1 font-semibold text-white">{item.totalAllowed}</p>
+                </div>
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Taken</p>
+                  <p className="mt-1 font-semibold text-orange-400">{item.taken}</p>
+                </div>
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Left</p>
+                  <p className="mt-1 font-semibold text-emerald-400">{item.remaining}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
 
