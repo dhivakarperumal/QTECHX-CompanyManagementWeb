@@ -151,7 +151,7 @@ const Header = ({ onMenuClick }) => {
           title:    t.task_name || t.module_name || t.name || 'Untitled Task',
           project:  t.project_name || '',
           assigned: t.assigned_to_name || '',
-          assignedId: t.assigned_to || '',
+          assignedId: t.assigned_to_code || t.employee_code || t.assigned_to || '',
           status:   t.status || 'Pending',
         }));
       } catch (e) {
