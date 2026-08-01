@@ -22,7 +22,7 @@ const EmployeePayroll = () => {
   const fetchSalaryHistory = async () => {
     setLoading(true);
     try {
-      const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
+      const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.userId, user?.id, user?._id, user?.uuid].filter(Boolean).map(String);
       if (possibleIds.length === 0) {
         setError('Employee ID not found in profile.');
         setLoading(false);

@@ -84,11 +84,119 @@ const getBadgeStatus = (st) => {
   return 'Pending';
 };
 
+const normalizeListPayload = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const getResponseItems = (response, fallback = []) => {
+  if (!response) return fallback;
+  const payload = response?.data ?? response;
+  if (Array.isArray(payload)) return payload;
+  return normalizeListPayload(payload) || fallback;
+};
+
+const getEventDateValue = (event) =>
+  event?.planDate || event?.startDate || event?.plan_date || event?.start_time || event?.date || event?.start || event?.event_date;
+
+const resolveEmployeeId = (user, fallbackEmployeeId) => {
+  const candidateIds = [
+    user?.employee_id,
+    user?.employeeId,
+    user?.user_id,
+    user?.userId,
+    user?.id,
+    user?._id,
+    user?.uuid,
+    user?.employee_code,
+    user?.employeeCode,
+    user?.emp_id,
+    user?.empId,
+    fallbackEmployeeId,
+  ].filter(Boolean).map(String);
+
+  if (candidateIds.length === 0) return null;
+  return candidateIds.find((id) => id.length > 20) || candidateIds[0] || null;
+};
+
+const getDateValue = (value) => {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.includes('T') || trimmed.includes(' ') ? trimmed : `${trimmed}T00:00:00`;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isSameCalendarDay = (value, reference = new Date()) => {
+  const parsed = getDateValue(value);
+  if (!parsed) return false;
+  return dayjs(parsed).format('YYYY-MM-DD') === dayjs(reference).format('YYYY-MM-DD');
+};
+
+const eventMatchesUser = (event, possibleIds, userName) => {
+  if (!event) return false;
+  const directFields = [
+    event.user_id,
+    event.userId,
+    event.employee_id,
+    event.employeeId,
+    event.created_by,
+    event.createdBy,
+    event.assigned_to,
+    event.assignedTo,
+    event.owner_id,
+    event.ownerId,
+    event.creator_id,
+    event.creatorId,
+  ];
+
+  if (directFields.some((value) => possibleIds.includes(String(value)))) {
+    return true;
+  }
+
+  const participants = event.participants || event.attendees || event.members || [];
+  const normalizedParticipants = typeof participants === 'string'
+    ? (() => { try { return JSON.parse(participants); } catch { return []; } })()
+    : participants;
+
+  if (Array.isArray(normalizedParticipants)) {
+    return normalizedParticipants.some((participant) => {
+      if (!participant) return false;
+      if (typeof participant === 'string') {
+        const normalizedValue = String(participant).trim().toLowerCase();
+        return possibleIds.includes(normalizedValue) || (userName && normalizedValue === userName);
+      }
+      const participantFields = [
+        participant.user_id,
+        participant.userId,
+        participant.employee_id,
+        participant.employeeId,
+        participant.id,
+        participant.uuid,
+        participant.userID,
+        participant.employeeID,
+      ];
+      const participantIdMatch = participantFields.some((value) => possibleIds.includes(String(value)));
+      const participantName = String(participant.name || participant.full_name || participant.username || participant.label || '').trim().toLowerCase();
+      return participantIdMatch || (userName && participantName && participantName === userName);
+    });
+  }
+
+  return false;
+};
+
 /* ── main ── */
 const EmployeeDashboard = () => {
   const { userProfile, user, profileName } = useAuth();
-  const name = userProfile?.displayName?.split(' ')[0] || userProfile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Employee';
-  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || userProfile?.employee_id || user?.id;
+  const name = userProfile?.displayName?.split(' ')[0] || userProfile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || user?.username || 'Employee';
+  const employeeId = resolveEmployeeId(user, userProfile?.employee_id);
+  const primaryUserId = employeeId || user?.user_id || user?.id || user?.employee_id || user?.employeeId || user?.uuid || null;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -96,24 +204,24 @@ const EmployeeDashboard = () => {
     leaves: { recent: [], pendingCount: 0 },
     meetings: { todayCount: 0, upcoming: [] },
     projects: { activeList: [], activeCount: 0 },
-    attendance: { checkIn: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
-    payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' }
+    attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
+    payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
+    leaveBalance: 0
   });
 
   useEffect(() => {
-    if (!employeeId) return;
-
     const fetchAllData = async () => {
       setLoading(true);
       const today = new Date();
       const month = today.getMonth() + 1;
       const year = today.getFullYear();
-      const todayStr = today.toISOString().slice(0, 10);
+      const todayStr = dayjs(today).format('YYYY-MM-DD');
 
       try {
         const [
           tasksRes,
           leavesRes,
+          leaveSettingsRes,
           eventsRes,
           myEventsRes,
           projectsAssignRes,
@@ -121,13 +229,14 @@ const EmployeeDashboard = () => {
           attendanceRes,
           salaryRes
         ] = await Promise.allSettled([
-          api.get('/tasks', { params: { page: 1, limit: 1000, assigned_to: employeeId } }),
+          api.get('/tasks', { params: { page: 1, limit: 1000, ...(primaryUserId ? { assigned_to: primaryUserId } : {}) } }),
           api.get('/employee-leaves/my-leaves'),
+          api.get('/leave-settings'),
           api.get('/events'),
           api.get('/myevents'),
           api.get('/projects/assignments/all?limit=1000'),
           api.get('/projects?limit=1000&page=1'),
-          api.get(`/attendance/${employeeId}?month=${month}&year=${year}`),
+          api.get(`/attendance/${primaryUserId || ''}?month=${month}&year=${year}`),
           api.get('/salary/history')
         ]);
 
@@ -136,13 +245,14 @@ const EmployeeDashboard = () => {
           leaves: { recent: [], pendingCount: 0 },
           meetings: { todayCount: 0, upcoming: [] },
           projects: { activeList: [], activeCount: 0 },
-          attendance: { checkIn: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
-          payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' }
+          attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
+          payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
+          leaveBalance: 0
         };
 
         // --- TASKS ---
         if (tasksRes.status === 'fulfilled') {
-          const tasks = tasksRes.value?.data?.data || [];
+          const tasks = getResponseItems(tasksRes.value, []);
           newData.tasks.assigned = tasks.length;
           newData.tasks.completed = tasks.filter(t => ['Completed', 'Done'].includes(t.status)).length;
           newData.tasks.overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < today && !['Completed', 'Done'].includes(t.status)).length;
@@ -150,79 +260,93 @@ const EmployeeDashboard = () => {
         }
 
         // --- LEAVES ---
+        let employeeLeaves = [];
         if (leavesRes.status === 'fulfilled') {
-          const leaves = leavesRes.value?.data?.data || leavesRes.value?.data || [];
-          newData.leaves.pendingCount = leaves.filter(l => l.status === 'Pending').length;
-          newData.leaves.recent = leaves.slice(0, 4);
+          employeeLeaves = getResponseItems(leavesRes.value, []);
+          newData.leaves.pendingCount = employeeLeaves.filter(l => l.status === 'Pending').length;
+          newData.leaves.recent = employeeLeaves.slice(0, 4);
+        }
+
+        if (leaveSettingsRes.status === 'fulfilled') {
+          const leaveSettings = getResponseItems(leaveSettingsRes.value, []);
+          const approvedLeaves = employeeLeaves.filter(l => l.status === 'Approved');
+          newData.leaveBalance = leaveSettings.reduce((total, setting) => {
+            const maxDays = Number(setting.max_days || 0);
+            const taken = approvedLeaves
+              .filter(l => String(l.leave_type || '').toLowerCase() === String(setting.leave_type || '').toLowerCase())
+              .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+            return total + Math.max(maxDays - taken, 0);
+          }, 0);
         }
 
         // --- MEETINGS ---
-        const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
-        const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').toLowerCase();
+        const possibleIds = [
+          user?.employee_id,
+          user?.employeeId,
+          user?.user_id,
+          user?.userId,
+          user?.id,
+          user?._id,
+          user?.uuid,
+          user?.employee_code,
+          user?.employeeCode,
+          user?.emp_id,
+          user?.empId,
+          userProfile?.employee_id,
+          userProfile?.employeeId,
+          employeeId,
+          primaryUserId,
+        ].filter(Boolean).map(String);
+        const possibleIdSet = new Set(possibleIds.map(String));
+        const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
         
-        let personalEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value?.data?.data || eventsRes.value?.data || []) : [];
-        let officeEvents = myEventsRes.status === 'fulfilled' ? (myEventsRes.value?.data?.data || myEventsRes.value?.data || []) : [];
-        
-        if (possibleIds.length > 0) {
-          personalEvents = personalEvents.filter(evt => {
-            const evtUserId = String(evt.user_id || evt.userId || evt.employeeId);
-            return possibleIds.includes(evtUserId);
-          });
-          
-          officeEvents = officeEvents.filter(evt => {
-            let parts = evt.participants;
-            if (!parts) return false;
-            if (typeof parts === 'string') {
-              try { parts = JSON.parse(parts); } catch (e) { return false; }
-            }
-            if (!Array.isArray(parts)) return false;
-            return parts.some(p => {
-              if (typeof p === 'object' && p !== null) {
-                const matchById = possibleIds.includes(String(p.user_id)) || possibleIds.includes(String(p.employee_id));
-                const matchByName = userName && p.name && p.name.toLowerCase() === userName;
-                return matchById || matchByName;
-              }
-              return typeof p === 'string' && userName && p.toLowerCase() === userName;
-            });
-          });
-        }
+        let personalEvents = eventsRes.status === 'fulfilled' ? getResponseItems(eventsRes.value, []) : [];
+        let officeEvents = myEventsRes.status === 'fulfilled' ? getResponseItems(myEventsRes.value, []) : [];
         
         const allEvents = [...personalEvents, ...officeEvents];
-        const uniqueEvents = Array.from(new Map(allEvents.map(e => [e.id || e.uuid, e])).values());
+        const uniqueEvents = Array.from(new Map(allEvents.map(e => [e.id || e.uuid || `${e.title || e.event_name || 'event'}-${getEventDateValue(e) || ''}`, e])).values());
         
         const filteredMeetings = uniqueEvents.filter(e => {
-          const typeStr = String(e.eventType || e.category || '').toLowerCase();
-          return typeStr.includes('meeting') || typeStr.includes('meating') || typeStr.includes('call');
+          const text = [e.eventType, e.category, e.title, e.event_name, e.planTitle, e.name].filter(Boolean).join(' ').toLowerCase();
+          return text.includes('meeting') || text.includes('meating') || text.includes('call');
         });
+
+        const matchedMeetings = possibleIds.length > 0
+          ? filteredMeetings.filter(e => eventMatchesUser(e, possibleIds, userName) || eventMatchesUser(e, Array.from(possibleIdSet), userName))
+          : filteredMeetings;
+        const meetingsToUse = matchedMeetings.length > 0 ? matchedMeetings : filteredMeetings;
         
-        const upcomingEvents = filteredMeetings.filter(e => {
-          const mDate = e.planDate || e.startDate || e.plan_date || e.start_time || e.date;
-          return mDate && new Date(mDate) >= new Date().setHours(0,0,0,0);
+        const upcomingEvents = meetingsToUse.filter(e => {
+          const mDate = getEventDateValue(e);
+          return mDate && dayjs(mDate).isSameOrAfter(dayjs().startOf('day'));
         }).sort((a,b) => {
-          const dateA = a.planDate || a.startDate || a.plan_date || a.start_time || a.date;
-          const dateB = b.planDate || b.startDate || b.plan_date || b.start_time || b.date;
-          return new Date(dateA) - new Date(dateB);
+          const dateA = getEventDateValue(a);
+          const dateB = getEventDateValue(b);
+          return dayjs(dateA).valueOf() - dayjs(dateB).valueOf();
         });
         
-        newData.meetings.todayCount = upcomingEvents.filter(e => {
-          const mDate = e.planDate || e.startDate || e.plan_date || e.start_time || e.date;
-          return isSameDay(mDate);
-        }).length;
+        newData.meetings.todayCount = upcomingEvents.filter(e => isSameCalendarDay(getEventDateValue(e), today)).length;
         newData.meetings.upcoming = upcomingEvents.slice(0, 3);
 
         // --- PROJECTS ---
-        const allPrj = projectsAllRes.status === 'fulfilled' ? (projectsAllRes.value?.data?.data || projectsAllRes.value?.data || []) : [];
-        const grouped = projectsAssignRes.status === 'fulfilled' ? (projectsAssignRes.value?.data?.grouped || []) : [];
+        const allPrj = projectsAllRes.status === 'fulfilled'
+          ? (Array.isArray(projectsAllRes.value?.data) ? projectsAllRes.value.data : (Array.isArray(projectsAllRes.value?.data?.data) ? projectsAllRes.value.data.data : []))
+          : [];
+        const grouped = projectsAssignRes.status === 'fulfilled'
+          ? (Array.isArray(projectsAssignRes.value?.data?.grouped) ? projectsAssignRes.value.data.grouped : (Array.isArray(projectsAssignRes.value?.data) ? projectsAssignRes.value.data : []))
+          : [];
         
         const assignedUuids = new Set(
           grouped
-            .filter(g => g.employees?.some(e => String(e.employee_id) === String(employeeId)))
+            .filter(g => g.employees?.some(e => String(e.employee_id) === String(primaryUserId) || String(e.user_id) === String(primaryUserId) || String(e.id) === String(primaryUserId)))
             .map(g => g.project_uuid)
         );
         
-        const myProjects = allPrj.filter(p => 
-          assignedUuids.has(p.uuid) || (p.project_manager && p.project_manager.toLowerCase() === userName)
-        );
+        const myProjects = allPrj.filter(p => {
+          const projectUuid = p.uuid || p.project_uuid || p.project?.uuid || null;
+          const projectManager = p.project_manager || p.project?.project_manager || '';
+          return assignedUuids.has(projectUuid) || (projectManager && projectManager.toLowerCase() === userName);
+        });
         
         const activeProjects = myProjects.filter(p => !['Completed', 'Archived', 'Cancelled'].includes(p.status || p.project?.status));
         newData.projects.activeCount = activeProjects.length;
@@ -234,8 +358,14 @@ const EmployeeDashboard = () => {
 
         // --- ATTENDANCE ---
         if (attendanceRes.status === 'fulfilled') {
-          const records = attendanceRes.value?.data?.data || [];
-          const present = records.filter(r => ['Present', 'Half Day', 'Late'].includes(r.attendance_status));
+          const records = getResponseItems(attendanceRes.value, []);
+          const normalizedRecords = records.map((record) => ({
+            ...record,
+            attendance_status: record.attendance_status || record.status || 'Present',
+            check_in_time: record.check_in_time || record.checkIn || record.checkin || null,
+            check_out_time: record.check_out_time || record.checkOut || record.checkout || null,
+          }));
+          const present = normalizedRecords.filter(r => ['Present', 'Half Day', 'Late'].includes(r.attendance_status));
           
           newData.attendance.presentDays = present.length;
           // Estimate working days so far in month
@@ -246,9 +376,15 @@ const EmployeeDashboard = () => {
           }
           newData.attendance.absentDays = Math.max(0, workingDaysSoFar - present.length);
 
-          const todayRec = records.find(r => (r.date === todayStr) || (r.attendance_date && String(r.attendance_date).startsWith(todayStr)));
-          if (todayRec && todayRec.check_in_time) {
-            newData.attendance.checkIn = todayRec.check_in_time;
+          const todayRec = normalizedRecords.find(r => {
+            const recordDate = r.date || r.attendance_date || r.attendanceDate || '';
+            const normalizedDate = String(recordDate).slice(0, 10);
+            return normalizedDate === todayStr || isSameCalendarDay(recordDate, today);
+          });
+          const fallbackRec = todayRec || normalizedRecords[0] || null;
+          if (fallbackRec) {
+            newData.attendance.checkIn = fallbackRec.check_in_time || fallbackRec.checkIn || null;
+            newData.attendance.checkOut = fallbackRec.check_out_time || fallbackRec.checkOut || null;
           }
           
           // Hours this week (rough calculation for demo purposes)
@@ -267,16 +403,16 @@ const EmployeeDashboard = () => {
 
         // --- PAYROLL ---
         if (salaryRes.status === 'fulfilled') {
-          const history = salaryRes.value?.data?.data || salaryRes.value?.data || [];
+          const history = getResponseItems(salaryRes.value, []);
           if (history.length > 0) {
             const latest = history[0];
-            newData.payroll.nextSalary = `₹${latest.net_payable || latest.net_salary || 0}`;
-            // Predict next pay date as last day of current month
+            const salaryAmount = latest.total_salary ?? latest.net_payable ?? latest.net_salary ?? latest.amount ?? 0;
+            newData.payroll.nextSalary = `₹${Number(salaryAmount || 0).toLocaleString('en-IN')}`;
             const nextPay = new Date(year, month, 0);
             newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
           } else {
-             const nextPay = new Date(year, month, 0);
-             newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+            const nextPay = new Date(year, month, 0);
+            newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
           }
         }
 
@@ -319,11 +455,11 @@ const EmployeeDashboard = () => {
         <div className="flex flex-wrap gap-4 mt-5">
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CheckCircle2 size={16} className="text-green-400" />
-            <span className="text-white text-sm font-medium">Checked In: <span className="text-green-400">{data.attendance.checkIn || 'Not yet'}</span></span>
+            <span className="text-white text-sm font-medium">Check-in: <span className="text-green-400">{data.attendance.checkIn || 'Not yet'}</span> · Check-out: <span className="text-amber-400">{data.attendance.checkOut || 'Not yet'}</span></span>
           </div>
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CalendarDays size={16} className="text-blue-400" />
-            <span className="text-white text-sm font-medium">Leave Balance: <span className="text-blue-400">N/A</span></span>
+            <span className="text-white text-sm font-medium">Leave Balance: <span className="text-blue-400">{data.leaveBalance > 0 ? `${data.leaveBalance} days left` : '0 days left'}</span></span>
           </div>
         </div>
       </div>
@@ -344,7 +480,7 @@ const EmployeeDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* My Tasks */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-[300px]">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-75">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <CheckSquare size={18} className="text-primary" /> Today's Assigned Tasks
@@ -364,7 +500,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Leave Summary */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <CalendarOff size={18} className="text-primary" /> My Recent Leaves
@@ -384,7 +520,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Upcoming Meetings */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <Video size={18} className="text-primary" /> Upcoming Meetings
@@ -397,14 +533,16 @@ const EmployeeDashboard = () => {
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No upcoming meetings.</div>
             ) : (
               data.meetings.upcoming.map((m, i) => {
-                const mDate = new Date(m.start_time || m.date);
-                const timeStr = mDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const dayStr = isSameDay(mDate) ? `Today ${timeStr}` : `${formatDate(mDate)} ${timeStr}`;
+                const meetingDateValue = getEventDateValue(m);
+                const mDate = meetingDateValue ? new Date(meetingDateValue) : null;
+                const hasValidDate = mDate && !Number.isNaN(mDate.getTime());
+                const timeStr = hasValidDate ? mDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Time TBD';
+                const dayStr = hasValidDate ? (isSameDay(mDate) ? `Today ${timeStr}` : `${formatDate(mDate)} ${timeStr}`) : 'Schedule pending';
                 const members = Array.isArray(m.attendees) ? m.attendees.length : (m.members || 1);
                 return (
                   <div key={m.id || m.uuid || i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
                     <div>
-                      <p className="text-white text-sm font-medium">{m.title || m.event_name || 'Meeting'}</p>
+                      <p className="text-white text-sm font-medium">{m.title || m.event_name || m.planTitle || 'Meeting'}</p>
                       <p className="text-white/40 text-xs mt-0.5">{dayStr}</p>
                     </div>
                     <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-full font-medium">
@@ -418,7 +556,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Active Projects */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <FolderKanban size={18} className="text-primary" /> Active Projects

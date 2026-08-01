@@ -128,7 +128,7 @@ const EmployeeAdd = () => {
 
         const data = await response.json();
         const emp = data.employee;
-        
+
         if (emp) {
           setFormData({
             employee_code: emp.employee_code || "",
@@ -346,13 +346,13 @@ const EmployeeAdd = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     if (!isEditMode && formData.password !== formData.confirm_password) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
-    
+
     if (isEditMode && formData.password && formData.password !== formData.confirm_password) {
       setError("Passwords do not match");
       setLoading(false);
@@ -371,7 +371,7 @@ const EmployeeAdd = () => {
 
     try {
       const token = localStorage.getItem("token");
-      
+
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key] !== "" && formData[key] !== null) {
@@ -379,10 +379,10 @@ const EmployeeAdd = () => {
         }
       });
 
-      const url = isEditMode 
-        ? `http://localhost:5000/api/employees/${id}` 
+      const url = isEditMode
+        ? `http://localhost:5000/api/employees/${id}`
         : "http://localhost:5000/api/employees";
-        
+
       const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -470,11 +470,11 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Gender</label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className={inputClass}>
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+              <select name="gender" value={formData.gender} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Gender</option>
+                <option value="Male" className="bg-black text-white">Male</option>
+                <option value="Female" className="bg-black text-white">Female</option>
+                <option value="Other" className="bg-black text-white">Other</option>
               </select>
             </div>
             <div>
@@ -483,27 +483,27 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
-              <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={inputClass}>
-                <option value="">Select Blood Group</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="Unknown">Unknown</option>
+              <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Blood Group</option>
+                <option value="A+" className="bg-black text-white">A+</option>
+                <option value="A-" className="bg-black text-white">A-</option>
+                <option value="B+" className="bg-black text-white">B+</option>
+                <option value="B-" className="bg-black text-white">B-</option>
+                <option value="O+" className="bg-black text-white">O+</option>
+                <option value="O-" className="bg-black text-white">O-</option>
+                <option value="AB+" className="bg-black text-white">AB+</option>
+                <option value="AB-" className="bg-black text-white">AB-</option>
+                <option value="Unknown" className="bg-black text-white">Unknown</option>
               </select>
             </div>
             <div>
               <label className={labelClass}>Marital Status</label>
-              <select name="marital_status" value={formData.marital_status} onChange={handleChange} className={inputClass}>
-                <option value="">Select Status</option>
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-                <option value="Divorced">Divorced</option>
-                <option value="Widowed">Widowed</option>
+              <select name="marital_status" value={formData.marital_status} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Status</option>
+                <option value="Single" className="bg-black text-white">Single</option>
+                <option value="Married" className="bg-black text-white">Married</option>
+                <option value="Divorced" className="bg-black text-white">Divorced</option>
+                <option value="Widowed" className="bg-black text-white">Widowed</option>
               </select>
             </div>
             <div>
@@ -589,20 +589,20 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Employment Status <span className="text-red-500">*</span></label>
-              <select name="employment_status" required value={formData.employment_status} onChange={handleChange} className={inputClass}>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Terminated">Terminated</option>
-                <option value="Resigned">Resigned</option>
+              <select name="employment_status" required value={formData.employment_status} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="Active" className="bg-black text-white">Active</option>
+                <option value="Inactive" className="bg-black text-white">Inactive</option>
+                <option value="Terminated" className="bg-black text-white">Terminated</option>
+                <option value="Resigned" className="bg-black text-white">Resigned</option>
               </select>
             </div>
             <div>
               <label className={labelClass}>Role <span className="text-red-500">*</span></label>
-              <select name="role" required value={formData.role} onChange={handleChange} className={inputClass}>
-                <option value="Employee">Employee</option>
-                <option value="Manager">Manager</option>
-                <option value="HR">HR</option>
-                <option value="Admin">Admin</option>
+              <select name="role" required value={formData.role} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="Employee" className="bg-black text-white">Employee</option>
+                <option value="Manager" className="bg-black text-white">Manager</option>
+                <option value="HR" className="bg-black text-white">HR</option>
+                <option value="Admin" className="bg-black text-white">Admin</option>
               </select>
             </div>
           </div>
@@ -724,32 +724,32 @@ const EmployeeAdd = () => {
               <h2 className="text-lg font-semibold text-white">Login & Access</h2>
               <p className="text-xs text-white/40">Credentials for the employee portal</p>
             </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className={labelClass}>Username <span className="text-red-500">*</span></label>
-                  <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
-                </div>
-                <div>
-                  <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-                  <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
-                </div>
-                <div className="relative">
-                  <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                  <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </button>
-                  <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
-                </div>
-                <div className="relative">
-                  <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                  <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </button>
-                </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <label className={labelClass}>Username <span className="text-red-500">*</span></label>
+                <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+              </div>
+              <div>
+                <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
+                <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+              </div>
+              <div className="relative">
+                <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+                <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+                <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
+              </div>
+              <div className="relative">
+                <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
+                <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
               </div>
             </div>
+          </div>
         )}
 
         <div className="flex justify-end gap-3">

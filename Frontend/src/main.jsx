@@ -51,6 +51,7 @@ import EmployeePayroll from './Employees/EmployeePayroll.jsx'
 import EmployeePayrollSlips from './Employees/EmployeePayrollSlips.jsx'
 import ApplyLeave from './Employees/Leaves/ApplyLeave.jsx'
 import LeaveHistory from './Employees/Leaves/LeaveHistory.jsx'
+import EmployeeLeaveHistoryPage from './Employees/Leaves/EmployeeLeaveHistoryPage.jsx'
 import AllProjects from './Admin/Projects/AllProjects.jsx'
 import AddProject from './Admin/Projects/AddProject.jsx'
 import EditProject from './Admin/Projects/EditProject.jsx'
@@ -331,6 +332,10 @@ const router = createHashRouter([
             element: <AdminProfile />,
           },
           {
+            path: 'leave-history/:employeeId',
+            element: <EmployeeLeaveHistoryPage />,
+          },
+          {
             path: 'office-calendar',
             element: <OfficeCalendar />,
           },
@@ -446,6 +451,10 @@ const router = createHashRouter([
           {
             path: 'leaves/history',
             element: <LeaveHistory />,
+          },
+          {
+            path: 'leaves/history/:employeeId',
+            element: <EmployeeLeaveHistoryPage />,
           },
         ],
       },

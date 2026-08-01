@@ -164,7 +164,7 @@ export default function EmployeeTasks() {
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
 
-  const employeeId = user?.employee_id || user?.employeeId || user?.user_id;
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || null;
 
   const filterKey = useMemo(() => {
     if (location.pathname.endsWith('/pending'))    return 'pending';

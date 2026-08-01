@@ -1,5 +1,6 @@
 const LeaveModel = require("../models/employeeLeaveModel");
 const leaveSettingsModel = require("../models/leaveSettingsModel");
+const employeeModel = require("../models/employeeModel");
 
 function getAuthenticatedEmployeeId(req) {
   return req.user?.employee_id || req.user?.id || req.user?.user_id || null;
@@ -75,6 +76,40 @@ async function getAllLeaves(req, res) {
   }
 }
 
+async function getEmployeeLeaveHistory(req, res) {
+  try {
+    const requesterId = getAuthenticatedEmployeeId(req);
+    const targetEmployeeId = req.params.employeeId || req.query.employee_id || requesterId;
+    const userRole = String(req.user?.role || '').trim().toLowerCase();
+    const isAdmin = ['admin', 'super admin'].includes(userRole);
+    const isOwnHistory = requesterId && targetEmployeeId && String(requesterId) === String(targetEmployeeId);
+
+    if (!requesterId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    if (!isAdmin && !isOwnHistory) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to view this page' });
+    }
+
+    const [employee, leaves] = await Promise.all([
+      employeeModel.findByEmployeeId(targetEmployeeId),
+      LeaveModel.getLeavesByEmployeeId(targetEmployeeId)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        employee: employee || null,
+        leaves: leaves || []
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching employee leave history:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch employee leave history', error: error.message });
+  }
+}
+
 async function updateLeaveStatus(req, res) {
   try {
     const { id } = req.params;
@@ -97,5 +132,6 @@ module.exports = {
   applyLeave,
   getMyLeaves,
   getAllLeaves,
+  getEmployeeLeaveHistory,
   updateLeaveStatus
 };
