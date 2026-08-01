@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
 import {
@@ -13,6 +13,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const LeaveHistory = () => {
   const [leaves, setLeaves] = useState([]);
@@ -201,16 +202,12 @@ const LeaveHistory = () => {
         <div className="flex items-center gap-2">
 
           <button
-            onClick={() => setShowLeaveSummary(!showLeaveSummary)}
+            onClick={() => setShowLeaveSummary(true)}
             className="h-9 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition flex items-center gap-2"
           >
             Leave Type Details
 
-            {showLeaveSummary ? (
-              <ChevronUp size={16} />
-            ) : (
-              <ChevronDown size={16} />
-            )}
+            <ChevronDown size={16} />
           </button>
 
           <button
@@ -250,52 +247,7 @@ const LeaveHistory = () => {
           </div>
         </div>
 
-        <div className="mt-4">
-
-          {showLeaveSummary && (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-4">
-              {leaveSummary.map((item) => (
-                <div
-                  key={item.leave_type}
-                  className="rounded-2xl border border-white/10 bg-[#0f1117] p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">
-                      {item.leave_type}
-                    </p>
-
-                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
-                      {item.remaining} left
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
-                    <div>
-                      <p className="text-white/40 text-[10px] uppercase">Total</p>
-                      <p className="mt-1 font-semibold text-white">
-                        {item.totalAllowed}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-white/40 text-[10px] uppercase">Taken</p>
-                      <p className="mt-1 font-semibold text-orange-400">
-                        {item.taken}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-white/40 text-[10px] uppercase">Left</p>
-                      <p className="mt-1 font-semibold text-emerald-400">
-                        {item.remaining}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <div className="mt-4"></div>
 
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
@@ -543,6 +495,61 @@ const LeaveHistory = () => {
           )}
         </div>
       </div>
+
+      {showLeaveSummary && (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={(event) => event.target === event.currentTarget && setShowLeaveSummary(false)}
+          >
+            <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#0f1117] p-6 shadow-2xl shadow-black/50">
+              <div className="flex items-center justify-between gap-4 mb-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Leave Summary</p>
+                  <h2 className="text-xl font-semibold text-white">Leave Type Details</h2>
+                  <p className="text-sm text-white/40">Review your leave balances and approved usage.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveSummary(false)}
+                  className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {leaveSummary.map((item) => (
+                  <div
+                    key={item.leave_type}
+                    className="rounded-2xl border border-white/10 bg-[#12151f] p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-white">{item.leave_type}</p>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
+                        {item.remaining} left
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                      <div>
+                        <p className="text-white/40 text-[10px] uppercase">Total</p>
+                        <p className="mt-1 font-semibold text-white">{item.totalAllowed}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/40 text-[10px] uppercase">Taken</p>
+                        <p className="mt-1 font-semibold text-orange-400">{item.taken}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/40 text-[10px] uppercase">Left</p>
+                        <p className="mt-1 font-semibold text-emerald-400">{item.remaining}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
     </div>
   );
 };

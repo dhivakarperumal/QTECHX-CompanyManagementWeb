@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { FileText, Loader2, Send, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { FileText, Loader2, Send, ArrowLeft, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const defaultLeaveTypes = [
   "Casual Leave",
@@ -122,222 +123,240 @@ const ApplyLeave = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
-    <div className="space-y-5 pb-10 text-white min-h-screen">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/employee/leaves/history"
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition"
-          >
-            <ArrowLeft size={18} />
-          </Link>
-          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
-            <FileText size={22} className="text-orange-500" />
+    <ModalPortal>
+      <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm"
+        onClick={(event) => event.target === event.currentTarget && navigate('/employee/leaves/history')}
+      >
+        <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0f1117] shadow-2xl shadow-black/50 max-h-[90vh] overflow-hidden">
+          <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-white/10 bg-[#0f1117] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/employee/leaves/history')}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition"
+              >
+                <ArrowLeft size={18} />
+              </button>
+              <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+                <FileText size={22} className="text-orange-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-white">Apply for Leave</h1>
+                <p className="text-white/40 text-xs mt-0.5">Submit a new leave request for approval</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/employee/leaves/history')}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Apply for Leave</h1>
-            <p className="text-white/40 text-xs mt-0.5">Submit a new leave request for approval</p>
+
+          <div className="max-h-[calc(90vh-92px)] overflow-y-auto p-6">
+            <div className="rounded-2xl border border-white/10 bg-[#111318] p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Read-only Employee Info */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Employee Name</label>
+                    <input 
+                      type="text" 
+                      value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : (user?.name || user?.username || '')} 
+                      disabled 
+                      className="w-full bg-white/4 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Employee ID</label>
+                    <input 
+                      type="text" 
+                      value={user?.employee_code || user?.user_id || user?.employee_id || user?.employeeId || ''} 
+                      disabled 
+                      className="w-full text-white rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm  cursor-not-allowed outline-none" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Mobile Number</label>
+                    <input 
+                      type="text" 
+                      value={user?.mobile_number || user?.mobile || user?.phone || ''} 
+                      disabled 
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Email ID</label>
+                    <input 
+                      type="text" 
+                      value={user?.personal_email || user?.email || ''} 
+                      disabled 
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
+                    />
+                  </div>
+
+                  {/* Leave Fields */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Leave Type</label>
+                    <select 
+                      name="leave_type" 
+                      value={formData.leave_type} 
+                      onChange={handleChange} 
+                      required
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
+                    >
+                      {availableLeaveTypes.map(type => (
+                        <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
+                      ))}
+                    </select>
+                    {!settingsLoading && (
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
+                        <p className="font-semibold text-white">Leave balance</p>
+                        {selectedLeaveSetting ? (
+                          <div className="mt-2 flex items-center justify-between">
+                            <span>Total allowed: <span className="text-white">{selectedLeaveSetting.max_days ?? 0}</span></span>
+                            <span>Taken: <span className="text-orange-400">{selectedLeaveSetting.taken ?? 0}</span></span>
+                            <span>Remaining: <span className="text-emerald-400">{selectedLeaveSetting.remaining ?? 0}</span></span>
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-white/40">Leave balance not available for this type yet.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Day Type</label>
+                    <div className="flex space-x-6 mt-3">
+                      <label className="flex items-center space-x-2 cursor-pointer group">
+                        <input 
+                          type="radio" 
+                          name="day_type" 
+                          value="Full Day" 
+                          checked={formData.day_type === 'Full Day'} 
+                          onChange={handleChange}
+                          className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
+                        />
+                        <span className="text-sm text-white/70 group-hover:text-white transition">Full Day</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer group">
+                        <input 
+                          type="radio" 
+                          name="day_type" 
+                          value="Half Day" 
+                          checked={formData.day_type === 'Half Day'} 
+                          onChange={handleChange}
+                          className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
+                        />
+                        <span className="text-sm text-white/70 group-hover:text-white transition">Half Day</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {formData.day_type === 'Half Day' && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-white/70">Half Day Session</label>
+                      <div className="flex space-x-6 mt-3">
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="half_day_type" 
+                            value="Morning" 
+                            checked={formData.half_day_type === 'Morning'} 
+                            onChange={handleChange}
+                            className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
+                          />
+                          <span className="text-sm text-white/70 group-hover:text-white transition">Morning</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                          <input 
+                            type="radio" 
+                            name="half_day_type" 
+                            value="Afternoon" 
+                            checked={formData.half_day_type === 'Afternoon'} 
+                            onChange={handleChange}
+                            className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
+                          />
+                          <span className="text-sm text-white/70 group-hover:text-white transition">Afternoon</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">From Date</label>
+                    <input 
+                      type="date" 
+                      name="from_date" 
+                      value={formData.from_date} 
+                      onChange={handleChange} 
+                      required
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition scheme-dark" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">To Date</label>
+                    <input 
+                      type="date" 
+                      name="to_date" 
+                      value={formData.day_type === 'Half Day' ? formData.from_date : formData.to_date} 
+                      onChange={handleChange} 
+                      disabled={formData.day_type === 'Half Day'}
+                      required
+                      min={formData.from_date}
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed scheme-dark" 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-white/70">Number of Days</label>
+                    <input 
+                      type="text" 
+                      value={formData.no_of_days} 
+                      disabled 
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-orange-400 font-bold outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-white/70">Reason for Leave</label>
+                  <textarea 
+                    name="reason" 
+                    value={formData.reason} 
+                    onChange={handleChange} 
+                    required
+                    rows="4"
+                    placeholder="Please provide a brief reason for your leave request..."
+                    className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 transition resize-none placeholder-white/20"
+                  ></textarea>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition hover:opacity-90 disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    <span>{loading ? 'Submitting...' : 'Submit Request'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="rounded-2xl border border-white/10 bg-[#111318] p-6 max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Read-only Employee Info */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Employee Name</label>
-              <input 
-                type="text" 
-                value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : (user?.name || user?.username || '')} 
-                disabled 
-                className="w-full bg-white/4 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Employee ID</label>
-              <input 
-                type="text" 
-                value={user?.employee_code || user?.user_id || user?.employee_id || user?.employeeId || ''} 
-                disabled 
-                className="w-full text-white rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm  cursor-not-allowed outline-none" 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Mobile Number</label>
-              <input 
-                type="text" 
-                value={user?.mobile_number || user?.mobile || user?.phone || ''} 
-                disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Email ID</label>
-              <input 
-                type="text" 
-                value={user?.personal_email || user?.email || ''} 
-                disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
-              />
-            </div>
-
-            {/* Leave Fields */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Leave Type</label>
-              <select 
-                name="leave_type" 
-                value={formData.leave_type} 
-                onChange={handleChange} 
-                required
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
-              >
-                {availableLeaveTypes.map(type => (
-                  <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
-                ))}
-              </select>
-              {!settingsLoading && (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
-                  <p className="font-semibold text-white">Leave balance</p>
-                  {selectedLeaveSetting ? (
-                    <div className="mt-2 flex items-center justify-between">
-                      <span>Total allowed: <span className="text-white">{selectedLeaveSetting.max_days ?? 0}</span></span>
-                      <span>Taken: <span className="text-orange-400">{selectedLeaveSetting.taken ?? 0}</span></span>
-                      <span>Remaining: <span className="text-emerald-400">{selectedLeaveSetting.remaining ?? 0}</span></span>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-white/40">Leave balance not available for this type yet.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Day Type</label>
-              <div className="flex space-x-6 mt-3">
-                <label className="flex items-center space-x-2 cursor-pointer group">
-                  <input 
-                    type="radio" 
-                    name="day_type" 
-                    value="Full Day" 
-                    checked={formData.day_type === 'Full Day'} 
-                    onChange={handleChange}
-                    className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
-                  />
-                  <span className="text-sm text-white/70 group-hover:text-white transition">Full Day</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer group">
-                  <input 
-                    type="radio" 
-                    name="day_type" 
-                    value="Half Day" 
-                    checked={formData.day_type === 'Half Day'} 
-                    onChange={handleChange}
-                    className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
-                  />
-                  <span className="text-sm text-white/70 group-hover:text-white transition">Half Day</span>
-                </label>
-              </div>
-            </div>
-
-            {formData.day_type === 'Half Day' && (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-white/70">Half Day Session</label>
-                <div className="flex space-x-6 mt-3">
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="half_day_type" 
-                      value="Morning" 
-                      checked={formData.half_day_type === 'Morning'} 
-                      onChange={handleChange}
-                      className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
-                    />
-                    <span className="text-sm text-white/70 group-hover:text-white transition">Morning</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="half_day_type" 
-                      value="Afternoon" 
-                      checked={formData.half_day_type === 'Afternoon'} 
-                      onChange={handleChange}
-                      className="w-4 h-4 text-orange-500 border-white/20 bg-white/5 focus:ring-orange-500 focus:ring-offset-[#111318]"
-                    />
-                    <span className="text-sm text-white/70 group-hover:text-white transition">Afternoon</span>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">From Date</label>
-              <input 
-                type="date" 
-                name="from_date" 
-                value={formData.from_date} 
-                onChange={handleChange} 
-                required
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition scheme-dark" 
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">To Date</label>
-              <input 
-                type="date" 
-                name="to_date" 
-                value={formData.day_type === 'Half Day' ? formData.from_date : formData.to_date} 
-                onChange={handleChange} 
-                disabled={formData.day_type === 'Half Day'}
-                required
-                min={formData.from_date}
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed scheme-dark" 
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/70">Number of Days</label>
-              <input 
-                type="text" 
-                value={formData.no_of_days} 
-                disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-orange-400 font-bold outline-none" 
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-white/70">Reason for Leave</label>
-            <textarea 
-              name="reason" 
-              value={formData.reason} 
-              onChange={handleChange} 
-              required
-              rows="4"
-              placeholder="Please provide a brief reason for your leave request..."
-              className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 transition resize-none placeholder-white/20"
-            ></textarea>
-          </div>
-
-          <div className="pt-4 flex justify-end">
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition hover:opacity-90 disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
-            >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              <span>{loading ? 'Submitting...' : 'Submit Request'}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    </ModalPortal>
   );
 };
 
