@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, Plus, Search, RefreshCw, Eye, Edit2, Trash2, Loader2, UserCheck, UserX, Briefcase } from "lucide-react";
+import { Users, Plus, Search, RefreshCw, Eye, Edit2, Trash2, Loader2, UserCheck, UserX, Briefcase, List, LayoutGrid, Phone, Mail } from "lucide-react";
 
 const EmployeeList = () => {
+  const [viewMode, setViewMode] = useState("table");
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -145,12 +146,34 @@ const EmployeeList = () => {
             <option value="HR">HR</option>
             <option value="Admin">Admin</option>
           </select>
+          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 gap-1 ml-auto md:ml-0">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+                viewMode === 'table' ? 'bg-orange-500 text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+              title="Table View"
+            >
+              <List size={15} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+                viewMode === 'card' ? 'bg-orange-500 text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid size={15} />
+            </button>
+          </div>
         </div>
 
+        {viewMode === 'table' && (
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <table className="min-w-full text-sm">
             <thead className="bg-white/4 text-white/60">
               <tr>
+                <th className="px-4 py-3 text-left w-16">S.No</th>
                 <th className="px-4 py-3 text-left">Photo</th>
                 <th className="px-4 py-3 text-left">Employee Code</th>
                 <th className="px-4 py-3 text-left">Name</th>
@@ -166,8 +189,9 @@ const EmployeeList = () => {
                 <tr><td colSpan="8" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td></tr>
               ) : filteredEmployees.length === 0 ? (
                 <tr><td colSpan="8" className="px-4 py-8 text-center text-white/40">No employees found</td></tr>
-              ) : filteredEmployees.map((emp) => (
+              ) : filteredEmployees.map((emp, index) => (
                 <tr key={emp.employee_id} className="border-t border-white/10 hover:bg-white/2">
+                  <td className="px-4 py-3 text-white/70">{index + 1}</td>
                   <td className="px-4 py-3">
                     {emp.profile_photo ? (
                       <img src={getProfilePhotoUrl(emp.profile_photo)} alt={`${emp.first_name} ${emp.last_name || ""}`.trim()} className="h-10 w-10 rounded-full object-cover border border-white/10" />
@@ -195,6 +219,61 @@ const EmployeeList = () => {
             </tbody>
           </table>
         </div>
+        )}
+
+        {viewMode === 'card' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {loading ? (
+              <div className="col-span-full py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></div>
+            ) : filteredEmployees.length === 0 ? (
+              <div className="col-span-full py-8 text-center text-white/40">No employees found</div>
+            ) : filteredEmployees.map((emp, index) => (
+              <div key={emp.employee_id} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:bg-white/[0.02] transition relative">
+                <div className="absolute top-5 right-5 text-xs text-white/40 font-medium">#{index + 1}</div>
+                <div className="flex items-center gap-4 mb-5">
+                  {emp.profile_photo ? (
+                    <img src={getProfilePhotoUrl(emp.profile_photo)} alt={`${emp.first_name} ${emp.last_name || ""}`.trim()} className="h-12 w-12 rounded-full object-cover border border-white/10" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-base font-bold text-white/70">
+                      {`${emp.first_name?.[0] || ""}${emp.last_name?.[0] || ""}`.toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-bold text-white text-base leading-tight">{emp.first_name} {emp.last_name}</div>
+                    <div className="text-white/40 text-xs mt-0.5">{emp.designation || "—"} • {emp.employee_code || "N/A"}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-5">
+                  <div className="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
+                    <Mail size={14} className="text-white/40" />
+                    <span className="text-white/70 text-sm truncate">{emp.personal_email || "N/A"}</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/5 p-2 rounded-lg">
+                    <Phone size={14} className="text-white/40" />
+                    <span className="text-white/70 text-sm">{emp.mobile_number || "N/A"}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                  <div className="flex gap-2">
+                    <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-300">
+                      {emp.role}
+                    </span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${emp.employment_status === "Active" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" : emp.employment_status === "Inactive" ? "bg-rose-500/15 text-rose-400 border-rose-500/25" : "bg-white/10 text-white/60 border-white/15"}`}>
+                      {emp.employment_status}
+                    </span>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Link to={`/admin/employees/view/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/60 hover:text-white hover:bg-white/10"><Eye size={14} /></Link>
+                    <Link to={`/admin/employees/edit/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/60 hover:text-white hover:bg-white/10"><Edit2 size={14} /></Link>
+                    <button onClick={() => handleDelete(emp.employee_id)} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
