@@ -337,6 +337,10 @@ const router = createHashRouter([
             element: <AdminProfile />,
           },
           {
+            path: 'leave-history/:employeeId',
+            element: <EmployeeLeaveHistoryPage />,
+          },
+          {
             path: 'office-calendar',
             element: <OfficeCalendar />,
           },

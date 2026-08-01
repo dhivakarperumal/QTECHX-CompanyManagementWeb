@@ -389,7 +389,7 @@ const AdminLeaveManagement = () => {
                             <User size={14} />
                           </button>
                           <button
-                            onClick={() => navigate(`/employee/leaves/history/${leave.employee_id || leave.user_id || leave.id}`)}
+                            onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
                             className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
                             title="View full history"
                           >
@@ -526,7 +526,7 @@ const AdminLeaveManagement = () => {
                       <User size={14} />
                     </button>
                     <button
-                      onClick={() => navigate(`/employee/leaves/history/${leave.employee_id || leave.user_id || leave.id}`)}
+                      onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
                       className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
                       title="View full history"
                     >
