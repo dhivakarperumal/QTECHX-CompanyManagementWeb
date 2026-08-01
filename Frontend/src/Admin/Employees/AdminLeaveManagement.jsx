@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter } from 'lucide-react';
+import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter, List, LayoutGrid, CalendarDays, User } from 'lucide-react';
 
 const AdminLeaveManagement = () => {
+  const [viewMode, setViewMode] = useState('table');
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLeave, setSelectedLeave] = useState(null);
@@ -175,6 +177,12 @@ const AdminLeaveManagement = () => {
 
     return matchesSearch && matchesStatus && matchesType && matchesDate;
   });
+  const stats = [
+    { label: 'Total Leaves', value: leaves.length, icon: Briefcase, cls: 'text-blue-400', bg: 'bg-blue-500/15' },
+    { label: 'Approved', value: leaves.filter(l => l.status === 'Approved').length, icon: CheckCircle, cls: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { label: 'Rejected', value: leaves.filter(l => l.status === 'Rejected').length, icon: XCircle, cls: 'text-rose-400', bg: 'bg-rose-500/15' },
+    { label: 'Pending', value: leaves.filter(l => l.status === 'Pending').length, icon: RefreshCw, cls: 'text-orange-400', bg: 'bg-orange-500/15' },
+  ];
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -196,6 +204,24 @@ const AdminLeaveManagement = () => {
             <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
           </button>
         </div>
+      </div>
+
+      {/* ── Stats ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.06] transition">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
+                <Icon size={18} className={s.cls} />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white">{s.value}</p>
+                <p className="text-white/50 text-xs">{s.label}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center flex-wrap">
@@ -269,6 +295,28 @@ const AdminLeaveManagement = () => {
             />
           </div>
         )}
+        
+        {/* View toggle */}
+        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 gap-1 ml-auto">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'table' ? 'bg-orange-500 text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+            title="Table View"
+          >
+            <List size={15} />
+          </button>
+          <button
+            onClick={() => setViewMode('card')}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'card' ? 'bg-orange-500 text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
@@ -276,7 +324,6 @@ const AdminLeaveManagement = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-white/4 text-white/60">
               <tr>
-                <th className="px-4 py-3 text-left w-16">S.No</th>
                 <th className="px-4 py-3 text-left">Employee</th>
                 <th className="px-4 py-3 text-left">Leave Type</th>
                 <th className="px-4 py-3 text-left">Date Range</th>
@@ -298,7 +345,6 @@ const AdminLeaveManagement = () => {
               ) : (
                 filteredLeaves.map((leave, index) => (
                   <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
-                    <td className="px-4 py-3 text-white/70">{index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
                       <div className="text-white/40 text-xs">{leave.employee_code}</div>
@@ -351,6 +397,86 @@ const AdminLeaveManagement = () => {
           </table>
         </div>
       </div>
+      )}
+
+      {viewMode === 'card' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {loading ? (
+            <div className="col-span-full py-8 text-center text-white/40">
+              <Loader2 size={18} className="mx-auto animate-spin" />
+            </div>
+          ) : filteredLeaves.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-white/40">
+              No leave requests found matching filters.
+            </div>
+          ) : (
+            filteredLeaves.map((leave, index) => (
+              <div key={leave.id} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:bg-white/[0.02] transition relative">
+                <div className="absolute top-5 right-5 text-xs text-white/40 font-medium">#{index + 1}</div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <User size={16} className="text-white/60" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white text-base leading-tight">{leave.first_name} {leave.last_name}</div>
+                    <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40 text-xs">Leave Type</span>
+                    <div className="text-right">
+                      <span className="font-medium text-white text-sm">{leave.leave_type}</span>
+                      {leave.day_type === 'Half Day' && (
+                        <span className="text-white/40 text-xs ml-1">({leave.half_day_type})</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40 text-xs">Duration</span>
+                    <span className="font-medium text-white text-sm">
+                      {new Date(leave.from_date).toLocaleDateString()} 
+                      {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
+                      <span className="text-white/40 ml-1">({leave.no_of_days} days)</span>
+                    </span>
+                  </div>
+                  {leave.reason && (
+                    <div>
+                      <span className="text-white/40 text-xs block mb-1">Reason</span>
+                      <p className="text-white/70 text-sm bg-white/5 rounded-lg p-2.5 line-clamp-2" title={leave.reason}>
+                        {leave.reason}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                  {getStatusBadge(leave.status)}
+                  {leave.status === 'Pending' && (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleActionClick(leave, 'Approved')}
+                        className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
+                        title="Approve"
+                      >
+                        <CheckCircle size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleActionClick(leave, 'Rejected')}
+                        className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                        title="Reject"
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Action Modal */}
       {actionModal.show && createPortal(
@@ -408,122 +534,7 @@ const AdminLeaveManagement = () => {
               </button>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Bulk Approval Modal */}
-      {showBulkModal && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="rounded-2xl border border-white/10 bg-[#111318] max-w-4xl w-full p-6 animate-fade-in-up max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold tracking-tight text-white">
-                Bulk Approve Leaves
-              </h3>
-              <button onClick={() => setShowBulkModal(false)} className="text-white/40 hover:text-white transition">
-                <XCircle size={20} />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-2">
-              {pendingLeaves.length === 0 ? (
-                <div className="py-8 text-center text-white/40">No pending leave requests found.</div>
-              ) : (
-                <table className="min-w-full text-sm">
-                  <thead className="bg-[#111318] text-white/60 sticky top-0 z-10 border-b border-white/10">
-                    <tr>
-                      <th className="px-4 py-3 text-left w-10">
-                        <input 
-                          type="checkbox" 
-                          className="rounded border-white/20 bg-white/5 cursor-pointer accent-orange-500 w-4 h-4"
-                          checked={bulkSelection.length === pendingLeaves.length && pendingLeaves.length > 0}
-                          onChange={toggleAllBulkSelection}
-                        />
-                      </th>
-                      <th className="px-4 py-3 text-left w-16">S.No</th>
-                      <th className="px-4 py-3 text-left">Employee</th>
-                      <th className="px-4 py-3 text-left">Leave Type</th>
-                      <th className="px-4 py-3 text-left">Dates</th>
-                      <th className="px-4 py-3 text-left">Days</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingLeaves.map((leave, index) => (
-                      <tr key={leave.id} className="border-b border-white/5 hover:bg-white/2 cursor-pointer" onClick={() => toggleBulkSelection(leave.id)}>
-                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                          <input 
-                            type="checkbox" 
-                            className="rounded border-white/20 bg-white/5 cursor-pointer accent-orange-500 w-4 h-4"
-                            checked={bulkSelection.includes(leave.id)}
-                            onChange={() => toggleBulkSelection(leave.id)}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-white/70">{index + 1}</td>
-                        <td className="px-4 py-3">
-                          <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
-                          <div className="text-white/40 text-xs">{leave.employee_code}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-white">{leave.leave_type}</div>
-                          {leave.day_type === 'Half Day' && (
-                            <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-white/70 text-xs">
-                          {new Date(leave.from_date).toLocaleDateString()} 
-                          {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-white">{leave.no_of_days}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {pendingLeaves.length > 0 && (
-              <div className="mt-auto pt-4 border-t border-white/10 shrink-0">
-                <div className="mb-4">
-                  <label className="text-sm font-semibold text-white/70 block mb-2">
-                    Common Reason / Remarks
-                  </label>
-                  <textarea
-                    value={bulkReason}
-                    onChange={(e) => setBulkReason(e.target.value)}
-                    placeholder="Enter any remarks for the selected requests..."
-                    className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 resize-none transition"
-                    rows="2"
-                  ></textarea>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <span className="text-sm text-white/40">
-                    {bulkSelection.length} selected
-                  </span>
-                  <div className="flex gap-3 w-full sm:w-auto">
-                    <button
-                      onClick={() => submitBulkAction('Rejected')}
-                      disabled={submitting || bulkSelection.length === 0}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:bg-rose-500/20 disabled:opacity-50"
-                    >
-                      {submitting ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
-                      Reject Selected
-                    </button>
-                    <button
-                      onClick={() => submitBulkAction('Approved')}
-                      disabled={submitting || bulkSelection.length === 0}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-emerald-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90 disabled:opacity-50"
-                    >
-                      {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                      Approve Selected
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );
