@@ -1,4 +1,5 @@
 const LeaveModel = require("../models/employeeLeaveModel");
+const leaveSettingsModel = require("../models/leaveSettingsModel");
 
 function getAuthenticatedEmployeeId(req) {
   return req.user?.employee_id || req.user?.id || req.user?.user_id || null;
@@ -15,6 +16,17 @@ async function applyLeave(req, res) {
 
     if (!leave_type || !from_date || !to_date || !no_of_days || !reason) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const leaveSetting = await leaveSettingsModel.getLeaveSettingByType(leave_type);
+    const requestedDays = Number(no_of_days);
+    const maxDays = leaveSetting?.is_active ? Number(leaveSetting.max_days || 0) : null;
+
+    if (leaveSetting && Number(leaveSetting.is_active) === 1 && maxDays >= 0 && requestedDays > maxDays) {
+      return res.status(400).json({
+        success: false,
+        message: `${leave_type} limit exceeded. Maximum allowed days: ${maxDays}`
+      });
     }
 
     const leaveData = {

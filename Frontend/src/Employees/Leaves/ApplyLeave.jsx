@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const leaveTypes = [
+const defaultLeaveTypes = [
   "Casual Leave",
   "Sick Leave",
   "Earned Leave",
@@ -28,6 +28,24 @@ const ApplyLeave = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [leaveSettings, setLeaveSettings] = useState([]);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
+
+  useEffect(() => {
+    const fetchLeaveSettings = async () => {
+      try {
+        const res = await api.get('/leave-settings');
+        setLeaveSettings(res.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load leave settings', error);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    fetchLeaveSettings();
+  }, []);
 
   useEffect(() => {
     if (formData.from_date && formData.to_date) {
@@ -60,6 +78,12 @@ const ApplyLeave = () => {
     e.preventDefault();
     if (formData.no_of_days <= 0) {
       toast.error('Invalid date range');
+      return;
+    }
+
+    const selectedSetting = leaveSettings.find((item) => item.leave_type === formData.leave_type);
+    if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
+      toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
       return;
     }
     setLoading(true);
@@ -154,10 +178,21 @@ const ApplyLeave = () => {
                 required
                 className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
               >
-                {leaveTypes.map(type => (
+                {availableLeaveTypes.map(type => (
                   <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
                 ))}
               </select>
+              {!settingsLoading && (
+                <p className="text-xs text-white/40">
+                  {(() => {
+                    const selectedSetting = leaveSettings.find((item) => item.leave_type === formData.leave_type);
+                    if (!selectedSetting) return 'Leave limit not configured';
+                    return Number(selectedSetting.max_days || 0) >= 0
+                      ? `Maximum allowed: ${selectedSetting.max_days} day${Number(selectedSetting.max_days) === 1 ? '' : 's'}`
+                      : 'Leave limit not configured';
+                  })()}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -226,7 +261,7 @@ const ApplyLeave = () => {
                 value={formData.from_date} 
                 onChange={handleChange} 
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition [color-scheme:dark]" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition scheme-dark" 
               />
             </div>
 
@@ -240,7 +275,7 @@ const ApplyLeave = () => {
                 disabled={formData.day_type === 'Half Day'}
                 required
                 min={formData.from_date}
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed [color-scheme:dark]" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed scheme-dark" 
               />
             </div>
             

@@ -35,6 +35,7 @@ const eventRouter = require("./src/routers/eventRouter");
 const myEventRouter = require("./src/routers/myEventRouter");
 const dashboardRouter = require("./src/routers/dashboardRouter");
 const employeeLeaveRouter = require("./src/routers/employeeLeaveRouter");
+const leaveSettingsRouter = require("./src/routers/leaveSettingsRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -89,6 +90,7 @@ app.use("/api/events", eventRouter);
 app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/employee-leaves", employeeLeaveRouter);
+app.use("/api/leave-settings", leaveSettingsRouter);
 
 // Health check (must be before the catch-all /api/* 404 handler)
 app.get("/api/health", (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));
