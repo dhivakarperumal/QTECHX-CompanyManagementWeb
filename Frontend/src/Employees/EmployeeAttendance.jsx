@@ -8,6 +8,19 @@ const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
 const ALLOWED_RADIUS_METERS = 500;
 
+const getEmployeeReference = (user) => {
+  if (!user) return null;
+  return String(
+    user.employee_id ||
+    user.employeeId ||
+    user.user_id ||
+    user.id ||
+    user.uuid ||
+    user._id ||
+    ""
+  ).trim() || null;
+};
+
 // Haversine formula
 const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3; // metres
@@ -56,9 +69,8 @@ const EmployeeAttendance = () => {
 
     const fetchTodayAttendance = async () => {
       try {
-        const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
-        if (possibleIds.length === 0) return;
-        const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
+        const targetId = getEmployeeReference(user);
+        if (!targetId) return;
 
         const d = new Date();
         const month = d.getMonth() + 1;
@@ -210,9 +222,10 @@ const EmployeeAttendance = () => {
 
     setSubmitting(true);
     try {
-      // Prioritize UUID for DB insertion to prevent integer/string mismatch
-      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
-      const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
+      const employee_id = getEmployeeReference(user);
+      if (!employee_id) {
+        throw new Error("Unable to resolve employee id for attendance.");
+      }
 
       await api.post("/attendance", {
         employee_id: employee_id,
