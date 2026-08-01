@@ -91,6 +91,10 @@ const normalizeListPayload = (payload) => {
   if (Array.isArray(payload?.rows)) return payload.rows;
   if (Array.isArray(payload?.items)) return payload.items;
   if (Array.isArray(payload?.results)) return payload.results;
+  if (payload && typeof payload === 'object') {
+    const nestedValues = Object.values(payload).filter((value) => Array.isArray(value));
+    if (nestedValues.length > 0) return nestedValues[0];
+  }
   return [];
 };
 
@@ -98,7 +102,27 @@ const getResponseItems = (response, fallback = []) => {
   if (!response) return fallback;
   const payload = response?.data ?? response;
   if (Array.isArray(payload)) return payload;
+  if (payload && typeof payload === 'object') {
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.rows)) return payload.rows;
+    if (Array.isArray(payload.items)) return payload.items;
+    if (Array.isArray(payload.results)) return payload.results;
+    if (Array.isArray(payload.leaves)) return payload.leaves;
+    if (Array.isArray(payload.tasks)) return payload.tasks;
+    if (Array.isArray(payload.projects)) return payload.projects;
+    if (Array.isArray(payload.assignments)) return payload.assignments;
+    if (Array.isArray(payload.records)) return payload.records;
+    if (Array.isArray(payload.data?.rows)) return payload.data.rows;
+    if (Array.isArray(payload.data?.data)) return payload.data.data;
+  }
   return normalizeListPayload(payload) || fallback;
+};
+
+const getObjectValue = (payload, fallback = null) => {
+  if (!payload || typeof payload !== 'object') return fallback;
+  if (Array.isArray(payload)) return fallback;
+  if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) return payload.data;
+  return payload;
 };
 
 const getEventDateValue = (event) =>
@@ -250,6 +274,19 @@ const EmployeeDashboard = () => {
           leaveBalance: 0
         };
 
+        const debugPayloads = {
+          tasksRes: tasksRes.status === 'fulfilled' ? tasksRes.value : null,
+          leavesRes: leavesRes.status === 'fulfilled' ? leavesRes.value : null,
+          leaveSettingsRes: leaveSettingsRes.status === 'fulfilled' ? leaveSettingsRes.value : null,
+          eventsRes: eventsRes.status === 'fulfilled' ? eventsRes.value : null,
+          myEventsRes: myEventsRes.status === 'fulfilled' ? myEventsRes.value : null,
+          projectsAssignRes: projectsAssignRes.status === 'fulfilled' ? projectsAssignRes.value : null,
+          projectsAllRes: projectsAllRes.status === 'fulfilled' ? projectsAllRes.value : null,
+          attendanceRes: attendanceRes.status === 'fulfilled' ? attendanceRes.value : null,
+          salaryRes: salaryRes.status === 'fulfilled' ? salaryRes.value : null,
+        };
+        console.log('[EmployeeDashboard] API payloads:', debugPayloads);
+
         // --- TASKS ---
         if (tasksRes.status === 'fulfilled') {
           const tasks = getResponseItems(tasksRes.value, []);
@@ -330,21 +367,26 @@ const EmployeeDashboard = () => {
 
         // --- PROJECTS ---
         const allPrj = projectsAllRes.status === 'fulfilled'
-          ? (Array.isArray(projectsAllRes.value?.data) ? projectsAllRes.value.data : (Array.isArray(projectsAllRes.value?.data?.data) ? projectsAllRes.value.data.data : []))
+          ? getResponseItems(projectsAllRes.value, [])
           : [];
         const grouped = projectsAssignRes.status === 'fulfilled'
-          ? (Array.isArray(projectsAssignRes.value?.data?.grouped) ? projectsAssignRes.value.data.grouped : (Array.isArray(projectsAssignRes.value?.data) ? projectsAssignRes.value.data : []))
+          ? getResponseItems(projectsAssignRes.value, [])
           : [];
         
+        const groupedAssignments = Array.isArray(grouped) ? grouped : [];
         const assignedUuids = new Set(
-          grouped
-            .filter(g => g.employees?.some(e => String(e.employee_id) === String(primaryUserId) || String(e.user_id) === String(primaryUserId) || String(e.id) === String(primaryUserId)))
-            .map(g => g.project_uuid)
+          groupedAssignments
+            .filter((g) => {
+              const employees = Array.isArray(g?.employees) ? g.employees : [];
+              return employees.some((e) => String(e?.employee_id || e?.employeeId || e?.id || '') === String(primaryUserId) || String(e?.user_id || e?.userId || '') === String(primaryUserId));
+            })
+            .map((g) => g?.project_uuid || g?.projectUuid || g?.uuid || g?.project?.uuid || null)
+            .filter(Boolean)
         );
         
-        const myProjects = allPrj.filter(p => {
-          const projectUuid = p.uuid || p.project_uuid || p.project?.uuid || null;
-          const projectManager = p.project_manager || p.project?.project_manager || '';
+        const myProjects = allPrj.filter((p) => {
+          const projectUuid = p?.uuid || p?.project_uuid || p?.project?.uuid || null;
+          const projectManager = p?.project_manager || p?.project?.project_manager || '';
           return assignedUuids.has(projectUuid) || (projectManager && projectManager.toLowerCase() === userName);
         });
         
@@ -359,6 +401,7 @@ const EmployeeDashboard = () => {
         // --- ATTENDANCE ---
         if (attendanceRes.status === 'fulfilled') {
           const records = getResponseItems(attendanceRes.value, []);
+          console.log('[EmployeeDashboard] attendance records:', records);
           const normalizedRecords = records.map((record) => ({
             ...record,
             attendance_status: record.attendance_status || record.status || 'Present',
@@ -404,6 +447,7 @@ const EmployeeDashboard = () => {
         // --- PAYROLL ---
         if (salaryRes.status === 'fulfilled') {
           const history = getResponseItems(salaryRes.value, []);
+          console.log('[EmployeeDashboard] salary history:', history);
           if (history.length > 0) {
             const latest = history[0];
             const salaryAmount = latest.total_salary ?? latest.net_payable ?? latest.net_salary ?? latest.amount ?? 0;
