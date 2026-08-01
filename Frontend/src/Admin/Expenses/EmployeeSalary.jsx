@@ -52,8 +52,9 @@ export default function EmployeeSalary() {
   const [historyMonthFilter, setHistoryMonthFilter] = useState('all');
   const [historyYearFilter, setHistoryYearFilter] = useState(String(new Date().getFullYear()));
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [salaryViewMode, setSalaryViewMode] = useState('card');
   const payslipRef = useRef();
+  const [employeeViewMode, setEmployeeViewMode] = useState("card");
+  const [historyViewMode, setHistoryViewMode] = useState("table");
 
   const handlePrint = useReactToPrint({
     contentRef: payslipRef,
@@ -499,7 +500,6 @@ export default function EmployeeSalary() {
               <Users size={11} /> Employee Overview
             </div>
             <h2 className="text-base font-bold text-white">Employee cards & salary history</h2>
-            <p className="text-sm text-white/40 mt-0.5">Search employees, filter by month/year, and open a card to review that employee&apos;s salary records.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="relative">
@@ -525,13 +525,16 @@ export default function EmployeeSalary() {
               ))}
             </select>
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-              <button onClick={() => setSalaryViewMode('table')} className={`rounded-lg p-2 transition ${salaryViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-              <button onClick={() => setSalaryViewMode('card')} className={`rounded-lg p-2 transition ${salaryViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+              <button onClick={() => {
+                setEmployeeViewMode("table");
+                setSelectedEmployeeId(""); // optional reset
+              }} className={`rounded-lg p-2 transition ${employeeViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setEmployeeViewMode('card')} className={`rounded-lg p-2 transition ${employeeViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
             </div>
           </div>
         </div>
 
-        {salaryViewMode === 'table' ? (
+        {employeeViewMode === "table" ? (
           <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0e1118]">
             <table className="min-w-full text-sm">
               <thead className="bg-white/5 text-white/40">
@@ -550,7 +553,14 @@ export default function EmployeeSalary() {
                   const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
                   const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
                   return (
-                    <tr key={emp.employee_id} className="hover:bg-white/5">
+                    <tr
+                      key={emp.employee_id}
+                      onClick={() => setSelectedEmployeeId(emp.employee_id)}
+                      className={`cursor-pointer transition ${selectedEmployeeId === emp.employee_id
+                          ? "bg-orange-500/10"
+                          : "hover:bg-white/5"
+                        }`}
+                    >
                       <td className="px-3 py-2 font-medium text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</td>
                       <td className="px-3 py-2">{emp.employee_code || 'No code'}</td>
                       <td className="px-3 py-2">{employeeHistory.length}</td>
@@ -655,12 +665,12 @@ export default function EmployeeSalary() {
             <h2 className="text-base font-bold text-white">Salary History</h2>
           </div>
           <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-            <button onClick={() => setSalaryViewMode('table')} className={`rounded-lg p-2 transition ${salaryViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-            <button onClick={() => setSalaryViewMode('card')} className={`rounded-lg p-2 transition ${salaryViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+            <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+            <button onClick={() => setHistoryViewMode('card')} className={`rounded-lg p-2 transition ${historyViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
           </div>
         </div>
 
-        {salaryViewMode === 'card' ? (
+        {historyViewMode === "card" ? (
           <div className="grid gap-3 md:grid-cols-2">
             {historyLoading ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
@@ -686,7 +696,7 @@ export default function EmployeeSalary() {
                 <div className="mt-4 flex items-center justify-end gap-2">
                   <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
                   <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
-                  <button onClick={() => setSelectedPayslip(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> Payslip </button>
+                  <button onClick={() => setSelectedPayslip(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> </button>
                 </div>
               </div>
             ))}
