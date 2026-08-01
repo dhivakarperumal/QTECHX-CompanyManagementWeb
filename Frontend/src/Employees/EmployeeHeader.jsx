@@ -130,8 +130,8 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
         const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?._id, user?.userId, user?.uuid, user?.employee_code, user?.employeeCode].filter(Boolean).map(String);
         const currentUserName = (profileName || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
-        let personalEvents = normalizeList(eventsRes?.data);
-        let officeEvents = normalizeList(myEventsRes?.data);
+        let personalEvents = normalizeList(myEventsRes?.data);
+        let officeEvents = normalizeList(eventsRes?.data);
 
         if (possibleIds.length > 0) {
           personalEvents = personalEvents.filter(evt => possibleIds.includes(String(evt.user_id || evt.userId || evt.employeeId || evt.employee_id || '')));
@@ -153,16 +153,20 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
         const allEvents = [...personalEvents, ...officeEvents];
         const uniqueEvents = Array.from(new Map(allEvents.map(evt => [evt.id || evt.uuid || `${evt.title || evt.event_name || 'event'}-${evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || ''}`, evt])).values());
+        const now = dayjs();
         const meetingItems = uniqueEvents.filter(evt => {
-          const text = [evt.eventType, evt.category, evt.title, evt.event_name, evt.planTitle, evt.name].filter(Boolean).join(' ').toLowerCase();
-          return text.includes('meeting') || text.includes('meating') || text.includes('call');
+          const dateValue = evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || evt.start || evt.event_date;
+          if (!dateValue) return false;
+          const eventDate = dayjs(dateValue);
+          if (!eventDate.isValid()) return false;
+          return eventDate.isSame(now, 'day') || eventDate.isAfter(now, 'day');
         });
 
         meetingAlerts = meetingItems.slice(0, 5).map(evt => {
           const dateValue = evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || evt.start || evt.event_date;
           const meetingTime = dateValue ? dayjs(dateValue).format('h:mm A') : 'Time TBD';
           return {
-            id: evt.id || evt.uuid || `${evt.title || evt.event_name || 'meeting'}-${dateValue || ''}`,
+            id: evt.id || evt.uuid || `${evt.title || evt.event_name || evt.planTitle || 'meeting'}-${dateValue || ''}`,
             type: 'meeting',
             icon: Video,
             color: 'text-pink-400',
