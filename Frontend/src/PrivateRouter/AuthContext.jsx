@@ -3,6 +3,7 @@ import { createContext, useContext, useState } from "react";
 
 const defaultAuthValue = {
   user: null,
+  userProfile: null,
   setUser: () => {},
   login: () => {},
   logout: () => {},
@@ -24,6 +25,28 @@ export const useAuth = () => {
 
 const normalizeRoleValue = (roleValue) => roleValue?.toString().trim();
 
+const normalizeUserProfile = (userData) => {
+  if (!userData) return null;
+
+  const userId = userData.user_id || userData.id || userData.uuid || userData.employee_id || userData.employeeId || null;
+  const employeeId = userData.employee_id || userData.employeeId || userData.user_id || userData.id || userData.uuid || userId || null;
+
+  return {
+    ...userData,
+    role: normalizeRoleValue(userData.role),
+    user_id: userId,
+    id: userData.id || userId,
+    employee_id: employeeId,
+    employeeId,
+    uuid: userData.uuid || userId,
+    name: userData.name || userData.full_name || userData.displayName || userData.username || "",
+    displayName: userData.displayName || userData.name || userData.full_name || userData.username || "",
+    username: userData.username || userData.email || userData.displayName || "",
+    email: userData.email || userData.official_email || userData.personal_email || "",
+    phone: userData.phone || userData.mobile || userData.mobile_number || "",
+  };
+};
+
 const clearStoredAuth = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("token");
@@ -37,10 +60,7 @@ const loadStoredUser = () => {
     if (!storedUser) return null;
     const parsedUser = JSON.parse(storedUser);
     if (!parsedUser) return null;
-    return {
-      ...parsedUser,
-      role: normalizeRoleValue(parsedUser.role),
-    };
+    return normalizeUserProfile(parsedUser);
   } catch (error) {
     console.error("Failed to parse stored user", error);
     localStorage.removeItem("user");
@@ -54,9 +74,7 @@ export const AuthProvider = ({ children }) => {
   const [loginOpen, setLoginOpen] = useState(false);
 
     const login = (userData, token) => {
-    const normalizedUser = userData
-      ? { ...userData, role: normalizeRoleValue(userData.role) }
-      : null;
+    const normalizedUser = normalizeUserProfile(userData);
     setUser(normalizedUser);
     if (normalizedUser) {
       localStorage.setItem("user", JSON.stringify(normalizedUser));
@@ -75,7 +93,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Map user data for Header/Sidebar compatibility
-  const profileName = user?.username || user?.name || "Admin";
+  const userProfile = user;
+  const profileName = user?.displayName || user?.name || user?.username || "Admin";
   const role = user?.role || "admin";
   const email = user?.email || "";
   const phone = user?.phone || "";
@@ -84,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        userProfile,
         setUser,
         login,
         logout,

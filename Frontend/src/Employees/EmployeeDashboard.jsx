@@ -196,7 +196,7 @@ const EmployeeDashboard = () => {
   const { userProfile, user, profileName } = useAuth();
   const name = userProfile?.displayName?.split(' ')[0] || userProfile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || user?.username || 'Employee';
   const employeeId = resolveEmployeeId(user, userProfile?.employee_id);
-  const primaryUserId = user?.user_id || user?.id || user?.employee_id || user?.employeeId || user?.uuid || employeeId || null;
+  const primaryUserId = employeeId || user?.user_id || user?.id || user?.employee_id || user?.employeeId || user?.uuid || null;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -406,13 +406,13 @@ const EmployeeDashboard = () => {
           const history = getResponseItems(salaryRes.value, []);
           if (history.length > 0) {
             const latest = history[0];
-            newData.payroll.nextSalary = `₹${latest.net_payable || latest.net_salary || 0}`;
-            // Predict next pay date as last day of current month
+            const salaryAmount = latest.total_salary ?? latest.net_payable ?? latest.net_salary ?? latest.amount ?? 0;
+            newData.payroll.nextSalary = `₹${Number(salaryAmount || 0).toLocaleString('en-IN')}`;
             const nextPay = new Date(year, month, 0);
             newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
           } else {
-             const nextPay = new Date(year, month, 0);
-             newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+            const nextPay = new Date(year, month, 0);
+            newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
           }
         }
 
@@ -480,7 +480,7 @@ const EmployeeDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* My Tasks */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-[300px]">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-75">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <CheckSquare size={18} className="text-primary" /> Today's Assigned Tasks
@@ -500,7 +500,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Leave Summary */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <CalendarOff size={18} className="text-primary" /> My Recent Leaves
@@ -520,7 +520,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Upcoming Meetings */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <Video size={18} className="text-primary" /> Upcoming Meetings
@@ -556,7 +556,7 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Active Projects */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-[300px] flex flex-col">
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <FolderKanban size={18} className="text-primary" /> Active Projects
