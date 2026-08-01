@@ -64,7 +64,11 @@ const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
       <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
         {items.length ? items.map((item, i) => {
           let link = "/admin", label = "", sub = "";
-          if (type === "tasks")    { link = "/admin/tasks";           label = item.title;    sub = item.status; }
+          if (type === "tasks")    { 
+            link = "/admin/tasks";           
+            label = item.title;    
+            sub = `${item.status} ${item.assigned ? '· ' + item.assigned + (item.assignedId ? ' (' + item.assignedId + ')' : '') : ''}`; 
+          }
           if (type === "projects") { link = "/admin/projects";        label = item.name;     sub = `Due: ${item.due}`; }
           if (type === "leaves")   { link = "/admin/employees/leave"; label = item.employee; sub = `${item.type}${item.date ? ' · ' + item.date : ''}`; }
           return (
@@ -138,12 +142,16 @@ const Header = ({ onMenuClick }) => {
         const active = (data?.data || []).filter(t => {
           const s = (t.status || '').toLowerCase().trim();
           // Show Pending, In Progress, On Hold — i.e. not yet done
-          return s !== 'completed' && s !== 'cancelled' && s !== 'done';
+          if (s === 'completed' || s === 'cancelled' || s === 'done') return false;
+          // Only show tasks updated today
+          if (!t.updated_at) return false;
+          return dayjs(t.updated_at).isSame(dayjs(), 'day');
         });
         taskAlerts = active.map(t => ({
           title:    t.task_name || t.module_name || t.name || 'Untitled Task',
           project:  t.project_name || '',
           assigned: t.assigned_to_name || '',
+          assignedId: t.assigned_to || '',
           status:   t.status || 'Pending',
         }));
       } catch (e) {
