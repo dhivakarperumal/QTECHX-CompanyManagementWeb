@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
+  ArrowLeft, Loader2, AlertCircle, CheckCircle, Plus,
   DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, LayoutGrid, List
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -21,6 +22,34 @@ const BLANK = {
   date_of_payment: new Date().toISOString().split('T')[0],
   paid_to: ''
 };
+
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
 
 export default function Incomes() {
   const navigate = useNavigate();
@@ -37,6 +66,7 @@ export default function Incomes() {
   const [success, setSuccess] = useState('');
 
   const [editId, setEditId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -51,6 +81,20 @@ export default function Incomes() {
       ? `Receipt_${selectedReceipt.income_type}_${selectedReceipt.date_of_payment}`
       : "Receipt",
   });
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data } = await api.get('/incomes');
+      if (data.success) {
+        setHistory(data.incomes);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch incomes history", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   // Fetch interns on mount
   useEffect(() => {
@@ -69,20 +113,6 @@ export default function Incomes() {
     })();
     fetchHistory();
   }, []);
-
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const { data } = await api.get('/incomes');
-      if (data.success) {
-        setHistory(data.incomes);
-      }
-    } catch (err) {
-      console.warn("Failed to fetch incomes history", err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -142,6 +172,7 @@ export default function Incomes() {
 
   const handleEdit = (record) => {
     setEditId(record.income_id);
+    setShowForm(true);
     setFormData({
       income_type: record.income_type || '',
       intern_id: record.intern_id || '',
@@ -152,7 +183,6 @@ export default function Incomes() {
       date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split('T')[0] : '',
       paid_to: record.paid_to || ''
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (record) => {
@@ -173,6 +203,7 @@ export default function Incomes() {
 
   const resetForm = () => {
     setEditId(null);
+    setShowForm(false);
     setFormData({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' });
     setError('');
   };
@@ -202,20 +233,31 @@ export default function Incomes() {
 
   return (
     <div className="space-y-6 text-white pb-10">
-      <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/admin/expenses')}
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
-          <ArrowLeft size={16} />
-        </button>
-        <div>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
-            <DollarSign size={11} /> Company Income
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <button onClick={() => navigate('/admin/expenses')}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
+              <DollarSign size={11} /> Company Income
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Income</h1>
+            <p className="text-sm text-white/40 mt-0.5">
+              Record and manage company incomes.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Income</h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            Record and manage company incomes.
-          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowForm((prev) => !prev)}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 self-start"
+          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+        >
+          <Plus size={15} />
+          {showForm ? 'Close Form' : 'New Income'}
+        </button>
       </div>
 
       {success && (
@@ -229,7 +271,8 @@ export default function Incomes() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <Modal open={showForm} onClose={resetForm} title={editId ? 'Edit Income Details' : 'New Income'}>
+        <form onSubmit={handleSave} className="space-y-6">
 
         {/* Income Details */}
         <section className={sectionClass}>
@@ -315,6 +358,7 @@ export default function Incomes() {
           </div>
         </section>
       </form>
+      </Modal>
 
       {/* History Table */}
       <section className={sectionClass}>
