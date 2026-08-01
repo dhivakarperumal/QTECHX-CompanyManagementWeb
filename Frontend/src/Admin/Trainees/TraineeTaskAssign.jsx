@@ -453,8 +453,8 @@ const TraineeTaskAssign = () => {
                   <p>{assignment.daily_report || '—'}</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10">Edit</button>
-                  <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">Delete</button>
+                  <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10"><Edit2 size={14} /></button>
+                  <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}
