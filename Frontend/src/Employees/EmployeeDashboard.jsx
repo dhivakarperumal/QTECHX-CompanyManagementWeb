@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import api from '../api';
+import dayjs from 'dayjs';
 
 /* ── stat card ── */
 const StatCard = ({ icon: Icon, label, value, sub, color, bg }) => (
@@ -68,10 +69,7 @@ const LeaveRow = ({ type, dates, status }) => {
 /* ── helpers ── */
 const isSameDay = (val) => {
   if (!val) return false;
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return false;
-  const today = new Date();
-  return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+  return dayjs(val).isSame(dayjs(), 'day');
 };
 
 const formatDate = (val) => {
@@ -88,7 +86,7 @@ const getBadgeStatus = (st) => {
 
 /* ── main ── */
 const EmployeeDashboard = () => {
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, profileName } = useAuth();
   const name = userProfile?.displayName?.split(' ')[0] || userProfile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Employee';
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id || userProfile?.employee_id || user?.id;
 
@@ -160,7 +158,7 @@ const EmployeeDashboard = () => {
 
         // --- MEETINGS ---
         const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
-        const userName = (userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').toLowerCase();
+        const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').toLowerCase();
         
         let personalEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value?.data?.data || eventsRes.value?.data || []) : [];
         let officeEvents = myEventsRes.status === 'fulfilled' ? (myEventsRes.value?.data?.data || myEventsRes.value?.data || []) : [];

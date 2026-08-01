@@ -263,6 +263,7 @@ const EmployeeProjects = () => {
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Project</th>
                  
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
@@ -275,6 +276,7 @@ const EmployeeProjects = () => {
               <tbody>
                 {paginated.map((p, i) => (
                   <tr key={p.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                    <td className="px-5 py-3.5 text-[13px] text-white/55 whitespace-nowrap">{(page - 1) * limit + i + 1}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={p.project_name} index={(page-1)*limit + i} />
