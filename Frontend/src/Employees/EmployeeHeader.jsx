@@ -128,7 +128,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
           return [];
         };
 
-        const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?._id, user?.userId, user?.uuid].filter(Boolean).map(String);
+        const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?._id, user?.userId, user?.uuid, user?.employee_code, user?.employeeCode].filter(Boolean).map(String);
         const currentUserName = (profileName || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
         let personalEvents = normalizeList(eventsRes?.data);
         let officeEvents = normalizeList(myEventsRes?.data);

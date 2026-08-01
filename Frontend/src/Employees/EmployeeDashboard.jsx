@@ -292,7 +292,12 @@ const EmployeeDashboard = () => {
           user?.employeeCode,
           user?.emp_id,
           user?.empId,
+          userProfile?.employee_id,
+          userProfile?.employeeId,
+          employeeId,
+          primaryUserId,
         ].filter(Boolean).map(String);
+        const possibleIdSet = new Set(possibleIds.map(String));
         const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
         
         let personalEvents = eventsRes.status === 'fulfilled' ? getResponseItems(eventsRes.value, []) : [];
@@ -307,7 +312,7 @@ const EmployeeDashboard = () => {
         });
 
         const matchedMeetings = possibleIds.length > 0
-          ? filteredMeetings.filter(e => eventMatchesUser(e, possibleIds, userName))
+          ? filteredMeetings.filter(e => eventMatchesUser(e, possibleIds, userName) || eventMatchesUser(e, Array.from(possibleIdSet), userName))
           : filteredMeetings;
         const meetingsToUse = matchedMeetings.length > 0 ? matchedMeetings : filteredMeetings;
         
@@ -324,8 +329,12 @@ const EmployeeDashboard = () => {
         newData.meetings.upcoming = upcomingEvents.slice(0, 3);
 
         // --- PROJECTS ---
-        const allPrj = projectsAllRes.status === 'fulfilled' ? (projectsAllRes.value?.data?.data || projectsAllRes.value?.data || []) : [];
-        const grouped = projectsAssignRes.status === 'fulfilled' ? (projectsAssignRes.value?.data?.grouped || []) : [];
+        const allPrj = projectsAllRes.status === 'fulfilled'
+          ? (Array.isArray(projectsAllRes.value?.data) ? projectsAllRes.value.data : (Array.isArray(projectsAllRes.value?.data?.data) ? projectsAllRes.value.data.data : []))
+          : [];
+        const grouped = projectsAssignRes.status === 'fulfilled'
+          ? (Array.isArray(projectsAssignRes.value?.data?.grouped) ? projectsAssignRes.value.data.grouped : (Array.isArray(projectsAssignRes.value?.data) ? projectsAssignRes.value.data : []))
+          : [];
         
         const assignedUuids = new Set(
           grouped
@@ -333,9 +342,11 @@ const EmployeeDashboard = () => {
             .map(g => g.project_uuid)
         );
         
-        const myProjects = allPrj.filter(p => 
-          assignedUuids.has(p.uuid) || (p.project_manager && p.project_manager.toLowerCase() === userName)
-        );
+        const myProjects = allPrj.filter(p => {
+          const projectUuid = p.uuid || p.project_uuid || p.project?.uuid || null;
+          const projectManager = p.project_manager || p.project?.project_manager || '';
+          return assignedUuids.has(projectUuid) || (projectManager && projectManager.toLowerCase() === userName);
+        });
         
         const activeProjects = myProjects.filter(p => !['Completed', 'Archived', 'Cancelled'].includes(p.status || p.project?.status));
         newData.projects.activeCount = activeProjects.length;
