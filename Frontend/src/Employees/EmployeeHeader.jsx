@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
+import api from "../api";
 
 /* ── page title map ── */
 const pageInfo = {
@@ -31,21 +32,13 @@ const getPageInfo = (pathname) => {
   return { title: "Dashboard", icon: LayoutDashboard };
 };
 
-/* ── notification item ── */
-const notifications = [
-  { id: 1, type: "task",    icon: CheckSquare,  color: "text-blue-400",   bg: "bg-blue-500/15",   title: "New task assigned",          sub: "Design Review — Due Jul 25",  time: "2m ago" },
-  { id: 2, type: "leave",   icon: CheckCircle2, color: "text-green-400",  bg: "bg-green-500/15",  title: "Leave approved",             sub: "Jul 10 – Jul 11 Casual Leave", time: "1h ago" },
-  { id: 3, type: "meeting", icon: Video,        color: "text-purple-400", bg: "bg-purple-500/15", title: "Meeting in 30 minutes",       sub: "Sprint Planning — 3:00 PM",    time: "30m ago" },
-  { id: 4, type: "payroll", icon: DollarSign,   color: "text-emerald-400",bg: "bg-emerald-500/15",title: "Salary credited",            sub: "₹45,000 — July Payroll",       time: "2d ago" },
-];
-
 /* ══════════════════ MAIN HEADER ══════════════════ */
 const EmployeeHeader = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showSearch, setShowSearch]         = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
   const [currentTime, setCurrentTime]       = useState(dayjs());
-  const [unreadCount]                       = useState(notifications.length);
+  const [alerts, setAlerts]                 = useState({ tasks: [], leaves: [] });
 
   const dropdownRef = useRef(null);
   const searchRef   = useRef(null);
@@ -53,7 +46,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { profileName, role, email, logout } = useAuth();
+  const { profileName, role, email, logout, user } = useAuth();
 
   const userName = profileName || "Employee";
   const userRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
@@ -64,6 +57,72 @@ const EmployeeHeader = ({ onMenuClick }) => {
     const t = setInterval(() => setCurrentTime(dayjs()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  /* fetch notifications */
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      if (!user) return;
+      const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id;
+      if (!employeeId) return;
+
+      let taskAlerts = [];
+      let leaveAlerts = [];
+
+      try {
+        const { data } = await api.get('/tasks', {
+          params: { page: 1, limit: 100, assigned_to: employeeId },
+        });
+        const active = (data?.data || []).filter(t => {
+          return (t.assignment_date && dayjs(t.assignment_date).isSame(dayjs(), 'day')) ||
+                 (t.created_at && dayjs(t.created_at).isSame(dayjs(), 'day'));
+        });
+        taskAlerts = active.map(t => ({
+          id: t.uuid || t.id,
+          type: "task",
+          icon: CheckSquare,
+          color: "text-blue-400",
+          bg: "bg-blue-500/15",
+          title: "Today Assigned Task",
+          sub: t.task_name || t.module_name || 'Untitled Task',
+          time: dayjs(t.assignment_date || t.created_at).format('h:mm A'),
+          link: "/employee/tasks"
+        }));
+      } catch (e) {
+        console.error('[Header] Tasks fetch error:', e?.message);
+      }
+
+      try {
+        const { data } = await api.get('/employee-leaves/my-leaves');
+        const approved = (data?.data || []).filter(l => {
+          if (l.status !== 'Approved') return false;
+          return (l.updated_at && dayjs(l.updated_at).isSame(dayjs(), 'day')) ||
+                 (l.created_at && dayjs(l.created_at).isSame(dayjs(), 'day'));
+        });
+        leaveAlerts = approved.map(l => ({
+          id: l.id,
+          type: "leave",
+          icon: CheckCircle2,
+          color: "text-green-400",
+          bg: "bg-green-500/15",
+          title: "Leave approved",
+          sub: `${dayjs(l.from_date).format('MMM D')} - ${dayjs(l.to_date).format('MMM D')} ${l.leave_type || 'Leave'}`,
+          time: dayjs(l.updated_at || l.created_at).format('h:mm A'),
+          link: "/employee/leaves"
+        }));
+      } catch (e) {
+        console.error('[Header] Leave fetch error:', e?.message);
+      }
+
+      setAlerts({ tasks: taskAlerts, leaves: leaveAlerts });
+    };
+
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const allNotifications = [...alerts.tasks, ...alerts.leaves];
+  const unreadCount = allNotifications.length;
 
   /* focus search input */
   useEffect(() => { if (showSearch) inputRef.current?.focus(); }, [showSearch]);
@@ -182,10 +241,22 @@ const EmployeeHeader = ({ onMenuClick }) => {
                   </div>
                   {/* list */}
                   <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
-                    {notifications.map(n => {
-                      const NIcon = n.icon;
-                      return (
-                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition cursor-pointer group">
+                    {allNotifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-white/40 text-xs">
+                        No new notifications
+                      </div>
+                    ) : (
+                      allNotifications.map(n => {
+                        const NIcon = n.icon;
+                        return (
+                          <div 
+                            key={`${n.type}-${n.id}`} 
+                            onClick={() => {
+                              if (n.link) navigate(n.link);
+                              setActiveDropdown(null);
+                            }}
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition cursor-pointer group"
+                          >
                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.bg}`}>
                             <NIcon size={14} className={n.color} />
                           </div>
@@ -196,7 +267,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
                           <span className="text-[9px] text-white/25 shrink-0 mt-0.5">{n.time}</span>
                         </div>
                       );
-                    })}
+                    }))}
                   </div>
                   <button className="w-full block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
                     View All Notifications

@@ -97,7 +97,7 @@ const EmployeeDashboard = () => {
           if (isNaN(d.getTime())) return false;
           return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
         };
-        const filtered = all.filter(t => isSameDay(t.due_date) || isSameDay(t.assignment_date) || isSameDay(t.start_date));
+        const filtered = all.filter(t => isSameDay(t.assignment_date) || isSameDay(t.created_at));
         setTodayTasks(filtered.slice(0, 5));
       })
       .catch(err => console.error(err))
