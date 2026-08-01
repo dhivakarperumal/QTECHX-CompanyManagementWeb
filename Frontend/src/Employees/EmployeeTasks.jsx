@@ -211,7 +211,7 @@ export default function EmployeeTasks() {
       if (!ok) return false;
       if (filterKey === 'pending')    return ['Pending', 'To Do'].includes(task.status);
       if (filterKey === 'completed')  return task.status === 'Completed';
-      if (filterKey === 'today')      return isSameDay(task.due_date) || isSameDay(task.assignment_date);
+      if (filterKey === 'today')      return isSameDay(task.assignment_date) || isSameDay(task.created_at);
       if (filterKey === 'processing') return ['In Progress', 'Review', 'Testing'].includes(task.status);
       return true;
     });
