@@ -15,17 +15,6 @@ const AdminSettingsPage = () => {
 
   return (
     <div className="space-y-6 pb-8 text-white min-h-screen">
-      <div className="rounded-4xl border border-white/10 bg-[#12131a]/70 p-6 shadow-2xl shadow-black/30">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-orange-500/15 flex items-center justify-center">
-            <Settings className="text-orange-500" size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
-            <p className="text-sm text-white/40">Choose a settings area to continue.</p>
-          </div>
-        </div>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => {
@@ -49,13 +38,7 @@ const AdminSettingsPage = () => {
         })}
       </div>
 
-      <div className="rounded-4xl border border-white/10 bg-[#12131a]/70 p-6 shadow-2xl shadow-black/20">
-        <div className="flex items-center gap-3 mb-2">
-          <ShieldCheck size={20} className="text-emerald-400" />
-          <h3 className="text-lg font-semibold text-white">Quick note</h3>
-        </div>
-        <p className="text-sm text-white/55">You can add more cards here later. For now, leave settings is available as its own page.</p>
-      </div>
+     
     </div>
   );
 };
