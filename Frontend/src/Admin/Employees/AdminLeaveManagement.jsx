@@ -319,6 +319,7 @@ const AdminLeaveManagement = () => {
         </div>
       </div>
 
+      {viewMode === 'table' && (
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <table className="min-w-full text-sm">
