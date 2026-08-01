@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Clock3, MapPin, PlusCircle, X, Eye, Loader2, UserRoundCheck, UserRoundX, LayoutGrid, List } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, Clock3, MapPin, PlusCircle, X, Eye, Loader2, UserRoundCheck, UserRoundX, LayoutGrid, List, Search, RefreshCw } from "lucide-react";
 import api from "../api";
 import { Link } from "react-router-dom";
 
@@ -9,13 +9,14 @@ const defaultYear = today.getFullYear();
 
 const AttendancePage = () => {
   const [employees, setEmployees] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
-  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [summary, setSummary] = useState([]);
+  const selectedMonth = defaultMonth;
+  const selectedYear = defaultYear;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [viewLoading, setViewLoading] = useState(false);
+
   const [error, setError] = useState(null);
   const [form, setForm] = useState({
     employee_id: "",
@@ -25,43 +26,35 @@ const AttendancePage = () => {
     attendance_status: "Present",
     location: "",
   });
-  const [metrics, setMetrics] = useState({
-    working_hours: "8h 30m",
-    late_entry: "No",
-    early_exit: "No",
-    overtime: "No",
-  });
-  const [employeeAttendance, setEmployeeAttendance] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewMode, setViewMode] = useState("table");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, [selectedMonth, selectedYear]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const employeeRes = await api.get("/employees?limit=200");
+      const [employeeRes, summaryRes] = await Promise.all([
+        api.get("/employees?limit=200"),
+        api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`),
+      ]);
+
       setEmployees(employeeRes?.data?.data || []);
+      setSummary(summaryRes?.data?.data || []);
     } catch (err) {
-      console.error("Failed to load employees", err);
-      setError("Unable to load employees. Please refresh or check your login.");
+      console.error("Failed to load attendance data", err);
+      setError("Unable to load attendance data. Please refresh or check your login.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonth, selectedYear]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
     const nextForm = { ...form, [name]: value };
     setForm(nextForm);
 
-    if (name === "check_in_time" || name === "check_out_time") {
-      const computed = calculateMetrics(nextForm.check_in_time, nextForm.check_out_time);
-      setMetrics(computed);
-    }
   };
 
   const calculateMetrics = (checkIn, checkOut) => {
@@ -115,8 +108,16 @@ const AttendancePage = () => {
   };
 
   useEffect(() => {
-    setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
-  }, []);
+    const fetchData = async () => {
+      await loadData();
+    };
+    fetchData();
+  }, [loadData]);
+
+  const metrics = useMemo(
+    () => calculateMetrics(form.check_in_time, form.check_out_time),
+    [form.check_in_time, form.check_out_time]
+  );
 
   const openAddModal = () => {
     setForm((prev) => ({ ...prev, employee_id: employees[0]?.employee_id || "" }));
@@ -242,7 +243,6 @@ Longitude: ${position.coords.longitude}`,
         attendance_status: "Present",
         location: "",
       });
-      setMetrics({ working_hours: "8h 30m", late_entry: "No", early_exit: "No", overtime: "No" });
       loadData();
     } catch (error) {
       console.error("Failed to add attendance", error);
@@ -253,50 +253,119 @@ Longitude: ${position.coords.longitude}`,
   };
 
 
-  const employeeCards = useMemo(
-    () =>
-      employees.map((employee) => ({
-        employee_id: employee.employee_id,
-        employee_code: employee.employee_code,
+  const employeeCards = useMemo(() => {
+    const summaryMap = new Map(summary.map((item) => [item.employee_id, item]));
+    return employees.map((employee) => {
+      const attendance = summaryMap.get(employee.employee_id) || {};
+      return {
+        ...employee,
         employee_name: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
-        present_days: 0,
-        absent_days: 0,
-      })),
-    [employees]
-  );
+        present_days: attendance.present_days ?? 0,
+        absent_days: attendance.absent_days ?? 0,
+      };
+    });
+  }, [employees, summary]);
+
+  const filteredEmployees = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return employeeCards.filter((employee) => {
+      const fullName = `${employee.first_name || ""} ${employee.last_name || ""}`.toLowerCase();
+      const matchSearch =
+        !term ||
+        fullName.includes(term) ||
+        (employee.employee_code || "").toLowerCase().includes(term) ||
+        (employee.personal_email || "").toLowerCase().includes(term);
+      const matchStatus = !statusFilter || employee.employment_status === statusFilter;
+      const matchRole = !roleFilter || employee.role === roleFilter;
+      return matchSearch && matchStatus && matchRole;
+    });
+  }, [employeeCards, search, statusFilter, roleFilter]);
+
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter((emp) => emp.employment_status === "Active").length;
+  const inactiveEmployees = employees.filter((emp) => emp.employment_status === "Inactive").length;
+  const rolesCount = new Set(employees.map((emp) => emp.role).filter(Boolean)).size;
+
+  const getProfilePhotoUrl = (photo) => {
+    if (!photo) return "";
+    const cleanPath = photo.replace(/\\/g, "/");
+    return cleanPath.startsWith("/") ? `http://localhost:5000${cleanPath}` : `http://localhost:5000/${cleanPath}`;
+  };
 
   return (
-    <div className="space-y-6 text-white">
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Employee Attendance</p>
-          <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
-          <p className="mt-2 text-sm text-white/60">Track day-to-day attendance, manage check-ins, and review monthly reports.</p>
+    <div className="space-y-5 text-white">
+      <div className="space-y-4 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-4 shadow-2xl shadow-black/20">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-orange-400">Employee Attendance</p>
+            <h2 className="text-xl font-semibold">Attendance dashboard</h2>
+            <p className="mt-1 text-sm text-white/60">Track day-to-day attendance, manage check-ins, and review monthly reports.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
+              <PlusCircle size={16} /> Add Attendance
+            </button>
+            <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+              <button onClick={() => setViewMode("table")} className={`rounded-full p-2 transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Table view"><List size={16} /></button>
+              <button onClick={() => setViewMode("card")} className={`rounded-full p-2 transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Card view"><LayoutGrid size={16} /></button>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
 
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
-              {Array.from({ length: 12 }, (_, index) => (
-                <option key={index + 1} value={index + 1} className="bg-slate-900">{new Date(2024, index).toLocaleString("en", { month: "long" })}</option>
-              ))}
-            </select>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Total", value: totalEmployees, icon: Eye, bg: "bg-blue-500/15", color: "text-blue-400" },
+            { label: "Active", value: activeEmployees, icon: UserRoundCheck, bg: "bg-emerald-500/15", color: "text-emerald-400" },
+            { label: "Inactive", value: inactiveEmployees, icon: UserRoundX, bg: "bg-rose-500/15", color: "text-rose-400" },
+            { label: "Roles", value: rolesCount, icon: CalendarDays, bg: "bg-violet-500/15", color: "text-violet-400" },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.label} className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold text-white">{item.value}</p>
+                    <p className="text-sm text-white/50">{item.label}</p>
+                  </div>
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${item.bg}`}>
+                    <Icon size={18} className={item.color} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-2xl border border-white/10 bg-[#111318] p-3">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name, code or email"
+                className="w-full rounded-2xl border border-white/10 bg-white/4 px-10 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="bg-transparent outline-none">
-              {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
-                <option key={year} value={year} className="bg-slate-900">{year}</option>
-              ))}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-2xl border border-white/10 bg-white/4 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50">
+              <option value="">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Terminated">Terminated</option>
+              <option value="Resigned">Resigned</option>
             </select>
-          </div>
-          <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
-            <PlusCircle size={16} /> Add Attendance
-          </button>
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode("table")} className={`rounded-full p-2 transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode("card")} className={`rounded-full p-2 transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Card view"><LayoutGrid size={16} /></button>
+            <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="rounded-2xl border border-white/10 bg-white/4 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50">
+              <option value="">All Roles</option>
+              <option value="Employee">Employee</option>
+              <option value="Manager">Manager</option>
+              <option value="HR">HR</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <button onClick={loadData} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white transition hover:bg-white/10">
+              <RefreshCw size={16} /> Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -317,20 +386,49 @@ Longitude: ${position.coords.longitude}`,
               <table className="min-w-full text-sm">
                 <thead className="bg-white/5 text-white/60">
                   <tr>
-                    <th className="px-4 py-3 text-left">Employee</th>
-                    <th className="px-4 py-3 text-left">Employee ID</th>
+                    <th className="px-4 py-3 text-left w-16">S.No</th>
+                    <th className="px-4 py-3 text-left">Photo</th>
+                    <th className="px-4 py-3 text-left">Employee Code</th>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Email</th>
+                    <th className="px-4 py-3 text-left">Mobile</th>
+                    <th className="px-4 py-3 text-left">Role</th>
+                    <th className="px-4 py-3 text-left">Status</th>
                     <th className="px-4 py-3 text-left">Present</th>
                     <th className="px-4 py-3 text-left">Absent</th>
-                    <th className="px-4 py-3 text-right">Action</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
-                  {employeeCards.length === 0 ? (
-                    <tr><td colSpan="5" className="px-4 py-8 text-center text-white/60">No employees found.</td></tr>
-                  ) : employeeCards.map((employee) => (
-                    <tr key={employee.employee_id} className="hover:bg-white/5">
-                      <td className="px-4 py-3 font-semibold text-white">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</td>
-                      <td className="px-4 py-3 text-white/60">{employee.employee_id}</td>
+                <tbody>
+                  {filteredEmployees.length === 0 ? (
+                    <tr><td colSpan="11" className="px-4 py-8 text-center text-white/60">No employees found.</td></tr>
+                  ) : filteredEmployees.map((employee, index) => (
+                    <tr key={employee.employee_id} className="border-t border-white/10 hover:bg-white/5">
+                      <td className="px-4 py-3 text-white/60">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        {employee.profile_photo ? (
+                          <img src={getProfilePhotoUrl(employee.profile_photo)} alt={employee.employee_name} className="h-10 w-10 rounded-full object-cover border border-white/10" />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm font-semibold text-white/70">
+                            {`${employee.first_name?.[0] || ""}${employee.last_name?.[0] || ""}`.toUpperCase()}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-white">{employee.employee_code || employee.employee_id}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-white">{employee.employee_name}</div>
+                        <div className="text-white/40 text-xs">{employee.designation || "Staff"}</div>
+                      </td>
+                      <td className="px-4 py-3 text-white/70">{employee.personal_email || "—"}</td>
+                      <td className="px-4 py-3 text-white/70">{employee.mobile_number || "—"}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-300">{employee.role || "Employee"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest ${employee.employment_status === "Active" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" : employee.employment_status === "Inactive" ? "bg-rose-500/15 text-rose-400 border-rose-500/25" : "bg-white/10 text-white/60 border-white/15"}`}>
+                          {employee.employment_status || "Active"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-emerald-400">{employee.present_days || 0}</td>
                       <td className="px-4 py-3 text-rose-400">{employee.absent_days || 0}</td>
                       <td className="px-4 py-3 text-right">
@@ -345,17 +443,17 @@ Longitude: ${position.coords.longitude}`,
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {employeeCards.length === 0 ? (
+              {filteredEmployees.length === 0 ? (
                 <div className="col-span-full rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60">
                   No employees found.
                 </div>
               ) : (
-                employeeCards.map((employee) => (
+                filteredEmployees.map((employee) => (
                   <div key={employee.employee_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-[0.22em] text-white/40">{employee.employee_code || "EMP"}</p>
-                        <h3 className="mt-1 text-lg font-semibold">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</h3>
+                        <h3 className="mt-1 text-lg font-semibold">{employee.employee_name}</h3>
                       </div>
                       <div className={`rounded-full p-2 ${employee.present_days > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-700/60 text-slate-300"}`}>
                         {employee.present_days > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
