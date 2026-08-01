@@ -1,7 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud, LayoutGrid, List } from 'lucide-react';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-10000 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -19,11 +48,6 @@ const TraineeTaskMaster = () => {
   const [taskViewMode, setTaskViewMode] = useState("table");
 
   const [trainees, setTrainees] = useState([]);
-
-  useEffect(() => {
-    fetchTasks();
-    fetchTrainees();
-  }, []);
 
   const fetchTrainees = async () => {
     try {
@@ -46,6 +70,11 @@ const TraineeTaskMaster = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTasks();
+    fetchTrainees();
+  }, []);
 
   const getDocumentUrl = (documentPath) => {
     if (!documentPath) return null;
@@ -150,17 +179,15 @@ const TraineeTaskMaster = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
-            >
-              <Plus size={15} /> Add Task
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+          style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+        >
+          <Plus size={15} /> Add Task
+        </button>
       </div>
+    </div>
 
       {/* Trainee Cards Section */}
       <div className="mb-8 mt-2">
@@ -177,9 +204,9 @@ const TraineeTaskMaster = () => {
 
                 <input
                   type="text"
-                  value={taskSearch}
-                  onChange={(e) => setTaskSearch(e.target.value)}
-                  placeholder="Search task"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search trainee"
                   className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
                 />
               </div>
@@ -288,16 +315,8 @@ const TraineeTaskMaster = () => {
         </div>
       </div>
 
-      {showForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#111318] p-6 mb-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">{editingUuid ? 'Edit Task' : 'Add New Task'}</h3>
-            <button onClick={resetForm} className="text-white/40 hover:text-white transition">
-              <X size={20} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
+      <Modal open={showForm} onClose={resetForm} title={editingUuid ? 'Edit Task' : 'Add New Task'}>
+        <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-white/70 mb-1.5">Task Name *</label>
               <input
@@ -345,8 +364,7 @@ const TraineeTaskMaster = () => {
               </button>
             </div>
           </form>
-        </div>
-      )}
+        </Modal>
 
       {taskViewMode === "table" ? (
 
