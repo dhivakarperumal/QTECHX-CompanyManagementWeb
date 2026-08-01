@@ -382,7 +382,7 @@ export default function Incomes() {
                 <div className="mt-4 flex items-center justify-end gap-2">
                   <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
                   <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
-                  <button onClick={() => setSelectedReceipt(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> Receipt </button>
+                  <button onClick={() => setSelectedReceipt(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> </button>
                 </div>
               </div>
             ))}
@@ -458,6 +458,7 @@ export default function Incomes() {
             </tbody>
           </table>
         </div>
+        )}
       </section>
 
       {/* Receipt Modal */}
