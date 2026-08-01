@@ -159,7 +159,7 @@ export default function EmployeeTasks() {
   const [updatingTaskId, setUpdatingTaskId] = useState('');
   const [statusMessage, setStatusMessage] = useState({ text: '', type: 'success' });
   const [cancelModal, setCancelModal] = useState({ isOpen: false, task: null, reason: '' });
-  const [issueModal, setIssueModal] = useState({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' });
+  const [issueModal, setIssueModal] = useState({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '', document: null });
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
@@ -275,7 +275,7 @@ export default function EmployeeTasks() {
     if (newStatus === 'Cancelled') {
       setCancelModal({ isOpen: true, task, reason: '' });
     } else if (newStatus === 'Issue') {
-      setIssueModal({ isOpen: true, task, taskName: task.task_name || '', description: task.description || '', facingIssue: '' });
+      setIssueModal({ isOpen: true, task, taskName: task.task_name || '', description: task.description || '', facingIssue: '', document: null });
     } else {
       updateTaskStatus(task, newStatus);
     }
@@ -855,11 +855,21 @@ export default function EmployeeTasks() {
                   onChange={(e) => setIssueModal(prev => ({ ...prev, facingIssue: e.target.value }))}
                 />
               </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Upload Document (Optional)</label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    className="w-full rounded-xl border border-white/10 bg-black/20 p-2 text-sm text-white file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-500/10 file:text-red-400 hover:file:bg-red-500/20 cursor-pointer"
+                    onChange={(e) => setIssueModal(prev => ({ ...prev, document: e.target.files?.[0] || null }))}
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 mt-5">
               <button
                 type="button"
-                onClick={() => setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' })}
+                onClick={() => setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '', document: null })}
                 className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
               >
                 Go Back
@@ -868,12 +878,12 @@ export default function EmployeeTasks() {
                 type="button"
                 disabled={!issueModal.facingIssue.trim()}
                 onClick={() => {
-                  updateTaskStatus(issueModal.task, 'Issue', null, null, {
+                  updateTaskStatus(issueModal.task, 'Issue', issueModal.document, null, {
                     taskName: issueModal.taskName,
                     description: issueModal.description,
                     facingIssue: issueModal.facingIssue
                   });
-                  setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' });
+                  setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '', document: null });
                 }}
                 className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
