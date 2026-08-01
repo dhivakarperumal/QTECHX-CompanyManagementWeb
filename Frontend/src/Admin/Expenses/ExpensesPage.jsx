@@ -2,6 +2,35 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { Receipt, DollarSign, PlusCircle, CheckCircle2, AlertCircle, Loader2, X, Download } from "lucide-react";
+import ModalPortal from "../../Componets/CommonComponents/ModalPortal";
+
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
 
 const ExpensesPage = () => {
   const [fund, setFund] = useState(0);
@@ -316,7 +345,7 @@ const ExpensesPage = () => {
       {/* ── Stats Overview ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {/* Available Fund Stat */}
-        <div className="bg-white/[0.04] border border-emerald-500/20 rounded-2xl p-5 flex flex-col justify-between hover:bg-white/[0.06] transition relative overflow-hidden group">
+        <div className="bg-white/4 border border-emerald-500/20 rounded-2xl p-5 flex flex-col justify-between hover:bg-white/6 transition relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition duration-500" />
           <div className="flex items-center gap-3 mb-2 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -351,7 +380,7 @@ const ExpensesPage = () => {
         </div>
 
         {/* Total Spent Stat */}
-        <div className="bg-white/[0.04] border border-rose-500/20 rounded-2xl p-5 flex flex-col justify-between hover:bg-white/[0.06] transition relative overflow-hidden group">
+        <div className="bg-white/4 border border-rose-500/20 rounded-2xl p-5 flex flex-col justify-between hover:bg-white/6 transition relative overflow-hidden group">
           <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition duration-500" />
           <div className="flex items-center gap-3 relative z-10">
             <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
@@ -366,129 +395,122 @@ const ExpensesPage = () => {
         </div>
       </div>
 
-      {/* ── Add Expense Form ── */}
-      {showExpenseForm && (
-        <div className="bg-[#111318] border border-white/10 rounded-2xl p-6 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300">
-          <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-            <PlusCircle size={18} className="text-primary" />
-            Record New Expense
-          </h2>
-          <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
+      <Modal open={showExpenseForm} onClose={() => setShowExpenseForm(false)} title="Record New Expense">
+        <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
+            <select required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
+              value={expenseData.expense_type}
+              onChange={(e) => {
+                const value = e.target.value;
+                setExpenseData((prev) => ({ ...prev, expense_type: value, paid_to: value === "Salary" ? prev.paid_to : "" }));
+                if (value !== "Other") {
+                  setCustomExpenseType("");
+                }
+              }}>
+              <option value="" className="bg-[#111318]">Select Expense Type</option>
+              {expenseTypeOptions.map((option) => (
+                <option key={option} value={option} className="bg-[#111318]">{option}</option>
+              ))}
+            </select>
+            {isOtherExpenseType && (
+              <div className="mt-2">
+                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Custom Expense Type</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+                  placeholder="Enter expense type"
+                  value={customExpenseType}
+                  onChange={(e) => setCustomExpenseType(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
+            {isSalaryExpense ? (
               <select required
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-                value={expenseData.expense_type}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setExpenseData((prev) => ({ ...prev, expense_type: value, paid_to: value === "Salary" ? prev.paid_to : "" }));
-                  if (value !== "Other") {
-                    setCustomExpenseType("");
-                  }
-                }}>
-                <option value="" className="bg-[#111318]">Select Expense Type</option>
-                {expenseTypeOptions.map((option) => (
-                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
-                ))}
+                value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})}>
+                <option value="" className="bg-[#111318]">Select Employee</option>
+                {employees.map((employee) => {
+                  const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
+                  const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
+                  return (
+                    <option key={employee.employee_id} value={displayValue} className="bg-[#111318]">
+                      {displayValue}
+                    </option>
+                  );
+                })}
               </select>
-              {isOtherExpenseType && (
-                <div className="mt-2">
-                  <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Custom Expense Type</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                    placeholder="Enter expense type"
-                    value={customExpenseType}
-                    onChange={(e) => setCustomExpenseType(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
-              {isSalaryExpense ? (
-                <select required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-                  value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})}>
-                  <option value="" className="bg-[#111318]">Select Employee</option>
-                  {employees.map((employee) => {
-                    const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
-                    const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
-                    return (
-                      <option key={employee.employee_id} value={displayValue} className="bg-[#111318]">
-                        {displayValue}
-                      </option>
-                    );
-                  })}
-                </select>
-              ) : (
-                <input type="text" required 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                  placeholder="e.g. Amazon Web Services"
-                  value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
-              )}
-            </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
-              <input type="date" required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition [color-scheme:dark]"
-                value={expenseData.date_of_payment} onChange={(e) => setExpenseData({...expenseData, date_of_payment: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Amount (₹)</label>
-              <input type="number" step="0.01" required 
+            ) : (
+              <input type="text" required 
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                placeholder="0.00"
-                value={expenseData.amount} onChange={(e) => setExpenseData({...expenseData, amount: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
-              <select required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-                value={expenseData.payment_type} onChange={(e) => setExpenseData({...expenseData, payment_type: e.target.value})}>
-                <option value="" className="bg-[#111318]">Select Payment Type</option>
-                <option value="Cash" className="bg-[#111318]">Cash</option>
-                <option value="Bank Transfer" className="bg-[#111318]">Bank Transfer</option>
-                <option value="Credit Card" className="bg-[#111318]">Credit Card</option>
-                <option value="UPI" className="bg-[#111318]">UPI</option>
-                <option value="Cheque" className="bg-[#111318]">Cheque</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Invoice Number</label>
-              <input type="text" 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                placeholder="Optional"
-                value={expenseData.invoice_number} onChange={(e) => setExpenseData({...expenseData, invoice_number: e.target.value})} />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Description</label>
-              <textarea rows="2"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                placeholder="Additional notes about this expense..."
-                value={expenseData.description} onChange={(e) => setExpenseData({...expenseData, description: e.target.value})}></textarea>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Upload Bill (Optional)</label>
-              <input type="file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 transition cursor-pointer"
-                onChange={(e) => setBillFile(e.target.files[0])} />
-            </div>
-            <div className="sm:col-span-2 flex justify-end gap-3 mt-2 border-t border-white/5 pt-5">
-              <button type="button" onClick={() => setShowExpenseForm(false)}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition">
-                Cancel
-              </button>
-              <button type="submit" 
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-90 transition"
-                style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
-                Submit Expense
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+                placeholder="e.g. Amazon Web Services"
+                value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
+            )}
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
+            <input type="date" required 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition scheme-dark"
+              value={expenseData.date_of_payment} onChange={(e) => setExpenseData({...expenseData, date_of_payment: e.target.value})} />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Amount (₹)</label>
+            <input type="number" step="0.01" required 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="0.00"
+              value={expenseData.amount} onChange={(e) => setExpenseData({...expenseData, amount: e.target.value})} />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
+            <select required 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
+              value={expenseData.payment_type} onChange={(e) => setExpenseData({...expenseData, payment_type: e.target.value})}>
+              <option value="" className="bg-[#111318]">Select Payment Type</option>
+              <option value="Cash" className="bg-[#111318]">Cash</option>
+              <option value="Bank Transfer" className="bg-[#111318]">Bank Transfer</option>
+              <option value="Credit Card" className="bg-[#111318]">Credit Card</option>
+              <option value="UPI" className="bg-[#111318]">UPI</option>
+              <option value="Cheque" className="bg-[#111318]">Cheque</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Invoice Number</label>
+            <input type="text" 
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="Optional"
+              value={expenseData.invoice_number} onChange={(e) => setExpenseData({...expenseData, invoice_number: e.target.value})} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Description</label>
+            <textarea rows="2"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="Additional notes about this expense..."
+              value={expenseData.description} onChange={(e) => setExpenseData({...expenseData, description: e.target.value})}></textarea>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Upload Bill (Optional)</label>
+            <input type="file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 transition cursor-pointer"
+              onChange={(e) => setBillFile(e.target.files[0])} />
+          </div>
+          <div className="sm:col-span-2 flex justify-end gap-3 mt-2 border-t border-white/5 pt-5">
+            <button type="button" onClick={() => setShowExpenseForm(false)}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition">
+              Cancel
+            </button>
+            <button type="submit" 
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-90 transition"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+              Submit Expense
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="bg-[#111318] border border-white/10 rounded-2xl p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -639,10 +661,10 @@ const ExpensesPage = () => {
         </div>
         <div className="flex items-end gap-2 h-56 mt-3 overflow-x-auto">
           {monthlyTrend.map((item) => (
-            <div key={item.monthName} className="min-w-[44px] flex-1 flex flex-col items-center gap-2">
+            <div key={item.monthName} className="min-w-11 flex-1 flex flex-col items-center gap-2">
               <div className="w-full flex items-end justify-center h-44 rounded-2xl bg-white/5 p-2">
                 <div
-                  className="w-full rounded-xl bg-gradient-to-t from-primary to-orange-400"
+                  className="w-full rounded-xl bg-linear-to-t from-primary to-orange-400"
                   style={{ height: `${Math.max((item.monthValue / maxMonthlyValue) * 100, 6)}%` }}
                 />
               </div>
@@ -656,7 +678,7 @@ const ExpensesPage = () => {
       </div>
 
       {/* ── Table Mode ── */}
-      <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+      <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader2 size={30} className="animate-spin text-primary/70" />
@@ -672,9 +694,9 @@ const ExpensesPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-175 text-sm">
               <thead>
-                <tr className="bg-white/[0.03] border-b border-white/8">
+                <tr className="bg-white/3 border-b border-white/8">
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Date</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Expense Details</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Payment Mode</th>
@@ -684,7 +706,7 @@ const ExpensesPage = () => {
               </thead>
               <tbody>
                 {filteredExpenses.map((exp) => (
-                  <tr key={exp.expense_id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
+                  <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
                     <td className="px-5 py-4">
                       <p className="text-white/80 font-medium text-sm">
                         {new Date(exp.date_of_payment).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
