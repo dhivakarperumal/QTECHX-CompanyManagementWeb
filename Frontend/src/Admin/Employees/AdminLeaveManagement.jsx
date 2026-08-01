@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 import api from '../../api';
@@ -22,6 +23,8 @@ const AdminLeaveManagement = () => {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkSelection, setBulkSelection] = useState([]);
   const [bulkReason, setBulkReason] = useState('');
+  const [expandedRow, setExpandedRow] = useState(null);
+  const navigate = useNavigate();
 
   const pendingLeaves = leaves.filter(l => l.status === 'Pending');
 
@@ -184,6 +187,10 @@ const AdminLeaveManagement = () => {
     { label: 'Pending', value: leaves.filter(l => l.status === 'Pending').length, icon: RefreshCw, cls: 'text-orange-400', bg: 'bg-orange-500/15' },
   ];
 
+  const toggleExpandedRow = (id) => {
+    setExpandedRow((prev) => (prev === id ? null : id));
+  };
+
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -211,7 +218,7 @@ const AdminLeaveManagement = () => {
         {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-white/[0.04] border border-white/8 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.06] transition">
+            <div key={s.label} className="bg-white/4 border border-white/8 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/6 transition">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`}>
                 <Icon size={18} className={s.cls} />
               </div>
@@ -225,7 +232,7 @@ const AdminLeaveManagement = () => {
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-50">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
           <input
             type="text"
@@ -235,7 +242,7 @@ const AdminLeaveManagement = () => {
             className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500 transition"
           />
         </div>
-        <div className="relative min-w-[140px]">
+        <div className="relative min-w-35">
           <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
           <select
             value={leaveTypeFilter}
@@ -248,7 +255,7 @@ const AdminLeaveManagement = () => {
             ))}
           </select>
         </div>
-        <div className="relative min-w-[140px]">
+        <div className="relative min-w-35">
           <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
           <select
             value={statusFilter}
@@ -261,7 +268,7 @@ const AdminLeaveManagement = () => {
             <option value="Rejected">Rejected</option>
           </select>
         </div>
-        <div className="relative min-w-[140px]">
+        <div className="relative min-w-35">
           <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
           <select
             value={dateFilter}
@@ -346,54 +353,108 @@ const AdminLeaveManagement = () => {
                 </tr>
               ) : (
                 filteredLeaves.map((leave, index) => (
-                  <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
-                    <td className="px-4 py-3 text-white/70">{index + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
-                      <div className="text-white/40 text-xs">{leave.employee_code}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{leave.leave_type}</div>
-                      {leave.day_type === 'Half Day' && (
-                        <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-white/70">
-                      {new Date(leave.from_date).toLocaleDateString()} 
-                      {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-white">
-                      {leave.no_of_days}
-                    </td>
-                    <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.reason}>
-                      {leave.reason}
-                    </td>
-                    <td className="px-4 py-3">
-                      {getStatusBadge(leave.status)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {leave.status === 'Pending' ? (
+                  <React.Fragment key={leave.id}>
+                    <tr className="border-t border-white/10 hover:bg-white/2">
+                      <td className="px-4 py-3 text-white/70">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
+                        <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-white">{leave.leave_type}</div>
+                        {leave.day_type === 'Half Day' && (
+                          <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-white/70">
+                        {new Date(leave.from_date).toLocaleDateString()} 
+                        {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-white">
+                        {leave.no_of_days}
+                      </td>
+                      <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.reason}>
+                        {leave.reason}
+                      </td>
+                      <td className="px-4 py-3">
+                        {getStatusBadge(leave.status)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={() => handleActionClick(leave, 'Approved')}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
-                            title="Approve"
+                          <button
+                            onClick={() => toggleExpandedRow(leave.id)}
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+                            title="View details"
                           >
-                            <CheckCircle size={14} />
+                            <User size={14} />
                           </button>
-                          <button 
-                            onClick={() => handleActionClick(leave, 'Rejected')}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
-                            title="Reject"
+                          <button
+                            onClick={() => navigate(`/employee/leaves/history/${leave.employee_id || leave.user_id || leave.id}`)}
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
+                            title="View full history"
                           >
-                            <XCircle size={14} />
+                            <Briefcase size={14} />
                           </button>
+                          {leave.status === 'Pending' ? (
+                            <>
+                              <button 
+                                onClick={() => handleActionClick(leave, 'Approved')}
+                                className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
+                                title="Approve"
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                              <button 
+                                onClick={() => handleActionClick(leave, 'Rejected')}
+                                className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                                title="Reject"
+                              >
+                                <XCircle size={14} />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-white/40 text-xs">Processed</span>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-white/40 text-xs">Processed</span>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {expandedRow === leave.id && (
+                      <tr className="border-t border-white/10 bg-white/3">
+                        <td colSpan="8" className="px-4 py-4">
+                          <div className="rounded-2xl border border-white/10 bg-[#0f1117] p-4">
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Name</p>
+                                <p className="mt-1 font-semibold text-white">{leave.first_name} {leave.last_name}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Code</p>
+                                <p className="mt-1 font-semibold text-white">{leave.employee_code || '—'}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Leave Type</p>
+                                <p className="mt-1 font-semibold text-white">{leave.leave_type}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Days Requested</p>
+                                <p className="mt-1 font-semibold text-white">{leave.no_of_days}</p>
+                              </div>
+                            </div>
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Reason</p>
+                                <p className="mt-1 text-sm text-white/70">{leave.reason || '—'}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Admin Remark</p>
+                                <p className="mt-1 text-sm text-white/70">{leave.admin_reason || '—'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
@@ -414,7 +475,7 @@ const AdminLeaveManagement = () => {
             </div>
           ) : (
             filteredLeaves.map((leave, index) => (
-              <div key={leave.id} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:bg-white/[0.02] transition relative">
+              <div key={leave.id} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:bg-white/2 transition relative">
                 <div className="absolute top-5 right-5 text-xs text-white/40 font-medium">#{index + 1}</div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
@@ -456,25 +517,65 @@ const AdminLeaveManagement = () => {
 
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
                   {getStatusBadge(leave.status)}
-                  {leave.status === 'Pending' && (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleActionClick(leave, 'Approved')}
-                        className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
-                        title="Approve"
-                      >
-                        <CheckCircle size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleActionClick(leave, 'Rejected')}
-                        className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
-                        title="Reject"
-                      >
-                        <XCircle size={14} />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toggleExpandedRow(leave.id)}
+                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+                      title="View details"
+                    >
+                      <User size={14} />
+                    </button>
+                    <button
+                      onClick={() => navigate(`/employee/leaves/history/${leave.employee_id || leave.user_id || leave.id}`)}
+                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
+                      title="View full history"
+                    >
+                      <Briefcase size={14} />
+                    </button>
+                    {leave.status === 'Pending' && (
+                      <>
+                        <button 
+                          onClick={() => handleActionClick(leave, 'Approved')}
+                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
+                          title="Approve"
+                        >
+                          <CheckCircle size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleActionClick(leave, 'Rejected')}
+                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                          title="Reject"
+                        >
+                          <XCircle size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {expandedRow === leave.id && (
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-[#0f1117] p-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Name</p>
+                        <p className="mt-1 font-semibold text-white">{leave.first_name} {leave.last_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Code</p>
+                        <p className="mt-1 font-semibold text-white">{leave.employee_code || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Reason</p>
+                        <p className="mt-1 text-sm text-white/70">{leave.reason || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Admin Remark</p>
+                        <p className="mt-1 text-sm text-white/70">{leave.admin_reason || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -484,7 +585,7 @@ const AdminLeaveManagement = () => {
       {/* Action Modal */}
       {actionModal.show && (
         <ModalPortal>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4">
             <div className="rounded-2xl border border-white/10 bg-[#111318] max-w-md w-full p-6 animate-fade-in-up">
               <h3 className={`text-xl font-bold mb-4 tracking-tight ${actionModal.action === 'Approved' ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {actionModal.action === 'Approved' ? 'Approve Leave' : 'Reject Leave'}
@@ -545,7 +646,7 @@ const AdminLeaveManagement = () => {
       {/* Bulk Approval Modal */}
       {showBulkModal && (
         <ModalPortal>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4">
             <div className="rounded-2xl border border-white/10 bg-[#111318] max-w-4xl w-full p-6 animate-fade-in-up max-h-[90vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold tracking-tight text-white">
