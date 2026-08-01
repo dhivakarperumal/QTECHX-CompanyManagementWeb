@@ -51,7 +51,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
   let viewAllLink = "/admin";
   if (type === "tasks") viewAllLink = "/admin/tasks";
   if (type === "projects") viewAllLink = "/admin/projects";
-  if (type === "leaves") viewAllLink = "/admin/leaves";
+  if (type === "leaves") viewAllLink = "/admin/employees/leave";
 
   return (
     <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col">
@@ -64,9 +64,13 @@ const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
       <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
         {items.length ? items.map((item, i) => {
           let link = "/admin", label = "", sub = "";
-          if (type === "tasks")    { link = "/admin/tasks";    label = item.title;       sub = item.project; }
-          if (type === "projects") { link = "/admin/projects"; label = item.name;        sub = `Due: ${item.due}`; }
-          if (type === "leaves")   { link = "/admin/leaves";   label = item.employee;    sub = item.type; }
+          if (type === "tasks")    { 
+            link = "/admin/tasks";           
+            label = item.title;    
+            sub = `${item.status} ${item.assigned ? '· ' + item.assigned + (item.assignedId ? ' (' + item.assignedId + ')' : '') : ''}`; 
+          }
+          if (type === "projects") { link = "/admin/projects";        label = item.name;     sub = `Due: ${item.due}`; }
+          if (type === "leaves")   { link = "/admin/employees/leave"; label = item.employee; sub = `${item.type}${item.date ? ' · ' + item.date : ''}`; }
           return (
             <Link key={i} to={link} onClick={onClose} className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition group">
               <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">{icon}</div>
@@ -77,7 +81,7 @@ const AlertDropdown = ({ title, items, icon, type, onClose, accent }) => {
             </Link>
           );
         }) : (
-          <div className="py-8 text-center text-white/30 text-xs">No alerts</div>
+          <div className="py-8 text-center text-white/30 text-xs">No active items</div>
         )}
       </div>
       <Link to={viewAllLink} onClick={onClose} className="block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
@@ -92,7 +96,7 @@ const Header = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [alerts, setAlerts] = useState({ tasks: [], projects: [], leaves: [] });
+  const [alerts, setAlerts] = useState({ tasks: [], leaves: [] });
   const [currentTime, setCurrentTime] = useState(dayjs());
 
   const dropdownRef = useRef(null);
@@ -113,23 +117,51 @@ const Header = ({ onMenuClick }) => {
     return () => clearInterval(t);
   }, []);
 
-  /* fetch alerts mock */
+  /* fetch live data — pending leaves + active task updates */
   useEffect(() => {
-    // Setting some mock alerts for demonstration
-    setAlerts({
-      tasks: [
-        { title: "Design Login UI Revamp", project: "CMS Web App" },
-        { title: "API Integration – Employee", project: "Backend Module" }
-      ],
-      projects: [
-        { name: "CMS Web App", due: "Aug 10" },
-        { name: "Backend Module", due: "Aug 20" }
-      ],
-      leaves: [
-        { employee: "Rahul Kumar", type: "Casual Leave" },
-        { employee: "Priya Sharma", type: "Sick Leave" }
-      ]
-    });
+    const fetchAlerts = async () => {
+      let leaveAlerts = [];
+      let taskAlerts  = [];
+
+      // ── 1. Pending Leaves from employee_leaves table ──
+      try {
+        const { data } = await api.get('/employee-leaves/all');
+        const pending = (data?.data || []).filter(l => l.status === 'Pending');
+        leaveAlerts = pending.map(l => ({
+          employee: `${l.first_name || ''} ${l.last_name || ''}`.trim(),
+          type:     l.leave_type || 'Leave',
+          date:     l.from_date ? dayjs(l.from_date).format('DD MMM YYYY') : '',
+        }));
+      } catch (e) {
+        console.error('[Header] Leave fetch error:', e?.response?.status, e.message);
+      }
+
+      // ── 2. Active Task Updates from employee_task_assignments ──
+      try {
+        const { data } = await api.get('/tasks', { params: { page: 1, limit: 100 } });
+        const active = (data?.data || []).filter(t => {
+          const s = (t.status || '').toLowerCase().trim();
+          // Show Pending, In Progress, On Hold — i.e. not yet done
+          if (s === 'completed' || s === 'cancelled' || s === 'done') return false;
+          // Only show tasks updated today
+          if (!t.updated_at) return false;
+          return dayjs(t.updated_at).isSame(dayjs(), 'day');
+        });
+        taskAlerts = active.map(t => ({
+          title:    t.task_name || t.module_name || t.name || 'Untitled Task',
+          project:  t.project_name || '',
+          assigned: t.assigned_to_name || '',
+          assignedId: t.assigned_to_code || t.employee_code || t.assigned_to || '',
+          status:   t.status || 'Pending',
+        }));
+      } catch (e) {
+        console.error('[Header] Tasks fetch error:', e?.response?.status, e.message);
+      }
+
+      setAlerts({ tasks: taskAlerts, leaves: leaveAlerts });
+    };
+
+    fetchAlerts();
   }, []);
 
   /* focus search */
@@ -146,7 +178,7 @@ const Header = ({ onMenuClick }) => {
   }, [activeDropdown, showSearch]);
 
   const toggle = (name) => setActiveDropdown(p => p === name ? null : name);
-  const totalAlerts = alerts.tasks.length + alerts.projects.length + alerts.leaves.length;
+  const totalAlerts = alerts.leaves.length + alerts.tasks.length;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -229,34 +261,32 @@ const Header = ({ onMenuClick }) => {
             {/* Divider */}
             <div className="w-px h-6 bg-white/10 mx-1" />
 
-            {/* Task Updates */}
-            <IconBtn name="tasks" badge={alerts.tasks.length} badgeColor="bg-blue-500" title="Task Updates">
-              <CheckSquare size={18} />
-            </IconBtn>
-            {activeDropdown === "tasks" && (
-              <AlertDropdown title="Task Updates" items={alerts.tasks} icon={<CheckSquare size={13} className="text-blue-400" />} type="tasks" onClose={() => setActiveDropdown(null)} accent="bg-blue-500/20 text-blue-400" />
-            )}
+            {/* Task Updates - live from employee_task_assignments */}
+            <div className="relative">
+              <IconBtn name="tasks" badge={alerts.tasks.length} badgeColor="bg-blue-500" title="Task Updates">
+                <CheckSquare size={18} />
+              </IconBtn>
+              {activeDropdown === "tasks" && (
+                <AlertDropdown title="Task Updates" items={alerts.tasks} icon={<CheckSquare size={13} className="text-blue-400" />} type="tasks" onClose={() => setActiveDropdown(null)} accent="bg-blue-500/20 text-blue-400" />
+              )}
+            </div>
 
-            {/* Project Updates */}
-            <IconBtn name="projects" badge={alerts.projects.length} badgeColor="bg-purple-500" title="Project Updates">
-              <FolderKanban size={18} />
-            </IconBtn>
-            {activeDropdown === "projects" && (
-              <AlertDropdown title="Project Updates" items={alerts.projects} icon={<FolderKanban size={13} className="text-purple-400" />} type="projects" onClose={() => setActiveDropdown(null)} accent="bg-purple-500/20 text-purple-400" />
-            )}
+            {/* Leave Requests - live from employee_leaves table */}
+            <div className="relative">
+              <IconBtn name="leaves" badge={alerts.leaves.length} badgeColor="bg-yellow-500" title="Pending Leave Requests">
+                <CalendarOff size={18} />
+              </IconBtn>
+              {activeDropdown === "leaves" && (
+                <AlertDropdown title="Leave Requests" items={alerts.leaves} icon={<CalendarOff size={13} className="text-yellow-400" />} type="leaves" onClose={() => setActiveDropdown(null)} accent="bg-yellow-500/20 text-yellow-400" />
+              )}
+            </div>
 
-            {/* Leave Requests */}
-            <IconBtn name="leaves" badge={alerts.leaves.length} badgeColor="bg-yellow-500" title="Leave Requests">
-              <CalendarOff size={18} />
-            </IconBtn>
-            {activeDropdown === "leaves" && (
-              <AlertDropdown title="Leave Requests" items={alerts.leaves} icon={<CalendarOff size={13} className="text-yellow-400" />} type="leaves" onClose={() => setActiveDropdown(null)} accent="bg-yellow-500/20 text-yellow-400" />
-            )}
-
-            {/* Bell summary */}
-            <IconBtn name="bell" badge={totalAlerts} badgeColor="bg-primary" title="All Notifications">
-              <Bell size={18} />
-            </IconBtn>
+            {/* Bell - total pending count */}
+            {/* <div className="relative">
+              <IconBtn name="bell" badge={totalAlerts} badgeColor="bg-primary" title="Notifications">
+                <Bell size={18} />
+              </IconBtn>
+            </div> */}
 
             {/* Divider */}
             <div className="w-px h-6 bg-white/10 mx-1" />

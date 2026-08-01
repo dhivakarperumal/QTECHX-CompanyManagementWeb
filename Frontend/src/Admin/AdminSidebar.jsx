@@ -92,8 +92,8 @@ const navItems = [
     label: "Task Management",
     icon: CheckSquare,
     children: [
-      { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
       { path: "/admin/tasks/new", label: "New Tasks", icon: PlusSquare },
+      { path: "/admin/tasks", label: "All Tasks", icon: CheckSquare },
       { path: "/admin/tasks/pending", label: "Pending Tasks", icon: AlertCircle },
       { path: "/admin/tasks/completed", label: "Completed Tasks", icon: CheckSquare },
       { path: "/admin/tasks/cancelled", label: "Cancelled Tasks", icon: XCircle },

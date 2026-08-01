@@ -6,7 +6,7 @@ const { findProjectByUUID } = require('../models/projectModel');
 const { getDB } = require('../config/db');
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const STATUSES = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUSES = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 const taskUploadDir = path.join(__dirname, '../../uploads/tasks');
 if (!fs.existsSync(taskUploadDir)) fs.mkdirSync(taskUploadDir, { recursive: true });

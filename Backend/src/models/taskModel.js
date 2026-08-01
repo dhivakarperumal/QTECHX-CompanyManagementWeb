@@ -13,6 +13,7 @@ const taskFields = [
   't.parent_task_uuid',
   't.assigned_to',
   "CONCAT_WS(' ', a.first_name, a.last_name) AS assigned_to_name",
+  'a.employee_code AS assigned_to_code',
   't.assigned_by',
   "CONCAT_WS(' ', b.first_name, b.last_name) AS assigned_by_name",
   't.team',

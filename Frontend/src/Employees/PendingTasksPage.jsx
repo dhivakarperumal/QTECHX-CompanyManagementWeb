@@ -353,7 +353,7 @@ export default function PendingTasksPage() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/6">
-                  {['TASK', 'PROJECT', 'DUE DATE', 'PRIORITY', 'STATUS', 'ACTIONS'].map(col => (
+                  {['S No', 'TASK', 'PROJECT', 'DUE DATE', 'PRIORITY', 'STATUS', 'ACTIONS'].map(col => (
                     <th key={col} className="px-5 py-3.5 text-[10px] font-bold tracking-widest text-white/35 uppercase whitespace-nowrap">
                       {col}
                     </th>
@@ -374,6 +374,9 @@ export default function PendingTasksPage() {
                         overdue ? 'hover:bg-rose-500/[0.03]' : 'hover:bg-white/[0.02]'
                       }`}
                     >
+                      <td className="px-5 py-4 text-[13px] text-white/55 whitespace-nowrap">
+                        {i + 1}
+                      </td>
                       {/* task */}
                       <td className="px-5 py-4 min-w-[200px]">
                         <div className="flex items-center gap-3">

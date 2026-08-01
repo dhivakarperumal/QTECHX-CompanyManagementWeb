@@ -316,6 +316,7 @@ const EmployeeMeetings = () => {
             <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Meeting</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Type</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Date</th>
@@ -331,6 +332,7 @@ const EmployeeMeetings = () => {
                   const link = m.meetingLink || m.link || (m.location && String(m.location).startsWith('http') ? m.location : null);
                   return (
                     <tr key={i} className={`border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors ${isPast ? 'opacity-50' : ''}`}>
+                      <td className="px-5 py-3.5 text-[13px] text-white/55 whitespace-nowrap">{i + 1}</td>
                       <td className="px-5 py-3.5">
                         <div className="font-bold text-white text-sm">{m.planTitle || m.title}</div>
                         {m.location && !String(m.location).startsWith('http') && (

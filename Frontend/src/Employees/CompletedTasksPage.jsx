@@ -286,7 +286,7 @@ export default function CompletedTasksPage() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/6">
-                  {['TASK', 'PROJECT', 'COMPLETED ON', 'PRIORITY', 'ATTACHMENTS', 'ACTIONS'].map(col => (
+                  {['S No', 'TASK', 'PROJECT', 'COMPLETED ON', 'PRIORITY', 'ATTACHMENTS', 'ACTIONS'].map(col => (
                     <th key={col} className="px-5 py-3.5 text-[10px] font-bold tracking-widest text-white/35 uppercase whitespace-nowrap">
                       {col}
                     </th>
@@ -296,6 +296,7 @@ export default function CompletedTasksPage() {
               <tbody>
                 {visible.map((task, i) => (
                   <tr key={task.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                    <td className="px-5 py-4 text-[13px] text-white/55 whitespace-nowrap">{i + 1}</td>
 
                     {/* task */}
                     <td className="px-5 py-4 min-w-[200px]">
