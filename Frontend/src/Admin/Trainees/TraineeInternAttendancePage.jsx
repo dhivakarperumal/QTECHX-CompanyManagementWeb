@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search } from 'lucide-react';
+import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search, LayoutGrid, List } from 'lucide-react';
 import api from '../../api';
 
 const today = new Date();
@@ -13,6 +13,7 @@ export default function TraineeInternAttendancePage() {
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('card');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -152,6 +153,10 @@ export default function TraineeInternAttendancePage() {
           <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+            <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
+            <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
             <CalendarDays size={16} className="text-orange-400" />
             <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
@@ -188,40 +193,73 @@ export default function TraineeInternAttendancePage() {
       ) : (
         <>
           {error && <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">{error}</div>}
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {cards.length === 0 ? (
-              <div className="col-span-full rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60">No trainee or intern records found.</div>
-            ) : cards.map((person) => (
-              <div key={person.trainee_intern_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-white/40">{person.person_id || 'TI'}</p>
-                    <h3 className="mt-1 text-lg font-semibold">{person.trainee_name || person.full_name}</h3>
-                    <p className="text-sm text-white/60">{person.type || 'Trainee / Intern'}</p>
+          {viewMode === 'table' ? (
+            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#0f172a]/70">
+              <table className="min-w-full text-sm">
+                <thead className="bg-white/5 text-white/60">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Type</th>
+                    <th className="px-4 py-3 text-left">Person ID</th>
+                    <th className="px-4 py-3 text-left">Present</th>
+                    <th className="px-4 py-3 text-left">Absent</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {cards.length === 0 ? (
+                    <tr><td colSpan="6" className="px-4 py-8 text-center text-white/60">No trainee or intern records found.</td></tr>
+                  ) : cards.map((person) => (
+                    <tr key={person.trainee_intern_id} className="hover:bg-white/5">
+                      <td className="px-4 py-3 font-semibold text-white">{person.trainee_name || person.full_name}</td>
+                      <td className="px-4 py-3 text-white/60">{person.type || 'Trainee / Intern'}</td>
+                      <td className="px-4 py-3 text-white/60">{person.person_id || 'TI'}</td>
+                      <td className="px-4 py-3 text-emerald-400">{person.present_days || 0}</td>
+                      <td className="px-4 py-3 text-rose-400">{person.absent_days || 0}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Link to={`/admin/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10"><Eye size={14} /> View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {cards.length === 0 ? (
+                <div className="col-span-full rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60">No trainee or intern records found.</div>
+              ) : cards.map((person) => (
+                <div key={person.trainee_intern_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-white/40">{person.person_id || 'TI'}</p>
+                      <h3 className="mt-1 text-lg font-semibold">{person.trainee_name || person.full_name}</h3>
+                      <p className="text-sm text-white/60">{person.type || 'Trainee / Intern'}</p>
+                    </div>
+                    <div className={`rounded-full p-2 ${Number(person.present_days || 0) > 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700/60 text-slate-300'}`}>
+                      {Number(person.present_days || 0) > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
+                    </div>
                   </div>
-                  <div className={`rounded-full p-2 ${Number(person.present_days || 0) > 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700/60 text-slate-300'}`}>
-                    {Number(person.present_days || 0) > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-white/40">Present Days</p>
+                      <p className="mt-1 text-xl font-semibold text-emerald-400">{person.present_days || 0}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-white/40">Absent Days</p>
+                      <p className="mt-1 text-xl font-semibold text-rose-400">{person.absent_days || 0}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex items-center justify-between text-sm text-white/60">
+                    <span className="font-medium">ID: {person.trainee_intern_id}</span>
+                    <Link to={`/admin/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
+                      <Eye size={14} /> View
+                    </Link>
                   </div>
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <p className="text-white/40">Present Days</p>
-                    <p className="mt-1 text-xl font-semibold text-emerald-400">{person.present_days || 0}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <p className="text-white/40">Absent Days</p>
-                    <p className="mt-1 text-xl font-semibold text-rose-400">{person.absent_days || 0}</p>
-                  </div>
-                </div>
-                <div className="mt-5 flex items-center justify-between text-sm text-white/60">
-                  <span className="font-medium">ID: {person.trainee_intern_id}</span>
-                  <Link to={`/admin/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
-                    <Eye size={14} /> View
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 

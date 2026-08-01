@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud } from 'lucide-react';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud, LayoutGrid, List } from 'lucide-react';
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
@@ -14,6 +14,7 @@ const TraineeTaskMaster = () => {
   const [showForm, setShowForm] = useState(false);
   const [typeFilter, setTypeFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('card');
   const [taskSearch, setTaskSearch] = useState('');
 
   const [trainees, setTrainees] = useState([]);
@@ -169,6 +170,10 @@ const TraineeTaskMaster = () => {
               <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee" className="w-48 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
             </div>
+            <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
+              <button onClick={() => setViewMode('table')} className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={14} /></button>
+              <button onClick={() => setViewMode('card')} className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={14} /></button>
+            </div>
             <select 
               value={typeFilter} 
               onChange={(e) => setTypeFilter(e.target.value)}
@@ -183,6 +188,29 @@ const TraineeTaskMaster = () => {
         
         {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
           <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
+        ) : viewMode === 'table' ? (
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/4 text-white/60">
+                <tr>
+                  <th className="px-4 py-3 text-left">Name</th>
+                  <th className="px-4 py-3 text-left">Type</th>
+                  <th className="px-4 py-3 text-left">Person ID</th>
+                  <th className="px-4 py-3 text-left">Department</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
+                  <tr key={trainee.uuid} className="border-t border-white/10 hover:bg-white/2">
+                    <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
+                    <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
+                    <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
+                    <td className="px-4 py-3 text-white/70">{trainee.department || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (

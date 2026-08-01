@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, Plus
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -45,6 +45,7 @@ export default function ProjectPayment() {
   const [clientSearch, setClientSearch] = useState('');
   const [modeFilter, setModeFilter] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [paymentViewMode, setPaymentViewMode] = useState('card');
   const receiptRef = useRef();
 
   const handlePrint = useReactToPrint({
@@ -434,38 +435,72 @@ export default function ProjectPayment() {
               <option value="Cheque">Cheque</option>
               <option value="Other">Other</option>
             </select>
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+              <button onClick={() => setPaymentViewMode('table')} className={`rounded-lg p-2 transition ${paymentViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setPaymentViewMode('card')} className={`rounded-lg p-2 transition ${paymentViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filteredProjects.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No projects match the current filters.</div>
-          ) : (
-            filteredProjects.map((project) => {
-              const stats = projectTotals[String(project.id)] || { total: 0, count: 0 };
-              const isActive = String(selectedProjectId || '') === String(project.id);
-              return (
-                <button key={project.id} type="button" onClick={() => setSelectedProjectId(String(project.id))} className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{project.project_name}</p>
-                      <p className="text-xs text-white/40">{project.project_code || 'No code'}</p>
+        {paymentViewMode === 'table' ? (
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0e1118]">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/5 text-white/40">
+                <tr>
+                  <th className="px-3 py-2 text-left">Project</th>
+                  <th className="px-3 py-2 text-left">Client</th>
+                  <th className="px-3 py-2 text-left">Paid</th>
+                  <th className="px-3 py-2 text-left">Payments</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10 text-white/70">
+                {filteredProjects.length === 0 ? (
+                  <tr><td colSpan="4" className="px-3 py-4 text-center text-white/40">No projects match the current filters.</td></tr>
+                ) : filteredProjects.map((project) => {
+                  const stats = projectTotals[String(project.id)] || { total: 0, count: 0 };
+                  return (
+                    <tr key={project.id} className="hover:bg-white/5">
+                      <td className="px-3 py-2 font-medium text-white">{project.project_name}</td>
+                      <td className="px-3 py-2">{project.client_name || 'N/A'}</td>
+                      <td className="px-3 py-2 font-semibold text-emerald-400">₹{stats.total.toLocaleString('en-IN')}</td>
+                      <td className="px-3 py-2">{stats.count}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {filteredProjects.length === 0 ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No projects match the current filters.</div>
+            ) : (
+              filteredProjects.map((project) => {
+                const stats = projectTotals[String(project.id)] || { total: 0, count: 0 };
+                const isActive = String(selectedProjectId || '') === String(project.id);
+                return (
+                  <button key={project.id} type="button" onClick={() => setSelectedProjectId(String(project.id))} className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{project.project_name}</p>
+                        <p className="text-xs text-white/40">{project.project_code || 'No code'}</p>
+                      </div>
+                      <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{stats.count} pay</div>
                     </div>
-                    <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{stats.count} pay</div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-white/50">Client</span>
-                    <span className="font-semibold text-white">{project.client_name || 'N/A'}</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-white/50">Paid</span>
-                    <span className="font-semibold text-emerald-400">₹{stats.total.toLocaleString('en-IN')}</span>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="text-white/50">Client</span>
+                      <span className="font-semibold text-white">{project.client_name || 'N/A'}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="text-white/50">Paid</span>
+                      <span className="font-semibold text-emerald-400">₹{stats.total.toLocaleString('en-IN')}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-[#0e1118] p-4">
           <div className="mb-3 flex items-center justify-between">
@@ -516,70 +551,109 @@ export default function ProjectPayment() {
 
       {/* Payment History Table */}
       <section className={`${sectionClass} mt-10`}>
-        <div className="mb-5 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
-          <h2 className="text-base font-bold text-white">Payment History</h2>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
+            <h2 className="text-base font-bold text-white">Payment History</h2>
+          </div>
+          <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+            <button onClick={() => setPaymentViewMode('table')} className={`rounded-lg p-2 transition ${paymentViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+            <button onClick={() => setPaymentViewMode('card')} className={`rounded-lg p-2 transition ${paymentViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-white/70">
-            <thead className="bg-white/5 text-white/50">
-              <tr>
-                <th className="px-4 py-3 rounded-l-lg font-medium">Project</th>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Amount (₹)</th>
-                <th className="px-4 py-3 font-medium">Mode</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {historyLoading ? (
-                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
-              ) : history.length === 0 ? (
-                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No payment records found.</td></tr>
-              ) : (
-                history.map((record) => (
-                  <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{record.project_name}</div>
-                      <div className="text-xs opacity-60">{record.uuid}</div>
-                    </td>
-                    <td className="px-4 py-3">{record.client_name || 'N/A'}</td>
-                    <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.amount_paid).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{record.payment_mode || '-'}</td>
-                    <td className="px-4 py-3">{new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(record)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
-                          title="Edit"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(record)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => setSelectedReceipt(record)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
-                          title="Receipt"
-                        >
-                          <Printer size={13} /> Receipt
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {paymentViewMode === 'card' ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {historyLoading ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
+            ) : history.length === 0 ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No payment records found.</div>
+            ) : history.map((record) => (
+              <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-white">{record.project_name}</p>
+                    <p className="text-xs text-white/40">{record.client_name || 'N/A'}</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">{record.payment_mode || '-'}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Amount</span>
+                  <span className="font-semibold text-emerald-400">₹{parseFloat(record.amount_paid).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Date</span>
+                  <span className="text-white/70">{new Date(record.date_of_payment).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
+                  <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
+                  <button onClick={() => setSelectedReceipt(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> Receipt </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-white/70">
+              <thead className="bg-white/5 text-white/50">
+                <tr>
+                  <th className="px-4 py-3 rounded-l-lg font-medium">Project</th>
+                  <th className="px-4 py-3 font-medium">Client</th>
+                  <th className="px-4 py-3 font-medium">Amount (₹)</th>
+                  <th className="px-4 py-3 font-medium">Mode</th>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {historyLoading ? (
+                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
+                ) : history.length === 0 ? (
+                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No payment records found.</td></tr>
+                ) : (
+                  history.map((record) => (
+                    <tr key={record.id} className="hover:bg-white/2 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-white">{record.project_name}</div>
+                        <div className="text-xs opacity-60">{record.uuid}</div>
+                      </td>
+                      <td className="px-4 py-3">{record.client_name || 'N/A'}</td>
+                      <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.amount_paid).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3">{record.payment_mode || '-'}</td>
+                      <td className="px-4 py-3">{new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
+                            title="Edit"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => setSelectedReceipt(record)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                            title="Receipt"
+                          >
+                            <Printer size={13} /> Receipt
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Receipt Modal */}

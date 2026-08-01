@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search
+  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, LayoutGrid, List
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -42,6 +42,7 @@ export default function Incomes() {
   const [typeFilter, setTypeFilter] = useState('All');
   const [modeFilter, setModeFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('all');
+  const [incomeViewMode, setIncomeViewMode] = useState('table');
   const receiptRef = useRef();
   
   const handlePrint = useReactToPrint({
@@ -348,16 +349,52 @@ export default function Incomes() {
               <option value="today">Today</option>
               <option value="this_month">This month</option>
             </select>
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+              <button onClick={() => setIncomeViewMode('table')} className={`rounded-lg p-2 transition ${incomeViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setIncomeViewMode('card')} className={`rounded-lg p-2 transition ${incomeViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+            </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-[#0e1118] text-white/40">
-              <tr>
-                <th className="px-4 py-3 font-medium rounded-l-xl">Date</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Details (Intern/Reason)</th>
+        {incomeViewMode === 'card' ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {historyLoading ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No income records found.</div>
+            ) : filteredHistory.map((record) => (
+              <div key={record.income_id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-white">{record.income_type}</p>
+                    <p className="text-xs text-white/40">{record.intern_name || record.income_reason || '—'}</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">₹{parseFloat(record.amount || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Date</span>
+                  <span className="text-white/70">{new Date(record.date_of_payment).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Mode</span>
+                  <span className="text-white/70">{record.payment_type || '—'}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
+                  <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
+                  <button onClick={() => setSelectedReceipt(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> Receipt </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-[#0e1118] text-white/40">
+                <tr>
+                  <th className="px-4 py-3 font-medium rounded-l-xl">Date</th>
+                  <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Details (Intern/Reason)</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">Mode</th>
                 <th className="px-4 py-3 font-medium">Received By</th>
@@ -377,14 +414,14 @@ export default function Incomes() {
                 </tr>
               ) : (
                 filteredHistory.map((h, i) => (
-                  <tr key={h.id || i} className="hover:bg-white/[0.02] transition">
+                  <tr key={h.id || i} className="hover:bg-white/2 transition">
                     <td className="px-4 py-3">{new Date(h.date_of_payment).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-white/5 border border-white/10">
                         {h.income_type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 max-w-[200px] truncate" title={h.intern_name || h.income_reason}>
+                    <td className="px-4 py-3 max-w-50 truncate" title={h.intern_name || h.income_reason}>
                       {h.income_type === 'Internship Payment' ? h.intern_name : h.income_reason}
                     </td>
                     <td className="px-4 py-3 font-bold text-emerald-400">₹{parseFloat(h.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
