@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+
 import api from '../../api';
 import toast from 'react-hot-toast';
 import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter, List, LayoutGrid, CalendarDays, User } from 'lucide-react';
@@ -17,6 +18,62 @@ const AdminLeaveManagement = () => {
   const [dateFilter, setDateFilter] = useState('All');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkSelection, setBulkSelection] = useState([]);
+  const [bulkReason, setBulkReason] = useState('');
+
+  const pendingLeaves = leaves.filter(l => l.status === 'Pending');
+
+  const toggleBulkSelection = (id) => {
+    if (bulkSelection.includes(id)) {
+      setBulkSelection(bulkSelection.filter(item => item !== id));
+    } else {
+      setBulkSelection([...bulkSelection, id]);
+    }
+  };
+
+  const toggleAllBulkSelection = () => {
+    if (bulkSelection.length === pendingLeaves.length && pendingLeaves.length > 0) {
+      setBulkSelection([]);
+    } else {
+      setBulkSelection(pendingLeaves.map(l => l.id));
+    }
+  };
+
+  const submitBulkAction = async (action) => {
+    if (!bulkReason && action === 'Rejected') {
+      toast.error('Please provide a reason for rejection');
+      return;
+    }
+
+    if (bulkSelection.length === 0) {
+      toast.error('Please select at least one leave request');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await Promise.all(bulkSelection.map(id => 
+        api.put(`/employee-leaves/${id}/status`, {
+          status: action,
+          admin_reason: bulkReason
+        })
+      ));
+      
+      toast.success(`${bulkSelection.length} Leaves ${action.toLowerCase()} successfully`);
+      setShowBulkModal(false);
+      setBulkSelection([]);
+      setBulkReason('');
+      fetchLeaves();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to update some leave statuses');
+      fetchLeaves();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchLeaves();
@@ -140,6 +197,9 @@ const AdminLeaveManagement = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowBulkModal(true)} className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition hover:opacity-90 bg-orange-600">
+            <CheckCircle size={15} /> Approve Leaves
+          </button>
           <button onClick={fetchLeaves} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
             <RefreshCw size={15} className={loading ? "animate-spin text-orange-500" : ""} />
           </button>
@@ -260,12 +320,11 @@ const AdminLeaveManagement = () => {
       </div>
 
       {viewMode === 'table' && (
-        <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
-            <table className="min-w-full text-sm">
-              <thead className="bg-white/4 text-white/60">
-                <tr>
-                  <th className="px-4 py-3 text-left w-16">S.No</th>
+      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="min-w-full text-sm">
+            <thead className="bg-white/4 text-white/60">
+              <tr>
                 <th className="px-4 py-3 text-left">Employee</th>
                 <th className="px-4 py-3 text-left">Leave Type</th>
                 <th className="px-4 py-3 text-left">Date Range</th>
@@ -287,9 +346,6 @@ const AdminLeaveManagement = () => {
               ) : (
                 filteredLeaves.map((leave, index) => (
                   <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
-                    <td className="px-4 py-3 text-white/70">
-                      {index + 1}
-                    </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
                       <div className="text-white/40 text-xs">{leave.employee_code}</div>
@@ -479,8 +535,7 @@ const AdminLeaveManagement = () => {
               </button>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );
