@@ -12,7 +12,7 @@ function Modal({ open, onClose, title, children }) {
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
-        <div className="w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+        <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <h2 className="text-xl font-semibold text-white">{title}</h2>

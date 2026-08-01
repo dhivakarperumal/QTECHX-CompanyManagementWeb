@@ -8,6 +8,7 @@ import {
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -30,6 +31,34 @@ const BLANK = {
   ifsc_code: '',
   upi_id: ''
 };
+
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
 
 export default function EmployeeSalary() {
   const navigate = useNavigate();
@@ -344,7 +373,7 @@ export default function EmployeeSalary() {
         </button>
       </div>
 
-      {showForm && (
+      <Modal open={showForm} onClose={resetForm} title={editId ? 'Edit Salary Payment' : 'Record Salary Payment'}>
         <form onSubmit={handleSave} className="space-y-6">
           <section className={sectionClass}>
             <div className="mb-5 flex items-center gap-2">
@@ -491,7 +520,7 @@ export default function EmployeeSalary() {
             </button>
           </div>
         </form>
-      )}
+      </Modal>
 
       <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
