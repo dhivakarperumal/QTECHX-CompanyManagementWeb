@@ -14,8 +14,6 @@ import {
 } from 'lucide-react';
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -71,7 +69,6 @@ const ReportsPage = () => {
   const [error, setError] = useState('');
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [attendanceRows, setAttendanceRows] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [salaryHistory, setSalaryHistory] = useState([]);
   const [clients, setClients] = useState([]);
@@ -82,10 +79,9 @@ const ReportsPage = () => {
       setError('');
 
       try {
-        const [employeesRes, projectsRes, attendanceRes, expensesRes, salariesRes, clientsRes] = await Promise.allSettled([
+        const [employeesRes, projectsRes, expensesRes, salariesRes, clientsRes] = await Promise.allSettled([
           api.get('/employees'),
           api.get('/projects'),
-          api.get('/attendance/summary'),
           api.get('/expenses'),
           api.get('/salary/history'),
           api.get('/clients'),
@@ -93,19 +89,17 @@ const ReportsPage = () => {
 
         const parsedEmployees = getArrayData(employeesRes.status === 'fulfilled' ? employeesRes.value?.data : null, 'data');
         const parsedProjects = getArrayData(projectsRes.status === 'fulfilled' ? projectsRes.value?.data : null, 'data');
-        const parsedAttendance = getArrayData(attendanceRes.status === 'fulfilled' ? attendanceRes.value?.data : null, 'data');
         const parsedExpenses = getArrayData(expensesRes.status === 'fulfilled' ? expensesRes.value?.expenses : null, 'expenses');
         const parsedSalaries = getArrayData(salariesRes.status === 'fulfilled' ? salariesRes.value?.data : null, 'data');
         const parsedClients = getArrayData(clientsRes.status === 'fulfilled' ? clientsRes.value?.data : null, 'data');
 
         setEmployees(parsedEmployees);
         setProjects(parsedProjects);
-        setAttendanceRows(parsedAttendance);
         setExpenses(parsedExpenses);
         setSalaryHistory(parsedSalaries);
         setClients(parsedClients);
 
-        if ([employeesRes, projectsRes, attendanceRes, expensesRes, salariesRes, clientsRes].every((result) => result.status === 'rejected')) {
+        if ([employeesRes, projectsRes, expensesRes, salariesRes, clientsRes].every((result) => result.status === 'rejected')) {
           setError('Live data is temporarily unavailable. Showing the dashboard shell instead.');
         }
       } catch (err) {
@@ -119,11 +113,6 @@ const ReportsPage = () => {
   }, []);
 
   const summaryCards = useMemo(() => {
-    const presentCount = attendanceRows.filter((row) => String(row.attendance_status || '').toLowerCase() === 'present').length;
-    const absentCount = attendanceRows.filter((row) => String(row.attendance_status || '').toLowerCase() === 'absent').length;
-    const totalAttendance = attendanceRows.length;
-    const attendanceRate = totalAttendance ? Math.round((presentCount / totalAttendance) * 100) : 0;
-
     const activeProjects = projects.filter((project) => {
       const status = String(project.current_status || '').trim();
       return ['In Progress', 'Planning', 'Testing', 'On Hold', 'Live'].includes(status);
@@ -149,13 +138,6 @@ const ReportsPage = () => {
         icon: FolderKanban,
       },
       {
-        label: 'Attendance rate',
-        value: `${attendanceRate}%`,
-        hint: `${presentCount} present / ${totalAttendance} tracked`,
-        tone: 'bg-emerald-500/15 text-emerald-300',
-        icon: CalendarCheck2,
-      },
-      {
         label: 'Monthly spend',
         value: currencyFormatter.format(totalExpenses),
         hint: `${currencyFormatter.format(totalPayroll)} payroll`,
@@ -170,17 +152,7 @@ const ReportsPage = () => {
         icon: AlertTriangle,
       },
     ];
-  }, [attendanceRows, clients, employees.length, expenses, projects, salaryHistory]);
-
-  const attendanceBreakdown = useMemo(() => {
-    const statusMap = attendanceRows.reduce((acc, row) => {
-      const status = normalizeStatus(row.attendance_status);
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(statusMap).map(([name, count]) => ({ name, count }));
-  }, [attendanceRows]);
+  }, [clients, employees.length, expenses, projects, salaryHistory]);
 
   const projectStatusBreakdown = useMemo(() => {
     const statusMap = projects.reduce((acc, project) => {
@@ -271,26 +243,7 @@ const ReportsPage = () => {
       )}
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/40">Attendance overview</p>
-              <h2 className="text-lg font-semibold text-white">Daily attendance by status</h2>
-            </div>
-            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60">{attendanceRows.length} entries</div>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={attendanceBreakdown}>
-                <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.45)" tickLine={false} axisLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.45)" tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#111318', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px' }} />
-                <Bar dataKey="count" fill="#f97316" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+
 
         <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20">
           <div className="mb-4 flex items-center justify-between">

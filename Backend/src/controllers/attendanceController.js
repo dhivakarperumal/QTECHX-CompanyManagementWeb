@@ -1,4 +1,4 @@
-const { createAttendance, getAttendanceSummary, getEmployeeAttendance } = require("../models/attendanceModel");
+const { createAttendance, getEmployeeAttendance } = require("../models/attendanceModel");
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 
 async function create(req, res) {
@@ -44,18 +44,6 @@ async function create(req, res) {
   }
 }
 
-async function summary(req, res) {
-  try {
-    const month = Number(req.query.month || new Date().getMonth() + 1);
-    const year = Number(req.query.year || new Date().getFullYear());
-    const rows = await getAttendanceSummary({ month, year });
-    return res.json({ data: rows, month, year });
-  } catch (error) {
-    console.error("Attendance summary error:", error);
-    return res.status(500).json({ message: "Failed to retrieve attendance summary" });
-  }
-}
-
 async function employeeAttendance(req, res) {
   try {
     const month = Number(req.query.month || new Date().getMonth() + 1);
@@ -68,4 +56,4 @@ async function employeeAttendance(req, res) {
   }
 }
 
-module.exports = { create, summary, employeeAttendance };
+module.exports = { create, employeeAttendance };

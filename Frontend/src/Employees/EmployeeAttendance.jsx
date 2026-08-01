@@ -76,7 +76,7 @@ const EmployeeAttendance = () => {
         }
       }
     } catch (err) {
-      console.warn("Could not fetch attendance summary", err);
+      console.warn("Could not fetch attendance records", err);
     } finally {
       setLoading(false);
     }

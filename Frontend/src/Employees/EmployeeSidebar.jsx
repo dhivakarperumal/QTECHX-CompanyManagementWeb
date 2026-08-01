@@ -34,7 +34,7 @@ const navItems = [
 
   /* ---- ATTENDANCE ---- */
   {
-    path: "/employee/attendance/summary",
+    path: "/employee/attendance",
     label: "My Attendance",
     icon: ClipboardCheck,
   },

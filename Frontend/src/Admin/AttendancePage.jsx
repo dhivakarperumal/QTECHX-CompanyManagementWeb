@@ -9,7 +9,6 @@ const defaultYear = today.getFullYear();
 
 const AttendancePage = () => {
   const [employees, setEmployees] = useState([]);
-  const [summary, setSummary] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,14 +48,6 @@ const AttendancePage = () => {
     } catch (err) {
       console.error("Failed to load employees", err);
       setError("Unable to load employees. Please refresh or check your login.");
-    }
-
-    try {
-      const summaryRes = await api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`);
-      setSummary(summaryRes?.data?.data || []);
-    } catch (err) {
-      console.error("Failed to load attendance summary", err);
-      setError((prev) => prev ? prev + " Attendance summary could not be loaded." : "Attendance summary could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -262,15 +253,17 @@ Longitude: ${position.coords.longitude}`,
   };
 
 
-  const employeeCards = useMemo(() => {
-    return summary.length ? summary : employees.map((employee) => ({
-      employee_id: employee.employee_id,
-      employee_code: employee.employee_code,
-      employee_name: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
-      present_days: 0,
-      absent_days: 0,
-    }));
-  }, [summary, employees]);
+  const employeeCards = useMemo(
+    () =>
+      employees.map((employee) => ({
+        employee_id: employee.employee_id,
+        employee_code: employee.employee_code,
+        employee_name: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
+        present_days: 0,
+        absent_days: 0,
+      })),
+    [employees]
+  );
 
   return (
     <div className="space-y-6 text-white">
