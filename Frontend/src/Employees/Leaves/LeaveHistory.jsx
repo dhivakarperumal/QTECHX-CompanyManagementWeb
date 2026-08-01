@@ -199,6 +199,20 @@ const LeaveHistory = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+
+          <button
+            onClick={() => setShowLeaveSummary(!showLeaveSummary)}
+            className="h-9 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition flex items-center gap-2"
+          >
+            Leave Type Details
+
+            {showLeaveSummary ? (
+              <ChevronUp size={16} />
+            ) : (
+              <ChevronDown size={16} />
+            )}
+          </button>
+
           <button
             onClick={() => navigate("/employee/leaves/apply")}
             className="h-9 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition flex items-center gap-2"
@@ -216,6 +230,7 @@ const LeaveHistory = () => {
               className={loading ? "animate-spin text-orange-500" : ""}
             />
           </button>
+
         </div>
       </div>
 
@@ -236,20 +251,6 @@ const LeaveHistory = () => {
         </div>
 
         <div className="mt-4">
-          <button
-            onClick={() => setShowLeaveSummary(!showLeaveSummary)}
-            className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4 hover:bg-white/10 transition"
-          >
-            <span className="font-semibold text-white">
-              Leave Type Details
-            </span>
-
-            {showLeaveSummary ? (
-              <ChevronUp size={18} className="text-orange-400" />
-            ) : (
-              <ChevronDown size={18} className="text-orange-400" />
-            )}
-          </button>
 
           {showLeaveSummary && (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-4">
