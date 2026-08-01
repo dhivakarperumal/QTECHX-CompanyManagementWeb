@@ -108,9 +108,9 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Employee Name</label>
               <input 
                 type="text" 
-                value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : ''} 
+                value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : (user?.name || user?.username || '')} 
                 disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
+                className="w-full bg-white/4 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
               />
             </div>
             
@@ -118,7 +118,7 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Employee ID</label>
               <input 
                 type="text" 
-                value={user?.employee_code || ''} 
+                value={user?.employee_code || user?.user_id || user?.employee_id || user?.employeeId || ''} 
                 disabled 
                 className="w-full text-white rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm  cursor-not-allowed outline-none" 
               />
@@ -128,7 +128,7 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Mobile Number</label>
               <input 
                 type="text" 
-                value={user?.mobile_number || ''} 
+                value={user?.mobile_number || user?.mobile || user?.phone || ''} 
                 disabled 
                 className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
               />
@@ -138,7 +138,7 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Email ID</label>
               <input 
                 type="text" 
-                value={user?.personal_email || ''} 
+                value={user?.personal_email || user?.email || ''} 
                 disabled 
                 className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
               />
