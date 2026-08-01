@@ -1,5 +1,9 @@
 const { getDB } = require('../config/db');
 
+function getAuthenticatedEmployeeId(req) {
+  return req.user?.employee_id || req.user?.employeeId || req.user?.user_id || req.user?.id || req.user?.uuid || null;
+}
+
 async function getDashboardMetrics(req, res) {
   try {
     const db = getDB();
@@ -122,4 +126,149 @@ async function getDashboardMetrics(req, res) {
   }
 }
 
-module.exports = { getDashboardMetrics };
+async function getEmployeeDashboardData(req, res) {
+  try {
+    const db = getDB();
+    const employeeId = getAuthenticatedEmployeeId(req);
+
+    if (!employeeId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    const [employeeRows] = await db.execute(
+      'SELECT employee_id, employee_code, first_name, last_name, profile_photo FROM employees WHERE employee_id = ? LIMIT 1',
+      [employeeId]
+    );
+    const employee = employeeRows[0] || null;
+
+    const [tasksRows] = await db.execute(
+      `SELECT t.uuid, t.task_name, t.status, t.due_date, t.assignment_date, t.created_at, p.project_name
+       FROM tasks t
+       LEFT JOIN projects p ON p.id = t.project_id
+       WHERE t.assigned_to = ? AND t.deleted = 0
+       ORDER BY t.created_at DESC LIMIT 20`,
+      [employeeId]
+    );
+
+    const [leaveRows] = await db.execute(
+      `SELECT leave_type, from_date, to_date, status, no_of_days
+       FROM employee_leaves
+       WHERE employee_id = ?
+       ORDER BY created_at DESC LIMIT 10`,
+      [employeeId]
+    );
+
+    const [leaveSettingsRows] = await db.execute(
+      'SELECT leave_type, max_days, is_active FROM employee_leave_settings ORDER BY leave_type ASC'
+    );
+
+    const [meetingRows] = await db.execute(
+      `SELECT id, title, event_name, planTitle, startDate, startTime, eventType, category
+       FROM events
+       WHERE startDate >= ?
+       ORDER BY startDate ASC, startTime ASC LIMIT 10`,
+      [todayStr]
+    );
+
+    const [projectRows] = await db.execute(
+      `SELECT p.uuid, p.project_name, p.end_date, p.current_status, p.completion_percentage
+       FROM project_assignments pa
+       JOIN projects p ON p.id = pa.project_id
+       WHERE pa.employee_ids LIKE ?
+       ORDER BY p.created_at DESC LIMIT 10`,
+      [`%"employee_id":"${employeeId}"%`]
+    );
+
+    const [attendanceRows] = await db.execute(
+      `SELECT attendance_date, attendance_status, check_in_time, check_out_time, working_hours
+       FROM attendance
+       WHERE employee_id = ? AND month = ? AND year = ?
+       ORDER BY attendance_date DESC`,
+      [employeeId, month, year]
+    );
+
+    const [salaryRows] = await db.execute(
+      `SELECT total_salary, salary_month, salary_year
+       FROM employee_salaries
+       WHERE employee_id = ?
+       ORDER BY salary_year DESC, salary_month DESC LIMIT 5`,
+      [employeeId]
+    );
+
+    const todayTasks = tasksRows.filter((task) => {
+      const taskDate = task.assignment_date || task.created_at;
+      return taskDate && taskDate.slice(0, 10) === todayStr;
+    }).slice(0, 5);
+
+    const pendingLeaves = leaveRows.filter((leave) => leave.status === 'Pending').length;
+    const approvedLeaves = leaveRows.filter((leave) => leave.status === 'Approved');
+    const leaveBalance = leaveSettingsRows.reduce((total, setting) => {
+      const maxDays = Number(setting.max_days || 0);
+      const taken = approvedLeaves
+        .filter((leave) => String(leave.leave_type || '').toLowerCase() === String(setting.leave_type || '').toLowerCase())
+        .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+      return total + Math.max(maxDays - taken, 0);
+    }, 0);
+
+    const workingDaysSoFar = Array.from({ length: today.getDate() }, (_, index) => new Date(year, month - 1, index + 1)).filter((date) => date.getDay() !== 0 && date.getDay() !== 6).length;
+    const presentDays = attendanceRows.filter((record) => ['Present', 'Half Day', 'Late'].includes(record.attendance_status)).length;
+
+    const attendanceRecord = attendanceRows.find((record) => record.attendance_date?.slice(0, 10) === todayStr) || attendanceRows[0] || null;
+    const hoursThisWeek = attendanceRows.reduce((sum, record) => {
+      const parsedHours = String(record.working_hours || '').match(/(\d+)h/);
+      return sum + (parsedHours ? Number(parsedHours[1]) : 0);
+    }, 0);
+
+    const latestSalary = salaryRows[0] || null;
+    const nextPayDate = latestSalary ? new Date(year, month, 0).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : new Date(year, month, 0).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+
+    return res.json({
+      success: true,
+      employee,
+      tasks: {
+        assigned: tasksRows.length,
+        completed: tasksRows.filter((task) => ['Completed', 'Done'].includes(task.status)).length,
+        overdue: tasksRows.filter((task) => task.due_date && new Date(task.due_date) < today && !['Completed', 'Done'].includes(task.status)).length,
+        today: todayTasks,
+      },
+      leaves: {
+        recent: leaveRows.slice(0, 4),
+        pendingCount: pendingLeaves,
+      },
+      meetings: {
+        todayCount: meetingRows.filter((meeting) => meeting.startDate?.slice(0, 10) === todayStr).length,
+        upcoming: meetingRows.slice(0, 3),
+      },
+      projects: {
+        activeCount: projectRows.length,
+        activeList: projectRows.slice(0, 3).map((project) => ({
+          name: project.project_name || 'Project',
+          progress: Number(project.completion_percentage || 0),
+          due: project.end_date ? new Date(project.end_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '—',
+        })),
+      },
+      attendance: {
+        checkIn: attendanceRecord?.check_in_time || null,
+        checkOut: attendanceRecord?.check_out_time || null,
+        presentDays,
+        absentDays: Math.max(0, workingDaysSoFar - presentDays),
+        hoursThisWeek,
+      },
+      payroll: {
+        nextPayDate,
+        nextSalary: latestSalary ? `₹${Number(latestSalary.total_salary || 0).toLocaleString('en-IN')}` : 'N/A',
+      },
+      leaveBalance,
+    });
+  } catch (err) {
+    console.error('getEmployeeDashboardData error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to load employee dashboard data' });
+  }
+}
+
+module.exports = { getDashboardMetrics, getEmployeeDashboardData };
