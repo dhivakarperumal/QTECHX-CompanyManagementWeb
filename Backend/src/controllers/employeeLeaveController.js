@@ -132,5 +132,6 @@ module.exports = {
   applyLeave,
   getMyLeaves,
   getAllLeaves,
+  getEmployeeLeaveHistory,
   updateLeaveStatus
 };
