@@ -45,7 +45,8 @@ export default function ProjectPayment() {
   const [clientSearch, setClientSearch] = useState('');
   const [modeFilter, setModeFilter] = useState('All');
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [paymentViewMode, setPaymentViewMode] = useState('card');
+  const [projectViewMode, setProjectViewMode] = useState("card");
+  const [historyViewMode, setHistoryViewMode] = useState("table");
   const receiptRef = useRef();
 
   const handlePrint = useReactToPrint({
@@ -436,13 +437,13 @@ export default function ProjectPayment() {
               <option value="Other">Other</option>
             </select>
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-              <button onClick={() => setPaymentViewMode('table')} className={`rounded-lg p-2 transition ${paymentViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-              <button onClick={() => setPaymentViewMode('card')} className={`rounded-lg p-2 transition ${paymentViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+              <button onClick={() => setProjectViewMode("table")} className={`rounded-lg p-2 transition ${projectViewMode  === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setProjectViewMode('card')} className={`rounded-lg p-2 transition ${projectViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
             </div>
           </div>
         </div>
 
-        {paymentViewMode === 'table' ? (
+        {projectViewMode === 'table' ? (
           <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0e1118]">
             <table className="min-w-full text-sm">
               <thead className="bg-white/5 text-white/40">
@@ -459,7 +460,12 @@ export default function ProjectPayment() {
                 ) : filteredProjects.map((project) => {
                   const stats = projectTotals[String(project.id)] || { total: 0, count: 0 };
                   return (
-                    <tr key={project.id} className="hover:bg-white/5">
+                    <tr key={project.id} onClick={() => setSelectedProjectId(String(project.id))}
+                      className={`cursor-pointer transition
+    ${String(selectedProjectId) === String(project.id)
+                          ? "bg-orange-500/10 border-l-4 border-orange-500"
+                          : "hover:bg-white/5"
+                        }`}>
                       <td className="px-3 py-2 font-medium text-white">{project.project_name}</td>
                       <td className="px-3 py-2">{project.client_name || 'N/A'}</td>
                       <td className="px-3 py-2 font-semibold text-emerald-400">₹{stats.total.toLocaleString('en-IN')}</td>
@@ -557,12 +563,12 @@ export default function ProjectPayment() {
             <h2 className="text-base font-bold text-white">Payment History</h2>
           </div>
           <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-            <button onClick={() => setPaymentViewMode('table')} className={`rounded-lg p-2 transition ${paymentViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-            <button onClick={() => setPaymentViewMode('card')} className={`rounded-lg p-2 transition ${paymentViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+            <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+            <button onClick={() => setHistoryViewMode('card')} className={`rounded-lg p-2 transition ${historyViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
           </div>
         </div>
 
-        {paymentViewMode === 'card' ? (
+        {historyViewMode === 'card' ? (
           <div className="grid gap-3 md:grid-cols-2">
             {historyLoading ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
