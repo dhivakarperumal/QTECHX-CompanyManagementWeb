@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { CalendarDays, Clock3, MapPin, PlusCircle, X, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock3, MapPin, PlusCircle, X, ClipboardCheck, AlertCircle } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
+import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
@@ -29,7 +30,6 @@ const EmployeeAttendance = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [hasMarkedToday, setHasMarkedToday] = useState(false);
@@ -52,35 +52,33 @@ const EmployeeAttendance = () => {
   const [isWithinRadius, setIsWithinRadius] = useState(false);
 
   useEffect(() => {
-    checkTodayAttendance();
-  }, [user]);
-
-  const checkTodayAttendance = async () => {
     if (!user) return;
-    setLoading(true);
-    try {
-      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
-      if (possibleIds.length === 0) return;
-      const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
 
-      const d = new Date();
-      const month = d.getMonth() + 1;
-      const year = d.getFullYear();
-      const dateStr = d.toISOString().slice(0, 10);
+    const fetchTodayAttendance = async () => {
+      try {
+        const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
+        if (possibleIds.length === 0) return;
+        const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
 
-      const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
-      if (res.data && res.data.data) {
-        const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-        if (todayRecord) {
-          setHasMarkedToday(true);
+        const d = new Date();
+        const month = d.getMonth() + 1;
+        const year = d.getFullYear();
+        const dateStr = d.toISOString().slice(0, 10);
+
+        const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
+        if (res.data && res.data.data) {
+          const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+          if (todayRecord) {
+            setHasMarkedToday(true);
+          }
         }
+      } catch (err) {
+        console.warn("Could not fetch attendance records", err);
       }
-    } catch (err) {
-      console.warn("Could not fetch attendance records", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchTodayAttendance();
+  }, [user]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -281,8 +279,10 @@ const EmployeeAttendance = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70 p-4">
-          <div className="flex min-h-full items-start justify-center py-8">
+        <ModalPortal>
+          <div className="fixed inset-0 z-9999 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={(event) => event.target === event.currentTarget && setIsModalOpen(false)}
+          >
             <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 max-h-[90vh] overflow-hidden">
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0f172a] px-6 py-5">
                 <div>
@@ -380,7 +380,7 @@ const EmployeeAttendance = () => {
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, Briefcase, History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
+  DollarSign, History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
