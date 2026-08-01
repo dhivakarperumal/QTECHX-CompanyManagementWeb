@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { CalendarDays, Loader2, RefreshCw, Search, X, LayoutGrid, List } from "lucide-react";
+import {
+  CalendarDays,
+  Loader2,
+  RefreshCw,
+  Search,
+  X,
+  LayoutGrid,
+  List,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LeaveHistory = () => {
@@ -16,6 +26,7 @@ const LeaveHistory = () => {
   const [sortBy, setSortBy] = useState("Newest");
   const [dateFilter, setDateFilter] = useState("All");
   const [viewMode, setViewMode] = useState('table');
+  const [showLeaveSummary, setShowLeaveSummary] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -224,31 +235,65 @@ const LeaveHistory = () => {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {leaveSummary.map((item) => (
-            <div key={item.leave_type} className="rounded-2xl border border-white/10 bg-[#0f1117] p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white">{item.leave_type}</p>
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
-                  {item.remaining} left
-                </span>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
-                <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Total</p>
-                  <p className="mt-1 font-semibold text-white">{item.totalAllowed}</p>
+        <div className="mt-4">
+          <button
+            onClick={() => setShowLeaveSummary(!showLeaveSummary)}
+            className="w-full flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-5 py-4 hover:bg-white/10 transition"
+          >
+            <span className="font-semibold text-white">
+              Leave Type Details
+            </span>
+
+            {showLeaveSummary ? (
+              <ChevronUp size={18} className="text-orange-400" />
+            ) : (
+              <ChevronDown size={18} className="text-orange-400" />
+            )}
+          </button>
+
+          {showLeaveSummary && (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 mt-4">
+              {leaveSummary.map((item) => (
+                <div
+                  key={item.leave_type}
+                  className="rounded-2xl border border-white/10 bg-[#0f1117] p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">
+                      {item.leave_type}
+                    </p>
+
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
+                      {item.remaining} left
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                    <div>
+                      <p className="text-white/40 text-[10px] uppercase">Total</p>
+                      <p className="mt-1 font-semibold text-white">
+                        {item.totalAllowed}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-white/40 text-[10px] uppercase">Taken</p>
+                      <p className="mt-1 font-semibold text-orange-400">
+                        {item.taken}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-white/40 text-[10px] uppercase">Left</p>
+                      <p className="mt-1 font-semibold text-emerald-400">
+                        {item.remaining}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Taken</p>
-                  <p className="mt-1 font-semibold text-orange-400">{item.taken}</p>
-                </div>
-                <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Left</p>
-                  <p className="mt-1 font-semibold text-emerald-400">{item.remaining}</p>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-white/10">
