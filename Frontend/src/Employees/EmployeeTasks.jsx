@@ -878,7 +878,11 @@ export default function EmployeeTasks() {
                 type="button"
                 disabled={!issueModal.facingIssue.trim()}
                 onClick={() => {
-                  updateTaskStatus(issueModal.task, 'Issue', issueModal.document, null, {
+                  let docToUpload = issueModal.document;
+                  if (docToUpload) {
+                    docToUpload = new File([docToUpload], `IssueDoc_${docToUpload.name}`, { type: docToUpload.type });
+                  }
+                  updateTaskStatus(issueModal.task, 'Issue', docToUpload, null, {
                     taskName: issueModal.taskName,
                     description: issueModal.description,
                     facingIssue: issueModal.facingIssue

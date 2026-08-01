@@ -61,6 +61,22 @@ const formatDateForInput = (dateString) => {
   }
 };
 
+const getCancelReason = (comments) => {
+  if (!comments) return null;
+  const matches = comments.match(/\[Cancelled\]:\s*(.*)/g);
+  if (!matches || matches.length === 0) return null;
+  const lastMatch = matches[matches.length - 1];
+  return lastMatch.replace(/\[Cancelled\]:\s*/, '').trim();
+};
+
+const getIssueReason = (comments) => {
+  if (!comments) return null;
+  const matches = comments.match(/\[Issue\]:\s*(.*)/g);
+  if (!matches || matches.length === 0) return null;
+  const lastMatch = matches[matches.length - 1];
+  return lastMatch.replace(/\[Issue\]:\s*/, '').trim();
+};
+
 const mapTaskToViewModel = (task) => ({
   id: task.uuid,
   uuid: task.uuid,
@@ -81,6 +97,9 @@ const mapTaskToViewModel = (task) => ({
   estimatedHours: task.estimated_hours || "",
   project_id: task.project_id,
   project_uuid: task.project_uuid,
+  comments: task.comments || "",
+  issueReason: getIssueReason(task.comments),
+  cancelReason: getCancelReason(task.comments),
   attachments: (() => { try { return JSON.parse(task.attachments || '[]'); } catch { return []; } })(),
 });
 
@@ -1047,11 +1066,52 @@ export default function TasksPage({ initialPageKey = null }) {
               <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Description</p>
               <p className="mt-2 text-sm text-slate-200 whitespace-pre-line">{selectedTaskDetails.description || 'No description provided.'}</p>
             </div>
-            {selectedTaskDetails.attachments && selectedTaskDetails.attachments.length > 0 && (
+            {selectedTaskDetails.cancelReason && (
+              <div className="sm:col-span-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-rose-400">Cancellation Reason</p>
+                <p className="mt-2 text-sm text-rose-200 whitespace-pre-line">{selectedTaskDetails.cancelReason}</p>
+              </div>
+            )}
+            {selectedTaskDetails.issueReason && (
+              <div className="sm:col-span-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-red-400">Issue Details</p>
+                <p className="mt-2 text-sm text-red-200 whitespace-pre-line">{selectedTaskDetails.issueReason}</p>
+                {selectedTaskDetails.attachments?.filter(a => a.original_name?.startsWith('IssueDoc_')).length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-red-400/70 mb-2">Issue Documents</p>
+                    <div className="flex flex-col gap-2">
+                      {selectedTaskDetails.attachments.filter(a => a.original_name?.startsWith('IssueDoc_')).map((att, i) => (
+                        <a
+                          key={i}
+                          href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '10px 14px', borderRadius: '10px',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                            background: 'rgba(239,68,68,0.05)',
+                            color: '#fca5a5', textDecoration: 'none',
+                            fontSize: '13px', transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.05)'}
+                        >
+                          <Paperclip size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name.replace('IssueDoc_', '')}</span>
+                          <Download size={14} style={{ flexShrink: 0 }} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {selectedTaskDetails.attachments && selectedTaskDetails.attachments.filter(a => !a.original_name?.startsWith('IssueDoc_')).length > 0 && (
               <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mb-3">Attachments</p>
                 <div className="flex flex-col gap-2">
-                  {selectedTaskDetails.attachments.map((att, i) => (
+                  {selectedTaskDetails.attachments.filter(a => !a.original_name?.startsWith('IssueDoc_')).map((att, i) => (
                     <a
                       key={i}
                       href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
