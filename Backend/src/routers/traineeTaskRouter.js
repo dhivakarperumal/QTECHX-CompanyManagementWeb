@@ -5,6 +5,7 @@ const traineeTaskController = require("../controllers/traineeTaskController");
 const verifyToken = require("../security/authMiddleware");
 
 const taskUpload = upload.single("task_document");
+const assignmentUpload = upload.single("assignment_document");
 
 // Trainee Tasks
 router.get("/trainee-tasks", traineeTaskController.getTraineeTasks);
@@ -14,8 +15,8 @@ router.delete("/trainee-tasks/:uuid", traineeTaskController.deleteTraineeTask);
 
 // Trainee Task Assignments
 router.get("/trainee-task-assignments", traineeTaskController.getAssignments);
-router.post("/trainee-task-assignments", traineeTaskController.assignTask);
-router.put("/trainee-task-assignments/:uuid", traineeTaskController.updateAssignment);
+router.post("/trainee-task-assignments", assignmentUpload, traineeTaskController.assignTask);
+router.put("/trainee-task-assignments/:uuid", assignmentUpload, traineeTaskController.updateAssignment);
 router.delete("/trainee-task-assignments/:uuid", traineeTaskController.deleteAssignment);
 
 module.exports = router;

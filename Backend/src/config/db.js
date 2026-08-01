@@ -1147,6 +1147,7 @@ async function ensureSchema(pool) {
   );
 
   await pool.execute(`ALTER TABLE trainee_tasks ADD COLUMN IF NOT EXISTS document_path VARCHAR(255) NULL`);
+  await pool.execute(`ALTER TABLE trainee_task_assignments ADD COLUMN IF NOT EXISTS assignment_document_path VARCHAR(255) NULL`);
 
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS trainee_task_assignments (
@@ -1157,6 +1158,7 @@ async function ensureSchema(pool) {
       assigned_date DATE NULL,
       assigned_time TIME NULL,
       due_date DATE NULL,
+      assignment_document_path VARCHAR(255) NULL,
       status ENUM('Pending','In Progress','On Hold','Review','Completed','Cancelled') NOT NULL DEFAULT 'Pending',
       progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
       daily_report TEXT NULL,

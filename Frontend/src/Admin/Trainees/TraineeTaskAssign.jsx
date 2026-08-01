@@ -1,7 +1,36 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import { UserCheck, Edit2, Trash2, Loader2, Save, X, Plus, Search, LayoutGrid, List } from 'lucide-react';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-10000 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
 
 const TraineeTaskAssign = () => {
   const [assignments, setAssignments] = useState([]);
@@ -19,6 +48,7 @@ const TraineeTaskAssign = () => {
   const [assignedDate, setAssignedDate] = useState('');
   const [assignedTime, setAssignedTime] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [assignmentDocument, setAssignmentDocument] = useState(null);
 
   // Update State (for inline editing)
   const [editingAssignmentUuid, setEditingAssignmentUuid] = useState(null);
@@ -26,17 +56,13 @@ const TraineeTaskAssign = () => {
   const [editStatus, setEditStatus] = useState('Pending');
   const [editDailyReport, setEditDailyReport] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       setLoading(true);
       const [assignmentsRes, tasksRes, traineesRes] = await Promise.all([
         api.get('/trainee-task-assignments'),
         api.get('/trainee-tasks'),
-        api.get('/trainee-intern') // assuming this endpoint gets trainees/interns
+        api.get('/trainee-intern')
       ]);
       setAssignments(assignmentsRes.data);
       setTasks(tasksRes.data);
@@ -49,6 +75,13 @@ const TraineeTaskAssign = () => {
     }
   };
 
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchData();
+    };
+    loadData();
+  }, []);
+
   const handleAssign = async (e) => {
     e.preventDefault();
     if (!selectedTask || !selectedTrainee || !assignedDate) {
@@ -57,12 +90,18 @@ const TraineeTaskAssign = () => {
     }
 
     try {
-      await api.post('/trainee-task-assignments', {
-        trainee_task_uuid: selectedTask,
-        trainee_intern_uuid: selectedTrainee,
-        assigned_date: assignedDate,
-        assigned_time: assignedTime,
-        due_date: dueDate
+      const formData = new FormData();
+      formData.append('trainee_task_uuid', selectedTask);
+      formData.append('trainee_intern_uuid', selectedTrainee);
+      formData.append('assigned_date', assignedDate);
+      formData.append('assigned_time', assignedTime);
+      formData.append('due_date', dueDate);
+      if (assignmentDocument) {
+        formData.append('assignment_document', assignmentDocument);
+      }
+
+      await api.post('/trainee-task-assignments', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success('Task assigned successfully');
 
@@ -116,6 +155,7 @@ const TraineeTaskAssign = () => {
     setAssignedDate('');
     setAssignedTime('');
     setDueDate('');
+    setAssignmentDocument(null);
     setShowForm(false);
   };
 
@@ -146,6 +186,7 @@ const TraineeTaskAssign = () => {
         <div className="flex items-center gap-2">
           {!showForm && (
             <button
+              type="button"
               onClick={() => setShowForm(true)}
               className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
               style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
@@ -156,17 +197,9 @@ const TraineeTaskAssign = () => {
         </div>
       </div>
 
-      {showForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#111318] p-6 mb-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">New Task Assignment</h3>
-            <button onClick={resetForm} className="text-white/40 hover:text-white transition">
-              <X size={20} />
-            </button>
-          </div>
-
+      <Modal open={showForm} onClose={resetForm} title="New Task Assignment">
           <form onSubmit={handleAssign} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
                 <select
@@ -227,6 +260,22 @@ const TraineeTaskAssign = () => {
                   className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-1.5">Upload Document</label>
+                <label className="cursor-pointer flex items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-3 text-sm text-white/70 hover:border-orange-500/50 transition-all">
+                  <span className="truncate">{assignmentDocument ? assignmentDocument.name : 'Choose a PDF, DOC, image, or ZIP file'}</span>
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80">
+                    Browse
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip,.rar"
+                    onChange={(e) => setAssignmentDocument(e.target.files?.[0] || null)}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
@@ -246,8 +295,7 @@ const TraineeTaskAssign = () => {
               </button>
             </div>
           </form>
-        </div>
-      )}
+      </Modal>
 
       {/* Assignments Table */}
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
@@ -368,7 +416,7 @@ const TraineeTaskAssign = () => {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-4 min-w-[120px]">
+                        <td className="px-4 py-4 min-w-30">
                           {isEditing ? (
                             <div className="flex items-center gap-2">
                               <input
@@ -391,7 +439,7 @@ const TraineeTaskAssign = () => {
                             </div>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-white/70 max-w-[200px]">
+                        <td className="px-4 py-4 text-white/70 max-w-50">
                           {isEditing ? (
                             <textarea
                               value={editDailyReport}

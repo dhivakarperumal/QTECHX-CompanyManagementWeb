@@ -91,7 +91,7 @@ exports.getAssignments = async (req, res) => {
     const db = getDB();
     
     let query = `
-      SELECT tta.*, tt.task_name, tt.description, ti.full_name as trainee_name, ti.type as trainee_type
+      SELECT tta.*, tt.task_name, tt.description, tt.document_path AS task_document_path, ti.full_name as trainee_name, ti.type as trainee_type
       FROM trainee_task_assignments tta
       JOIN trainee_tasks tt ON tta.trainee_task_id = tt.id
       JOIN trainee_intern ti ON tta.trainee_intern_id = ti.uuid
@@ -116,6 +116,7 @@ exports.getAssignments = async (req, res) => {
 exports.assignTask = async (req, res) => {
   try {
     const { trainee_task_uuid, trainee_intern_uuid, assigned_date, assigned_time, due_date } = req.body;
+    const assignmentDocumentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
     const db = getDB();
     const uuid = uuidv4();
     const created_by = req.user ? req.user.user_id : null;
@@ -129,9 +130,9 @@ exports.assignTask = async (req, res) => {
 
     await db.execute(
       `INSERT INTO trainee_task_assignments 
-        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, created_by) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, created_by]
+        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, created_by]
     );
 
     res.status(201).json({ message: "Task assigned successfully", uuid });
@@ -145,15 +146,31 @@ exports.updateAssignment = async (req, res) => {
   try {
     const { uuid } = req.params;
     const { status, progress, daily_report, due_date } = req.body;
+    const assignmentDocumentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
     const db = getDB();
     const updated_by = req.user ? req.user.user_id : null;
 
-    // Use a dynamic query builder simple approach or just update all
+    const updateFields = [
+      "status = ?",
+      "progress = ?",
+      "daily_report = ?",
+      "due_date = ?",
+      "updated_by = ?"
+    ];
+    const values = [status, progress, daily_report, due_date, updated_by];
+
+    if (assignmentDocumentPath) {
+      updateFields.push("assignment_document_path = ?");
+      values.push(assignmentDocumentPath);
+    }
+
+    values.push(uuid);
+
     await db.execute(
       `UPDATE trainee_task_assignments 
-       SET status = ?, progress = ?, daily_report = ?, due_date = ?, updated_by = ? 
+       SET ${updateFields.join(", ")} 
        WHERE uuid = ?`,
-      [status, progress, daily_report, due_date, updated_by, uuid]
+      values
     );
 
     res.json({ message: "Assignment updated successfully" });
