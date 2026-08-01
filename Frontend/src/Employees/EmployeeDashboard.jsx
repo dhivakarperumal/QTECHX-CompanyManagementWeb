@@ -8,7 +8,6 @@ import { useAuth } from '../PrivateRouter/AuthContext';
 import api from '../api';
 import dayjs from 'dayjs';
 
-/* ── stat card ── */
 const StatCard = ({ icon: Icon, label, value, sub, color, bg }) => (
   <div className={`flex items-center gap-4 rounded-2xl p-5 ${bg} border border-white/10`}>
     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color} shrink-0`}>
@@ -22,13 +21,13 @@ const StatCard = ({ icon: Icon, label, value, sub, color, bg }) => (
   </div>
 );
 
-/* ── task row ── */
 const TaskRow = ({ title, project, status, due }) => {
   const statusStyles = {
     'In Progress': 'bg-blue-500/20 text-blue-400',
-    'Pending':     'bg-yellow-500/20 text-yellow-400',
-    'Done':        'bg-green-500/20 text-green-400',
+    'Pending': 'bg-yellow-500/20 text-yellow-400',
+    'Done': 'bg-green-500/20 text-green-400',
   };
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
       <div className="flex-1 min-w-0">
@@ -45,14 +44,14 @@ const TaskRow = ({ title, project, status, due }) => {
   );
 };
 
-/* ── leave row ── */
 const LeaveRow = ({ type, dates, status }) => {
   const s = {
     Approved: { cls: 'bg-green-500/20 text-green-400', icon: CheckCircle2 },
-    Pending:  { cls: 'bg-yellow-500/20 text-yellow-400', icon: Timer },
+    Pending: { cls: 'bg-yellow-500/20 text-yellow-400', icon: Timer },
     Rejected: { cls: 'bg-red-500/20 text-red-400', icon: AlertCircle },
   }[status] || { cls: 'bg-gray-500/20 text-gray-400', icon: Timer };
   const Icon = s.icon;
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
       <div>
@@ -66,7 +65,6 @@ const LeaveRow = ({ type, dates, status }) => {
   );
 };
 
-/* ── helpers ── */
 const isSameDay = (val) => {
   if (!val) return false;
   return dayjs(val).isSame(dayjs(), 'day');
@@ -84,143 +82,12 @@ const getBadgeStatus = (st) => {
   return 'Pending';
 };
 
-const normalizeListPayload = (payload) => {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.rows)) return payload.rows;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.results)) return payload.results;
-  if (payload && typeof payload === 'object') {
-    const nestedValues = Object.values(payload).filter((value) => Array.isArray(value));
-    if (nestedValues.length > 0) return nestedValues[0];
-  }
-  return [];
-};
-
-const getResponseItems = (response, fallback = []) => {
-  if (!response) return fallback;
-  const payload = response?.data ?? response;
-  if (Array.isArray(payload)) return payload;
-  if (payload && typeof payload === 'object') {
-    if (Array.isArray(payload.data)) return payload.data;
-    if (Array.isArray(payload.rows)) return payload.rows;
-    if (Array.isArray(payload.items)) return payload.items;
-    if (Array.isArray(payload.results)) return payload.results;
-    if (Array.isArray(payload.leaves)) return payload.leaves;
-    if (Array.isArray(payload.tasks)) return payload.tasks;
-    if (Array.isArray(payload.projects)) return payload.projects;
-    if (Array.isArray(payload.assignments)) return payload.assignments;
-    if (Array.isArray(payload.records)) return payload.records;
-    if (Array.isArray(payload.data?.rows)) return payload.data.rows;
-    if (Array.isArray(payload.data?.data)) return payload.data.data;
-  }
-  return normalizeListPayload(payload) || fallback;
-};
-
-const getObjectValue = (payload, fallback = null) => {
-  if (!payload || typeof payload !== 'object') return fallback;
-  if (Array.isArray(payload)) return fallback;
-  if (payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) return payload.data;
-  return payload;
-};
-
 const getEventDateValue = (event) =>
   event?.planDate || event?.startDate || event?.plan_date || event?.start_time || event?.date || event?.start || event?.event_date;
 
-const resolveEmployeeId = (user, fallbackEmployeeId) => {
-  const candidateIds = [
-    user?.employee_id,
-    user?.employeeId,
-    user?.user_id,
-    user?.userId,
-    user?.id,
-    user?._id,
-    user?.uuid,
-    user?.employee_code,
-    user?.employeeCode,
-    user?.emp_id,
-    user?.empId,
-    fallbackEmployeeId,
-  ].filter(Boolean).map(String);
-
-  if (candidateIds.length === 0) return null;
-  return candidateIds.find((id) => id.length > 20) || candidateIds[0] || null;
-};
-
-const getDateValue = (value) => {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed) return null;
-  const normalized = trimmed.includes('T') || trimmed.includes(' ') ? trimmed : `${trimmed}T00:00:00`;
-  const parsed = new Date(normalized);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const isSameCalendarDay = (value, reference = new Date()) => {
-  const parsed = getDateValue(value);
-  if (!parsed) return false;
-  return dayjs(parsed).format('YYYY-MM-DD') === dayjs(reference).format('YYYY-MM-DD');
-};
-
-const eventMatchesUser = (event, possibleIds, userName) => {
-  if (!event) return false;
-  const directFields = [
-    event.user_id,
-    event.userId,
-    event.employee_id,
-    event.employeeId,
-    event.created_by,
-    event.createdBy,
-    event.assigned_to,
-    event.assignedTo,
-    event.owner_id,
-    event.ownerId,
-    event.creator_id,
-    event.creatorId,
-  ];
-
-  if (directFields.some((value) => possibleIds.includes(String(value)))) {
-    return true;
-  }
-
-  const participants = event.participants || event.attendees || event.members || [];
-  const normalizedParticipants = typeof participants === 'string'
-    ? (() => { try { return JSON.parse(participants); } catch { return []; } })()
-    : participants;
-
-  if (Array.isArray(normalizedParticipants)) {
-    return normalizedParticipants.some((participant) => {
-      if (!participant) return false;
-      if (typeof participant === 'string') {
-        const normalizedValue = String(participant).trim().toLowerCase();
-        return possibleIds.includes(normalizedValue) || (userName && normalizedValue === userName);
-      }
-      const participantFields = [
-        participant.user_id,
-        participant.userId,
-        participant.employee_id,
-        participant.employeeId,
-        participant.id,
-        participant.uuid,
-        participant.userID,
-        participant.employeeID,
-      ];
-      const participantIdMatch = participantFields.some((value) => possibleIds.includes(String(value)));
-      const participantName = String(participant.name || participant.full_name || participant.username || participant.label || '').trim().toLowerCase();
-      return participantIdMatch || (userName && participantName && participantName === userName);
-    });
-  }
-
-  return false;
-};
-
-/* ── main ── */
 const EmployeeDashboard = () => {
-  const { userProfile, user, profileName } = useAuth();
+  const { userProfile, user } = useAuth();
   const name = userProfile?.displayName?.split(' ')[0] || userProfile?.name?.split(' ')[0] || user?.name?.split(' ')[0] || user?.username || 'Employee';
-  const employeeId = resolveEmployeeId(user, userProfile?.employee_id);
-  const primaryUserId = employeeId || user?.user_id || user?.id || user?.employee_id || user?.employeeId || user?.uuid || null;
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -230,247 +97,36 @@ const EmployeeDashboard = () => {
     projects: { activeList: [], activeCount: 0 },
     attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
     payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
-    leaveBalance: 0
+    leaveBalance: 0,
   });
 
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
-      const today = new Date();
-      const month = today.getMonth() + 1;
-      const year = today.getFullYear();
-      const todayStr = dayjs(today).format('YYYY-MM-DD');
 
       try {
-        const [
-          tasksRes,
-          leavesRes,
-          leaveSettingsRes,
-          eventsRes,
-          myEventsRes,
-          projectsAssignRes,
-          projectsAllRes,
-          attendanceRes,
-          salaryRes
-        ] = await Promise.allSettled([
-          api.get('/tasks', { params: { page: 1, limit: 1000, ...(primaryUserId ? { assigned_to: primaryUserId } : {}) } }),
-          api.get('/employee-leaves/my-leaves'),
-          api.get('/leave-settings'),
-          api.get('/events'),
-          api.get('/myevents'),
-          api.get('/projects/assignments/all?limit=1000'),
-          api.get('/projects?limit=1000&page=1'),
-          api.get(`/attendance/${primaryUserId || ''}?month=${month}&year=${year}`),
-          api.get('/salary/history')
-        ]);
+        const res = await api.get('/dashboard/employee');
+        const payload = res?.data || {};
+        console.log('[EmployeeDashboard] dedicated payload:', payload);
 
-        const newData = {
-          tasks: { today: [], assigned: 0, completed: 0, overdue: 0 },
-          leaves: { recent: [], pendingCount: 0 },
-          meetings: { todayCount: 0, upcoming: [] },
-          projects: { activeList: [], activeCount: 0 },
-          attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
-          payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
-          leaveBalance: 0
-        };
-
-        const debugPayloads = {
-          tasksRes: tasksRes.status === 'fulfilled' ? tasksRes.value : null,
-          leavesRes: leavesRes.status === 'fulfilled' ? leavesRes.value : null,
-          leaveSettingsRes: leaveSettingsRes.status === 'fulfilled' ? leaveSettingsRes.value : null,
-          eventsRes: eventsRes.status === 'fulfilled' ? eventsRes.value : null,
-          myEventsRes: myEventsRes.status === 'fulfilled' ? myEventsRes.value : null,
-          projectsAssignRes: projectsAssignRes.status === 'fulfilled' ? projectsAssignRes.value : null,
-          projectsAllRes: projectsAllRes.status === 'fulfilled' ? projectsAllRes.value : null,
-          attendanceRes: attendanceRes.status === 'fulfilled' ? attendanceRes.value : null,
-          salaryRes: salaryRes.status === 'fulfilled' ? salaryRes.value : null,
-        };
-        console.log('[EmployeeDashboard] API payloads:', debugPayloads);
-
-        // --- TASKS ---
-        if (tasksRes.status === 'fulfilled') {
-          const tasks = getResponseItems(tasksRes.value, []);
-          newData.tasks.assigned = tasks.length;
-          newData.tasks.completed = tasks.filter(t => ['Completed', 'Done'].includes(t.status)).length;
-          newData.tasks.overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < today && !['Completed', 'Done'].includes(t.status)).length;
-          newData.tasks.today = tasks.filter(t => isSameDay(t.assignment_date) || isSameDay(t.created_at)).slice(0, 5);
-        }
-
-        // --- LEAVES ---
-        let employeeLeaves = [];
-        if (leavesRes.status === 'fulfilled') {
-          employeeLeaves = getResponseItems(leavesRes.value, []);
-          newData.leaves.pendingCount = employeeLeaves.filter(l => l.status === 'Pending').length;
-          newData.leaves.recent = employeeLeaves.slice(0, 4);
-        }
-
-        if (leaveSettingsRes.status === 'fulfilled') {
-          const leaveSettings = getResponseItems(leaveSettingsRes.value, []);
-          const approvedLeaves = employeeLeaves.filter(l => l.status === 'Approved');
-          newData.leaveBalance = leaveSettings.reduce((total, setting) => {
-            const maxDays = Number(setting.max_days || 0);
-            const taken = approvedLeaves
-              .filter(l => String(l.leave_type || '').toLowerCase() === String(setting.leave_type || '').toLowerCase())
-              .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
-            return total + Math.max(maxDays - taken, 0);
-          }, 0);
-        }
-
-        // --- MEETINGS ---
-        const possibleIds = [
-          user?.employee_id,
-          user?.employeeId,
-          user?.user_id,
-          user?.userId,
-          user?.id,
-          user?._id,
-          user?.uuid,
-          user?.employee_code,
-          user?.employeeCode,
-          user?.emp_id,
-          user?.empId,
-          userProfile?.employee_id,
-          userProfile?.employeeId,
-          employeeId,
-          primaryUserId,
-        ].filter(Boolean).map(String);
-        const possibleIdSet = new Set(possibleIds.map(String));
-        const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
-        
-        let personalEvents = eventsRes.status === 'fulfilled' ? getResponseItems(eventsRes.value, []) : [];
-        let officeEvents = myEventsRes.status === 'fulfilled' ? getResponseItems(myEventsRes.value, []) : [];
-        
-        const allEvents = [...personalEvents, ...officeEvents];
-        const uniqueEvents = Array.from(new Map(allEvents.map(e => [e.id || e.uuid || `${e.title || e.event_name || 'event'}-${getEventDateValue(e) || ''}`, e])).values());
-        
-        const filteredMeetings = uniqueEvents.filter(e => {
-          const text = [e.eventType, e.category, e.title, e.event_name, e.planTitle, e.name].filter(Boolean).join(' ').toLowerCase();
-          return text.includes('meeting') || text.includes('meating') || text.includes('call');
+        setData({
+          tasks: payload?.tasks || { today: [], assigned: 0, completed: 0, overdue: 0 },
+          leaves: payload?.leaves || { recent: [], pendingCount: 0 },
+          meetings: payload?.meetings || { todayCount: 0, upcoming: [] },
+          projects: payload?.projects || { activeList: [], activeCount: 0 },
+          attendance: payload?.attendance || { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
+          payroll: payload?.payroll || { nextPayDate: 'N/A', nextSalary: 'N/A' },
+          leaveBalance: Number(payload?.leaveBalance || 0),
         });
-
-        const matchedMeetings = possibleIds.length > 0
-          ? filteredMeetings.filter(e => eventMatchesUser(e, possibleIds, userName) || eventMatchesUser(e, Array.from(possibleIdSet), userName))
-          : filteredMeetings;
-        const meetingsToUse = matchedMeetings.length > 0 ? matchedMeetings : filteredMeetings;
-        
-        const upcomingEvents = meetingsToUse.filter(e => {
-          const mDate = getEventDateValue(e);
-          return mDate && dayjs(mDate).isSameOrAfter(dayjs().startOf('day'));
-        }).sort((a,b) => {
-          const dateA = getEventDateValue(a);
-          const dateB = getEventDateValue(b);
-          return dayjs(dateA).valueOf() - dayjs(dateB).valueOf();
-        });
-        
-        newData.meetings.todayCount = upcomingEvents.filter(e => isSameCalendarDay(getEventDateValue(e), today)).length;
-        newData.meetings.upcoming = upcomingEvents.slice(0, 3);
-
-        // --- PROJECTS ---
-        const allPrj = projectsAllRes.status === 'fulfilled'
-          ? getResponseItems(projectsAllRes.value, [])
-          : [];
-        const grouped = projectsAssignRes.status === 'fulfilled'
-          ? getResponseItems(projectsAssignRes.value, [])
-          : [];
-        
-        const groupedAssignments = Array.isArray(grouped) ? grouped : [];
-        const assignedUuids = new Set(
-          groupedAssignments
-            .filter((g) => {
-              const employees = Array.isArray(g?.employees) ? g.employees : [];
-              return employees.some((e) => String(e?.employee_id || e?.employeeId || e?.id || '') === String(primaryUserId) || String(e?.user_id || e?.userId || '') === String(primaryUserId));
-            })
-            .map((g) => g?.project_uuid || g?.projectUuid || g?.uuid || g?.project?.uuid || null)
-            .filter(Boolean)
-        );
-        
-        const myProjects = allPrj.filter((p) => {
-          const projectUuid = p?.uuid || p?.project_uuid || p?.project?.uuid || null;
-          const projectManager = p?.project_manager || p?.project?.project_manager || '';
-          return assignedUuids.has(projectUuid) || (projectManager && projectManager.toLowerCase() === userName);
-        });
-        
-        const activeProjects = myProjects.filter(p => !['Completed', 'Archived', 'Cancelled'].includes(p.status || p.project?.status));
-        newData.projects.activeCount = activeProjects.length;
-        newData.projects.activeList = activeProjects.slice(0, 3).map(p => ({
-          name: p.project_name || p.project?.project_name || 'Project',
-          progress: p.completion_percentage || p.project?.completion_percentage || 0,
-          due: formatDate(p.end_date || p.project?.end_date)
-        }));
-
-        // --- ATTENDANCE ---
-        if (attendanceRes.status === 'fulfilled') {
-          const records = getResponseItems(attendanceRes.value, []);
-          console.log('[EmployeeDashboard] attendance records:', records);
-          const normalizedRecords = records.map((record) => ({
-            ...record,
-            attendance_status: record.attendance_status || record.status || 'Present',
-            check_in_time: record.check_in_time || record.checkIn || record.checkin || null,
-            check_out_time: record.check_out_time || record.checkOut || record.checkout || null,
-          }));
-          const present = normalizedRecords.filter(r => ['Present', 'Half Day', 'Late'].includes(r.attendance_status));
-          
-          newData.attendance.presentDays = present.length;
-          // Estimate working days so far in month
-          let workingDaysSoFar = 0;
-          for (let d = 1; d <= today.getDate(); d++) {
-            const date = new Date(year, month - 1, d);
-            if (date.getDay() !== 0 && date.getDay() !== 6) workingDaysSoFar++; // excluding weekends
-          }
-          newData.attendance.absentDays = Math.max(0, workingDaysSoFar - present.length);
-
-          const todayRec = normalizedRecords.find(r => {
-            const recordDate = r.date || r.attendance_date || r.attendanceDate || '';
-            const normalizedDate = String(recordDate).slice(0, 10);
-            return normalizedDate === todayStr || isSameCalendarDay(recordDate, today);
-          });
-          const fallbackRec = todayRec || normalizedRecords[0] || null;
-          if (fallbackRec) {
-            newData.attendance.checkIn = fallbackRec.check_in_time || fallbackRec.checkIn || null;
-            newData.attendance.checkOut = fallbackRec.check_out_time || fallbackRec.checkOut || null;
-          }
-          
-          // Hours this week (rough calculation for demo purposes)
-          let weekHours = 0;
-          const currentWeekStart = new Date(today);
-          currentWeekStart.setDate(today.getDate() - today.getDay());
-          present.forEach(r => {
-             const rDate = new Date(r.date || r.attendance_date);
-             if (rDate >= currentWeekStart && r.working_hours) {
-                const match = r.working_hours.toString().match(/(\d+)h/);
-                if (match) weekHours += parseInt(match[1]);
-             }
-          });
-          newData.attendance.hoursThisWeek = weekHours;
-        }
-
-        // --- PAYROLL ---
-        if (salaryRes.status === 'fulfilled') {
-          const history = getResponseItems(salaryRes.value, []);
-          console.log('[EmployeeDashboard] salary history:', history);
-          if (history.length > 0) {
-            const latest = history[0];
-            const salaryAmount = latest.total_salary ?? latest.net_payable ?? latest.net_salary ?? latest.amount ?? 0;
-            newData.payroll.nextSalary = `₹${Number(salaryAmount || 0).toLocaleString('en-IN')}`;
-            const nextPay = new Date(year, month, 0);
-            newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-          } else {
-            const nextPay = new Date(year, month, 0);
-            newData.payroll.nextPayDate = nextPay.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-          }
-        }
-
-        setData(newData);
-
       } catch (err) {
-        console.error("Dashboard data fetch error:", err);
+        console.error('Employee dashboard fetch error:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAllData();
-  }, [employeeId]);
+    fetchDashboardData();
+  }, [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?.uuid, userProfile?.employee_id]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -485,8 +141,6 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="space-y-6 pb-6">
-
-      {/* ── GREETING BANNER ── */}
       <div className="relative rounded-2xl overflow-hidden p-6 md:p-8"
         style={{ background: 'linear-gradient(135deg,#F8740E22,#F8740E08)', border: '1px solid rgba(248,116,14,0.25)' }}>
         <div className="absolute right-6 top-4 opacity-10">
@@ -508,7 +162,6 @@ const EmployeeDashboard = () => {
         </div>
       </div>
 
-      {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <StatCard icon={ClipboardCheck} label="Attendance This Month" value={`${data.attendance.presentDays}`} sub={`${data.attendance.absentDays} days absent`} color="bg-green-500/20 text-green-400" bg="bg-white/5" />
         <StatCard icon={CheckSquare} label="Tasks Assigned" value={`${data.tasks.assigned}`} sub={`${data.tasks.completed} completed`} color="bg-blue-500/20 text-blue-400" bg="bg-white/5" />
@@ -520,10 +173,7 @@ const EmployeeDashboard = () => {
         <StatCard icon={AlertCircle} label="Overdue Tasks" value={`${data.tasks.overdue}`} sub="Action needed" color="bg-red-500/20 text-red-400" bg="bg-white/5" />
       </div>
 
-      {/* ── BOTTOM GRID ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* My Tasks */}
         <div className="rounded-2xl bg-white/5 border border-white/10 p-5 flex flex-col min-h-75">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
@@ -532,18 +182,17 @@ const EmployeeDashboard = () => {
           </div>
           <div className="flex-1 flex flex-col">
             {loading ? (
-              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2"/> Loading tasks...</div>
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2" /> Loading tasks...</div>
             ) : data.tasks.today.length === 0 ? (
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No tasks assigned for today.</div>
             ) : (
-              data.tasks.today.map(t => (
+              data.tasks.today.map((t) => (
                 <TaskRow key={t.uuid || t.id} title={t.task_name} project={t.project_name || '—'} status={getBadgeStatus(t.status)} due={formatDate(t.due_date)} />
               ))
             )}
           </div>
         </div>
 
-        {/* Leave Summary */}
         <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
@@ -552,18 +201,17 @@ const EmployeeDashboard = () => {
           </div>
           <div className="flex-1 flex flex-col">
             {loading ? (
-              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2"/> Loading leaves...</div>
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2" /> Loading leaves...</div>
             ) : data.leaves.recent.length === 0 ? (
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No recent leave records.</div>
             ) : (
               data.leaves.recent.map((l, i) => (
-                 <LeaveRow key={l.id || i} type={l.leave_type || 'Leave'} dates={`${formatDate(l.from_date)} - ${formatDate(l.to_date)}`} status={l.status || 'Pending'} />
+                <LeaveRow key={l.id || i} type={l.leave_type || 'Leave'} dates={`${formatDate(l.from_date)} - ${formatDate(l.to_date)}`} status={l.status || 'Pending'} />
               ))
             )}
           </div>
         </div>
 
-        {/* Upcoming Meetings */}
         <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
@@ -572,7 +220,7 @@ const EmployeeDashboard = () => {
           </div>
           <div className="flex-1 flex flex-col">
             {loading ? (
-              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2"/> Loading meetings...</div>
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2" /> Loading meetings...</div>
             ) : data.meetings.upcoming.length === 0 ? (
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No upcoming meetings.</div>
             ) : (
@@ -582,7 +230,6 @@ const EmployeeDashboard = () => {
                 const hasValidDate = mDate && !Number.isNaN(mDate.getTime());
                 const timeStr = hasValidDate ? mDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Time TBD';
                 const dayStr = hasValidDate ? (isSameDay(mDate) ? `Today ${timeStr}` : `${formatDate(mDate)} ${timeStr}`) : 'Schedule pending';
-                const members = Array.isArray(m.attendees) ? m.attendees.length : (m.members || 1);
                 return (
                   <div key={m.id || m.uuid || i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
                     <div>
@@ -590,7 +237,7 @@ const EmployeeDashboard = () => {
                       <p className="text-white/40 text-xs mt-0.5">{dayStr}</p>
                     </div>
                     <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-full font-medium">
-                      {members} Members
+                      {m.members || 1} Members
                     </span>
                   </div>
                 );
@@ -599,7 +246,6 @@ const EmployeeDashboard = () => {
           </div>
         </div>
 
-        {/* Active Projects */}
         <div className="rounded-2xl bg-white/5 border border-white/10 p-5 min-h-75 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-white font-semibold flex items-center gap-2">
@@ -607,8 +253,8 @@ const EmployeeDashboard = () => {
             </h2>
           </div>
           <div className="flex-1 flex flex-col">
-             {loading ? (
-              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2"/> Loading projects...</div>
+            {loading ? (
+              <div className="flex items-center justify-center flex-1 text-white/40 text-sm"><Loader2 size={18} className="animate-spin mr-2" /> Loading projects...</div>
             ) : data.projects.activeList.length === 0 ? (
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No active projects.</div>
             ) : (
@@ -627,7 +273,6 @@ const EmployeeDashboard = () => {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
