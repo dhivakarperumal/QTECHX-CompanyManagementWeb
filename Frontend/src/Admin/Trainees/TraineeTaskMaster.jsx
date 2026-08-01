@@ -437,33 +437,39 @@ const TraineeTaskMaster = () => {
                 {task.description || "No description"}
               </p>
 
-              {task.document_path && (
-                <a
-                  href={getDocumentUrl(task.document_path)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-orange-400 text-sm mt-4"
-                >
-                  <UploadCloud size={14} />
-                  View Document
-                </a>
-              )}
+              <div className="mt-5 flex items-center justify-between">
 
-              <div className="flex justify-end gap-2 mt-5">
+                {task.document_path ? (
+                  <a
+                    href={getDocumentUrl(task.document_path)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm"
+                  >
+                    <UploadCloud size={14} />
+                    View Document
+                  </a>
+                ) : (
+                  <span />
+                )}
 
-                <button
-                  onClick={() => handleEdit(task)}
-                  className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
-                >
-                  <Edit2 size={15} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(task)}
+                    className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/70 hover:bg-white/10 hover:text-white transition"
+                    title="Edit"
+                  >
+                    <Edit2 size={14} />
+                  </button>
 
-                <button
-                  onClick={() => handleDelete(task.uuid)}
-                  className="rounded-lg bg-red-500/10 p-2 text-red-400 hover:bg-red-500/20"
-                >
-                  <Trash2 size={15} />
-                </button>
+                  <button
+                    onClick={() => handleDelete(task.uuid)}
+                    className="rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-red-400 hover:bg-red-500/20 transition"
+                    title="Delete"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
 
               </div>
 
