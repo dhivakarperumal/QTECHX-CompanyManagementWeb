@@ -222,19 +222,26 @@ async function getEmployeeDashboardData(req, res) {
     const workingDaysSoFar = Array.from({ length: today.getDate() }, (_, index) => new Date(year, month - 1, index + 1)).filter((date) => date.getDay() !== 0 && date.getDay() !== 6).length;
     const presentDays = attendanceRows.filter((record) => ['Present', 'Half Day', 'Late'].includes(record.attendance_status)).length;
 
+    const formatLocalDate = (value) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const normalizeRecordDate = (record) => {
       const value = record.attendance_date;
       if (!value) return null;
       if (typeof value === 'string') return value.slice(0, 10);
-      if (value instanceof Date) return value.toISOString().slice(0, 10);
-      return String(value).slice(0, 10);
+      return formatLocalDate(value);
     };
 
     const normalizeDateValue = (value) => {
       if (!value) return null;
       if (typeof value === 'string') return value.slice(0, 10);
-      if (value instanceof Date) return value.toISOString().slice(0, 10);
-      return String(value).slice(0, 10);
+      return formatLocalDate(value);
     };
 
     const attendanceRecord = attendanceRows.find((record) => normalizeRecordDate(record) === todayStr) || attendanceRows[0] || null;
