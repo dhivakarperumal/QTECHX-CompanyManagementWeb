@@ -284,7 +284,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
               <div className="absolute right-20 top-full mt-3 w-48 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 space-y-0.5">
                 {[
                   { label: "Apply Leave",   path: "/employee/leaves/apply",    icon: CalendarOff  },
-                  { label: "Log Hours",     path: "/employee/timesheet/log",    icon: Clock        },
+                 
                   { label: "My Tasks",      path: "/employee/tasks",            icon: CheckSquare  },
                   { label: "Meetings",      path: "/employee/meetings",         icon: Video        },
                   { label: "My Pay Slips",  path: "/employee/payroll/slips",    icon: DollarSign   },
