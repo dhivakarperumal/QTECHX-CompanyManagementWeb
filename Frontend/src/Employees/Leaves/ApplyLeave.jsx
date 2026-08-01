@@ -29,14 +29,32 @@ const ApplyLeave = () => {
 
   const [loading, setLoading] = useState(false);
   const [leaveSettings, setLeaveSettings] = useState([]);
+  const [employeeLeaves, setEmployeeLeaves] = useState([]);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
+  const enrichedLeaveSettings = leaveSettings.map((setting) => {
+    const taken = employeeLeaves
+      .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+      .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+
+    return {
+      ...setting,
+      taken,
+      remaining: Math.max(Number(setting.max_days || 0) - taken, 0),
+    };
+  });
+  const selectedLeaveSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type) || null;
 
   useEffect(() => {
     const fetchLeaveSettings = async () => {
       try {
-        const res = await api.get('/leave-settings');
-        setLeaveSettings(res.data?.data || []);
+        const [settingsRes, leavesRes] = await Promise.all([
+          api.get('/leave-settings'),
+          api.get('/employee-leaves/my-leaves')
+        ]);
+
+        setLeaveSettings(settingsRes.data?.data || []);
+        setEmployeeLeaves(leavesRes.data?.data || []);
       } catch (error) {
         console.error('Failed to load leave settings', error);
       } finally {
@@ -81,7 +99,7 @@ const ApplyLeave = () => {
       return;
     }
 
-    const selectedSetting = leaveSettings.find((item) => item.leave_type === formData.leave_type);
+    const selectedSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type);
     if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
       toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
       return;
@@ -183,15 +201,18 @@ const ApplyLeave = () => {
                 ))}
               </select>
               {!settingsLoading && (
-                <p className="text-xs text-white/40">
-                  {(() => {
-                    const selectedSetting = leaveSettings.find((item) => item.leave_type === formData.leave_type);
-                    if (!selectedSetting) return 'Leave limit not configured';
-                    return Number(selectedSetting.max_days || 0) >= 0
-                      ? `Maximum allowed: ${selectedSetting.max_days} day${Number(selectedSetting.max_days) === 1 ? '' : 's'}`
-                      : 'Leave limit not configured';
-                  })()}
-                </p>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
+                  <p className="font-semibold text-white">Leave balance</p>
+                  {selectedLeaveSetting ? (
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>Total allowed: <span className="text-white">{selectedLeaveSetting.max_days ?? 0}</span></span>
+                      <span>Taken: <span className="text-orange-400">{selectedLeaveSetting.taken ?? 0}</span></span>
+                      <span>Remaining: <span className="text-emerald-400">{selectedLeaveSetting.remaining ?? 0}</span></span>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-white/40">Leave balance not available for this type yet.</p>
+                  )}
+                </div>
               )}
             </div>
 
