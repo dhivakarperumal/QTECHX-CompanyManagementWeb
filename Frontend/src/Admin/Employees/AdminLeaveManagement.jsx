@@ -187,6 +187,28 @@ const AdminLeaveManagement = () => {
     { label: 'Pending', value: leaves.filter(l => l.status === 'Pending').length, icon: RefreshCw, cls: 'text-orange-400', bg: 'bg-orange-500/15' },
   ];
 
+  const employeeCards = filteredLeaves.reduce((acc, leave) => {
+    const employeeKey = leave.employee_id || leave.user_id || leave.id;
+    const name = `${leave.first_name || ''} ${leave.last_name || ''}`.trim() || 'Unknown Employee';
+    const existing = acc.find((item) => item.id === employeeKey);
+
+    if (existing) {
+      existing.totalCount += 1;
+      if (leave.status === 'Pending') existing.pendingCount += 1;
+      return acc;
+    }
+
+    acc.push({
+      id: employeeKey,
+      name,
+      employeeCode: leave.employee_code || '—',
+      totalCount: 1,
+      pendingCount: leave.status === 'Pending' ? 1 : 0,
+    });
+
+    return acc;
+  }, []);
+
   const toggleExpandedRow = (id) => {
     setExpandedRow((prev) => (prev === id ? null : id));
   };
@@ -326,8 +348,40 @@ const AdminLeaveManagement = () => {
         </div>
       </div>
 
-      {viewMode === 'table' && (
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
+        {employeeCards.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {employeeCards.map((employee) => (
+              <div key={employee.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/8">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                      <User size={16} className="text-white/70" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{employee.name}</p>
+                      <p className="text-xs text-white/40">{employee.employeeCode}</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-300">
+                    {employee.pendingCount} Pending
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-sm text-white/60">
+                  <span>{employee.totalCount} leave request{employee.totalCount > 1 ? 's' : ''}</span>
+                  <button
+                    onClick={() => navigate(`/admin/leave-history/${employee.id}`)}
+                    className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 transition hover:bg-orange-500/20"
+                  >
+                    View Full History
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'table' && (
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <table className="min-w-full text-sm">
             <thead className="bg-white/4 text-white/60">
@@ -381,19 +435,7 @@ const AdminLeaveManagement = () => {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => toggleExpandedRow(leave.id)}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
-                            title="View details"
-                          >
-                            <User size={14} />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
-                            className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
-                          >
-                            View Full History
-                          </button>
+                          
                           {leave.status === 'Pending' ? (
                             <>
                               <button 
@@ -459,7 +501,6 @@ const AdminLeaveManagement = () => {
             </tbody>
           </table>
         </div>
-      </div>
       )}
 
       {viewMode === 'card' && (
@@ -587,6 +628,7 @@ const AdminLeaveManagement = () => {
           )}
         </div>
       )}
+      </div>
 
       {/* Action Modal */}
       {actionModal.show && (
