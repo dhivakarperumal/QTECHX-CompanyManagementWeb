@@ -103,8 +103,45 @@ export default function AllTraineeInterns() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email or person ID" className="w-full rounded-xl border border-white/10 bg-white/4 pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50" />
           </div>
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"><option value="">All Types</option>{TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-xl border border-white/10 bg-white/4 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"><option value="">All Status</option>{STATUS_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
+          >
+            <option value="" className="bg-black text-white">
+              All Types
+            </option>
+
+            {TYPE_OPTIONS.map((option) => (
+              <option
+                key={option}
+                value={option}
+                className="bg-black text-white"
+              >
+                {option}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
+          >
+            <option value="" className="bg-black text-white">
+              All Status
+            </option>
+
+            {STATUS_OPTIONS.map((option) => (
+              <option
+                key={option}
+                value={option}
+                className="bg-black text-white"
+              >
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
         {error && <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-4 py-3 rounded-2xl"><AlertCircle size={16} /> {error}</div>}
         {viewMode === 'table' ? (
