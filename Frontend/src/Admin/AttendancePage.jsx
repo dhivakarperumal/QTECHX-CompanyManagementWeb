@@ -34,7 +34,7 @@ const AttendancePage = () => {
   });
   const [employeeAttendance, setEmployeeAttendance] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
 
   useEffect(() => {
     loadData();
@@ -225,7 +225,7 @@ Longitude: ${position.coords.longitude}`,
       }
     );
   };
-  
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
@@ -281,10 +281,7 @@ Longitude: ${position.coords.longitude}`,
           <p className="mt-2 text-sm text-white/60">Track day-to-day attendance, manage check-ins, and review monthly reports.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode("table")} className={`rounded-full p-2 transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode("card")} className={`rounded-full p-2 transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Card view"><LayoutGrid size={16} /></button>
-          </div>
+
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
             <CalendarDays size={16} className="text-orange-400" />
             <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
@@ -304,6 +301,10 @@ Longitude: ${position.coords.longitude}`,
           <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
             <PlusCircle size={16} /> Add Attendance
           </button>
+          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+            <button onClick={() => setViewMode("table")} className={`rounded-full p-2 transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Table view"><List size={16} /></button>
+            <button onClick={() => setViewMode("card")} className={`rounded-full p-2 transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Card view"><LayoutGrid size={16} /></button>
+          </div>
         </div>
       </div>
 

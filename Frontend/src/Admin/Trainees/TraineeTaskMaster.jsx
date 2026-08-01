@@ -6,7 +6,7 @@ import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
   const [taskDocument, setTaskDocument] = useState(null);
@@ -16,6 +16,7 @@ const TraineeTaskMaster = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('card');
   const [taskSearch, setTaskSearch] = useState('');
+  const [taskViewMode, setTaskViewMode] = useState("table");
 
   const [trainees, setTrainees] = useState([]);
 
@@ -137,7 +138,7 @@ const TraineeTaskMaster = () => {
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
       <Toaster position="top-right" />
-      
+
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
@@ -150,9 +151,9 @@ const TraineeTaskMaster = () => {
         </div>
         <div className="flex items-center gap-2">
           {!showForm && (
-            <button 
-              onClick={() => setShowForm(true)} 
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90" 
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
               style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
             >
               <Plus size={15} /> Add Task
@@ -166,16 +167,28 @@ const TraineeTaskMaster = () => {
         <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
           <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
           <div className="flex flex-wrap gap-2">
-            <div className="relative">
-              <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee" className="w-48 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+            <div className="flex items-center gap-2">
+
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+                />
+
+                <input
+                  type="text"
+                  value={taskSearch}
+                  onChange={(e) => setTaskSearch(e.target.value)}
+                  placeholder="Search task"
+                  className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
+                />
+              </div>
+
+
+
             </div>
-            <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
-              <button onClick={() => setViewMode('table')} className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={14} /></button>
-              <button onClick={() => setViewMode('card')} className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={14} /></button>
-            </div>
-            <select 
-              value={typeFilter} 
+            <select
+              value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
             >
@@ -183,9 +196,13 @@ const TraineeTaskMaster = () => {
               <option value="Trainee" className="text-black">Trainee</option>
               <option value="Intern" className="text-black">Intern</option>
             </select>
+            <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
+              <button onClick={() => setViewMode('table')} className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={14} /></button>
+              <button onClick={() => setViewMode('card')} className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={14} /></button>
+            </div>
           </div>
         </div>
-        
+
         {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
           <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
         ) : viewMode === 'table' ? (
@@ -201,7 +218,9 @@ const TraineeTaskMaster = () => {
               </thead>
               <tbody>
                 {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
-                  <tr key={trainee.uuid} className="border-t border-white/10 hover:bg-white/2">
+                  <tr key={trainee.uuid} onClick={() =>
+                    (window.location.hash = `/admin/trainees/tasks/view/${trainee.uuid}`)
+                  } className="border-t border-white/10 hover:bg-white/2">
                     <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
                     <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
                     <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
@@ -214,16 +233,16 @@ const TraineeTaskMaster = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
-              <a 
-                key={trainee.uuid} 
+              <a
+                key={trainee.uuid}
                 href={`#/admin/trainees/tasks/view/${trainee.uuid}`}
                 className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30 cursor-pointer"
               >
                 {trainee.profile_photo ? (
-                  <img 
-                    src={`http://localhost:5000/${trainee.profile_photo.replace(/\\/g, '/')}`} 
-                    alt={trainee.full_name} 
-                    className="w-12 h-12 rounded-full object-cover border border-white/10 group-hover:border-orange-500/50 transition-colors" 
+                  <img
+                    src={`http://localhost:5000/${trainee.profile_photo.replace(/\\/g, '/')}`}
+                    alt={trainee.full_name}
+                    className="w-12 h-12 rounded-full object-cover border border-white/10 group-hover:border-orange-500/50 transition-colors"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sm font-semibold text-white/70 group-hover:border-orange-500/50 transition-colors">
@@ -246,6 +265,27 @@ const TraineeTaskMaster = () => {
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
         </div>
+        <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
+          <button
+            onClick={() => setTaskViewMode("table")}
+            className={`rounded-lg p-2 transition ${taskViewMode === "table"
+              ? "bg-orange-500 text-white"
+              : "text-white/50 hover:text-white"
+              }`}
+          >
+            <List size={15} />
+          </button>
+
+          <button
+            onClick={() => setTaskViewMode("card")}
+            className={`rounded-lg p-2 transition ${taskViewMode === "card"
+              ? "bg-orange-500 text-white"
+              : "text-white/50 hover:text-white"
+              }`}
+          >
+            <LayoutGrid size={15} />
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -256,7 +296,7 @@ const TraineeTaskMaster = () => {
               <X size={20} />
             </button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-white/70 mb-1.5">Task Name *</label>
@@ -308,73 +348,132 @@ const TraineeTaskMaster = () => {
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
-          <table className="min-w-full text-sm">
-            <thead className="bg-white/4 text-white/60">
-              <tr>
-                <th className="px-4 py-4 text-left font-medium">S.No</th>
-                <th className="px-4 py-4 text-left font-medium">Task Name</th>
-                <th className="px-4 py-4 text-left font-medium">Description</th>
-                <th className="px-4 py-4 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {loading ? (
+      {taskViewMode === "table" ? (
+
+        <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/4 text-white/60">
                 <tr>
-                  <td colSpan="4" className="px-4 py-8 text-center text-white/40">
-                    <Loader2 size={18} className="mx-auto animate-spin" />
-                  </td>
+                  <th className="px-4 py-4 text-left font-medium">S.No</th>
+                  <th className="px-4 py-4 text-left font-medium">Task Name</th>
+                  <th className="px-4 py-4 text-left font-medium">Description</th>
+                  <th className="px-4 py-4 text-right font-medium">Actions</th>
                 </tr>
-              ) : filteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
-                </tr>
-              ) : (
-                filteredTasks.map((task, index) => (
-                  <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
-                    <td className="px-4 py-4 text-white/70">{index + 1}</td>
-                    <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
-                    <td className="px-4 py-4 text-white/50">
-                      <div className="space-y-1">
-                        <div>{task.description || "—"}</div>
-                        {task.document_path ? (
-                          <a
-                            href={getDocumentUrl(task.document_path)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
-                          >
-                            <UploadCloud size={13} /> View Document
-                          </a>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button 
-                          onClick={() => handleEdit(task)} 
-                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
-                          title="Edit Task"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(task.uuid)} 
-                          className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
-                          title="Delete Task"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-8 text-center text-white/40">
+                      <Loader2 size={18} className="mx-auto animate-spin" />
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : filteredTasks.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
+                  </tr>
+                ) : (
+                  filteredTasks.map((task, index) => (
+                    <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
+                      <td className="px-4 py-4 text-white/70">{index + 1}</td>
+                      <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
+                      <td className="px-4 py-4 text-white/50">
+                        <div className="space-y-1">
+                          <div>{task.description || "—"}</div>
+                          {task.document_path ? (
+                            <a
+                              href={getDocumentUrl(task.document_path)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
+                            >
+                              <UploadCloud size={13} /> View Document
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(task)}
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+                            title="Edit Task"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(task.uuid)}
+                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                            title="Delete Task"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+
+      ) : (
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          {filteredTasks.map((task) => (
+
+            <div
+              key={task.uuid}
+              className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:border-orange-500/40 transition"
+            >
+
+              <h3 className="text-lg font-semibold text-white">
+                {task.task_name}
+              </h3>
+
+              <p className="text-white/50 text-sm mt-2 line-clamp-3">
+                {task.description || "No description"}
+              </p>
+
+              {task.document_path && (
+                <a
+                  href={getDocumentUrl(task.document_path)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-orange-400 text-sm mt-4"
+                >
+                  <UploadCloud size={14} />
+                  View Document
+                </a>
+              )}
+
+              <div className="flex justify-end gap-2 mt-5">
+
+                <button
+                  onClick={() => handleEdit(task)}
+                  className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
+                >
+                  <Edit2 size={15} />
+                </button>
+
+                <button
+                  onClick={() => handleDelete(task.uuid)}
+                  className="rounded-lg bg-red-500/10 p-2 text-red-400 hover:bg-red-500/20"
+                >
+                  <Trash2 size={15} />
+                </button>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      )}
     </div>
   );
 };

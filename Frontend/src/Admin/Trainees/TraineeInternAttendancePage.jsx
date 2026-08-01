@@ -13,7 +13,7 @@ export default function TraineeInternAttendancePage() {
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('card');
+  const [viewMode, setViewMode] = useState('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -153,10 +153,7 @@ export default function TraineeInternAttendancePage() {
           <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
-          </div>
+
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
             <CalendarDays size={16} className="text-orange-400" />
             <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
@@ -176,6 +173,10 @@ export default function TraineeInternAttendancePage() {
           <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
             <PlusCircle size={16} /> Add Attendance
           </button>
+          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+            <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
+            <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
+          </div>
         </div>
       </div>
 
