@@ -390,10 +390,9 @@ const AdminLeaveManagement = () => {
                           </button>
                           <button
                             onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
-                            title="View full history"
+                            className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
                           >
-                            <Briefcase size={14} />
+                            View Full History
                           </button>
                           {leave.status === 'Pending' ? (
                             <>
@@ -477,14 +476,22 @@ const AdminLeaveManagement = () => {
             filteredLeaves.map((leave, index) => (
               <div key={leave.id} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:bg-white/2 transition relative">
                 <div className="absolute top-5 right-5 text-xs text-white/40 font-medium">#{index + 1}</div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                    <User size={16} className="text-white/60" />
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                      <User size={16} className="text-white/60" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-white text-base leading-tight">{leave.first_name} {leave.last_name}</div>
+                      <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-white text-base leading-tight">{leave.first_name} {leave.last_name}</div>
-                    <div className="text-white/40 text-xs">{leave.employee_code}</div>
-                  </div>
+                  <button
+                    onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
+                    className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
+                  >
+                    View Full History
+                  </button>
                 </div>
 
                 <div className="space-y-3 mb-5">
@@ -527,10 +534,9 @@ const AdminLeaveManagement = () => {
                     </button>
                     <button
                       onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
-                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition"
-                      title="View full history"
+                      className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
                     >
-                      <Briefcase size={14} />
+                      View Full History
                     </button>
                     {leave.status === 'Pending' && (
                       <>
