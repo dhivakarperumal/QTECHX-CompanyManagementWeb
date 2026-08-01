@@ -325,6 +325,7 @@ const AdminLeaveManagement = () => {
           <table className="min-w-full text-sm">
             <thead className="bg-white/4 text-white/60">
               <tr>
+                <th className="px-4 py-3 text-left w-16">S.No</th>
                 <th className="px-4 py-3 text-left">Employee</th>
                 <th className="px-4 py-3 text-left">Leave Type</th>
                 <th className="px-4 py-3 text-left">Date Range</th>
@@ -337,15 +338,16 @@ const AdminLeaveManagement = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
+                  <td colSpan="8" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
                 </tr>
               ) : filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave requests found matching filters.</td>
+                  <td colSpan="8" className="px-4 py-8 text-center text-white/40">No leave requests found matching filters.</td>
                 </tr>
               ) : (
                 filteredLeaves.map((leave, index) => (
                   <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
+                    <td className="px-4 py-3 text-white/70">{index + 1}</td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
                       <div className="text-white/40 text-xs">{leave.employee_code}</div>
