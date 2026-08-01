@@ -41,6 +41,7 @@ const STATUS_STYLES = {
   'Completed':   { pill: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30', dot: 'bg-emerald-400' },
   'On Hold':     { pill: 'bg-orange-500/15 text-orange-300 border border-orange-500/30',  dot: 'bg-orange-400' },
   'Cancelled':   { pill: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',        dot: 'bg-rose-400' },
+  'Issue':       { pill: 'bg-red-500/15 text-red-300 border border-red-500/30',           dot: 'bg-red-400' },
 };
 
 const PRIORITY_STYLES = {
@@ -64,6 +65,14 @@ const getCancelReason = (comments) => {
   if (!matches || matches.length === 0) return null;
   const lastMatch = matches[matches.length - 1];
   return lastMatch.replace(/\[Cancelled\]:\s*/, '').trim();
+};
+
+const getIssueReason = (comments) => {
+  if (!comments) return null;
+  const matches = comments.match(/\[Issue\]:\s*(.*)/g);
+  if (!matches || matches.length === 0) return null;
+  const lastMatch = matches[matches.length - 1];
+  return lastMatch.replace(/\[Issue\]:\s*/, '').trim();
 };
 
 function TaskAvatar({ name, index }) {
@@ -134,7 +143,7 @@ const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
 });
 
 /* ─── status select dropdown ──────────────────────────────────── */
-const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 /* ═══════════════════════════════════════════════════════════════ */
 export default function EmployeeTasks() {
@@ -150,6 +159,7 @@ export default function EmployeeTasks() {
   const [updatingTaskId, setUpdatingTaskId] = useState('');
   const [statusMessage, setStatusMessage] = useState({ text: '', type: 'success' });
   const [cancelModal, setCancelModal] = useState({ isOpen: false, task: null, reason: '' });
+  const [issueModal, setIssueModal] = useState({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' });
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
@@ -226,7 +236,7 @@ export default function EmployeeTasks() {
     setTimeout(() => setStatusMessage({ text: '', type: 'success' }), 3500);
   };
 
-  const updateTaskStatus = async (task, nextStatus = 'Completed', zipFile = null, reason = null) => {
+  const updateTaskStatus = async (task, nextStatus = 'Completed', zipFile = null, reason = null, issueData = null) => {
     try {
       setUpdatingTaskId(task.uuid);
       const payload = {
@@ -235,6 +245,11 @@ export default function EmployeeTasks() {
       };
       if (reason) {
         payload.comments = task.comments ? `${task.comments}\n[Cancelled]: ${reason}` : `[Cancelled]: ${reason}`;
+      }
+      if (issueData) {
+        payload.task_name = issueData.taskName;
+        payload.description = issueData.description;
+        payload.comments = task.comments ? `${task.comments}\n[Issue]: ${issueData.facingIssue}` : `[Issue]: ${issueData.facingIssue}`;
       }
       if (zipFile) {
         const base64 = await readFileAsBase64(zipFile);
@@ -259,6 +274,8 @@ export default function EmployeeTasks() {
   const handleStatusChange = (task, newStatus) => {
     if (newStatus === 'Cancelled') {
       setCancelModal({ isOpen: true, task, reason: '' });
+    } else if (newStatus === 'Issue') {
+      setIssueModal({ isOpen: true, task, taskName: task.task_name || '', description: task.description || '', facingIssue: '' });
     } else {
       updateTaskStatus(task, newStatus);
     }
@@ -467,6 +484,12 @@ export default function EmployeeTasks() {
                                 {getCancelReason(task.comments)}
                               </div>
                             )}
+                            {task.status === 'Issue' && getIssueReason(task.comments) && (
+                              <div className="mt-1.5 text-[11px] text-red-300/80 bg-red-500/10 px-2 py-1 rounded-lg border border-red-500/20 max-w-sm line-clamp-2" title={getIssueReason(task.comments)}>
+                                <span className="font-semibold mr-1">Issue:</span>
+                                {getIssueReason(task.comments)}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -628,6 +651,12 @@ export default function EmployeeTasks() {
                     {getCancelReason(task.comments)}
                   </div>
                 )}
+                {task.status === 'Issue' && getIssueReason(task.comments) && (
+                  <div className="mt-0.5 mb-1 text-[11px] text-red-300/80 bg-red-500/10 px-2.5 py-1.5 rounded-lg border border-red-500/20 line-clamp-3">
+                    <span className="font-semibold block mb-0.5 text-red-400/80">Facing Issue:</span>
+                    {getIssueReason(task.comments)}
+                  </div>
+                )}
 
                 {/* meta */}
                 <div className="space-y-1.5 text-[12px] text-white/50">
@@ -783,6 +812,72 @@ export default function EmployeeTasks() {
                 className="px-4 py-2 rounded-xl text-sm font-medium bg-rose-500 text-white hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* issue modal */}
+      {issueModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d24] p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-red-400 mb-2">Report Issue</h3>
+            <p className="text-sm text-white/50 mb-4">
+              Please provide the issue details for <strong>{issueModal.task?.task_name}</strong>.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Task Name</label>
+                <input
+                  type="text"
+                  className="w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-red-500/50"
+                  placeholder="Task Name"
+                  value={issueModal.taskName}
+                  onChange={(e) => setIssueModal(prev => ({ ...prev, taskName: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Description</label>
+                <textarea
+                  className="w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-red-500/50 min-h-[80px]"
+                  placeholder="Task Description"
+                  value={issueModal.description}
+                  onChange={(e) => setIssueModal(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-1">Facing Issue</label>
+                <textarea
+                  className="w-full rounded-xl border border-white/10 bg-black/20 p-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-red-500/50 min-h-[100px]"
+                  placeholder="Describe the issue you are facing..."
+                  value={issueModal.facingIssue}
+                  onChange={(e) => setIssueModal(prev => ({ ...prev, facingIssue: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' })}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                disabled={!issueModal.facingIssue.trim()}
+                onClick={() => {
+                  updateTaskStatus(issueModal.task, 'Issue', null, null, {
+                    taskName: issueModal.taskName,
+                    description: issueModal.description,
+                    facingIssue: issueModal.facingIssue
+                  });
+                  setIssueModal({ isOpen: false, task: null, taskName: '', description: '', facingIssue: '' });
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit Issue
               </button>
             </div>
           </div>
