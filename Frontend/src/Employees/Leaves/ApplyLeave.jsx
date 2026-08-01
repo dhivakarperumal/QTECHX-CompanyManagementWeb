@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const leaveTypes = [
+const defaultLeaveTypes = [
   "Casual Leave",
   "Sick Leave",
   "Earned Leave",
@@ -28,6 +28,42 @@ const ApplyLeave = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [leaveSettings, setLeaveSettings] = useState([]);
+  const [employeeLeaves, setEmployeeLeaves] = useState([]);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
+  const enrichedLeaveSettings = leaveSettings.map((setting) => {
+    const taken = employeeLeaves
+      .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+      .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+
+    return {
+      ...setting,
+      taken,
+      remaining: Math.max(Number(setting.max_days || 0) - taken, 0),
+    };
+  });
+  const selectedLeaveSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type) || null;
+
+  useEffect(() => {
+    const fetchLeaveSettings = async () => {
+      try {
+        const [settingsRes, leavesRes] = await Promise.all([
+          api.get('/leave-settings'),
+          api.get('/employee-leaves/my-leaves')
+        ]);
+
+        setLeaveSettings(settingsRes.data?.data || []);
+        setEmployeeLeaves(leavesRes.data?.data || []);
+      } catch (error) {
+        console.error('Failed to load leave settings', error);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    fetchLeaveSettings();
+  }, []);
 
   useEffect(() => {
     if (formData.from_date && formData.to_date) {
@@ -60,6 +96,12 @@ const ApplyLeave = () => {
     e.preventDefault();
     if (formData.no_of_days <= 0) {
       toast.error('Invalid date range');
+      return;
+    }
+
+    const selectedSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type);
+    if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
+      toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
       return;
     }
     setLoading(true);
@@ -108,9 +150,9 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Employee Name</label>
               <input 
                 type="text" 
-                value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : ''} 
+                value={user?.first_name ? `${user.first_name} ${user.last_name || ''}` : (user?.name || user?.username || '')} 
                 disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
+                className="w-full bg-white/4 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
               />
             </div>
             
@@ -118,7 +160,7 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Employee ID</label>
               <input 
                 type="text" 
-                value={user?.employee_code || ''} 
+                value={user?.employee_code || user?.user_id || user?.employee_id || user?.employeeId || ''} 
                 disabled 
                 className="w-full text-white rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm  cursor-not-allowed outline-none" 
               />
@@ -128,9 +170,9 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Mobile Number</label>
               <input 
                 type="text" 
-                value={user?.mobile_number || ''} 
+                value={user?.mobile_number || user?.mobile || user?.phone || ''} 
                 disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
               />
             </div>
 
@@ -138,9 +180,9 @@ const ApplyLeave = () => {
               <label className="text-sm font-semibold text-white/70">Email ID</label>
               <input 
                 type="text" 
-                value={user?.personal_email || ''} 
+                value={user?.personal_email || user?.email || ''} 
                 disabled 
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/40 cursor-not-allowed outline-none" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white cursor-not-allowed outline-none" 
               />
             </div>
 
@@ -154,10 +196,24 @@ const ApplyLeave = () => {
                 required
                 className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
               >
-                {leaveTypes.map(type => (
+                {availableLeaveTypes.map(type => (
                   <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
                 ))}
               </select>
+              {!settingsLoading && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
+                  <p className="font-semibold text-white">Leave balance</p>
+                  {selectedLeaveSetting ? (
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>Total allowed: <span className="text-white">{selectedLeaveSetting.max_days ?? 0}</span></span>
+                      <span>Taken: <span className="text-orange-400">{selectedLeaveSetting.taken ?? 0}</span></span>
+                      <span>Remaining: <span className="text-emerald-400">{selectedLeaveSetting.remaining ?? 0}</span></span>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-white/40">Leave balance not available for this type yet.</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -226,7 +282,7 @@ const ApplyLeave = () => {
                 value={formData.from_date} 
                 onChange={handleChange} 
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition [color-scheme:dark]" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition scheme-dark" 
               />
             </div>
 
@@ -240,7 +296,7 @@ const ApplyLeave = () => {
                 disabled={formData.day_type === 'Half Day'}
                 required
                 min={formData.from_date}
-                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed [color-scheme:dark]" 
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed scheme-dark" 
               />
             </div>
             

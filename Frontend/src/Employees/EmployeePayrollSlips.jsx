@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DollarSign, Printer, X, Loader2, FileText, AlertCircle, Search } from 'lucide-react';
+import { DollarSign, Printer, X, Loader2, FileText, AlertCircle, Search, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
@@ -14,6 +14,7 @@ const EmployeePayrollSlips = () => {
   const [monthFilter, setMonthFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState('table');
   const payslipRef = useRef();
 
   const handlePrint = useReactToPrint({
@@ -129,6 +130,22 @@ const EmployeePayrollSlips = () => {
               </option>
             ))}
           </select>
+          
+          {/* View Toggle */}
+          <div className="flex bg-black/20 p-1 rounded-lg border border-white/10">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-md transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-1.5 rounded-md transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -158,7 +175,7 @@ const EmployeePayrollSlips = () => {
               <FileText size={48} className="mb-4 opacity-20" />
               <p>No payslips found for the selected filters.</p>
             </div>
-          ) : (
+          ) : viewMode === 'table' ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-white/70">
                 <thead className="bg-white/5 text-white/50">
@@ -191,6 +208,35 @@ const EmployeePayrollSlips = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredHistory.map((record) => (
+                <div key={record.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-bold text-white text-lg">{new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' })} {record.salary_year}</h3>
+                      <p className="text-xs text-white/50">Credited: {new Date(record.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPayslip(record)}
+                      className="p-2 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition"
+                    >
+                      <Printer size={16} />
+                    </button>
+                  </div>
+                  <div className="space-y-2 mb-3 border-t border-white/5 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white/50">Basic Salary</span>
+                      <span className="text-white font-medium">₹{parseFloat(record.basic_salary).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white/50">Net Salary</span>
+                      <span className="text-emerald-400 font-bold">₹{parseFloat(record.total_salary).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           );
         })()}

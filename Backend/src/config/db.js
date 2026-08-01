@@ -1420,6 +1420,26 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensureLeaveSettingsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'employee_leave_settings'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS employee_leave_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        leave_type VARCHAR(100) NOT NULL UNIQUE,
+        max_days DECIMAL(5,2) NOT NULL DEFAULT 0,
+        description TEXT NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36),
+        updated_by VARCHAR(36)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  }
+}
+
 async function ensureEmployeeLeavesSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'employee_leaves'");
 
@@ -1469,6 +1489,7 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
+    await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);
     await ensureExpenseSchema(pool);

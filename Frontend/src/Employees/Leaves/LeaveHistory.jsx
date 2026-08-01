@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { CalendarDays, Loader2, RefreshCw, Search, X } from "lucide-react";
+import { CalendarDays, Loader2, RefreshCw, Search, X, LayoutGrid, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LeaveHistory = () => {
   const [leaves, setLeaves] = useState([]);
+  const [leaveSettings, setLeaveSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -14,6 +15,7 @@ const LeaveHistory = () => {
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("Newest");
   const [dateFilter, setDateFilter] = useState("All");
+  const [viewMode, setViewMode] = useState('table');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,9 +25,17 @@ const LeaveHistory = () => {
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/employee-leaves/my-leaves');
-      if (data.success) {
-        setLeaves(data.data);
+      const [leaveResponse, settingsResponse] = await Promise.all([
+        api.get('/employee-leaves/my-leaves'),
+        api.get('/leave-settings')
+      ]);
+
+      if (leaveResponse.data.success) {
+        setLeaves(leaveResponse.data.data || []);
+      }
+
+      if (settingsResponse.data.success) {
+        setLeaveSettings(settingsResponse.data.data || []);
       }
     } catch (error) {
       toast.error('Failed to fetch leave history');
@@ -38,6 +48,33 @@ const LeaveHistory = () => {
     "All",
     ...new Set(leaves.map((l) => l.leave_type)),
   ];
+
+  const leaveSummary = leaveSettings
+    .filter((setting) => Number(setting.is_active ?? 1) === 1)
+    .map((setting) => {
+      const totalAllowed = Number(setting.max_days || 0);
+      const taken = leaves
+        .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+        .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+      const remaining = Math.max(totalAllowed - taken, 0);
+
+      return {
+        leave_type: setting.leave_type,
+        totalAllowed,
+        taken,
+        remaining,
+      };
+    })
+    .sort((a, b) => a.leave_type.localeCompare(b.leave_type));
+
+  const overallSummary = leaveSummary.reduce(
+    (acc, item) => ({
+      totalAllowed: acc.totalAllowed + item.totalAllowed,
+      taken: acc.taken + item.taken,
+      remaining: acc.remaining + item.remaining,
+    }),
+    { totalAllowed: 0, taken: 0, remaining: 0 }
+  );
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -172,6 +209,48 @@ const LeaveHistory = () => {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Total Allowed</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{overallSummary.totalAllowed}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Taken</p>
+            <p className="mt-2 text-2xl font-semibold text-orange-400">{overallSummary.taken}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">Remaining</p>
+            <p className="mt-2 text-2xl font-semibold text-emerald-400">{overallSummary.remaining}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {leaveSummary.map((item) => (
+            <div key={item.leave_type} className="rounded-2xl border border-white/10 bg-[#0f1117] p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-white">{item.leave_type}</p>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
+                  {item.remaining} left
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Total</p>
+                  <p className="mt-1 font-semibold text-white">{item.totalAllowed}</p>
+                </div>
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Taken</p>
+                  <p className="mt-1 font-semibold text-orange-400">{item.taken}</p>
+                </div>
+                <div>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em]">Left</p>
+                  <p className="mt-1 font-semibold text-emerald-400">{item.remaining}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="overflow-x-auto rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
 
@@ -302,76 +381,120 @@ const LeaveHistory = () => {
             </div>
 
             <div className="flex gap-2">
-
-
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("All");
-                  setLeaveTypeFilter("All");
-                  setFromDate("");
-                  setToDate("");
-                  setSortBy("Newest");
-                }}
-                className="h-10 px-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition flex items-center gap-2"
-              >
-                <X size={15} />
-                Reset
-              </button>
-
+              <div className="flex bg-black/20 p-1 rounded-lg border border-white/10">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 rounded-md transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+                >
+                  <List size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`p-1.5 rounded-md transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+              </div>
             </div>
 
           </div>
-          <table className="min-w-full mt-5 text-sm">
-            <thead className="bg-white/4 text-white/60">
-              <tr>
-                <th className="px-4 py-3 text-left">Leave Type</th>
-                <th className="px-4 py-3 text-left">Date Range</th>
-                <th className="px-4 py-3 text-left">Days</th>
-                <th className="px-4 py-3 text-left">Reason</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Admin Remark</th>
-              </tr>
-            </thead>
-            <tbody>
+          {viewMode === 'table' ? (
+            <table className="min-w-full mt-5 text-sm">
+              <thead className="bg-white/4 text-white/60">
+                <tr>
+                  <th className="px-4 py-3 text-left">Leave Type</th>
+                  <th className="px-4 py-3 text-left">Date Range</th>
+                  <th className="px-4 py-3 text-left">Days</th>
+                  <th className="px-4 py-3 text-left">Reason</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Admin Remark</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
+                  </tr>
+                ) : filteredLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-8 text-center text-white/40">No leave history found.</td>
+                  </tr>
+                ) : (
+                  filteredLeaves.map((leave) => (
+                    <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-white">{leave.leave_type}</div>
+                        {leave.day_type === 'Half Day' && (
+                          <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-white/70">
+                        {new Date(leave.from_date).toLocaleDateString()}
+                        {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-white">
+                        {leave.no_of_days}
+                      </td>
+                      <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.reason}>
+                        {leave.reason}
+                      </td>
+                      <td className="px-4 py-3">
+                        {getStatusBadge(leave.status)}
+                      </td>
+                      <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.admin_reason}>
+                        {leave.admin_reason || '—'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
-                </tr>
+                <div className="col-span-full py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></div>
               ) : filteredLeaves.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-white/40">No leave history found.</td>
-                </tr>
+                <div className="col-span-full py-8 text-center text-white/40">No leave history found.</div>
               ) : (
                 filteredLeaves.map((leave) => (
-                  <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{leave.leave_type}</div>
-                      {leave.day_type === 'Half Day' && (
-                        <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-white/70">
-                      {new Date(leave.from_date).toLocaleDateString()}
-                      {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-white">
-                      {leave.no_of_days}
-                    </td>
-                    <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.reason}>
-                      {leave.reason}
-                    </td>
-                    <td className="px-4 py-3">
+                  <div key={leave.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-white">{leave.leave_type}</h3>
+                        {leave.day_type === 'Half Day' && (
+                          <div className="text-white/40 text-xs">Half Day ({leave.half_day_type})</div>
+                        )}
+                      </div>
                       {getStatusBadge(leave.status)}
-                    </td>
-                    <td className="px-4 py-3 text-white/70 max-w-xs truncate" title={leave.admin_reason}>
-                      {leave.admin_reason || '—'}
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="space-y-2 text-sm mb-3">
+                      <div className="flex justify-between">
+                        <span className="text-white/50">Date</span>
+                        <span className="text-white">
+                          {new Date(leave.from_date).toLocaleDateString()}
+                          {leave.from_date !== leave.to_date && ` - ${new Date(leave.to_date).toLocaleDateString()}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/50">Days</span>
+                        <span className="text-white font-medium">{leave.no_of_days}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <p className="text-xs text-white/70 line-clamp-2" title={leave.reason}>
+                        <span className="text-white/50">Reason: </span>{leave.reason}
+                      </p>
+                      {leave.admin_reason && (
+                        <p className="text-xs text-white/70 line-clamp-2 mt-1" title={leave.admin_reason}>
+                          <span className="text-white/50">Admin: </span>{leave.admin_reason}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 ))
               )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

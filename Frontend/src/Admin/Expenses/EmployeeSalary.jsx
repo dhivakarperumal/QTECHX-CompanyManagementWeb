@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
   AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
-  History, Printer, X, Edit, Trash2, Search, Plus
+  History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -53,6 +53,8 @@ export default function EmployeeSalary() {
   const [historyYearFilter, setHistoryYearFilter] = useState(String(new Date().getFullYear()));
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const payslipRef = useRef();
+  const [employeeViewMode, setEmployeeViewMode] = useState("card");
+  const [historyViewMode, setHistoryViewMode] = useState("table");
 
   const handlePrint = useReactToPrint({
     contentRef: payslipRef,
@@ -498,7 +500,6 @@ export default function EmployeeSalary() {
               <Users size={11} /> Employee Overview
             </div>
             <h2 className="text-base font-bold text-white">Employee cards & salary history</h2>
-            <p className="text-sm text-white/40 mt-0.5">Search employees, filter by month/year, and open a card to review that employee&apos;s salary records.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="relative">
@@ -523,41 +524,87 @@ export default function EmployeeSalary() {
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+              <button onClick={() => {
+                setEmployeeViewMode("table");
+                setSelectedEmployeeId(""); // optional reset
+              }} className={`rounded-lg p-2 transition ${employeeViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setEmployeeViewMode('card')} className={`rounded-lg p-2 transition ${employeeViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filteredEmployees.length === 0 ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No employees match this search.</div>
-          ) : (
-            filteredEmployees.map((emp) => {
-              const employeeName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
-              const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
-              const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
-              const isActive = selectedEmployeeId === emp.employee_id;
-              return (
-                <button
-                  key={emp.employee_id}
-                  type="button"
-                  onClick={() => setSelectedEmployeeId(emp.employee_id)}
-                  className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</p>
-                      <p className="text-xs text-white/40">{emp.employee_code || 'No code'}</p>
+        {employeeViewMode === "table" ? (
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0e1118]">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/5 text-white/40">
+                <tr>
+                  <th className="px-3 py-2 text-left">Employee</th>
+                  <th className="px-3 py-2 text-left">Code</th>
+                  <th className="px-3 py-2 text-left">Pays</th>
+                  <th className="px-3 py-2 text-left">Total Salary</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10 text-white/70">
+                {filteredEmployees.length === 0 ? (
+                  <tr><td colSpan="4" className="px-3 py-4 text-center text-white/40">No employees match this search.</td></tr>
+                ) : filteredEmployees.map((emp) => {
+                  const employeeName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+                  const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
+                  const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
+                  return (
+                    <tr
+                      key={emp.employee_id}
+                      onClick={() => setSelectedEmployeeId(emp.employee_id)}
+                      className={`cursor-pointer transition ${selectedEmployeeId === emp.employee_id
+                          ? "bg-orange-500/10"
+                          : "hover:bg-white/5"
+                        }`}
+                    >
+                      <td className="px-3 py-2 font-medium text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</td>
+                      <td className="px-3 py-2">{emp.employee_code || 'No code'}</td>
+                      <td className="px-3 py-2">{employeeHistory.length}</td>
+                      <td className="px-3 py-2 font-semibold text-emerald-400">₹{totalPaid.toLocaleString('en-IN')}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {filteredEmployees.length === 0 ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/50">No employees match this search.</div>
+            ) : (
+              filteredEmployees.map((emp) => {
+                const employeeName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+                const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
+                const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
+                const isActive = selectedEmployeeId === emp.employee_id;
+                return (
+                  <button
+                    key={emp.employee_id}
+                    type="button"
+                    onClick={() => setSelectedEmployeeId(emp.employee_id)}
+                    className={`rounded-2xl border p-4 text-left transition ${isActive ? 'border-orange-500/50 bg-orange-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</p>
+                        <p className="text-xs text-white/40">{emp.employee_code || 'No code'}</p>
+                      </div>
+                      <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{employeeHistory.length} pays</div>
                     </div>
-                    <div className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/60">{employeeHistory.length} pays</div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-white/50">Total salary</span>
-                    <span className="font-semibold text-emerald-400">₹{totalPaid.toLocaleString('en-IN')}</span>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <span className="text-white/50">Total salary</span>
+                      <span className="font-semibold text-emerald-400">₹{totalPaid.toLocaleString('en-IN')}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-[#0e1118] p-4">
           <div className="mb-3 flex items-center justify-between">
@@ -612,70 +659,109 @@ export default function EmployeeSalary() {
 
       {/* Salary History Table */}
       <section className={`${sectionClass} mt-10`}>
-        <div className="mb-5 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
-          <h2 className="text-base font-bold text-white">Salary History</h2>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
+            <h2 className="text-base font-bold text-white">Salary History</h2>
+          </div>
+          <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+            <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+            <button onClick={() => setHistoryViewMode('card')} className={`rounded-lg p-2 transition ${historyViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-white/70">
-            <thead className="bg-white/5 text-white/50">
-              <tr>
-                <th className="px-4 py-3 rounded-l-lg font-medium">Employee</th>
-                <th className="px-4 py-3 font-medium">Period</th>
-                <th className="px-4 py-3 font-medium">Basic (₹)</th>
-                <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
-                <th className="px-4 py-3 font-medium">Paid On</th>
-                <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {historyLoading ? (
-                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
-              ) : history.length === 0 ? (
-                <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No salary records found.</td></tr>
-              ) : (
-                history.map((record) => (
-                  <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{record.first_name} {record.last_name}</div>
-                      <div className="text-xs opacity-60">{record.employee_code}</div>
-                    </td>
-                    <td className="px-4 py-3">{new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'short' })} {record.salary_year}</td>
-                    <td className="px-4 py-3">{parseFloat(record.basic_salary).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(record)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
-                          title="Edit"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(record)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => setSelectedPayslip(record)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
-                          title="Payslip"
-                        >
-                          <Printer size={13} /> Payslip
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {historyViewMode === "card" ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {historyLoading ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
+            ) : history.length === 0 ? (
+              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No salary records found.</div>
+            ) : history.map((record) => (
+              <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-white">{record.first_name} {record.last_name}</p>
+                    <p className="text-xs text-white/40">{record.employee_code}</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">{new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'short' })} {record.salary_year}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Net Salary</span>
+                  <span className="font-semibold text-emerald-400">₹{parseFloat(record.total_salary).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-white/50">Paid On</span>
+                  <span className="text-white/70">{new Date(record.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
+                  <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
+                  <button onClick={() => setSelectedPayslip(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-white/70">
+              <thead className="bg-white/5 text-white/50">
+                <tr>
+                  <th className="px-4 py-3 rounded-l-lg font-medium">Employee</th>
+                  <th className="px-4 py-3 font-medium">Period</th>
+                  <th className="px-4 py-3 font-medium">Basic (₹)</th>
+                  <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
+                  <th className="px-4 py-3 font-medium">Paid On</th>
+                  <th className="px-4 py-3 rounded-r-lg font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {historyLoading ? (
+                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
+                ) : history.length === 0 ? (
+                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No salary records found.</td></tr>
+                ) : (
+                  history.map((record) => (
+                    <tr key={record.id} className="hover:bg-white/2 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-white">{record.first_name} {record.last_name}</div>
+                        <div className="text-xs opacity-60">{record.employee_code}</div>
+                      </td>
+                      <td className="px-4 py-3">{new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'short' })} {record.salary_year}</td>
+                      <td className="px-4 py-3">{parseFloat(record.basic_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-bold text-emerald-400">{parseFloat(record.total_salary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
+                            title="Edit"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => setSelectedPayslip(record)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 hover:bg-orange-500/20 transition"
+                            title="Payslip"
+                          >
+                            <Printer size={13} /> Payslip
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Payslip Modal */}

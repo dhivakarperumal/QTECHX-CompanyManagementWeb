@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, MapPin, Loader2, UserRoundCheck, AlertCircle, Eye, Search, Clock3, PlusCircle, X } from 'lucide-react';
+import { CalendarDays, MapPin, Loader2, UserRoundCheck, AlertCircle, Eye, Search, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import { Link } from 'react-router-dom';
@@ -32,6 +32,7 @@ const EmployeeAttendanceSummary = () => {
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [viewMode, setViewMode] = useState('table');
 
   const todayDate = new Date().toISOString().slice(0, 10);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -299,6 +300,21 @@ const EmployeeAttendanceSummary = () => {
               ))}
             </select>
           </div>
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 bg-black/20 p-1 rounded-full border border-white/10">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-full transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-1.5 rounded-full transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -331,6 +347,12 @@ const EmployeeAttendanceSummary = () => {
               <p className="text-sm text-white/50 mb-1">Absent Days</p>
               <h3 className="text-2xl font-bold text-rose-400">{absentDays}</h3>
             </div>
+            <div className="rounded-2xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
+              <p className="text-sm text-white/50 mb-1">On Time Percentage</p>
+              <h3 className="text-2xl font-bold text-blue-400">
+                {presentDays > 0 ? Math.round((history.filter(h => h.late_entry === 'No').length / presentDays) * 100) : 0}%
+              </h3>
+            </div>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 shadow-lg shadow-black/20 overflow-hidden">
@@ -339,7 +361,7 @@ const EmployeeAttendanceSummary = () => {
                 <CalendarDays size={48} className="mx-auto mb-3 opacity-20" />
                 <p>No attendance records found for this month.</p>
               </div>
-            ) : (
+            ) : viewMode === 'table' ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-white/70">
                   <thead className="bg-white/5 text-white/50">
@@ -380,6 +402,41 @@ const EmployeeAttendanceSummary = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
+                {history.map((record, i) => (
+                  <div key={record.id || i} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="font-medium text-white">
+                        {new Date(record.date || record.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        {record.attendance_status}
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm text-white/70 mb-3 border-t border-white/5 pt-3">
+                      <div className="flex justify-between">
+                        <span>Check-In</span>
+                        <span className="text-white">{record.check_in_time || '--'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Check-Out</span>
+                        <span className="text-white">{record.check_out_time || '--'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Working Hrs</span>
+                        <span className="text-white">{record.working_hours || '--'}</span>
+                      </div>
+                    </div>
+                    {record.location && (
+                      <div className="flex items-start gap-1 text-xs text-white/50 mt-3 pt-3 border-t border-white/10">
+                        <MapPin size={12} className="shrink-0 mt-0.5" />
+                        <span className="line-clamp-2" title={record.location}>{record.location.replace(/\n/g, ' ')}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
