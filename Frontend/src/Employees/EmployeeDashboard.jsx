@@ -84,6 +84,17 @@ const getBadgeStatus = (st) => {
   return 'Pending';
 };
 
+const normalizeListPayload = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+};
+
+const getEventDateValue = (event) =>
+  event?.planDate || event?.startDate || event?.plan_date || event?.start_time || event?.date || event?.start || event?.event_date;
+
 /* ── main ── */
 const EmployeeDashboard = () => {
   const { userProfile, user, profileName } = useAuth();
@@ -96,8 +107,9 @@ const EmployeeDashboard = () => {
     leaves: { recent: [], pendingCount: 0 },
     meetings: { todayCount: 0, upcoming: [] },
     projects: { activeList: [], activeCount: 0 },
-    attendance: { checkIn: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
-    payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' }
+    attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
+    payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
+    leaveBalance: 0
   });
 
   useEffect(() => {
@@ -114,6 +126,7 @@ const EmployeeDashboard = () => {
         const [
           tasksRes,
           leavesRes,
+          leaveSettingsRes,
           eventsRes,
           myEventsRes,
           projectsAssignRes,
@@ -123,6 +136,7 @@ const EmployeeDashboard = () => {
         ] = await Promise.allSettled([
           api.get('/tasks', { params: { page: 1, limit: 1000, assigned_to: employeeId } }),
           api.get('/employee-leaves/my-leaves'),
+          api.get('/leave-settings'),
           api.get('/events'),
           api.get('/myevents'),
           api.get('/projects/assignments/all?limit=1000'),
@@ -136,8 +150,9 @@ const EmployeeDashboard = () => {
           leaves: { recent: [], pendingCount: 0 },
           meetings: { todayCount: 0, upcoming: [] },
           projects: { activeList: [], activeCount: 0 },
-          attendance: { checkIn: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
-          payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' }
+          attendance: { checkIn: null, checkOut: null, presentDays: 0, absentDays: 0, hoursThisWeek: 0 },
+          payroll: { nextPayDate: 'N/A', nextSalary: 'N/A' },
+          leaveBalance: 0
         };
 
         // --- TASKS ---
@@ -150,22 +165,35 @@ const EmployeeDashboard = () => {
         }
 
         // --- LEAVES ---
+        let employeeLeaves = [];
         if (leavesRes.status === 'fulfilled') {
-          const leaves = leavesRes.value?.data?.data || leavesRes.value?.data || [];
-          newData.leaves.pendingCount = leaves.filter(l => l.status === 'Pending').length;
-          newData.leaves.recent = leaves.slice(0, 4);
+          employeeLeaves = leavesRes.value?.data?.data || leavesRes.value?.data || [];
+          newData.leaves.pendingCount = employeeLeaves.filter(l => l.status === 'Pending').length;
+          newData.leaves.recent = employeeLeaves.slice(0, 4);
+        }
+
+        if (leaveSettingsRes.status === 'fulfilled') {
+          const leaveSettings = leaveSettingsRes.value?.data?.data || leaveSettingsRes.value?.data || [];
+          const approvedLeaves = employeeLeaves.filter(l => l.status === 'Approved');
+          newData.leaveBalance = leaveSettings.reduce((total, setting) => {
+            const maxDays = Number(setting.max_days || 0);
+            const taken = approvedLeaves
+              .filter(l => String(l.leave_type || '').toLowerCase() === String(setting.leave_type || '').toLowerCase())
+              .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
+            return total + Math.max(maxDays - taken, 0);
+          }, 0);
         }
 
         // --- MEETINGS ---
         const possibleIds = [user?.id, user?._id, user?.userId, user?.employee_id, user?.employeeId, user?.user_id, user?.uuid].filter(Boolean).map(String);
         const userName = (profileName || userProfile?.displayName || userProfile?.name || user?.name || user?.full_name || user?.username || '').toLowerCase();
         
-        let personalEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value?.data?.data || eventsRes.value?.data || []) : [];
-        let officeEvents = myEventsRes.status === 'fulfilled' ? (myEventsRes.value?.data?.data || myEventsRes.value?.data || []) : [];
+        let personalEvents = eventsRes.status === 'fulfilled' ? normalizeListPayload(eventsRes.value?.data) : [];
+        let officeEvents = myEventsRes.status === 'fulfilled' ? normalizeListPayload(myEventsRes.value?.data) : [];
         
         if (possibleIds.length > 0) {
           personalEvents = personalEvents.filter(evt => {
-            const evtUserId = String(evt.user_id || evt.userId || evt.employeeId);
+            const evtUserId = String(evt.user_id || evt.userId || evt.employeeId || evt.employee_id || '');
             return possibleIds.includes(evtUserId);
           });
           
@@ -178,7 +206,7 @@ const EmployeeDashboard = () => {
             if (!Array.isArray(parts)) return false;
             return parts.some(p => {
               if (typeof p === 'object' && p !== null) {
-                const matchById = possibleIds.includes(String(p.user_id)) || possibleIds.includes(String(p.employee_id));
+                const matchById = possibleIds.includes(String(p.user_id || p.userId || p.employee_id || p.employeeId || ''));
                 const matchByName = userName && p.name && p.name.toLowerCase() === userName;
                 return matchById || matchByName;
               }
@@ -188,26 +216,23 @@ const EmployeeDashboard = () => {
         }
         
         const allEvents = [...personalEvents, ...officeEvents];
-        const uniqueEvents = Array.from(new Map(allEvents.map(e => [e.id || e.uuid, e])).values());
+        const uniqueEvents = Array.from(new Map(allEvents.map(e => [e.id || e.uuid || `${e.title || e.event_name || 'event'}-${getEventDateValue(e) || ''}`, e])).values());
         
         const filteredMeetings = uniqueEvents.filter(e => {
-          const typeStr = String(e.eventType || e.category || '').toLowerCase();
-          return typeStr.includes('meeting') || typeStr.includes('meating') || typeStr.includes('call');
+          const text = [e.eventType, e.category, e.title, e.event_name, e.planTitle, e.name].filter(Boolean).join(' ').toLowerCase();
+          return text.includes('meeting') || text.includes('meating') || text.includes('call');
         });
         
         const upcomingEvents = filteredMeetings.filter(e => {
-          const mDate = e.planDate || e.startDate || e.plan_date || e.start_time || e.date;
-          return mDate && new Date(mDate) >= new Date().setHours(0,0,0,0);
+          const mDate = getEventDateValue(e);
+          return mDate && dayjs(mDate).isSameOrAfter(dayjs().startOf('day'));
         }).sort((a,b) => {
-          const dateA = a.planDate || a.startDate || a.plan_date || a.start_time || a.date;
-          const dateB = b.planDate || b.startDate || b.plan_date || b.start_time || b.date;
-          return new Date(dateA) - new Date(dateB);
+          const dateA = getEventDateValue(a);
+          const dateB = getEventDateValue(b);
+          return dayjs(dateA).valueOf() - dayjs(dateB).valueOf();
         });
         
-        newData.meetings.todayCount = upcomingEvents.filter(e => {
-          const mDate = e.planDate || e.startDate || e.plan_date || e.start_time || e.date;
-          return isSameDay(mDate);
-        }).length;
+        newData.meetings.todayCount = upcomingEvents.filter(e => isSameDay(getEventDateValue(e))).length;
         newData.meetings.upcoming = upcomingEvents.slice(0, 3);
 
         // --- PROJECTS ---
@@ -247,8 +272,9 @@ const EmployeeDashboard = () => {
           newData.attendance.absentDays = Math.max(0, workingDaysSoFar - present.length);
 
           const todayRec = records.find(r => (r.date === todayStr) || (r.attendance_date && String(r.attendance_date).startsWith(todayStr)));
-          if (todayRec && todayRec.check_in_time) {
-            newData.attendance.checkIn = todayRec.check_in_time;
+          if (todayRec) {
+            newData.attendance.checkIn = todayRec.check_in_time || null;
+            newData.attendance.checkOut = todayRec.check_out_time || null;
           }
           
           // Hours this week (rough calculation for demo purposes)
@@ -319,11 +345,11 @@ const EmployeeDashboard = () => {
         <div className="flex flex-wrap gap-4 mt-5">
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CheckCircle2 size={16} className="text-green-400" />
-            <span className="text-white text-sm font-medium">Checked In: <span className="text-green-400">{data.attendance.checkIn || 'Not yet'}</span></span>
+            <span className="text-white text-sm font-medium">Check-in: <span className="text-green-400">{data.attendance.checkIn || 'Not yet'}</span> · Check-out: <span className="text-amber-400">{data.attendance.checkOut || 'Not yet'}</span></span>
           </div>
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CalendarDays size={16} className="text-blue-400" />
-            <span className="text-white text-sm font-medium">Leave Balance: <span className="text-blue-400">N/A</span></span>
+            <span className="text-white text-sm font-medium">Leave Balance: <span className="text-blue-400">{data.leaveBalance > 0 ? `${data.leaveBalance} days left` : '0 days left'}</span></span>
           </div>
         </div>
       </div>
@@ -397,14 +423,16 @@ const EmployeeDashboard = () => {
               <div className="flex items-center justify-center flex-1 text-white/40 text-sm">No upcoming meetings.</div>
             ) : (
               data.meetings.upcoming.map((m, i) => {
-                const mDate = new Date(m.start_time || m.date);
-                const timeStr = mDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const dayStr = isSameDay(mDate) ? `Today ${timeStr}` : `${formatDate(mDate)} ${timeStr}`;
+                const meetingDateValue = getEventDateValue(m);
+                const mDate = meetingDateValue ? new Date(meetingDateValue) : null;
+                const hasValidDate = mDate && !Number.isNaN(mDate.getTime());
+                const timeStr = hasValidDate ? mDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Time TBD';
+                const dayStr = hasValidDate ? (isSameDay(mDate) ? `Today ${timeStr}` : `${formatDate(mDate)} ${timeStr}`) : 'Schedule pending';
                 const members = Array.isArray(m.attendees) ? m.attendees.length : (m.members || 1);
                 return (
                   <div key={m.id || m.uuid || i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
                     <div>
-                      <p className="text-white text-sm font-medium">{m.title || m.event_name || 'Meeting'}</p>
+                      <p className="text-white text-sm font-medium">{m.title || m.event_name || m.planTitle || 'Meeting'}</p>
                       <p className="text-white/40 text-xs mt-0.5">{dayStr}</p>
                     </div>
                     <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-full font-medium">
