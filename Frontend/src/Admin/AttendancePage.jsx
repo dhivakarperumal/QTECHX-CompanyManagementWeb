@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle } from "lucide-react";
+import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle, Loader2 } from "lucide-react";
 import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
@@ -23,12 +23,13 @@ const AttendancePage = () => {
   const [form, setForm] = useState({
     employee_id: "",
     date: todayDateStr,
-    check_in_time: "09:30",
+    check_in_time: "",
     check_out_time: "",
     break_start_time: "",
     break_end_time: "",
     attendance_status: "Present",
-    location: "Marked by Admin",
+    location: "",
+    notes: ""
   });
 
   useEffect(() => {
@@ -214,7 +215,7 @@ const AttendancePage = () => {
                     {summaryData.slice(0, 5).map((row, i) => (
                       <tr key={i} className="hover:bg-white/5 transition-colors">
                         <td className="py-3 px-4 font-medium text-white">{row.employee_name}</td>
-                        <td className="py-3 px-4 text-white/60">{row.today_status === 'Present' || row.today_status === 'Late' ? '09:30 AM' : '--'}</td>
+                        <td className="py-3 px-4 text-white/60">--</td>
                         <td className="py-3 px-4 text-white/60">--</td>
                         <td className="py-3 px-4">
                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
@@ -255,7 +256,7 @@ const AttendancePage = () => {
                      </div>
                    </div>
                    <div className="text-right">
-                     <p className="text-sm font-bold text-white/80">09:00 AM</p>
+                     <p className="text-sm font-bold text-white/80">--</p>
                    </div>
                  </div>
                ))}
@@ -328,7 +329,7 @@ const AttendancePage = () => {
                   </div>
                   <div>
                     <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{user.employee_name}</span> logged in</p>
-                    <p className="text-xs text-white/40 mt-0.5">Today, 09:02 AM</p>
+                    <p className="text-xs text-white/40 mt-0.5">Today</p>
                   </div>
                 </div>
              ))}
@@ -457,12 +458,8 @@ const AttendancePage = () => {
                   
                   <div className="md:col-span-2 pt-4 flex justify-end gap-3 border-t border-white/10">
                     <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-6 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="rounded-2xl bg-orange-500 hover:bg-orange-600 px-6 py-3 font-medium text-white transition disabled:opacity-50"
-                    >
-                      {submitting ? "Saving..." : "Save Record"}
+                    <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 px-6 py-3 font-medium text-white transition hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center min-w-[120px]">
+                      {submitting ? <Loader2 className="animate-spin w-5 h-5" /> : "Save / Update"}
                     </button>
                   </div>
                 </form>

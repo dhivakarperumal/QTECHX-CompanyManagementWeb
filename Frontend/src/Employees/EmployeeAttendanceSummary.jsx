@@ -42,7 +42,7 @@ const EmployeeAttendanceSummary = () => {
 
   const [form, setForm] = useState({
     date: todayDate,
-    check_in_time: '09:30',
+    check_in_time: '',
     check_out_time: '',
     break_start_time: '',
     break_end_time: '',
@@ -624,12 +624,13 @@ const EmployeeAttendanceSummary = () => {
 
               <div className="sticky bottom-0 bg-[#0f172a] border-t border-white/10 px-6 py-4 flex justify-end gap-3 shrink-0">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || !isWithinRadius}
-                  className={`rounded-2xl px-4 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
+                <button 
+                  type="submit" 
+                  onClick={handleSubmit} 
+                  disabled={submitting || !isWithinRadius} 
+                  className={`rounded-2xl px-6 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
                 >
-                  {submitting ? "Saving..." : "Save Attendance"}
+                  {submitting ? 'Saving...' : 'Save / Update'}
                 </button>
               </div>
             </div>

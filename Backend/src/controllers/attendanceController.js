@@ -157,7 +157,11 @@ async function create(req, res) {
 
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    const attendanceDate = date.toISOString().slice(0, 10);
+    const attendanceDate = payload.date || [
+      year,
+      String(month).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
 
     const db = getDB();
     const [holidayEvents] = await db.execute(

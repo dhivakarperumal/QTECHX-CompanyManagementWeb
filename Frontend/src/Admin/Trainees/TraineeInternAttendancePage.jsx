@@ -21,12 +21,12 @@ export default function TraineeInternAttendancePage() {
   const [form, setForm] = useState({
     trainee_intern_id: '',
     date: today.toISOString().slice(0, 10),
-    check_in_time: '09:30',
-    check_out_time: '18:00',
+    check_in_time: '',
+    check_out_time: '',
     attendance_status: 'Present',
     location: '',
   });
-  const [metrics, setMetrics] = useState({ working_hours: '8h 30m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
+  const [metrics, setMetrics] = useState({ working_hours: '0h 0m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
 
   useEffect(() => {
     loadData();
@@ -52,16 +52,12 @@ export default function TraineeInternAttendancePage() {
   const calculateMetrics = (checkIn, checkOut) => {
     const parseTime = (value) => {
       if (!value) return null;
-      const [time, modifier] = String(value).split(' ');
-      const [hours, minutes] = time.split(':').map(Number);
-      let total = hours * 60 + minutes;
-      if (modifier === 'PM' && hours !== 12) total += 12 * 60;
-      if (modifier === 'AM' && hours === 12) total -= 12 * 60;
-      return total;
+      const [hours, minutes] = value.split(':').map(Number);
+      return hours * 60 + minutes;
     };
 
-    const officeCheckIn = parseTime('9:30 AM');
-    const officeCheckOut = parseTime('6:00 PM');
+    const officeCheckIn = parseTime('09:30');
+    const officeCheckOut = parseTime('18:00');
     const checkInMinutes = parseTime(checkIn);
     const checkOutMinutes = parseTime(checkOut);
 
@@ -122,8 +118,8 @@ export default function TraineeInternAttendancePage() {
         location: form.location,
       });
       setIsModalOpen(false);
-      setForm({ trainee_intern_id: '', date: today.toISOString().slice(0, 10), check_in_time: '09:30', check_out_time: '18:00', attendance_status: 'Present', location: '' });
-      setMetrics({ working_hours: '8h 30m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
+      setForm({ trainee_intern_id: '', date: today.toISOString().slice(0, 10), check_in_time: '', check_out_time: '', attendance_status: 'Present', location: '' });
+      setMetrics({ working_hours: '0h 0m', late_entry: 'No', early_exit: 'No', overtime: 'No' });
       loadData();
     } catch (err) {
       alert(err?.response?.data?.message || 'Could not save attendance');
@@ -318,8 +314,8 @@ export default function TraineeInternAttendancePage() {
               </div>
               <div className="md:col-span-2 flex justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/70">Cancel</button>
-                <button type="submit" disabled={submitting} className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70">
-                  {submitting ? <Loader2 size={14} className="mx-auto animate-spin" /> : 'Save Attendance'}
+                <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 hover:bg-orange-600 px-6 py-3 font-medium text-white transition disabled:opacity-50 flex justify-center items-center">
+                  {submitting ? "Saving..." : "Save / Update"}
                 </button>
               </div>
             </form>
