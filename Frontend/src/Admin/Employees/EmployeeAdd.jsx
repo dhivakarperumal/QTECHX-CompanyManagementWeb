@@ -216,7 +216,7 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
-  const departments = ["HR","Finance","Sales","Marketing","Development","Operations","Admin"];
+  const departments = ["Frontend","Backend"];
 
   const validateField = (name, value) => {
     if (!value) return "";
