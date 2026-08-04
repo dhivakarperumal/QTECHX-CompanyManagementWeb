@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { CalendarDays, MapPin, Loader2, UserRoundCheck, AlertCircle, Eye, Search, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
-import { Link } from 'react-router-dom';
 
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
@@ -61,10 +60,6 @@ const EmployeeAttendanceSummary = () => {
 
   const [isWithinRadius, setIsWithinRadius] = useState(false);
 
-  useEffect(() => {
-    fetchMyAttendance();
-  }, [selectedMonth, selectedYear, user]);
-
   const fetchMyAttendance = async () => {
     if (!user) return;
     setLoading(true);
@@ -116,6 +111,10 @@ const EmployeeAttendanceSummary = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchMyAttendance();
+  }, [selectedMonth, selectedYear, user]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;

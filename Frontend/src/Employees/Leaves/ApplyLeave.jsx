@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
 import toast from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 const defaultLeaveTypes = [

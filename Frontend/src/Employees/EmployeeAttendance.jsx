@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Clock3, MapPin, PlusCircle, X, ClipboardCheck, AlertCircle, CalendarDays, Loader2 } from 'lucide-react';
+import { MapPin, PlusCircle, AlertCircle, CalendarDays, Loader2 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
-import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
@@ -58,10 +57,6 @@ const EmployeeAttendance = () => {
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => {
-    checkTodayAttendance();
-  }, [user]);
-
   const checkTodayAttendance = async () => {
     if (!user) return;
     setLoading(true);
@@ -104,6 +99,10 @@ const EmployeeAttendance = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkTodayAttendance();
+  }, [user]);
 
   const handleLocation = () => {
     if (!navigator.geolocation) {
