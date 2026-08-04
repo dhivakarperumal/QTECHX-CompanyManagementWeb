@@ -324,40 +324,6 @@ const AttendancePage = () => {
            </div>
         </div>
 
-        {/* Department Wise */}
-        {/* <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-           <h3 className="text-lg font-bold text-white mb-6">Department Wise Attendance</h3>
-           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-h-48">
-              <div className="h-48 w-full md:w-1/2">
-                {computedDepartmentData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={computedDepartmentData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
-                        {computedDepartmentData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color || '#3b82f6'} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/50">No department data available.</div>
-                )}
-              </div>
-              <div className="w-full md:w-1/2 space-y-3 pl-0 md:pl-4">
-                {computedDepartmentData.map(item => (
-                  <div key={item.name} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 px-3 py-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color || '#3b82f6' }}></div>
-                      <span className="text-white/70 font-medium">{item.name}</span>
-                    </div>
-                    <span className="text-white/40">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
-           </div>
-        </div> */}
-
         {/* Recent Activity */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 overflow-hidden flex flex-col">
            <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>

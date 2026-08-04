@@ -280,9 +280,28 @@ async function summary(req, res) {
     );
 
     const trendData = (trendRows || []).slice(-7).map((entry) => {
-      const date = new Date(`${entry.attendance_date}T00:00:00`);
+      let dayName = 'Unknown';
+      if (entry.attendance_date) {
+        try {
+          let dateObj;
+          const dateStr = String(entry.attendance_date);
+          
+          if (dateStr.includes('-')) {
+            const [year, month, day] = dateStr.split('-');
+            dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          } else {
+            dateObj = new Date(entry.attendance_date);
+          }
+          
+          if (!isNaN(dateObj.getTime())) {
+            dayName = dateObj.toLocaleDateString('en-GB', { weekday: 'short' });
+          }
+        } catch (e) {
+          dayName = 'Unknown';
+        }
+      }
       return {
-        name: date.toLocaleDateString('en-GB', { weekday: 'short' }),
+        name: dayName,
         count: Number(entry.present_count || 0) + Number(entry.late_count || 0)
       };
     });
