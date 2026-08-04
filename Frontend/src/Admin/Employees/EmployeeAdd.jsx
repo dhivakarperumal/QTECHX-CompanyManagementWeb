@@ -64,6 +64,28 @@ const EmployeeAdd = () => {
     return date.toISOString().split("T")[0];
   };
 
+  const addEducationRow = () => {
+    setFormData((prev) => ({
+      ...prev,
+      educational_details: [...(prev.educational_details || []), { course: "", institution: "", percentage: "", year_of_passing: "" }]
+    }));
+  };
+
+  const removeEducationRow = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      educational_details: (prev.educational_details || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleEducationChange = (index, field, value) => {
+    setFormData((prev) => {
+      const copy = (prev.educational_details || []).slice();
+      copy[index] = { ...copy[index], [field]: value };
+      return { ...prev, educational_details: copy };
+    });
+  };
+
   const getFileUrl = (path) => {
     if (!path) return "";
     let cleanPath = path.replace(/\\/g, '/');
@@ -194,6 +216,22 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/departments');
+        if (!res.ok) throw new Error('no depts');
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data.departments)) setDepartments(data.departments);
+      } catch (err) {
+        if (!cancelled && departments.length === 0) setDepartments(['HR','Finance','Sales','Marketing','Development','Operations','Admin']);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   const validateField = (name, value) => {
     if (!value) return "";
 
@@ -279,6 +317,34 @@ const EmployeeAdd = () => {
       errors.personal_email = "Personal email must be a valid email address.";
     }
 
+    if (!data.personal_email?.trim()) {
+      errors.personal_email = "Personal email is required.";
+    }
+
+    if (!data.dob) {
+      errors.dob = "Date of birth is required.";
+    }
+
+    if (!data.salary_type) {
+      errors.salary_type = "Salary type is required.";
+    }
+
+    if (!data.bank_name?.trim()) {
+      errors.bank_name = "Bank name is required.";
+    }
+
+    if (!data.account_number?.trim()) {
+      errors.account_number = "Account number is required.";
+    }
+
+    if (!data.ifsc_code?.trim()) {
+      errors.ifsc_code = "IFSC code is required.";
+    }
+
+    if (!data.upi_id?.trim()) {
+      errors.upi_id = "UPI ID is required.";
+    }
+
     if (Array.isArray(data.educational_details)) {
       data.educational_details.forEach((row, index) => {
         if (!row.course?.trim() || !row.institution?.trim() || !row.percentage?.trim() || !row.year_of_passing?.trim()) {
@@ -342,6 +408,10 @@ const EmployeeAdd = () => {
         }
         if (name === "personal_email") {
           newData.official_email = sanitizedValue;
+        }
+        if (name === "mobile_number") {
+          // autofill password with mobile for initial creation
+          newData.password = sanitizedValue;
         }
       }
       return newData;
@@ -491,7 +561,7 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Date of Birth</label>
-              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={inputClass} />
+              <input type="date" name="dob" required value={formData.dob} onChange={handleChange} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
@@ -520,7 +590,10 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} placeholder="Enter nationality" />
+              <select name="nationality" value={formData.nationality} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="India">India</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
@@ -543,8 +616,8 @@ const EmployeeAdd = () => {
               {fieldErrors.alternate_mobile && <p className="mt-1 text-xs text-red-400">{fieldErrors.alternate_mobile}</p>}
             </div>
             <div>
-              <label className={labelClass}>Personal Email</label>
-              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
+              <label className={labelClass}>Personal Email <span className="text-red-500">*</span></label>
+              <input type="email" name="personal_email" required value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelClass}>Permanent Address</label>
@@ -584,8 +657,13 @@ const EmployeeAdd = () => {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className={labelClass}>Designation</label>
-              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} placeholder="Enter designation" />
+              <label className={labelClass}>Department</label>
+              <select name="department" value={formData.department} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d} value={d} className="bg-black text-white">{d}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Team Lead</label>
@@ -628,36 +706,77 @@ const EmployeeAdd = () => {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
-              <label className={labelClass}>Salary Type</label>
-              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} placeholder="Enter salary type" />
+              <label className={labelClass}>Salary Type <span className="text-red-500">*</span></label>
+              <select name="salary_type" required value={formData.salary_type} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Salary Type</option>
+                <option value="Daily" className="bg-black text-white">Daily</option>
+                <option value="Weekly" className="bg-black text-white">Weekly</option>
+                <option value="Monthly" className="bg-black text-white">Monthly</option>
+              </select>
             </div>
             <div>
               <label className={labelClass}>Basic Salary</label>
               <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} placeholder="Enter basic salary" />
             </div>
             <div>
-              <label className={labelClass}>Bank Name</label>
-              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
+              <label className={labelClass}>Bank Name <span className="text-red-500">*</span></label>
+              <input type="text" name="bank_name" required value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
             </div>
             <div>
-              <label className={labelClass}>Account Number</label>
-              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
+              <label className={labelClass}>Account Number <span className="text-red-500">*</span></label>
+              <input type="text" name="account_number" required value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
               {fieldErrors.account_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.account_number}</p>}
             </div>
             <div>
-              <label className={labelClass}>IFSC Code</label>
-              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
+              <label className={labelClass}>IFSC Code <span className="text-red-500">*</span></label>
+              <input type="text" name="ifsc_code" required value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
               {fieldErrors.ifsc_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.ifsc_code}</p>}
             </div>
             <div>
-              <label className={labelClass}>UPI ID</label>
-              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
+              <label className={labelClass}>UPI ID <span className="text-red-500">*</span></label>
+              <input type="text" name="upi_id" required value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
               {fieldErrors.upi_id && <p className="mt-1 text-xs text-red-400">{fieldErrors.upi_id}</p>}
             </div>
           </div>
         </div>
 
-        {/* Documents */}
+          {/* Educational Details */}
+          <div className={sectionClass}>
+            <div className="mb-4 border-b border-white/10 pb-3">
+              <h2 className="text-lg font-semibold text-white">Educational Details</h2>
+              <p className="text-xs text-white/40">Add academic qualifications (multiple rows)</p>
+            </div>
+            <div className="space-y-3">
+              {(formData.educational_details || []).map((row, idx) => (
+                <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-4 items-end">
+                  <div>
+                    <label className={labelClass}>Course</label>
+                    <input value={row.course} onChange={e => handleEducationChange(idx, 'course', e.target.value)} className={inputClass} placeholder="Course" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Institution</label>
+                    <input value={row.institution} onChange={e => handleEducationChange(idx, 'institution', e.target.value)} className={inputClass} placeholder="Institution" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Percentage</label>
+                    <input value={row.percentage} onChange={e => handleEducationChange(idx, 'percentage', e.target.value)} className={inputClass} placeholder="Percentage" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div style={{ flex: 1 }}>
+                      <label className={labelClass}>Year of Passing</label>
+                      <input value={row.year_of_passing} onChange={e => handleEducationChange(idx, 'year_of_passing', e.target.value)} className={inputClass} placeholder="YYYY" />
+                    </div>
+                    <div className="mt-6 flex gap-2">
+                      <button type="button" onClick={() => addEducationRow()} className="rounded-xl bg-white/5 px-3 py-1 text-sm">+</button>
+                      {idx > 0 && <button type="button" onClick={() => removeEducationRow(idx)} className="rounded-xl bg-white/5 px-3 py-1 text-sm">-</button>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Documents */}
         <div className={sectionClass}>
           <div className="mb-4 border-b border-white/10 pb-3">
             <h2 className="text-lg font-semibold text-white">Documents</h2>
@@ -692,20 +811,11 @@ const EmployeeAdd = () => {
               )}
             </div>
             <div>
-              <label className={labelClass}>Passport</label>
-              <input type="file" name="passport_url" onChange={handleChange} className={inputClass} />
-              {existingFiles.passport_url && (
-                <a href={getFileUrl(existingFiles.passport_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
-                  View Current Passport
-                </a>
-              )}
-            </div>
-            <div>
-              <label className={labelClass}>Offer Letter</label>
-              <input type="file" name="offer_letter_url" onChange={handleChange} className={inputClass} />
-              {existingFiles.offer_letter_url && (
-                <a href={getFileUrl(existingFiles.offer_letter_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
-                  View Current Offer Letter
+              <label className={labelClass}>Bank Passbook</label>
+              <input type="file" name="bank_passbook_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.bank_passbook_url && (
+                <a href={getFileUrl(existingFiles.bank_passbook_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Bank Passbook
                 </a>
               )}
             </div>
@@ -745,21 +855,7 @@ const EmployeeAdd = () => {
                 <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
                 <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
               </div>
-              <div className="relative">
-                <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-                <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
-              </div>
-              <div className="relative">
-                <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                  {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-              </div>
+              {/* Passwords are managed by employee portal; admin will not set password here. */}
             </div>
           </div>
         )}

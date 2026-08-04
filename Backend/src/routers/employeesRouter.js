@@ -14,8 +14,7 @@ const uploadFields = upload.fields([
   { name: 'resume_url', maxCount: 1 },
   { name: 'aadhaar_url', maxCount: 1 },
   { name: 'pan_url', maxCount: 1 },
-  { name: 'passport_url', maxCount: 1 },
-  { name: 'offer_letter_url', maxCount: 1 },
+  { name: 'bank_passbook_url', maxCount: 1 },
   { name: 'appointment_letter_url', maxCount: 1 },
   { name: 'nda_url', maxCount: 1 }
 ]);

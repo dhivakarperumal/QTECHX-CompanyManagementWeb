@@ -1265,6 +1265,16 @@ async function ensureEmployeesSchema(pool) {
       UNIQUE KEY uq_employees_employee_id (employee_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  // Ensure bank_passbook_url column exists (migrated from old passport_url)
+  const [empColumns] = await pool.execute('SHOW COLUMNS FROM employees');
+  const empColumnNames = new Set(empColumns.map(c => c.Field));
+  if (!empColumnNames.has('bank_passbook_url')) {
+    await pool.execute('ALTER TABLE employees ADD COLUMN bank_passbook_url VARCHAR(255) NULL');
+  }
+  if (!empColumnNames.has('educational_details')) {
+    await pool.execute('ALTER TABLE employees ADD COLUMN educational_details JSON NULL');
+  }
 }
 
 async function ensureAttendanceSchema(pool) {
