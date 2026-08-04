@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
@@ -60,7 +60,7 @@ const EmployeeAttendanceSummary = () => {
 
   const [isWithinRadius, setIsWithinRadius] = useState(false);
 
-  const fetchMyAttendance = async () => {
+  const fetchMyAttendance = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
@@ -110,11 +110,11 @@ const EmployeeAttendanceSummary = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   useEffect(() => {
     fetchMyAttendance();
-  }, [selectedMonth, selectedYear, user]);
+  }, [fetchMyAttendance]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;

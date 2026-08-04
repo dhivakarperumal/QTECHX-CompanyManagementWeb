@@ -57,7 +57,7 @@ const EmployeeAttendance = () => {
     return () => clearInterval(t);
   }, []);
 
-  const checkTodayAttendance = async () => {
+  const checkTodayAttendance = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -77,11 +77,9 @@ const EmployeeAttendance = () => {
 
       if (attendanceRes.data && attendanceRes.data.data) {
         const todayRecord = attendanceRes.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-        if (todayRecord) {
-          setAttendanceRecord(todayRecord);
-        } else {
-          setAttendanceRecord(null);
-        }
+        setAttendanceRecord(todayRecord || null);
+      } else {
+        setAttendanceRecord(null);
       }
 
       const approved = Array.isArray(leaveRes.data?.data)
@@ -98,11 +96,11 @@ const EmployeeAttendance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     checkTodayAttendance();
-  }, [user]);
+  }, [checkTodayAttendance]);
 
   const handleLocation = () => {
     if (!navigator.geolocation) {
