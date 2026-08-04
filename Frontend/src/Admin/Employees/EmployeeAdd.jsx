@@ -216,21 +216,7 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/api/departments');
-        if (!res.ok) throw new Error('no depts');
-        const data = await res.json();
-        if (!cancelled && Array.isArray(data.departments)) setDepartments(data.departments);
-      } catch (err) {
-        if (!cancelled && departments.length === 0) setDepartments(['HR','Finance','Sales','Marketing','Development','Operations','Admin']);
-      }
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const departments = ["HR","Finance","Sales","Marketing","Development","Operations","Admin"];
 
   const validateField = (name, value) => {
     if (!value) return "";
