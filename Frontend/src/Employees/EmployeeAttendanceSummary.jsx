@@ -304,8 +304,26 @@ const EmployeeAttendanceSummary = () => {
   };
 
 
+  const getLiveDuration = (checkInTime) => {
+    if (!checkInTime) return '0h 0m';
+    const [h, m] = checkInTime.split(':').map(Number);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+    const diff = Math.max(0, Math.floor((new Date() - start) / 1000));
+    const hrs = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    return `${hrs}h ${mins}m`;
+  };
+
   const presentDays = history.filter(h => h.attendance_status === 'Present').length;
   const absentDays = history.filter(h => h.attendance_status === 'Absent').length;
+
+  // Real-time update for live duration
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -434,7 +452,9 @@ const EmployeeAttendanceSummary = () => {
                         </td>
                         <td className="px-5 py-4">{record.check_in_time || '--'}</td>
                         <td className="px-5 py-4">{record.check_out_time || '--'}</td>
-                        <td className="px-5 py-4">{record.working_hours || '--'}</td>
+                        <td className="px-5 py-4">
+                          {record.check_out_time ? record.working_hours : (record.check_in_time && record.date === todayDate) ? getLiveDuration(record.check_in_time) : '--'}
+                        </td>
                         <td className="px-5 py-4">
                           {record.location ? (
                             <div className="flex items-center gap-1 text-xs text-white/50 max-w-[150px] truncate" title={record.location}>
@@ -473,7 +493,9 @@ const EmployeeAttendanceSummary = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Working Hrs</span>
-                        <span className="text-white">{record.working_hours || '--'}</span>
+                        <span className="text-white">
+                          {record.check_out_time ? record.working_hours : (record.check_in_time && record.date === todayDate) ? getLiveDuration(record.check_in_time) : '--'}
+                        </span>
                       </div>
                     </div>
                     {record.location && (

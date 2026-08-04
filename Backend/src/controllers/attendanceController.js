@@ -6,10 +6,24 @@ async function clockIn(req, res) {
   try {
     const payload = req.body;
     const date = new Date();
+    
+    if (date.getDay() === 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
+    }
+
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
     const attendanceDate = date.toISOString().slice(0, 10);
     const timeStr = date.toTimeString().slice(0, 5); // HH:MM
+
+    const db = getDB();
+    const [holidayEvents] = await db.execute(
+      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) = ?", 
+      [attendanceDate]
+    );
+    if (holidayEvents.length > 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked on a Holiday" });
+    }
 
     const existing = await getEmployeeAttendanceToday(payload.employee_id, attendanceDate);
     if (existing) {
@@ -127,10 +141,32 @@ async function clockOut(req, res) {
 async function create(req, res) {
   try {
     const payload = req.body;
-    const date = payload.date ? new Date(payload.date) : new Date();
+    
+    // Parse the date properly to avoid UTC shift issues
+    let date;
+    if (payload.date) {
+      const [y, m, d] = payload.date.split('-');
+      date = new Date(y, m - 1, d);
+    } else {
+      date = new Date();
+    }
+    
+    if (date.getDay() === 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
+    }
+
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
     const attendanceDate = date.toISOString().slice(0, 10);
+
+    const db = getDB();
+    const [holidayEvents] = await db.execute(
+      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) = ?", 
+      [attendanceDate]
+    );
+    if (holidayEvents.length > 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked on a Holiday" });
+    }
 
     const computed = calculateAttendanceMetrics({
       check_in_time: payload.check_in_time,
@@ -159,11 +195,14 @@ async function create(req, res) {
       updated_by: req.user?.user_id || "SYSTEM",
     };
 
-    const result = await createAttendance(record);
-    if (result?.exists) {
-      return res.status(409).json({ message: "Attendance already exists for this employee and date" });
+    const existing = await getEmployeeAttendanceToday(payload.employee_id, attendanceDate);
+    if (existing) {
+      delete record.created_by;
+      const updated = await updateAttendance(existing.id, record);
+      return res.status(200).json({ message: "Attendance updated successfully", attendance: updated });
     }
 
+    const result = await createAttendance(record);
     return res.status(201).json({ message: "Attendance recorded successfully", attendance: result });
   } catch (error) {
     console.error("Create attendance error:", error);
