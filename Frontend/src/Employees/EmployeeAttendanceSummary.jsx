@@ -325,6 +325,17 @@ const EmployeeAttendanceSummary = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const formatDateSafe = (val, opts = { weekday: 'short', month: 'short', day: 'numeric' }) => {
+    if (!val) return '—';
+    const d = new Date(val);
+    if (Number.isNaN(d.getTime())) return '—';
+    try {
+      return d.toLocaleDateString('en-US', opts);
+    } catch (e) {
+      return '—';
+    }
+  };
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
@@ -443,7 +454,7 @@ const EmployeeAttendanceSummary = () => {
                     {history.map((record, i) => (
                       <tr key={record.id || i} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-5 py-4 font-medium text-white">
-                          {new Date(record.date || record.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          {formatDateSafe(record.date || record.attendance_date)}
                         </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -476,7 +487,7 @@ const EmployeeAttendanceSummary = () => {
                   <div key={record.id || i} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition">
                     <div className="flex justify-between items-center mb-3">
                       <span className="font-medium text-white">
-                        {new Date(record.date || record.attendance_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        {formatDateSafe(record.date || record.attendance_date)}
                       </span>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                         {record.attendance_status}
