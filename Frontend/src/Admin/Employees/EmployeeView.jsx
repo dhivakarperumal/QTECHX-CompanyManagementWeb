@@ -184,8 +184,7 @@ const EmployeeView = () => {
               {renderFileLink("Resume", employee.resume_url)}
               {renderFileLink("Aadhaar", employee.aadhaar_url)}
               {renderFileLink("PAN", employee.pan_url)}
-              {renderFileLink("Passport", employee.passport_url)}
-              {renderFileLink("Offer Letter", employee.offer_letter_url)}
+              {renderFileLink("Bank Passbook", employee.bank_passbook_url || employee.passport_url)}
               {renderFileLink("Appointment Letter", employee.appointment_letter_url)}
               {renderFileLink("NDA", employee.nda_url)}
             </div>

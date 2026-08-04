@@ -33,6 +33,11 @@ async function create(req, res) {
   try {
     const actor = req.user?.user_id || "SYSTEM";
     const employeeData = { ...req.body };
+    // map department (frontend) -> designation (db)
+    if (employeeData.department) {
+      employeeData.designation = employeeData.department;
+      delete employeeData.department;
+    }
 
     // Process uploaded files
     if (req.files) {
@@ -51,8 +56,8 @@ async function create(req, res) {
     employeeData.created_by = actor;
     employeeData.updated_by = actor;
 
-    // Extract password for user creation and remove from employee table insert
-    const userPassword = employeeData.password;
+    // Extract password for user creation (default to mobile number) and remove from employee table insert
+    const userPassword = employeeData.password || employeeData.mobile_number;
     delete employeeData.password;
     delete employeeData.confirm_password;
 
@@ -124,6 +129,11 @@ async function update(req, res) {
     if (!existing) return res.status(404).json({ message: "Employee not found" });
 
     const updates = { ...req.body };
+    // map department -> designation for updates
+    if (updates.department) {
+      updates.designation = updates.department;
+      delete updates.department;
+    }
     updates.updated_by = req.user?.user_id || "SYSTEM";
     
     // Process uploaded files
@@ -139,14 +149,14 @@ async function update(req, res) {
     delete updates.created_by;
     delete updates.created_at;
     
-    const userPassword = updates.password;
+    // Admin updates should not change employee passwords via this endpoint
     delete updates.password;
     delete updates.confirm_password;
 
     const employee = await updateEmployee(req.params.employeeId, updates);
 
     // Update User record
-    if (updates.username || updates.official_email || userPassword || updates.role || updates.employment_status || updates.mobile_number) {
+    if (updates.username || updates.official_email || updates.role || updates.employment_status || updates.mobile_number) {
       try {
         const userUpdates = {};
         if (updates.username) userUpdates.username = updates.username;
@@ -154,9 +164,7 @@ async function update(req, res) {
         if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
         if (updates.role) userUpdates.role = updates.role;
         if (updates.employment_status) userUpdates.status = updates.employment_status;
-        if (userPassword) {
-          userUpdates.password = await bcrypt.hash(userPassword, 12);
-        }
+        // Password changes must be done by the employee via their panel
         await updateUser(req.params.employeeId, userUpdates);
       } catch (err) {
         console.error("Failed to update associated user account:", err);

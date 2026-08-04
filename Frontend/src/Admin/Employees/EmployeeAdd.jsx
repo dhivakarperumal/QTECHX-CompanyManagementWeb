@@ -2,6 +2,114 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiArrowLeft, FiSave, FiEye, FiEyeOff } from "react-icons/fi";
+const countries = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahrain",
+  "Bangladesh",
+  "Belarus",
+  "Belgium",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Chile",
+  "China",
+  "Colombia",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "Estonia",
+  "Ethiopia",
+  "Finland",
+  "France",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Hong Kong",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kuwait",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lithuania",
+  "Luxembourg",
+  "Malaysia",
+  "Maldives",
+  "Mexico",
+  "Monaco",
+  "Mongolia",
+  "Morocco",
+  "Myanmar",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nigeria",
+  "North Korea",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palestine",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Saudi Arabia",
+  "Singapore",
+  "South Africa",
+  "South Korea",
+  "Spain",
+  "Sri Lanka",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Thailand",
+  "Turkey",
+  "UAE",
+  "Ukraine",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zimbabwe"
+];
 
 const EmployeeAdd = () => {
   const navigate = useNavigate();
@@ -25,7 +133,7 @@ const EmployeeAdd = () => {
     dob: "",
     blood_group: "",
     marital_status: "",
-    nationality: "",
+    nationality: "India",
     aadhaar_number: "",
     pan_number: "",
     mobile_number: "",
@@ -35,7 +143,7 @@ const EmployeeAdd = () => {
     emergency_contact_person: "",
     emergency_contact_number: "",
     emergency_relationship: "",
-    designation: "",
+    department: "",
     team_lead: "",
     joining_date: "",
     confirmation_date: "",
@@ -50,16 +158,40 @@ const EmployeeAdd = () => {
     resume_url: "",
     aadhaar_url: "",
     pan_url: "",
-    passport_url: "",
-    offer_letter_url: "",
+    bank_passbook_url: "",
     appointment_letter_url: "",
     nda_url: "",
+    educational_details: [
+      { course: "", institution: "", percentage: "", year_of_passing: "" },
+    ],
   });
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
+  };
+
+  const addEducationRow = () => {
+    setFormData((prev) => ({
+      ...prev,
+      educational_details: [...(prev.educational_details || []), { course: "", institution: "", percentage: "", year_of_passing: "" }]
+    }));
+  };
+
+  const removeEducationRow = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      educational_details: (prev.educational_details || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleEducationChange = (index, field, value) => {
+    setFormData((prev) => {
+      const copy = (prev.educational_details || []).slice();
+      copy[index] = { ...copy[index], [field]: value };
+      return { ...prev, educational_details: copy };
+    });
   };
 
   const getFileUrl = (path) => {
@@ -138,7 +270,7 @@ const EmployeeAdd = () => {
             dob: formatDate(emp.dob),
             blood_group: emp.blood_group || "",
             marital_status: emp.marital_status || "",
-            nationality: emp.nationality || "",
+            nationality: emp.nationality || "India",
             aadhaar_number: emp.aadhaar_number || "",
             pan_number: emp.pan_number || "",
             mobile_number: emp.mobile_number || "",
@@ -148,7 +280,7 @@ const EmployeeAdd = () => {
             emergency_contact_person: emp.emergency_contact_person || "",
             emergency_contact_number: emp.emergency_contact_number || "",
             emergency_relationship: emp.emergency_relationship || "",
-            designation: emp.designation || "",
+            department: emp.department || emp.designation || "",
             team_lead: emp.team_lead || "",
             joining_date: formatDate(emp.joining_date),
             confirmation_date: formatDate(emp.confirmation_date),
@@ -164,22 +296,20 @@ const EmployeeAdd = () => {
             resume_url: "",
             aadhaar_url: "",
             pan_url: "",
-            passport_url: "",
-            offer_letter_url: "",
+            bank_passbook_url: emp.bank_passbook_url || emp.passport_url || "",
             appointment_letter_url: "",
             nda_url: "",
             username: "",
             official_email: "",
             password: "",
-            confirm_password: "",
+            educational_details: emp.educational_details ? JSON.parse(emp.educational_details) : [{ course: "", institution: "", percentage: "", year_of_passing: "" }],
           });
           setExistingFiles({
             profile_photo: emp.profile_photo || null,
             resume_url: emp.resume_url || null,
             aadhaar_url: emp.aadhaar_url || null,
             pan_url: emp.pan_url || null,
-            passport_url: emp.passport_url || null,
-            offer_letter_url: emp.offer_letter_url || null,
+            bank_passbook_url: emp.bank_passbook_url || emp.passport_url || null,
             appointment_letter_url: emp.appointment_letter_url || null,
             nda_url: emp.nda_url || null,
           });
@@ -193,6 +323,8 @@ const EmployeeAdd = () => {
 
     fetchEmployee();
   }, [id, isEditMode]);
+
+  const departments = ["Frontend", "Backend"];
 
   const validateField = (name, value) => {
     if (!value) return "";
@@ -243,6 +375,7 @@ const EmployeeAdd = () => {
 
   const validateForm = (data) => {
     const errors = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!data.mobile_number?.trim()) {
       errors.mobile_number = "Mobile number is required.";
@@ -275,71 +408,149 @@ const EmployeeAdd = () => {
       errors.upi_id = validateField("upi_id", data.upi_id);
     }
 
-    if (data.emergency_contact_number && validateField("emergency_contact_number", data.emergency_contact_number)) {
-      errors.emergency_contact_number = validateField("emergency_contact_number", data.emergency_contact_number);
+    if (!data.personal_email?.trim()) {
+      errors.personal_email = "Personal email is required.";
+    } else if (!emailPattern.test(data.personal_email)) {
+      errors.personal_email = "Personal email must be a valid email address.";
+    }
+
+    if (!data.dob) {
+      errors.dob = "Date of birth is required.";
+    } else {
+      const dobDate = new Date(data.dob);
+      if (Number.isNaN(dobDate.getTime())) {
+        errors.dob = "Date of birth is invalid.";
+      } else {
+        const today = new Date();
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+          age -= 1;
+        }
+        if (age < 18) {
+          errors.dob = "Employee must be at least 18 years old.";
+        }
+      }
+    }
+
+    if (!data.salary_type) {
+      errors.salary_type = "Salary type is required.";
+    }
+
+    if (!data.bank_name?.trim()) {
+      errors.bank_name = "Bank name is required.";
+    }
+
+    if (!data.account_number?.trim()) {
+      errors.account_number = "Account number is required.";
+    }
+
+    if (!data.ifsc_code?.trim()) {
+      errors.ifsc_code = "IFSC code is required.";
+    }
+
+    if (!data.upi_id?.trim()) {
+      errors.upi_id = "UPI ID is required.";
+    }
+
+    if (!isEditMode) {
+      if (!data.username?.trim()) {
+        errors.username = "Username is required.";
+      }
+      if (!data.official_email?.trim()) {
+        errors.official_email = "Official email is required.";
+      } else if (!emailPattern.test(data.official_email)) {
+        errors.official_email = "Official email must be a valid email address.";
+      }
+    }
+
+    if (Array.isArray(data.educational_details)) {
+      const incompleteRow = data.educational_details.some((row) => {
+        const fields = [row.course, row.institution, row.percentage, row.year_of_passing].map((value) => value?.trim());
+        const hasAnyValue = fields.some(Boolean);
+        const hasAllValues = fields.every(Boolean);
+        return hasAnyValue && !hasAllValues;
+      });
+
+      if (incompleteRow) {
+        errors.educational_details = "Complete or remove any incomplete education row.";
+      }
     }
 
     return errors;
   };
 
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value, files, type } = e.target;
+    let sanitizedValue = value;
+
     if (type === "file") {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
-    } else {
-      let sanitizedValue = value;
+      const file = files?.[0];
+      if (!file) return;
 
-      switch (name) {
-        case "mobile_number":
-        case "alternate_mobile":
-        case "emergency_contact_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
-          break;
-        case "aadhaar_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
-          break;
-        case "pan_number":
-          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
-          break;
-        case "account_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
-          break;
-        case "ifsc_code":
-          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
-          break;
-        case "upi_id":
-          sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
-          break;
-        default:
-          break;
-      }
-
-      setFormData((prev) => {
-        const newData = { ...prev, [name]: sanitizedValue };
-        if (!isEditMode) {
-          if (name === "first_name" || name === "last_name") {
-            const first = name === "first_name" ? sanitizedValue : prev.first_name;
-            const last = name === "last_name" ? sanitizedValue : prev.last_name;
-            newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
-          }
-          if (name === "personal_email") {
-            newData.official_email = sanitizedValue;
-          }
-        }
-        return newData;
-      });
-
+      setFormData((prev) => ({ ...prev, [name]: file }));
       setFieldErrors((prev) => {
         const nextErrors = { ...prev };
-        const error = validateField(name, sanitizedValue);
-        if (error) {
-          nextErrors[name] = error;
-        } else {
-          delete nextErrors[name];
-        }
+        delete nextErrors[name];
         return nextErrors;
       });
+      return;
     }
+
+    switch (name) {
+      case "mobile_number":
+      case "alternate_mobile":
+      case "emergency_contact_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
+        break;
+      case "aadhaar_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
+        break;
+      case "pan_number":
+        sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
+        break;
+      case "account_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
+        break;
+      case "ifsc_code":
+        sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
+        break;
+      case "upi_id":
+        sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
+        break;
+      default:
+        break;
+    }
+
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: sanitizedValue };
+      if (!isEditMode) {
+        if (name === "first_name" || name === "last_name") {
+          const first = name === "first_name" ? sanitizedValue : prev.first_name;
+          const last = name === "last_name" ? sanitizedValue : prev.last_name;
+          newData.username = `${first.toLowerCase()}${last ? "." + last.toLowerCase() : ""}`.replace(/\s+/g, "");
+        }
+        if (name === "personal_email") {
+          newData.official_email = sanitizedValue;
+        }
+        if (name === "mobile_number") {
+          // autofill password with mobile for initial creation
+          newData.password = sanitizedValue;
+        }
+      }
+      return newData;
+    });
+
+    setFieldErrors((prev) => {
+      const nextErrors = { ...prev };
+      const error = validateField(name, sanitizedValue);
+      if (error) {
+        nextErrors[name] = error;
+      } else {
+        delete nextErrors[name];
+      }
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -347,22 +558,13 @@ const EmployeeAdd = () => {
     setLoading(true);
     setError(null);
 
-    if (!isEditMode && formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
-    if (isEditMode && formData.password && formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
-      setError("Please correct the highlighted fields before saving.");
+      const errorMessages = Object.values(validationErrors).join(" | ");
+      setError(errorMessages);
       setLoading(false);
       return;
     }
@@ -373,10 +575,15 @@ const EmployeeAdd = () => {
       const token = localStorage.getItem("token");
 
       const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== "" && formData[key] !== null) {
-          submitData.append(key, formData[key]);
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] === "" || formData[key] === null) return;
+
+        if (key === "educational_details") {
+          submitData.append(key, JSON.stringify(formData[key]));
+          return;
         }
+
+        submitData.append(key, formData[key]);
       });
 
       const url = isEditMode
@@ -478,8 +685,8 @@ const EmployeeAdd = () => {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Date of Birth</label>
-              <input type="date" name="dob" value={formData.dob} onChange={handleChange} className={inputClass} />
+              <label className={labelClass}>Date of Birth <span className="text-red-500">*</span></label>
+              <input type="date" name="dob" required value={formData.dob} onChange={handleChange} className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
@@ -508,7 +715,22 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <input type="text" name="nationality" value={formData.nationality} onChange={handleChange} className={inputClass} placeholder="Enter nationality" />
+              <select
+                name="nationality"
+                value={formData.nationality}
+                onChange={handleChange}
+                className={`${inputClass} bg-[#111827] text-white border border-white/20`}
+              >
+                {countries.map((country) => (
+                  <option
+                    key={country}
+                    value={country}
+                    className="bg-[#111827] text-white"
+                  >
+                    {country}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
@@ -531,8 +753,9 @@ const EmployeeAdd = () => {
               {fieldErrors.alternate_mobile && <p className="mt-1 text-xs text-red-400">{fieldErrors.alternate_mobile}</p>}
             </div>
             <div>
-              <label className={labelClass}>Personal Email</label>
-              <input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
+              <label className={labelClass}>Personal Email <span className="text-red-500">*</span></label>
+              <input type="email" name="personal_email" required value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
+              {fieldErrors.personal_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.personal_email}</p>}
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelClass}>Permanent Address</label>
@@ -572,8 +795,13 @@ const EmployeeAdd = () => {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className={labelClass}>Designation</label>
-              <input type="text" name="designation" value={formData.designation} onChange={handleChange} className={inputClass} placeholder="Enter designation" />
+              <label className={labelClass}>Department</label>
+              <select name="department" value={formData.department} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d} value={d} className="bg-black text-white">{d}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Team Lead</label>
@@ -616,33 +844,77 @@ const EmployeeAdd = () => {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
-              <label className={labelClass}>Salary Type</label>
-              <input type="text" name="salary_type" value={formData.salary_type} onChange={handleChange} className={inputClass} placeholder="Enter salary type" />
+              <label className={labelClass}>Salary Type <span className="text-red-500">*</span></label>
+              <select name="salary_type" required value={formData.salary_type} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
+                <option value="" className="bg-black text-white">Select Salary Type</option>
+                <option value="Daily" className="bg-black text-white">Daily</option>
+                <option value="Weekly" className="bg-black text-white">Weekly</option>
+                <option value="Monthly" className="bg-black text-white">Monthly</option>
+              </select>
+              {fieldErrors.salary_type && <p className="mt-1 text-xs text-red-400">{fieldErrors.salary_type}</p>}
             </div>
             <div>
               <label className={labelClass}>Basic Salary</label>
               <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} placeholder="Enter basic salary" />
             </div>
             <div>
-              <label className={labelClass}>Bank Name</label>
-              <input type="text" name="bank_name" value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
+              <label className={labelClass}>Bank Name <span className="text-red-500">*</span></label>
+              <input type="text" name="bank_name" required value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
+              {fieldErrors.bank_name && <p className="mt-1 text-xs text-red-400">{fieldErrors.bank_name}</p>}
             </div>
             <div>
-              <label className={labelClass}>Account Number</label>
-              <input type="text" name="account_number" value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
+              <label className={labelClass}>Account Number <span className="text-red-500">*</span></label>
+              <input type="text" name="account_number" required value={formData.account_number} onChange={handleChange} className={inputClass} placeholder="Only digits, 6-20" />
               {fieldErrors.account_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.account_number}</p>}
             </div>
             <div>
-              <label className={labelClass}>IFSC Code</label>
-              <input type="text" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
+              <label className={labelClass}>IFSC Code <span className="text-red-500">*</span></label>
+              <input type="text" name="ifsc_code" required value={formData.ifsc_code} onChange={handleChange} className={inputClass} placeholder="SBIN0001234" />
               {fieldErrors.ifsc_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.ifsc_code}</p>}
             </div>
             <div>
-              <label className={labelClass}>UPI ID</label>
-              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
+              <label className={labelClass}>UPI ID <span className="text-red-500">*</span></label>
+              <input type="text" name="upi_id" required value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
               {fieldErrors.upi_id && <p className="mt-1 text-xs text-red-400">{fieldErrors.upi_id}</p>}
             </div>
           </div>
+        </div>
+
+        {/* Educational Details */}
+        <div className={sectionClass}>
+          <div className="mb-4 border-b border-white/10 pb-3">
+            <h2 className="text-lg font-semibold text-white">Educational Details</h2>
+            <p className="text-xs text-white/40">Add academic qualifications (multiple rows)</p>
+          </div>
+          <div className="space-y-3">
+            {(formData.educational_details || []).map((row, idx) => (
+              <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-4 items-end">
+                <div>
+                  <label className={labelClass}>Course</label>
+                  <input value={row.course} onChange={e => handleEducationChange(idx, 'course', e.target.value)} className={inputClass} placeholder="Course" />
+                </div>
+                <div>
+                  <label className={labelClass}>Institution</label>
+                  <input value={row.institution} onChange={e => handleEducationChange(idx, 'institution', e.target.value)} className={inputClass} placeholder="Institution" />
+                </div>
+                <div>
+                  <label className={labelClass}>Percentage</label>
+                  <input value={row.percentage} onChange={e => handleEducationChange(idx, 'percentage', e.target.value)} className={inputClass} placeholder="Percentage" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div style={{ flex: 1 }}>
+                    <label className={labelClass}>Year of Passing</label>
+                    <input value={row.year_of_passing} onChange={e => handleEducationChange(idx, 'year_of_passing', e.target.value)} className={inputClass} placeholder="YYYY" />
+                  </div>
+                  <div className="mt-6 flex gap-2">
+                    <button type="button" onClick={() => addEducationRow()} className="rounded-xl bg-white/5 px-3 py-1 text-sm">+</button>
+                    {idx > 0 && <button type="button" onClick={() => removeEducationRow(idx)} className="rounded-xl bg-white/5 px-3 py-1 text-sm">-</button>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {fieldErrors.educational_details && <p className="mt-3 text-sm text-red-400">{fieldErrors.educational_details}</p>}
         </div>
 
         {/* Documents */}
@@ -680,20 +952,11 @@ const EmployeeAdd = () => {
               )}
             </div>
             <div>
-              <label className={labelClass}>Passport</label>
-              <input type="file" name="passport_url" onChange={handleChange} className={inputClass} />
-              {existingFiles.passport_url && (
-                <a href={getFileUrl(existingFiles.passport_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
-                  View Current Passport
-                </a>
-              )}
-            </div>
-            <div>
-              <label className={labelClass}>Offer Letter</label>
-              <input type="file" name="offer_letter_url" onChange={handleChange} className={inputClass} />
-              {existingFiles.offer_letter_url && (
-                <a href={getFileUrl(existingFiles.offer_letter_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
-                  View Current Offer Letter
+              <label className={labelClass}>Bank Passbook</label>
+              <input type="file" name="bank_passbook_url" onChange={handleChange} className={inputClass} />
+              {existingFiles.bank_passbook_url && (
+                <a href={getFileUrl(existingFiles.bank_passbook_url)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
+                  View Current Bank Passbook
                 </a>
               )}
             </div>
@@ -724,30 +987,23 @@ const EmployeeAdd = () => {
               <h2 className="text-lg font-semibold text-white">Login & Access</h2>
               <p className="text-xs text-white/40">Credentials for the employee portal</p>
             </div>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
                 <label className={labelClass}>Username <span className="text-red-500">*</span></label>
                 <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+                {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
               </div>
               <div>
                 <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
                 <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+                {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
               </div>
-              <div className="relative">
-                <label className={labelClass}>Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                <input type={showPassword ? "text" : "password"} name="password" required={!isEditMode} value={formData.password} onChange={handleChange} className={inputClass} placeholder={isEditMode ? "Leave blank to keep unchanged" : "Enter password"} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-                <p className="mt-1 text-xs text-slate-500">Password must be at least 6 characters long.</p>
+              <div>
+                <label className={labelClass}>Mobile Number</label>
+                <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
+                {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
               </div>
-              <div className="relative">
-                <label className={labelClass}>Confirm Password {isEditMode ? "" : <span className="text-red-500">*</span>}</label>
-                <input type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEditMode && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} className={inputClass} placeholder="Confirm password" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
-                  {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-              </div>
+              {/* Passwords are managed by employee portal; admin will not set password here. */}
             </div>
           </div>
         )}
