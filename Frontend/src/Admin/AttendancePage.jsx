@@ -111,7 +111,8 @@ const AttendancePage = () => {
   const employeeLookup = new Map((employeeData || []).map((emp) => [emp.employee_id, emp]));
   const fallbackDepartmentData = Object.values(summaryData.reduce((acc, row) => {
     const employee = employeeLookup.get(row.employee_id);
-    const departmentName = employee?.department?.trim() || employee?.designation?.trim() || 'General';
+    const departmentSource = [employee?.designation, employee?.role, employee?.team_lead].filter(Boolean).join(' ');
+    const departmentName = departmentSource || 'General';
     const normalizedDepartment = departmentName.toLowerCase().includes('hr')
       ? 'HR'
       : departmentName.toLowerCase().includes('design')

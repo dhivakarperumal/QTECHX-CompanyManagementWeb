@@ -290,8 +290,7 @@ async function summary(req, res) {
     const [departmentRows] = await db.execute(
       `SELECT
          CASE
-           WHEN TRIM(COALESCE(e.department, '')) <> '' THEN e.department
-           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%hr%' THEN 'HR'
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%hr%' OR LOWER(COALESCE(e.role, '')) = 'hr' THEN 'HR'
            WHEN LOWER(COALESCE(e.designation, '')) LIKE '%design%' THEN 'Design'
            WHEN LOWER(COALESCE(e.designation, '')) LIKE '%marketing%' THEN 'Marketing'
            WHEN LOWER(COALESCE(e.designation, '')) LIKE '%sales%' THEN 'Sales'
