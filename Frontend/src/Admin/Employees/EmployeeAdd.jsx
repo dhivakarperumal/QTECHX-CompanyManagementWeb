@@ -375,6 +375,7 @@ const EmployeeAdd = () => {
 
   const validateForm = (data) => {
     const errors = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!data.mobile_number?.trim()) {
       errors.mobile_number = "Mobile number is required.";
@@ -407,12 +408,10 @@ const EmployeeAdd = () => {
       errors.upi_id = validateField("upi_id", data.upi_id);
     }
 
-    if (data.personal_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.personal_email)) {
-      errors.personal_email = "Personal email must be a valid email address.";
-    }
-
     if (!data.personal_email?.trim()) {
       errors.personal_email = "Personal email is required.";
+    } else if (!emailPattern.test(data.personal_email)) {
+      errors.personal_email = "Personal email must be a valid email address.";
     }
 
     if (!data.dob) {
@@ -439,12 +438,28 @@ const EmployeeAdd = () => {
       errors.upi_id = "UPI ID is required.";
     }
 
+    if (!isEditMode) {
+      if (!data.username?.trim()) {
+        errors.username = "Username is required.";
+      }
+      if (!data.official_email?.trim()) {
+        errors.official_email = "Official email is required.";
+      } else if (!emailPattern.test(data.official_email)) {
+        errors.official_email = "Official email must be a valid email address.";
+      }
+    }
+
     if (Array.isArray(data.educational_details)) {
-      data.educational_details.forEach((row, index) => {
-        if (!row.course?.trim() || !row.institution?.trim() || !row.percentage?.trim() || !row.year_of_passing?.trim()) {
-          errors.educational_details = "All educational detail rows must be fully completed.";
-        }
+      const incompleteRow = data.educational_details.some((row) => {
+        const fields = [row.course, row.institution, row.percentage, row.year_of_passing].map((value) => value?.trim());
+        const hasAnyValue = fields.some(Boolean);
+        const hasAllValues = fields.every(Boolean);
+        return hasAnyValue && !hasAllValues;
       });
+
+      if (incompleteRow) {
+        errors.educational_details = "Complete or remove any incomplete education row.";
+      }
     }
 
     return errors;
@@ -654,7 +669,7 @@ const EmployeeAdd = () => {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Date of Birth</label>
+              <label className={labelClass}>Date of Birth <span className="text-red-500">*</span></label>
               <input type="date" name="dob" required value={formData.dob} onChange={handleChange} className={inputClass} />
             </div>
             <div>
@@ -724,6 +739,7 @@ const EmployeeAdd = () => {
             <div>
               <label className={labelClass}>Personal Email <span className="text-red-500">*</span></label>
               <input type="email" name="personal_email" required value={formData.personal_email} onChange={handleChange} className={inputClass} placeholder="Enter personal email" />
+              {fieldErrors.personal_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.personal_email}</p>}
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className={labelClass}>Permanent Address</label>
@@ -819,6 +835,7 @@ const EmployeeAdd = () => {
                 <option value="Weekly" className="bg-black text-white">Weekly</option>
                 <option value="Monthly" className="bg-black text-white">Monthly</option>
               </select>
+              {fieldErrors.salary_type && <p className="mt-1 text-xs text-red-400">{fieldErrors.salary_type}</p>}
             </div>
             <div>
               <label className={labelClass}>Basic Salary</label>
@@ -827,6 +844,7 @@ const EmployeeAdd = () => {
             <div>
               <label className={labelClass}>Bank Name <span className="text-red-500">*</span></label>
               <input type="text" name="bank_name" required value={formData.bank_name} onChange={handleChange} className={inputClass} placeholder="Enter bank name" />
+              {fieldErrors.bank_name && <p className="mt-1 text-xs text-red-400">{fieldErrors.bank_name}</p>}
             </div>
             <div>
               <label className={labelClass}>Account Number <span className="text-red-500">*</span></label>
@@ -880,7 +898,9 @@ const EmployeeAdd = () => {
               </div>
             ))}
           </div>
+          {fieldErrors.educational_details && <p className="mt-3 text-sm text-red-400">{fieldErrors.educational_details}</p>
         </div>
+        
 
         {/* Documents */}
         <div className={sectionClass}>
@@ -952,14 +972,21 @@ const EmployeeAdd = () => {
               <h2 className="text-lg font-semibold text-white">Login & Access</h2>
               <p className="text-xs text-white/40">Credentials for the employee portal</p>
             </div>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
                 <label className={labelClass}>Username <span className="text-red-500">*</span></label>
                 <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+                {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
               </div>
               <div>
                 <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
                 <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+                {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
+              </div>
+              <div>
+                <label className={labelClass}>Mobile Number</label>
+                <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
+                {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
               </div>
               {/* Passwords are managed by employee portal; admin will not set password here. */}
             </div>
