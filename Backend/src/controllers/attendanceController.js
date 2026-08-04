@@ -222,10 +222,10 @@ async function summary(req, res) {
     const year = Number(req.query.year || currentYear);
     const rows = await getAttendanceSummary({ month, year });
 
+    const db = getDB();
+
     // If viewing current month, inject today's records and dynamically calculate missing statuses
     if (month === currentMonth && year === currentYear) {
-      const db = getDB();
-      // Ensure we use the exact local date string for querying the database
       const now = new Date();
       const todayDate = [
         now.getFullYear(),
@@ -245,18 +245,17 @@ async function summary(req, res) {
         const todayRecord = recordsByEmp[String(row.employee_id)];
         
         if (!todayRecord) {
-          // If no record exists yet today, evaluate late/absent based on time
-          // (Assuming 570 = 9:30 AM, 600 = 10:00 AM)
-          if (timeInMinutes > 600) {
+          if (timeInMinutes > 585) {
             row.absent_days = (row.absent_days || 0) + 1;
             row.today_status = 'Leave';
-          } else if (timeInMinutes > 570) {
+          } else if (timeInMinutes >= 570) {
             row.today_status = 'Late';
           } else {
-            row.today_status = 'Pending'; // Not late yet, but hasn't clocked in
+            row.today_status = 'Pending';
           }
         } else {
-           row.today_status = todayRecord.attendance_status || 'Present';
+           const hasLateEntry = Boolean(todayRecord.late_entry && todayRecord.late_entry !== 'No' && todayRecord.late_entry !== '0h 0m');
+           row.today_status = hasLateEntry ? 'Late' : (todayRecord.attendance_status || 'Present');
            row.check_in_time = todayRecord.check_in_time;
            row.check_out_time = todayRecord.check_out_time;
            row.break_start_time = todayRecord.break_start_time;
@@ -269,7 +268,77 @@ async function summary(req, res) {
       }
     }
 
-    return res.json({ data: rows, month, year });
+    const [trendRows] = await db.execute(
+      `SELECT attendance_date,
+              SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+              SUM(CASE WHEN attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count
+       FROM attendance
+       WHERE month = ? AND year = ?
+       GROUP BY attendance_date
+       ORDER BY attendance_date`,
+      [month, year]
+    );
+
+    const trendData = (trendRows || []).slice(-7).map((entry) => {
+      const date = new Date(`${entry.attendance_date}T00:00:00`);
+      return {
+        name: date.toLocaleDateString('en-GB', { weekday: 'short' }),
+        count: Number(entry.present_count || 0) + Number(entry.late_count || 0)
+      };
+    });
+
+    const [departmentRows] = await db.execute(
+      `SELECT
+         CASE
+           WHEN TRIM(COALESCE(e.department, '')) <> '' THEN e.department
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%hr%' THEN 'HR'
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%design%' THEN 'Design'
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%marketing%' THEN 'Marketing'
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%sales%' THEN 'Sales'
+           WHEN LOWER(COALESCE(e.designation, '')) LIKE '%developer%' OR LOWER(COALESCE(e.designation, '')) LIKE '%software%' OR LOWER(COALESCE(e.designation, '')) LIKE '%engineer%' THEN 'Development'
+           ELSE 'General'
+         END AS department_name,
+         COUNT(*) AS total_employees,
+         SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+         SUM(CASE WHEN a.attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count,
+         SUM(CASE WHEN a.attendance_status = 'Leave' THEN 1 ELSE 0 END) AS leave_count
+       FROM employees e
+       LEFT JOIN attendance a ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?
+       WHERE e.employment_status = 'Active'
+       GROUP BY department_name
+       ORDER BY present_count DESC, department_name`,
+      [month, year]
+    );
+
+    const departmentColors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
+    const departmentData = (departmentRows || []).map((row, index) => {
+      const total = Number(row.total_employees || 0) || 1;
+      const present = Number(row.present_count || 0);
+      return {
+        name: row.department_name || 'General',
+        value: Math.max(1, Math.round((present / total) * 100)),
+        color: departmentColors[index % departmentColors.length]
+      };
+    });
+
+    const [activityRows] = await db.execute(
+      `SELECT a.*, e.first_name, e.last_name, e.employee_code
+       FROM attendance a
+       LEFT JOIN employees e ON e.employee_id = a.employee_id
+       WHERE a.month = ? AND a.year = ?
+       ORDER BY COALESCE(a.updated_at, a.created_at) DESC
+       LIMIT 6`,
+      [month, year]
+    );
+
+    const recentActivity = (activityRows || []).map((row) => ({
+      employee_name: row.employee_name || `${row.first_name || ''} ${row.last_name || ''}`.trim() || row.employee_code || 'Employee',
+      status: row.attendance_status || 'Present',
+      check_in_time: row.check_in_time || null,
+      updated_at: row.updated_at || row.created_at
+    }));
+
+    return res.json({ data: rows, month, year, trendData, departmentData, recentActivity });
   } catch (error) {
     console.error("Attendance summary error:", error);
     return res.status(500).json({ message: "Failed to retrieve attendance summary" });

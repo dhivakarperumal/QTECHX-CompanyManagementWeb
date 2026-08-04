@@ -1,7 +1,22 @@
 const { getDB } = require("../config/db");
 
+async function resolveEmployeeName(employeeId) {
+  if (!employeeId) return null;
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT CONCAT(first_name, COALESCE(CONCAT(' ', last_name), '')) AS employee_name
+     FROM employees WHERE employee_id = ? LIMIT 1`,
+    [employeeId]
+  );
+  return rows[0]?.employee_name?.trim() || null;
+}
+
 async function createAttendance(record) {
   const db = getDB();
+  if (!record.employee_name && record.employee_id) {
+    record.employee_name = await resolveEmployeeName(record.employee_id);
+  }
+
   const [existing] = await db.execute(
     "SELECT id FROM attendance WHERE employee_id = ? AND attendance_date = ? LIMIT 1",
     [record.employee_id, record.attendance_date]
@@ -75,6 +90,10 @@ async function getEmployeeAttendance({ employeeId, month, year }) {
 }
 async function updateAttendance(id, record) {
   const db = getDB();
+  if (!record.employee_name && record.employee_id) {
+    record.employee_name = await resolveEmployeeName(record.employee_id);
+  }
+
   const fields = Object.keys(record).filter((key) => record[key] !== undefined);
   if (fields.length === 0) return findById(id);
 

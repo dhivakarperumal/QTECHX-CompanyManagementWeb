@@ -1270,6 +1270,7 @@ async function ensureAttendanceSchema(pool) {
     `CREATE TABLE IF NOT EXISTS attendance (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       employee_id VARCHAR(36) NOT NULL,
+      employee_name VARCHAR(255) NULL,
       attendance_date DATE NOT NULL,
       month INT NOT NULL,
       year INT NOT NULL,
@@ -1304,6 +1305,7 @@ async function ensureAttendanceSchema(pool) {
     }
   };
 
+  addColumn('employee_name', 'VARCHAR(255) NULL');
   addColumn('break_start_time', 'VARCHAR(20) NULL');
   addColumn('break_end_time', 'VARCHAR(20) NULL');
 
