@@ -43,7 +43,7 @@ const EmployeeAttendanceSummary = () => {
   const [form, setForm] = useState({
     date: todayDate,
     check_in_time: '09:30',
-    check_out_time: '18:00',
+    check_out_time: '',
     break_start_time: '',
     break_end_time: '',
     attendance_status: 'Present',
@@ -115,6 +115,21 @@ const EmployeeAttendanceSummary = () => {
       );
       setMetrics(computed);
     }
+  };
+
+  const fillCurrentTime = (field) => {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const nextForm = { ...form, [field]: timeStr };
+    setForm(nextForm);
+    
+    const computed = calculateMetrics(
+      nextForm.check_in_time,
+      nextForm.check_out_time,
+      nextForm.break_start_time,
+      nextForm.break_end_time
+    );
+    setMetrics(computed);
   };
 
   const calculateMetrics = (checkIn, checkOut, breakStart, breakEnd) => {
@@ -518,20 +533,32 @@ const EmployeeAttendanceSummary = () => {
 
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                    <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                    </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                    <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                    </div>
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
-                    <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                    </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break End Time</label>
-                    <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                    </div>
                   </div>
 
                   <div>
