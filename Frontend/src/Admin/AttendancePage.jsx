@@ -252,7 +252,7 @@ const AttendancePage = () => {
       <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-white">Today's Timesheet (Live)</h3>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.24em] text-white/50">Full width</span>
+          
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left">
@@ -302,7 +302,7 @@ const AttendancePage = () => {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Trend */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
