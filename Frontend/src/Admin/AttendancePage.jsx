@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle, Loader2 } from "lucide-react";
 import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { useCallback } from "react";
 
 const AttendancePage = () => {
   const [summaryData, setSummaryData] = useState([]);

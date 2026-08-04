@@ -92,4 +92,4 @@ async function getEmployeeAttendanceToday(employeeId, attendanceDate) {
   return rows[0] || null;
 }
 
-module.exports = { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday };
+module.exports = { createAttendance, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday };

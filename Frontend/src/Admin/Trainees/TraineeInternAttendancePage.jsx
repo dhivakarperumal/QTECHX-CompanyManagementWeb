@@ -277,56 +277,57 @@ export default function TraineeInternAttendancePage() {
                 </button>
               </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/70">Trainee / Intern</label>
-                <select name="trainee_intern_id" value={form.trainee_intern_id} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                  <option value="" disabled>Select member</option>
-                  {members.map((member) => (
-                    <option key={member.uuid} value={member.uuid} className="bg-slate-900">{member.full_name} ({member.person_id || member.uuid})</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Date</label>
-                <input type="date" name="date" value={form.date} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                  <option value="Present" className="bg-slate-900">Present</option>
-                  <option value="Absent" className="bg-slate-900">Absent</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="grid gap-3 md:grid-cols-4 text-sm">
-                  <div><p className="text-white/40">Working Hours</p><p className="mt-1 font-semibold text-white">{metrics.working_hours}</p></div>
-                  <div><p className="text-white/40">Late Entry</p><p className="mt-1 font-semibold text-white">{metrics.late_entry}</p></div>
-                  <div><p className="text-white/40">Early Exit</p><p className="mt-1 font-semibold text-white">{metrics.early_exit}</p></div>
-                  <div><p className="text-white/40">Overtime</p><p className="mt-1 font-semibold text-white">{metrics.overtime}</p></div>
+              <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm text-white/70">Trainee / Intern</label>
+                  <select name="trainee_intern_id" value={form.trainee_intern_id} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
+                    <option value="" disabled>Select member</option>
+                    {members.map((member) => (
+                      <option key={member.uuid} value={member.uuid} className="bg-slate-900">{member.full_name} ({member.person_id || member.uuid})</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/70">Location</label>
-                <input type="text" name="location" value={form.location} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" placeholder="Optional location" />
-              </div>
-              <div className="md:col-span-2 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/70">Cancel</button>
-                <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 hover:bg-orange-600 px-6 py-3 font-medium text-white transition disabled:opacity-50 flex justify-center items-center">
-                  {submitting ? "Saving..." : "Save / Update"}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="mb-2 block text-sm text-white/70">Date</label>
+                  <input type="date" name="date" value={form.date} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
+                  <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
+                    <option value="Present" className="bg-slate-900">Present</option>
+                    <option value="Absent" className="bg-slate-900">Absent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
+                  <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
+                  <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                </div>
+                <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="grid gap-3 md:grid-cols-4 text-sm">
+                    <div><p className="text-white/40">Working Hours</p><p className="mt-1 font-semibold text-white">{metrics.working_hours}</p></div>
+                    <div><p className="text-white/40">Late Entry</p><p className="mt-1 font-semibold text-white">{metrics.late_entry}</p></div>
+                    <div><p className="text-white/40">Early Exit</p><p className="mt-1 font-semibold text-white">{metrics.early_exit}</p></div>
+                    <div><p className="text-white/40">Overtime</p><p className="mt-1 font-semibold text-white">{metrics.overtime}</p></div>
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm text-white/70">Location</label>
+                  <input type="text" name="location" value={form.location} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" placeholder="Optional location" />
+                </div>
+                <div className="md:col-span-2 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/70">Cancel</button>
+                  <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 hover:bg-orange-600 px-6 py-3 font-medium text-white transition disabled:opacity-50 flex justify-center items-center">
+                    {submitting ? "Saving..." : "Save / Update"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
