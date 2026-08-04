@@ -50,6 +50,31 @@ async function findById(id) {
   return rows[0] || null;
 }
 
+async function getAttendanceSummary({ month, year }) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT
+       e.employee_id,
+       e.employee_code,
+       CONCAT(e.first_name, ' ', COALESCE(e.last_name, '')) AS employee_name,
+       SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_days,
+       SUM(CASE WHEN a.attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_days
+     FROM employees e
+     LEFT JOIN attendance a
+       ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?
+     WHERE e.employment_status = 'Active'
+     GROUP BY e.employee_id, e.employee_code, e.first_name, e.last_name
+     ORDER BY e.first_name, e.last_name`,
+    [month, year]
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    present_days: Number(row.present_days || 0),
+    absent_days: Number(row.absent_days || 0),
+  }));
+}
+
 async function getEmployeeAttendance({ employeeId, month, year }) {
   const db = getDB();
   const [rows] = await db.execute(
@@ -92,4 +117,4 @@ async function getEmployeeAttendanceToday(employeeId, attendanceDate) {
   return rows[0] || null;
 }
 
-module.exports = { createAttendance, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday };
+module.exports = { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday };
