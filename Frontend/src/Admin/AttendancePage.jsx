@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle } from "lucide-react";
 import api from "../api";
-import { Link } from "react-router-dom";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 const AttendancePage = () => {
@@ -11,9 +10,26 @@ const AttendancePage = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState("");
+
   const today = new Date();
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedToday = today.toLocaleDateString('en-GB', dateOptions);
+  const todayDateStr = today.toISOString().slice(0, 10);
+
+  const [form, setForm] = useState({
+    employee_id: "",
+    date: todayDateStr,
+    check_in_time: "09:30",
+    check_out_time: "18:00",
+    break_start_time: "",
+    break_end_time: "",
+    attendance_status: "Present",
+    location: "Marked by Admin",
+  });
 
   useEffect(() => {
     loadData();
@@ -35,6 +51,31 @@ const AttendancePage = () => {
     }
   };
 
+  const handleFormChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.employee_id) {
+       setError("Please select an employee");
+       return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.post("/attendance", form);
+      setSuccessMsg("Attendance marked successfully!");
+      setIsModalOpen(false);
+      setTimeout(() => setSuccessMsg(""), 3000);
+      loadData();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to mark attendance");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Metrics Calculation
   const totalEmployees = employeeData.length;
   const presentToday = summaryData.filter(s => s.today_status === 'Present').length;
@@ -42,14 +83,12 @@ const AttendancePage = () => {
   const onLeaveToday = summaryData.filter(s => s.today_status === 'Leave').length;
   const lateToday = summaryData.filter(s => s.today_status === 'Late').length;
   
-  // Estimate working now (based on Present and not clocked out if we had live data, assuming present = working for this summary)
   const workingNow = presentToday; 
 
   const overviewData = [
     { name: 'Present', value: presentToday, color: '#10b981' },
     { name: 'Late', value: lateToday, color: '#f59e0b' },
     { name: 'Absent', value: absentToday, color: '#ef4444' },
-    { name: 'Half Day', value: 0, color: '#8b5cf6' },
     { name: 'On Leave', value: onLeaveToday, color: '#3b82f6' }
   ];
 
@@ -71,29 +110,42 @@ const AttendancePage = () => {
   ];
 
   return (
-    <div className="space-y-6 text-slate-800 bg-slate-50 min-h-screen pb-10 font-sans">
+    <div className="space-y-6 text-white pb-10">
       
       {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
+          <h2 className="text-2xl font-bold text-white">Attendance Dashboard</h2>
+          <p className="mt-1 text-sm text-white/60">Overview of today's attendance and company metrics.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg">
-            <CalendarDays size={16} />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-white/70 font-medium bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+            <CalendarDays size={16} className="text-orange-400" />
             <span>{formattedToday}</span>
           </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-600 px-4 py-2 text-sm font-medium text-white transition"
+          >
+            <PlusCircle size={16} /> Mark Attendance
+          </button>
         </div>
       </div>
 
+      {successMsg && (
+        <div className="rounded-2xl border border-emerald-500/40 bg-emerald-900/20 p-4 text-emerald-200">
+          {successMsg}
+        </div>
+      )}
+
       {/* Top Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard icon={<Users className="text-blue-500" />} title="Total Employees" value={totalEmployees} subtext="+8 This Month" bgColor="bg-blue-50" />
-        <StatCard icon={<UserCheck className="text-emerald-500" />} title="Present Today" value={presentToday} subtext={`${presentPercentage}% of total`} bgColor="bg-emerald-50" />
-        <StatCard icon={<UserX className="text-rose-500" />} title="Absent Today" value={absentToday} subtext={`${((absentToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-rose-50" />
-        <StatCard icon={<UserMinus className="text-orange-500" />} title="On Leave Today" value={onLeaveToday} subtext={`${((onLeaveToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-orange-50" />
-        <StatCard icon={<Clock className="text-purple-500" />} title="Late Today" value={lateToday} subtext={`${presentToday > 0 ? ((lateToday/presentToday)*100).toFixed(1) : 0}% of present`} bgColor="bg-purple-50" />
-        <StatCard icon={<UserCog className="text-indigo-500" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-50" />
+        <StatCard icon={<Users className="text-blue-400" />} title="Total Employees" value={totalEmployees} subtext="+8 This Month" bgColor="bg-blue-500/10" />
+        <StatCard icon={<UserCheck className="text-emerald-400" />} title="Present Today" value={presentToday} subtext={`${presentPercentage}% of total`} bgColor="bg-emerald-500/10" />
+        <StatCard icon={<UserX className="text-rose-400" />} title="Absent Today" value={absentToday} subtext={`${((absentToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-rose-500/10" />
+        <StatCard icon={<UserMinus className="text-orange-400" />} title="On Leave Today" value={onLeaveToday} subtext={`${((onLeaveToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-orange-500/10" />
+        <StatCard icon={<Clock className="text-purple-400" />} title="Late Today" value={lateToday} subtext={`${presentToday > 0 ? ((lateToday/presentToday)*100).toFixed(1) : 0}% of present`} bgColor="bg-purple-500/10" />
+        <StatCard icon={<UserCog className="text-indigo-400" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-500/10" />
       </div>
 
       {/* Main Content Area */}
@@ -103,8 +155,8 @@ const AttendancePage = () => {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Overview Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6">Today's Attendance Overview</h3>
+          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+            <h3 className="text-lg font-bold text-white mb-6">Today's Attendance Overview</h3>
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-48 h-48 relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -114,12 +166,12 @@ const AttendancePage = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <RechartsTooltip />
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-bold text-slate-800">{presentPercentage}%</span>
-                  <span className="text-xs text-emerald-500 font-medium">Present</span>
+                  <span className="text-2xl font-bold text-white">{presentPercentage}%</span>
+                  <span className="text-xs text-emerald-400 font-medium">Present</span>
                 </div>
               </div>
               
@@ -128,9 +180,9 @@ const AttendancePage = () => {
                   <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span className="text-sm font-medium text-slate-600">{item.name}</span>
+                      <span className="text-sm font-medium text-white/70">{item.name}</span>
                     </div>
-                    <span className="text-sm font-bold text-slate-800">{item.value}</span>
+                    <span className="text-sm font-bold text-white">{item.value}</span>
                   </div>
                 ))}
               </div>
@@ -138,13 +190,13 @@ const AttendancePage = () => {
           </div>
 
           {/* Timesheet */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-800">Today's Timesheet (Live)</h3>
+                <h3 className="text-lg font-bold text-white">Today's Timesheet (Live)</h3>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-sm text-left">
-                 <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                 <thead className="bg-white/5 text-white/50 font-medium border-b border-white/10">
                    <tr>
                      <th className="py-3 px-4 rounded-tl-lg">Employee</th>
                      <th className="py-3 px-4">Start Time</th>
@@ -152,17 +204,17 @@ const AttendancePage = () => {
                      <th className="py-3 px-4">Status</th>
                    </tr>
                  </thead>
-                 <tbody className="divide-y divide-slate-50">
+                 <tbody className="divide-y divide-white/5">
                     {summaryData.slice(0, 5).map((row, i) => (
-                      <tr key={i} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-4 font-medium text-slate-700">{row.employee_name}</td>
-                        <td className="py-3 px-4 text-slate-500">{row.today_status === 'Present' || row.today_status === 'Late' ? '09:30 AM' : '--'}</td>
-                        <td className="py-3 px-4 text-slate-500">--</td>
+                      <tr key={i} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3 px-4 font-medium text-white">{row.employee_name}</td>
+                        <td className="py-3 px-4 text-white/60">{row.today_status === 'Present' || row.today_status === 'Late' ? '09:30 AM' : '--'}</td>
+                        <td className="py-3 px-4 text-white/60">--</td>
                         <td className="py-3 px-4">
-                           <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
-                              row.today_status === 'Present' ? 'bg-emerald-100 text-emerald-600' : 
-                              row.today_status === 'Late' ? 'bg-purple-100 text-purple-600' :
-                              'bg-rose-100 text-rose-600'
+                           <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                              row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 
+                              row.today_status === 'Late' ? 'bg-purple-500/10 text-purple-400' :
+                              'bg-rose-500/10 text-rose-400'
                            }`}>
                              {row.today_status || 'Unknown'}
                            </span>
@@ -180,29 +232,29 @@ const AttendancePage = () => {
         <div className="space-y-6">
           
           {/* Live Status */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-96 flex flex-col">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Live Status <span className="text-xs font-normal text-slate-400">(Real-time)</span></h3>
+          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 h-96 flex flex-col">
+            <h3 className="text-lg font-bold text-white mb-4">Live Status <span className="text-xs font-normal text-white/40">(Real-time)</span></h3>
             <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                {summaryData.slice(0, 6).map((user, i) => (
                  <div key={i} className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 uppercase">
+                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-white/70 uppercase">
                         {user.employee_name.charAt(0)}
                      </div>
                      <div>
-                       <p className="text-sm font-bold text-slate-800">{user.employee_name}</p>
-                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-500' : user.today_status === 'Late' ? 'text-purple-500' : 'text-slate-400'}`}>
+                       <p className="text-sm font-bold text-white">{user.employee_name}</p>
+                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'Late' ? 'text-purple-400' : 'text-white/40'}`}>
                          <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
                        </p>
                      </div>
                    </div>
                    <div className="text-right">
-                     <p className="text-sm font-bold text-slate-800">09:00 AM</p>
+                     <p className="text-sm font-bold text-white/80">09:00 AM</p>
                    </div>
                  </div>
                ))}
             </div>
-            <button className="w-full mt-4 py-2 text-sm font-bold text-blue-600 hover:text-blue-700 transition">
+            <button className="w-full mt-4 py-2 text-sm font-bold text-orange-400 hover:text-orange-300 transition">
               View All Employees &rarr;
             </button>
           </div>
@@ -214,24 +266,24 @@ const AttendancePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Trend */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-           <h3 className="text-lg font-bold text-slate-800 mb-6">Attendance Trend <span className="text-xs font-normal text-slate-400">(This Week)</span></h3>
+        <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+           <h3 className="text-lg font-bold text-white mb-6">Attendance Trend <span className="text-xs font-normal text-white/40">(This Week)</span></h3>
            <div className="h-48 w-full">
              <ResponsiveContainer width="100%" height="100%">
                <LineChart data={trendData}>
-                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff1a" />
                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                 <RechartsTooltip />
-                 <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                 <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                 <Line type="monotone" dataKey="count" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#0f172a' }} activeDot={{ r: 6 }} />
                </LineChart>
              </ResponsiveContainer>
            </div>
         </div>
 
         {/* Department Wise */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-           <h3 className="text-lg font-bold text-slate-800 mb-6">Department Wise Attendance</h3>
+        <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+           <h3 className="text-lg font-bold text-white mb-6">Department Wise Attendance</h3>
            <div className="flex items-center justify-between h-48">
               <div className="w-1/2 h-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -241,6 +293,7 @@ const AttendancePage = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -249,9 +302,9 @@ const AttendancePage = () => {
                   <div key={item.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span className="text-slate-600 font-medium">{item.name}</span>
+                      <span className="text-white/70 font-medium">{item.name}</span>
                     </div>
-                    <span className="text-slate-400">{item.value}%</span>
+                    <span className="text-white/40">{item.value}%</span>
                   </div>
                 ))}
               </div>
@@ -259,17 +312,17 @@ const AttendancePage = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-           <h3 className="text-lg font-bold text-slate-800 mb-4">Recent Activity</h3>
+        <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 overflow-hidden flex flex-col">
+           <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>
            <div className="flex-1 overflow-y-auto space-y-4">
              {summaryData.slice(0, 4).map((user, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mt-1">
-                     <span className="text-xs font-bold text-slate-500 uppercase">{user.employee_name.charAt(0)}</span>
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mt-1">
+                     <span className="text-xs font-bold text-white/50 uppercase">{user.employee_name.charAt(0)}</span>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-700 font-medium"><span className="font-bold text-slate-800">{user.employee_name}</span> logged in</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Today, 09:02 AM</p>
+                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{user.employee_name}</span> logged in</p>
+                    <p className="text-xs text-white/40 mt-0.5">Today, 09:02 AM</p>
                   </div>
                 </div>
              ))}
@@ -278,18 +331,141 @@ const AttendancePage = () => {
 
       </div>
 
+      {/* Mark Attendance Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70 p-4">
+          <div className="flex min-h-full items-start justify-center py-8">
+            <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Admin Action</p>
+                  <h3 className="text-xl font-semibold text-white">Mark Attendance</h3>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                {error && (
+                  <div className="mb-4 flex items-center gap-2 rounded-2xl border border-rose-500/40 bg-rose-900/20 p-4 text-sm text-rose-200">
+                    <AlertCircle size={16} className="shrink-0" /> {error}
+                  </div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-sm text-white/70">Select Employee</label>
+                    <select
+                      name="employee_id"
+                      value={form.employee_id}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    >
+                      <option value="" className="bg-slate-900 text-white/50">-- Select Employee --</option>
+                      {employeeData.map((emp) => (
+                        <option key={emp.employee_id} value={emp.employee_id} className="bg-slate-900 text-white">
+                          {emp.first_name} {emp.last_name} ({emp.employee_code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Date</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={form.date}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
+                    <select
+                      name="attendance_status"
+                      value={form.attendance_status}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    >
+                      <option value="Present" className="bg-slate-900">Present</option>
+                      <option value="Absent" className="bg-slate-900">Absent</option>
+                      <option value="Half Day" className="bg-slate-900">Half Day</option>
+                      <option value="Leave" className="bg-slate-900">Leave</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
+                    <input
+                      type="time"
+                      name="check_in_time"
+                      value={form.check_in_time}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
+                    <input
+                      type="time"
+                      name="check_out_time"
+                      value={form.check_out_time}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
+                    <input
+                      type="time"
+                      name="break_start_time"
+                      value={form.break_start_time}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Break End Time</label>
+                    <input
+                      type="time"
+                      name="break_end_time"
+                      value={form.break_end_time}
+                      onChange={handleFormChange}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2 pt-4 flex justify-end gap-3 border-t border-white/10">
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-6 py-3 text-white/70 hover:bg-white/10">Cancel</button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="rounded-2xl bg-orange-500 hover:bg-orange-600 px-6 py-3 font-medium text-white transition disabled:opacity-50"
+                    >
+                      {submitting ? "Saving..." : "Save Record"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
 const StatCard = ({ icon, title, value, subtext, bgColor }) => (
-  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:shadow-md transition cursor-default">
+  <div className="bg-[#0f172a]/70 p-4 rounded-3xl shadow-lg border border-white/10 flex flex-col justify-center items-center text-center hover:bg-white/[0.02] transition cursor-default">
     <div className={`w-12 h-12 rounded-full ${bgColor} flex items-center justify-center mb-3`}>
       {icon}
     </div>
-    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</p>
-    <h3 className="text-2xl font-black text-slate-800 mt-1 mb-1">{value}</h3>
-    <p className={`text-xs font-medium ${subtext.includes('+') || subtext.includes('Working') ? 'text-emerald-500' : 'text-slate-400'}`}>{subtext}</p>
+    <p className="text-xs font-bold text-white/50 uppercase tracking-wider">{title}</p>
+    <h3 className="text-2xl font-black text-white mt-1 mb-1">{value}</h3>
+    <p className={`text-xs font-medium ${subtext.includes('+') || subtext.includes('Working') ? 'text-emerald-400' : 'text-white/40'}`}>{subtext}</p>
   </div>
 );
 
