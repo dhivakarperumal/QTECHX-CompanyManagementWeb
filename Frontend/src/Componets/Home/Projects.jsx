@@ -61,6 +61,26 @@ const Projects = () => {
       ? items
       : items.filter((p) => p.category === activeCategory);
 
+  const NextArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      aria-label="Next"
+      className="absolute top-1/2 right-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80"
+    >
+      <FiArrowRight className="text-primary text-xl" />
+    </button>
+  );
+
+  const PrevArrow = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      aria-label="Previous"
+      className="absolute top-1/2 left-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80"
+    >
+      <FiArrowLeft className="text-primary text-xl" />
+    </button>
+  );
+
   const settings = {
     dots: false,
     infinite: true,
@@ -70,18 +90,8 @@ const Projects = () => {
     autoplay: true,
     autoplaySpeed: 2000,
     arrows: window.innerWidth >= 768,
-    nextArrow: (
-      <button className="absolute top-1/2 right-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80">
-        <FiArrowRight className="text-primary text-xl" />{" "}
-        {/* arrow color white */}
-      </button>
-    ),
-    prevArrow: (
-      <button className="absolute top-1/2 left-[-15px] -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-primary shadow-md hover:bg-primary/80">
-        <FiArrowLeft className="text-primary text-xl" />{" "}
-        {/* arrow color white */}
-      </button>
-    ),
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
   };
 
   return (

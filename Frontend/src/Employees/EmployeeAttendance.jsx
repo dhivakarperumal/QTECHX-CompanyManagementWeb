@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock3, MapPin, PlusCircle, X, ClipboardCheck, AlertCircle, CalendarDays } from 'lucide-react';
+import { Clock3, MapPin, PlusCircle, X, ClipboardCheck, AlertCircle, CalendarDays, Loader2 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import ModalPortal from '../Componets/CommonComponents/ModalPortal';
@@ -47,158 +47,167 @@ const EmployeeAttendance = () => {
   const [attendanceRecord, setAttendanceRecord] = useState(null);
   const [isWithinRadius, setIsWithinRadius] = useState(false);
 
+  const [locationStr, setLocationStr] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // update clock every second
+  useEffect(() => {
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => {
     checkTodayAttendance();
   }, [user]);
 
   const checkTodayAttendance = async () => {
     if (!user) return;
+    setLoading(true);
+    try {
+      const targetId = getEmployeeReference(user);
+      if (!targetId) return;
 
-    const fetchTodayAttendance = async () => {
-      try {
-        const targetId = getEmployeeReference(user);
-        if (!targetId) return;
+      const d = new Date();
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const dateStr = d.toISOString().slice(0, 10);
 
-        const d = new Date();
-        const month = d.getMonth() + 1;
-        const year = d.getFullYear();
-        const dateStr = d.toISOString().slice(0, 10);
-
-        const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
-        if (res.data && res.data.data) {
-          const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-          if (todayRecord) {
-            setAttendanceRecord(todayRecord);
-          }
+      const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
+      if (res.data && res.data.data) {
+        const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+        if (todayRecord) {
+          setAttendanceRecord(todayRecord);
+        } else {
+          setAttendanceRecord(null);
         }
-      } catch (err) {
-        console.warn("Could not fetch attendance summary", err);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.warn("Could not fetch attendance summary", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleLocation = () => {
-      if (!navigator.geolocation) {
-        setError("Geolocation not supported");
-        return;
-      }
-      setError(null);
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
+  const handleLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
+    }
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
 
-            const distance = getDistanceInMeters(latitude, longitude, OFFICE_LAT, OFFICE_LNG);
-            setIsWithinRadius(distance <= ALLOWED_RADIUS_METERS);
+          const distance = getDistanceInMeters(latitude, longitude, OFFICE_LAT, OFFICE_LNG);
+          setIsWithinRadius(distance <= ALLOWED_RADIUS_METERS);
 
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
-            const address = data.address || {};
-            const fullAddress = [
-              address.house_number, address.road, address.neighbourhood, address.suburb,
-              address.village, address.town, address.city, address.county, address.state,
-              address.postcode, address.country,
-            ].filter(Boolean).join(", ");
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const address = data.address || {};
+          const fullAddress = [
+            address.house_number, address.road, address.neighbourhood, address.suburb,
+            address.village, address.town, address.city, address.county, address.state,
+            address.postcode, address.country,
+          ].filter(Boolean).join(", ");
 
-            setLocationStr(`Latitude: ${latitude}\nLongitude: ${longitude}\n\nAddress: ${fullAddress}`);
+          setLocationStr(`Latitude: ${latitude}\nLongitude: ${longitude}\n\nAddress: ${fullAddress}`);
 
-            if (distance > ALLOWED_RADIUS_METERS) {
-              setError(`You are ${Math.round(distance)}m away from the office. You must be within ${ALLOWED_RADIUS_METERS}m to mark attendance.`);
-            } else {
-              setError(null);
-            }
-          } catch (err) {
-            console.error(err);
-            setLocationStr(`Latitude: ${position.coords.latitude}\nLongitude: ${position.coords.longitude}`);
+          if (distance > ALLOWED_RADIUS_METERS) {
+            setError(`You are ${Math.round(distance)}m away from the office. You must be within ${ALLOWED_RADIUS_METERS}m to mark attendance.`);
+          } else {
+            setError(null);
           }
-        },
-        (error) => {
-          console.error(error);
-          setError("Unable to fetch location. Please ensure location services are enabled.");
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    };
-
-    const executeAction = async (endpoint, payload = {}) => {
-      if (endpoint === '/attendance/clock-in' && !isWithinRadius) {
-        setError(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to clock in.`);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
-        const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
-
-        const res = await api({
-          method: endpoint === '/attendance/clock-in' ? 'post' : 'put',
-          url: endpoint,
-          data: { employee_id, location: locationStr, ...payload }
-        });
-        setSuccessMsg(res.data.message);
-        setTimeout(() => setSuccessMsg(''), 4000);
-        await checkTodayAttendance();
-      } catch (err) {
-        console.error(`Failed to ${endpoint}`, err);
-        setError(err?.response?.data?.message || `Could not complete action`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const getWorkingDuration = () => {
-      if (!attendanceRecord?.check_in_time) return "0h 0m 0s";
-      const [h, m] = attendanceRecord.check_in_time.split(':').map(Number);
-      const start = new Date();
-      start.setHours(h, m, 0, 0);
-
-      let end = currentTime;
-      if (attendanceRecord.check_out_time) {
-        const [endH, endM] = attendanceRecord.check_out_time.split(':').map(Number);
-        end = new Date();
-        end.setHours(endH, endM, 0, 0);
-      }
-
-      let diff = Math.floor((end - start) / 1000);
-      if (diff < 0) diff = 0;
-
-      let breakSecs = 0;
-      if (attendanceRecord.break_start_time) {
-        const [bsh, bsm] = attendanceRecord.break_start_time.split(':').map(Number);
-        const bs = new Date();
-        bs.setHours(bsh, bsm, 0, 0);
-
-        let be = end;
-        if (attendanceRecord.break_end_time) {
-          const [beh, bem] = attendanceRecord.break_end_time.split(':').map(Number);
-          be = new Date();
-          be.setHours(beh, bem, 0, 0);
+        } catch (err) {
+          console.error(err);
+          setLocationStr(`Latitude: ${position.coords.latitude}\nLongitude: ${position.coords.longitude}`);
         }
-        breakSecs = Math.max(0, Math.floor((be - bs) / 1000));
+      },
+      (error) => {
+        console.error(error);
+        setError("Unable to fetch location. Please ensure location services are enabled.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const executeAction = async (endpoint, payload = {}) => {
+    if (endpoint === '/attendance/clock-in' && !isWithinRadius) {
+      setError(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to clock in.`);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
+      const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
+
+      const res = await api({
+        method: endpoint === '/attendance/clock-in' ? 'post' : 'put',
+        url: endpoint,
+        data: { employee_id, location: locationStr, ...payload }
+      });
+      setSuccessMsg(res.data.message);
+      setTimeout(() => setSuccessMsg(''), 4000);
+      await checkTodayAttendance();
+    } catch (err) {
+      console.error(`Failed to ${endpoint}`, err);
+      setError(err?.response?.data?.message || `Could not complete action`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getWorkingDuration = () => {
+    if (!attendanceRecord?.check_in_time) return "0h 0m 0s";
+    const [h, m] = attendanceRecord.check_in_time.split(':').map(Number);
+    const start = new Date();
+    start.setHours(h || 0, m || 0, 0, 0);
+
+    let end = currentTime;
+    if (attendanceRecord.check_out_time) {
+      const [endH, endM] = attendanceRecord.check_out_time.split(':').map(Number);
+      end = new Date();
+      end.setHours(endH || 0, endM || 0, 0, 0);
+    }
+
+    let diff = Math.floor((end - start) / 1000);
+    if (diff < 0) diff = 0;
+
+    let breakSecs = 0;
+    if (attendanceRecord.break_start_time) {
+      const [bsh, bsm] = attendanceRecord.break_start_time.split(':').map(Number);
+      const bs = new Date();
+      bs.setHours(bsh || 0, bsm || 0, 0, 0);
+
+      let be = end;
+      if (attendanceRecord.break_end_time) {
+        const [beh, bem] = attendanceRecord.break_end_time.split(':').map(Number);
+        be = new Date();
+        be.setHours(beh || 0, bem || 0, 0, 0);
       }
+      breakSecs = Math.max(0, Math.floor((be - bs) / 1000));
+    }
 
-      diff = Math.max(0, diff - breakSecs);
+    diff = Math.max(0, diff - breakSecs);
 
-      const hrs = Math.floor(diff / 3600);
-      const mins = Math.floor((diff % 3600) / 60);
-      const secs = diff % 60;
-      return `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
-    };
+    const hrs = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    const secs = diff % 60;
+    return `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+  };
 
-    const getStatusText = () => {
-      if (!attendanceRecord) return "Offline";
-      if (attendanceRecord.check_out_time) return attendanceRecord.attendance_status; // "Present" or "Half Day"
-      if (attendanceRecord.break_start_time && !attendanceRecord.break_end_time) return "On Break";
-      return "Working";
-    };
+  const getStatusText = () => {
+    if (!attendanceRecord) return "Offline";
+    if (attendanceRecord.check_out_time) return attendanceRecord.attendance_status || 'Present';
+    if (attendanceRecord.break_start_time && !attendanceRecord.break_end_time) return "On Break";
+    return "Working";
+  };
 
-
-    return (
+  return (
       <div className="space-y-6 text-white pb-10">
         <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
           <div>
@@ -315,5 +324,5 @@ const EmployeeAttendance = () => {
       </div>
     );
   };
-}
+
 export default EmployeeAttendance;
