@@ -115,6 +115,7 @@ const createEmptyForm = () => ({
   activeProjectsUsingPlan: 0,
   completedProjectsUsingPlan: 0,
   createdBy: 'Admin',
+  projectId: '',
 });
 
 const selectClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
@@ -247,6 +248,7 @@ function ProjectPlansPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [toast, setToast] = useState('');
   const [formData, setFormData] = useState(createEmptyForm());
+  const [projectsList, setProjectsList] = useState([]);
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -286,6 +288,20 @@ function ProjectPlansPage() {
     };
 
     loadPlans();
+  }, []);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await api.get('/projects?limit=1000&page=1');
+        if (response?.data?.data) {
+          setProjectsList(response.data.data.filter((p) => p.current_status !== 'Cancelled'));
+        }
+      } catch (error) {
+        console.warn('Projects API unavailable', error);
+      }
+    };
+    loadProjects();
   }, []);
 
   useEffect(() => {
@@ -530,6 +546,7 @@ function ProjectPlansPage() {
       activeProjectsUsingPlan: currentPlan?.activeProjectsUsingPlan || 0,
       completedProjectsUsingPlan: currentPlan?.completedProjectsUsingPlan || 0,
       createdBy: currentPlan?.createdBy || formData.createdBy || 'Admin',
+      projectId: formData.projectId || null,
       createdAt: currentPlan?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -1032,6 +1049,13 @@ function ProjectPlansPage() {
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Plan Code</span>
                   <input name="planCode" value={formData.planCode} onChange={handleFieldChange} className={fieldClasses} required disabled={mode === 'view'} />
+                </label>
+                <label className="text-sm text-white/70">
+                  <span className="mb-1 block">Link Project</span>
+                  <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
+                    <option value="">None</option>
+                    {projectsList.map((project) => <option key={project.uuid} value={project.uuid}>{project.project_name}</option>)}
+                  </select>
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Project Type</span>
