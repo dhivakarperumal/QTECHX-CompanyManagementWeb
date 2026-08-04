@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download, User, Play, Search, LayoutGrid, List } from 'lucide-react';
+import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download, User, Play, Search, LayoutGrid, List, Calendar, Flag, Layers, FileText, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import api from '../../api';
 
 const tabs = [
@@ -1018,66 +1018,111 @@ export default function TasksPage({ initialPageKey = null }) {
         }
       >
         {selectedTaskDetails && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Name</p>
-                <p className="mt-1 font-semibold text-white">{selectedTaskDetails.name}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Project</p>
-                <p className="mt-1 text-slate-200">{selectedTaskDetails.project}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Status</p>
-                <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[selectedTaskDetails.status] || 'bg-slate-600 text-slate-100'}`}>
+          <div className="flex flex-col gap-5">
+            {/* Header Section */}
+            <div className="flex flex-col gap-2 p-5 rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-900/90 border border-white/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+              
+              <div className="flex justify-between items-start z-10">
+                <div className="space-y-1 pr-4">
+                  <p className="text-xs uppercase tracking-widest text-primary/80 font-semibold">{selectedTaskDetails.project}</p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white leading-tight">{selectedTaskDetails.name}</h3>
+                </div>
+                <span className={`flex-shrink-0 inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-bold border ${
+                  selectedTaskDetails.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                  selectedTaskDetails.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                  selectedTaskDetails.status === 'Issue' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                  'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                }`}>
                   {selectedTaskDetails.status}
                 </span>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Due Date</p>
-                <p className="mt-1 text-slate-200">{selectedTaskDetails.dueDate}</p>
-              </div>
             </div>
-            <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assigned To</p>
-                <p className="mt-1 text-slate-200">{selectedTaskDetails.assignedTo}</p>
+
+            {/* Grid details */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+                  <User size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Assigned To</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-200">{selectedTaskDetails.assignedTo}</p>
+                  <p className="text-xs text-slate-500 mt-1">By: {selectedTaskDetails.assignedBy}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assigned By</p>
-                <p className="mt-1 text-slate-200">{selectedTaskDetails.assignedBy}</p>
+
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 flex-shrink-0">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Due Date</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-200">{selectedTaskDetails.dueDate || 'Not set'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Priority</p>
-                <p className="mt-1 text-slate-200">{selectedTaskDetails.priority}</p>
+
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 flex-shrink-0">
+                  <Flag size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Priority</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-200">{selectedTaskDetails.priority}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Progress</p>
-                <div className="mt-2">
-                  <div className="h-2 rounded-full bg-white/10">
-                    <div className="h-2 rounded-full bg-primary" style={{ width: `${selectedTaskDetails.progress}%` }} />
+
+              <div className="flex flex-col justify-center p-4 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors">
+                <div className="flex justify-between items-end mb-2">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Progress</p>
+                  <span className="text-xs font-bold text-emerald-400">{selectedTaskDetails.progress}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-900 overflow-hidden">
+                  <div 
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 relative"
+                    style={{ width: `${selectedTaskDetails.progress}%` }}
+                  >
+                    <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
                   </div>
-                  <p className="mt-1 text-sm text-slate-200">{selectedTaskDetails.progress}%</p>
                 </div>
               </div>
             </div>
-            <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Description</p>
-              <p className="mt-2 text-sm text-slate-200 whitespace-pre-line">{selectedTaskDetails.description || 'No description provided.'}</p>
+
+            {/* Description */}
+            <div className="p-5 rounded-2xl bg-slate-800/40 border border-white/5 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-slate-400 mb-1">
+                <FileText size={16} />
+                <p className="text-xs uppercase tracking-widest font-semibold">Description</p>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                {selectedTaskDetails.description || 'No description provided.'}
+              </p>
             </div>
+
+            {/* Cancel/Issue Reasons */}
             {selectedTaskDetails.cancelReason && (
-              <div className="sm:col-span-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-rose-400">Cancellation Reason</p>
-                <p className="mt-2 text-sm text-rose-200 whitespace-pre-line">{selectedTaskDetails.cancelReason}</p>
+              <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-rose-400 mb-1">
+                  <AlertCircle size={16} />
+                  <p className="text-xs uppercase tracking-widest font-semibold">Cancellation Reason</p>
+                </div>
+                <p className="text-sm text-rose-200 leading-relaxed whitespace-pre-wrap">
+                  {selectedTaskDetails.cancelReason}
+                </p>
               </div>
             )}
+            
             {selectedTaskDetails.issueReason && (
-              <div className="sm:col-span-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-red-400">Issue Details</p>
-                <p className="mt-2 text-sm text-red-200 whitespace-pre-line">{selectedTaskDetails.issueReason}</p>
+              <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/20 flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-red-400 mb-1">
+                  <AlertTriangle size={16} />
+                  <p className="text-xs uppercase tracking-widest font-semibold">Issue Details</p>
+                </div>
+                <p className="text-sm text-red-200 leading-relaxed whitespace-pre-wrap">
+                  {selectedTaskDetails.issueReason}
+                </p>
                 {selectedTaskDetails.attachments?.filter(a => a.original_name?.startsWith('IssueDoc_')).length > 0 && (
-                  <div className="mt-4">
+                  <div className="mt-3 pt-3 border-t border-red-500/20">
                     <p className="text-[10px] uppercase tracking-[0.24em] text-red-400/70 mb-2">Issue Documents</p>
                     <div className="flex flex-col gap-2">
                       {selectedTaskDetails.attachments.filter(a => a.original_name?.startsWith('IssueDoc_')).map((att, i) => (
@@ -1086,20 +1131,11 @@ export default function TasksPage({ initialPageKey = null }) {
                           href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            padding: '10px 14px', borderRadius: '10px',
-                            border: '1px solid rgba(239,68,68,0.2)',
-                            background: 'rgba(239,68,68,0.05)',
-                            color: '#fca5a5', textDecoration: 'none',
-                            fontSize: '13px', transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.05)'}
+                          className="flex items-center gap-2 p-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs hover:bg-red-500/10 transition-colors"
                         >
-                          <Paperclip size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
-                          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name.replace('IssueDoc_', '')}</span>
-                          <Download size={14} style={{ flexShrink: 0 }} />
+                          <Paperclip size={14} className="flex-shrink-0" />
+                          <span className="truncate">{att.original_name.replace('IssueDoc_', '')}</span>
+                          <Download size={14} className="ml-auto flex-shrink-0" />
                         </a>
                       ))}
                     </div>
@@ -1107,30 +1143,28 @@ export default function TasksPage({ initialPageKey = null }) {
                 )}
               </div>
             )}
+
+            {/* General Attachments */}
             {selectedTaskDetails.attachments && selectedTaskDetails.attachments.filter(a => !a.original_name?.startsWith('IssueDoc_')).length > 0 && (
-              <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500 mb-3">Attachments</p>
-                <div className="flex flex-col gap-2">
+              <div className="p-5 rounded-2xl bg-slate-800/40 border border-white/5 flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-slate-400 mb-1">
+                  <Paperclip size={16} />
+                  <p className="text-xs uppercase tracking-widest font-semibold">Attachments</p>
+                </div>
+                <div className="flex flex-col gap-2 mt-2">
                   {selectedTaskDetails.attachments.filter(a => !a.original_name?.startsWith('IssueDoc_')).map((att, i) => (
                     <a
                       key={i}
                       href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${att.path}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '10px 14px', borderRadius: '10px',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.04)',
-                        color: '#94a3b8', textDecoration: 'none',
-                        fontSize: '13px', transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(249,115,22,0.1)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                      className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-sm hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all group"
                     >
-                      <Paperclip size={14} style={{ color: '#f97316', flexShrink: 0 }} />
-                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.original_name}</span>
-                      <Download size={14} style={{ flexShrink: 0 }} />
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary text-slate-400">
+                        <Paperclip size={14} />
+                      </div>
+                      <span className="flex-1 truncate">{att.original_name}</span>
+                      <Download size={16} className="text-slate-500 group-hover:text-primary transition-colors" />
                     </a>
                   ))}
                 </div>
