@@ -205,19 +205,33 @@ const AttendancePage = () => {
                <table className="w-full text-sm text-left">
                  <thead className="bg-white/5 text-white/50 font-medium border-b border-white/10">
                    <tr>
-                     <th className="py-3 px-4 rounded-tl-lg">Employee</th>
-                     <th className="py-3 px-4">Start Time</th>
-                     <th className="py-3 px-4">End Time</th>
-                     <th className="py-3 px-4">Status</th>
+                     <th className="py-3 px-4 rounded-tl-lg whitespace-nowrap">Employee</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Start Time</th>
+                     <th className="py-3 px-4 whitespace-nowrap">End Time</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Break Start</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Break End</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Working Hrs</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Late Entry</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Early Exit</th>
+                     <th className="py-3 px-4 whitespace-nowrap">Overtime</th>
+                     <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Status</th>
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
-                    {summaryData.slice(0, 5).map((row, i) => (
+                    {summaryData.map((row, i) => (
                       <tr key={i} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3 px-4 font-medium text-white">{row.employee_name}</td>
-                        <td className="py-3 px-4 text-white/60">--</td>
-                        <td className="py-3 px-4 text-white/60">--</td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 font-medium text-white whitespace-nowrap">
+                          {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code})</span>
+                        </td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_in_time || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_out_time || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_start_time || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_end_time || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.working_hours || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.late_entry || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.early_exit || '--'}</td>
+                        <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.overtime || '--'}</td>
+                        <td className="py-3 px-4 whitespace-nowrap">
                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                               row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 
                               row.today_status === 'Late' ? 'bg-purple-500/10 text-purple-400' :

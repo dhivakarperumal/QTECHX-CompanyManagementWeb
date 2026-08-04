@@ -222,33 +222,49 @@ async function summary(req, res) {
     const year = Number(req.query.year || currentYear);
     const rows = await getAttendanceSummary({ month, year });
 
-    // If viewing current month, inject "Late" or "Leave" dynamically for today's missing records
+    // If viewing current month, inject today's records and dynamically calculate missing statuses
     if (month === currentMonth && year === currentYear) {
       const db = getDB();
-      const todayDate = new Date().toISOString().slice(0, 10);
+      // Ensure we use the exact local date string for querying the database
       const now = new Date();
+      const todayDate = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0')
+      ].join('-');
+      
       const currentHours = now.getHours();
       const currentMinutes = now.getMinutes();
       const timeInMinutes = currentHours * 60 + currentMinutes;
 
-      // 9:30 AM = 570 mins, 10:00 AM = 600 mins
-      if (timeInMinutes > 570) {
-        const [activeEmployees] = await db.execute("SELECT employee_id FROM employees WHERE employment_status = 'Active'");
-        const [todayRecords] = await db.execute("SELECT employee_id FROM attendance WHERE attendance_date = ?", [todayDate]);
+      const [todayRecords] = await db.execute("SELECT * FROM attendance WHERE attendance_date = ?", [todayDate]);
+      const recordsByEmp = {};
+      todayRecords.forEach(r => { recordsByEmp[String(r.employee_id)] = r; });
+      
+      for (const row of rows) {
+        const todayRecord = recordsByEmp[String(row.employee_id)];
         
-        const attendedIds = new Set(todayRecords.map(r => String(r.employee_id)));
-        
-        for (const row of rows) {
-          if (!attendedIds.has(String(row.employee_id))) {
-            if (timeInMinutes > 600) {
-              row.absent_days = (row.absent_days || 0) + 1;
-              row.today_status = 'Leave'; // Or Absent
-            } else {
-              row.today_status = 'Late';
-            }
+        if (!todayRecord) {
+          // If no record exists yet today, evaluate late/absent based on time
+          // (Assuming 570 = 9:30 AM, 600 = 10:00 AM)
+          if (timeInMinutes > 600) {
+            row.absent_days = (row.absent_days || 0) + 1;
+            row.today_status = 'Leave';
+          } else if (timeInMinutes > 570) {
+            row.today_status = 'Late';
           } else {
-             row.today_status = 'Present'; // Simplified, actual logic can check time
+            row.today_status = 'Pending'; // Not late yet, but hasn't clocked in
           }
+        } else {
+           row.today_status = todayRecord.attendance_status || 'Present';
+           row.check_in_time = todayRecord.check_in_time;
+           row.check_out_time = todayRecord.check_out_time;
+           row.break_start_time = todayRecord.break_start_time;
+           row.break_end_time = todayRecord.break_end_time;
+           row.working_hours = todayRecord.working_hours;
+           row.late_entry = todayRecord.late_entry;
+           row.early_exit = todayRecord.early_exit;
+           row.overtime = todayRecord.overtime;
         }
       }
     }
