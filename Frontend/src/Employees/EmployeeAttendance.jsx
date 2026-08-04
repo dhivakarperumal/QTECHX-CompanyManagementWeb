@@ -41,30 +41,17 @@ const EmployeeAttendance = () => {
   const { user } = useAuth();
   const todayDate = new Date().toISOString().slice(0, 10);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
-  const [hasMarkedToday, setHasMarkedToday] = useState(false);
-
-  const [form, setForm] = useState({
-    date: todayDate,
-    check_in_time: '09:30',
-    check_out_time: '18:00',
-    attendance_status: 'Present',
-    location: '',
-  });
-
-  const [metrics, setMetrics] = useState({
-    working_hours: '8h 30m',
-    late_entry: 'No',
-    early_exit: 'No',
-    overtime: 'No',
-  });
-
+  const [attendanceRecord, setAttendanceRecord] = useState(null);
   const [isWithinRadius, setIsWithinRadius] = useState(false);
 
   useEffect(() => {
+    checkTodayAttendance();
+  }, [user]);
+
+  const checkTodayAttendance = async () => {
     if (!user) return;
 
     const fetchTodayAttendance = async () => {
@@ -77,91 +64,26 @@ const EmployeeAttendance = () => {
         const year = d.getFullYear();
         const dateStr = d.toISOString().slice(0, 10);
 
-        const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
-        if (res.data && res.data.data) {
-          const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-          if (todayRecord) {
-            setHasMarkedToday(true);
-          }
+      const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
+      if (res.data && res.data.data) {
+        const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+        if (todayRecord) {
+          setAttendanceRecord(todayRecord);
         }
-      } catch (err) {
-        console.warn("Could not fetch attendance records", err);
       }
-    };
-
-    fetchTodayAttendance();
-  }, [user]);
-
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    const nextForm = { ...form, [name]: value };
-    setForm(nextForm);
-
-    if (name === "check_in_time" || name === "check_out_time") {
-      const computed = calculateMetrics(nextForm.check_in_time, nextForm.check_out_time);
-      setMetrics(computed);
+    } catch (err) {
+      console.warn("Could not fetch attendance summary", err);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const calculateMetrics = (checkIn, checkOut) => {
-    const parseTime = (value) => {
-      if (!value) return null;
-      const [time, modifier] = String(value).split(" ");
-      const [hours, minutes] = time.split(":").map(Number);
-      let total = hours * 60 + minutes;
-      if (modifier === "PM" && hours !== 12) total += 12 * 60;
-      if (modifier === "AM" && hours === 12) total -= 12 * 60;
-      return total;
-    };
-
-    const officeCheckIn = parseTime("9:30 AM");
-    const officeCheckOut = parseTime("6:00 PM");
-    const checkInMinutes = parseTime(checkIn);
-    const checkOutMinutes = parseTime(checkOut);
-
-    let workingHours = "0h 0m";
-    let lateEntry = "No";
-    let earlyExit = "No";
-    let overtime = "No";
-
-    if (checkInMinutes !== null) {
-      const lateBy = checkInMinutes - officeCheckIn;
-      if (lateBy > 0) {
-        lateEntry = `${Math.floor(lateBy / 60)}h ${lateBy % 60}m`;
-      }
-    }
-
-    if (checkOutMinutes !== null) {
-      const exitBefore = officeCheckOut - checkOutMinutes;
-      if (exitBefore > 0) {
-        earlyExit = `${Math.floor(exitBefore / 60)}h ${exitBefore % 60}m`;
-      }
-    }
-
-    if (checkInMinutes !== null && checkOutMinutes !== null) {
-      const durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
-      const hours = Math.floor(durationMinutes / 60);
-      const minutes = durationMinutes % 60;
-      workingHours = `${hours}h ${minutes}m`;
-
-      const overtimeMinutes = Math.max(0, checkOutMinutes - officeCheckOut);
-      if (overtimeMinutes > 0) {
-        overtime = `${Math.floor(overtimeMinutes / 60)}h ${overtimeMinutes % 60}m`;
-      }
-    }
-
-    return { working_hours: workingHours, late_entry: lateEntry, early_exit: earlyExit, overtime };
   };
 
   const handleLocation = () => {
     if (!navigator.geolocation) {
-      setForm((prev) => ({
-        ...prev,
-        location: "Geolocation not supported",
-      }));
-      return;
+       setError("Geolocation not supported");
+       return;
     }
-
+    setError(null);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
@@ -182,74 +104,99 @@ const EmployeeAttendance = () => {
             address.postcode, address.country,
           ].filter(Boolean).join(", ");
 
-          setForm((prev) => ({
-            ...prev,
-            location: `Latitude: ${latitude}\nLongitude: ${longitude}\n\nAddress: ${fullAddress}`,
-          }));
+          setLocationStr(`Latitude: ${latitude}\nLongitude: ${longitude}\n\nAddress: ${fullAddress}`);
 
           if (distance > ALLOWED_RADIUS_METERS) {
             setError(`You are ${Math.round(distance)}m away from the office. You must be within ${ALLOWED_RADIUS_METERS}m to mark attendance.`);
           } else {
             setError(null);
           }
-
         } catch (err) {
           console.error(err);
-          setForm((prev) => ({
-            ...prev,
-            location: `Latitude: ${position.coords.latitude}\nLongitude: ${position.coords.longitude}`,
-          }));
+          setLocationStr(`Latitude: ${position.coords.latitude}\nLongitude: ${position.coords.longitude}`);
         }
       },
       (error) => {
-        console.error(error);
-        alert("Unable to fetch location");
+         console.error(error);
+         setError("Unable to fetch location. Please ensure location services are enabled.");
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!isWithinRadius) {
-      alert(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to mark attendance. Please fetch your location.`);
-      return;
+  const executeAction = async (endpoint, payload = {}) => {
+    if (endpoint === '/attendance/clock-in' && !isWithinRadius) {
+       setError(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to clock in.`);
+       return;
     }
-
-    setSubmitting(true);
+    setLoading(true);
+    setError(null);
     try {
-      const employee_id = getEmployeeReference(user);
-      if (!employee_id) {
-        throw new Error("Unable to resolve employee id for attendance.");
-      }
-
-      await api.post("/attendance", {
-        employee_id: employee_id,
-        date: form.date, // always today
-        check_in_time: form.check_in_time,
-        check_out_time: form.check_out_time,
-        working_hours: metrics.working_hours,
-        late_entry: metrics.late_entry,
-        early_exit: metrics.early_exit,
-        overtime: metrics.overtime,
-        attendance_status: form.attendance_status,
-        location: form.location,
+      const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
+      const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
+      
+      const res = await api({
+        method: endpoint === '/attendance/clock-in' ? 'post' : 'put',
+        url: endpoint,
+        data: { employee_id, location: locationStr, ...payload }
       });
-      setIsModalOpen(false);
-      setSuccessMsg("Attendance marked successfully for today!");
+      setSuccessMsg(res.data.message);
       setTimeout(() => setSuccessMsg(''), 4000);
-      setHasMarkedToday(true);
+      await checkTodayAttendance();
     } catch (err) {
-      console.error("Failed to add attendance", err);
-      alert(err?.response?.data?.message || "Could not save attendance");
+      console.error(`Failed to ${endpoint}`, err);
+      setError(err?.response?.data?.message || `Could not complete action`);
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
+
+  const getWorkingDuration = () => {
+    if (!attendanceRecord?.check_in_time) return "0h 0m 0s";
+    const [h, m] = attendanceRecord.check_in_time.split(':').map(Number);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+
+    let end = currentTime;
+    if (attendanceRecord.check_out_time) {
+      const [endH, endM] = attendanceRecord.check_out_time.split(':').map(Number);
+      end = new Date();
+      end.setHours(endH, endM, 0, 0);
+    }
+    
+    let diff = Math.floor((end - start) / 1000);
+    if (diff < 0) diff = 0;
+
+    let breakSecs = 0;
+    if (attendanceRecord.break_start_time) {
+      const [bsh, bsm] = attendanceRecord.break_start_time.split(':').map(Number);
+      const bs = new Date();
+      bs.setHours(bsh, bsm, 0, 0);
+      
+      let be = end;
+      if (attendanceRecord.break_end_time) {
+         const [beh, bem] = attendanceRecord.break_end_time.split(':').map(Number);
+         be = new Date();
+         be.setHours(beh, bem, 0, 0);
+      }
+      breakSecs = Math.max(0, Math.floor((be - bs) / 1000));
+    }
+    
+    diff = Math.max(0, diff - breakSecs);
+    
+    const hrs = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    const secs = diff % 60;
+    return `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+  };
+
+  const getStatusText = () => {
+     if (!attendanceRecord) return "Offline";
+     if (attendanceRecord.check_out_time) return attendanceRecord.attendance_status; // "Present" or "Half Day"
+     if (attendanceRecord.break_start_time && !attendanceRecord.break_end_time) return "On Break";
+     return "Working";
+  };
+
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -260,20 +207,10 @@ const EmployeeAttendance = () => {
           <p className="mt-2 text-sm text-white/60">Mark your daily check-in/out while present at the office.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => {
-              if (hasMarkedToday) {
-                alert("You have already marked your attendance for today.");
-                return;
-              }
-              setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
-              setIsModalOpen(true);
-            }}
-            disabled={hasMarkedToday}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-medium text-white transition ${hasMarkedToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
-          >
-            <PlusCircle size={16} /> Mark Attendance Today
-          </button>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
+            <CalendarDays size={16} className="text-orange-400" />
+            <span>{todayDate}</span>
+          </div>
         </div>
       </div>
 
@@ -282,119 +219,99 @@ const EmployeeAttendance = () => {
           {successMsg}
         </div>
       )}
+      {error && (
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-900/20 p-4 text-rose-200 flex items-center gap-2">
+          <AlertCircle size={16} /> {error}
+        </div>
+      )}
 
-      <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60 shadow-lg shadow-black/20 flex flex-col items-center">
-        <ClipboardCheck size={48} className="text-orange-400 mb-4 opacity-30" />
-        <h3 className="text-xl text-white font-semibold mb-2">
-          {hasMarkedToday ? "You have already marked your attendance today." : "You have not marked attendance for today."}
-        </h3>
-        <p className="max-w-md">Use the &quot;Mark Attendance Today&quot; button to record your presence. Ensure you are at the office premises before fetching your location.</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-6 shadow-lg shadow-black/20 flex flex-col items-center justify-center min-h-[300px]">
+          <h3 className="text-xl font-semibold mb-2">Live Status</h3>
+          <p className={`text-sm mb-6 ${getStatusText() === 'Working' ? 'text-emerald-400' : getStatusText() === 'On Break' ? 'text-orange-400' : 'text-slate-400'}`}>
+            ● {getStatusText()}
+          </p>
+          
+          <div className="text-5xl font-mono tracking-wider mb-8 text-white/90">
+             {getWorkingDuration()}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 w-full">
+            {!attendanceRecord?.check_in_time ? (
+              <button
+                onClick={() => executeAction('/attendance/clock-in')}
+                disabled={loading || !isWithinRadius}
+                className="col-span-2 rounded-2xl bg-emerald-500 py-3 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null}
+                Clock In
+              </button>
+            ) : !attendanceRecord.check_out_time ? (
+              <>
+                {!attendanceRecord.break_start_time ? (
+                  <button
+                    onClick={() => executeAction('/attendance/break-start')}
+                    disabled={loading}
+                    className="rounded-2xl bg-orange-500 py-3 font-medium text-white transition hover:bg-orange-600 disabled:opacity-50"
+                  >
+                    Start Break
+                  </button>
+                ) : !attendanceRecord.break_end_time ? (
+                  <button
+                    onClick={() => executeAction('/attendance/break-end')}
+                    disabled={loading}
+                    className="rounded-2xl bg-emerald-500 py-3 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50"
+                  >
+                    End Break
+                  </button>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 py-3 text-center text-white/40">Break Finished</div>
+                )}
+                
+                <button
+                  onClick={() => executeAction('/attendance/clock-out')}
+                  disabled={loading || (attendanceRecord.break_start_time && !attendanceRecord.break_end_time)}
+                  className="rounded-2xl bg-rose-500 py-3 font-medium text-white transition hover:bg-rose-600 disabled:opacity-50"
+                >
+                  Clock Out
+                </button>
+              </>
+            ) : (
+               <div className="col-span-2 rounded-2xl border border-white/10 bg-white/5 py-3 text-center text-white/40">
+                  Shift Completed
+               </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-6 shadow-lg shadow-black/20 flex flex-col">
+           <h3 className="text-xl font-semibold mb-4">Location Verification</h3>
+           
+           {!attendanceRecord?.check_in_time && (
+             <p className="text-sm text-white/60 mb-6">
+               You must be at the office to clock in. Office is located at {OFFICE_LAT}, {OFFICE_LNG}. Please fetch your location to verify.
+             </p>
+           )}
+
+           <textarea
+              readOnly
+              rows={4}
+              value={locationStr || (attendanceRecord?.location) || ''}
+              placeholder="Location details will appear here..."
+              className="w-full flex-1 rounded-2xl border border-white/5 bg-black/20 p-4 outline-none text-white/60 resize-none mb-4"
+           />
+           
+           {!attendanceRecord?.check_in_time && (
+              <button 
+                 onClick={handleLocation} 
+                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10"
+              >
+                 <MapPin size={16} /> Fetch Location
+              </button>
+           )}
+        </div>
       </div>
 
-      {isModalOpen && (
-        <ModalPortal>
-          <div className="fixed inset-0 z-9999 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm"
-            onClick={(event) => event.target === event.currentTarget && setIsModalOpen(false)}
-          >
-            <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 max-h-[90vh] overflow-hidden">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0f172a] px-6 py-5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Daily Record</p>
-                  <h3 className="text-xl font-semibold">Mark My Attendance</h3>
-                </div>
-                <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="max-h-[calc(90vh-80px)] overflow-y-auto px-6 py-5">
-                {error && (
-                  <div className="mt-4 flex items-center gap-2 rounded-2xl border border-rose-500/40 bg-rose-900/20 p-4 text-sm text-rose-200">
-                    <AlertCircle size={16} className="shrink-0" /> {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Date (Today only)</label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={form.date}
-                      disabled
-                      className="w-full rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/50 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                    <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                      <option value="Present" className="bg-slate-900">Present</option>
-                      <option value="Absent" className="bg-slate-900">Absent</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                    <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                    <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Working Hours</label>
-                    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
-                      <Clock3 size={16} className="text-orange-400" />
-                      <span>{metrics.working_hours}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Late Entry</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Early Exit</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm text-white/70">Overtime</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm text-white/70">Office Location Verification *</label>
-                    <div className="flex flex-col gap-3 md:flex-row">
-                      <textarea
-                        name="location"
-                        value={form.location}
-                        readOnly
-                        rows={3}
-                        placeholder="Use the button to verify you are at the office"
-                        className="flex-1 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none text-white/60 resize-none cursor-not-allowed"
-                      />
-                      <button type="button" onClick={handleLocation} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10">
-                        <MapPin size={16} /> Fetch Location
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2 sticky bottom-0 bg-[#0f172a] border-t border-white/10 pt-4 mt-6 flex justify-end gap-3">
-                    <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                    <button
-                      type="submit"
-                      disabled={submitting || !isWithinRadius}
-                      className={`rounded-2xl px-4 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
-                    >
-                      {submitting ? "Saving..." : "Save Attendance"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </ModalPortal>
-      )}
     </div>
   );
 };

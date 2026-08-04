@@ -1,55 +1,87 @@
-function calculateAttendanceMetrics({ check_in_time, check_out_time }) {
+function calculateAttendanceMetrics({ check_in_time, check_out_time, break_start_time, break_end_time }) {
   const parseTime = (value) => {
     if (!value) return null;
     const normalized = String(value).trim();
     if (!normalized) return null;
 
-    const [time, modifier] = normalized.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    let total = hours * 60 + minutes;
-
-    if (modifier === 'PM' && hours !== 12) total += 12 * 60;
-    if (modifier === 'AM' && hours === 12) total -= 12 * 60;
-
-    return total;
+    // Handle HH:MM AM/PM format or HH:MM format
+    if (normalized.includes(' ')) {
+      const [time, modifier] = normalized.split(' ');
+      const [hoursStr, minutesStr] = time.split(':');
+      let hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
+      if (modifier.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+      if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    } else {
+      const [hours, minutes] = normalized.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
   };
 
-  const officeCheckIn = parseTime('9:30 AM');
-  const officeCheckOut = parseTime('6:00 PM');
+  const formatMinutesToTime = (totalMinutes) => {
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
+  };
+
+  const officeCheckIn = parseTime('09:30');
+  const officeCheckOut = parseTime('18:00');
+  const autoBreakStart = parseTime('14:00'); // 2 PM
+  const autoBreakEnd = parseTime('15:00'); // 3 PM
 
   const checkInMinutes = parseTime(check_in_time);
-  const checkOutMinutes = parseTime(check_out_time);
+  let checkOutMinutes = parseTime(check_out_time);
+  let breakStartMinutes = parseTime(break_start_time);
+  let breakEndMinutes = parseTime(break_end_time);
 
   let lateEntry = 'No';
   let earlyExit = 'No';
   let overtime = 'No';
-  let workingHours = '0h 0m';
+  let workingHoursStr = '0h 0m';
   let attendanceStatus = 'Absent';
-
+  
   if (checkInMinutes !== null) {
     const lateBy = checkInMinutes - officeCheckIn;
     if (lateBy > 0) {
-      lateEntry = `${Math.floor(lateBy / 60)}h ${lateBy % 60}m`;
+      lateEntry = formatMinutesToTime(lateBy);
     }
+    attendanceStatus = 'Present';
   }
 
-  if (checkOutMinutes !== null) {
+  // If clock out is present, calculate full metrics
+  if (checkInMinutes !== null && checkOutMinutes !== null) {
     const exitBefore = officeCheckOut - checkOutMinutes;
     if (exitBefore > 0) {
-      earlyExit = `${Math.floor(exitBefore / 60)}h ${exitBefore % 60}m`;
+      earlyExit = formatMinutesToTime(exitBefore);
     }
-  }
 
-  if (checkInMinutes !== null && checkOutMinutes !== null) {
-    const durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
-    workingHours = `${hours}h ${minutes}m`;
-    attendanceStatus = 'Present';
+    let durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
 
+    // Break logic
+    let breakDuration = 0;
+    if (breakStartMinutes !== null && breakEndMinutes !== null) {
+      breakDuration = Math.max(0, breakEndMinutes - breakStartMinutes);
+    } else if (breakStartMinutes !== null && breakEndMinutes === null) {
+       // On break currently, assume break continues until check out or max 1 hour
+       breakDuration = Math.max(0, checkOutMinutes - breakStartMinutes);
+    } else if (checkInMinutes <= autoBreakStart && checkOutMinutes >= autoBreakEnd) {
+      // Auto deduct 1 hour break if they worked across the 2-3 PM window
+      breakDuration = 60;
+    }
+
+    durationMinutes = Math.max(0, durationMinutes - breakDuration);
+    workingHoursStr = formatMinutesToTime(durationMinutes);
+
+    // Overtime
     const overtimeMinutes = Math.max(0, checkOutMinutes - officeCheckOut);
     if (overtimeMinutes > 0) {
-      overtime = `${Math.floor(overtimeMinutes / 60)}h ${overtimeMinutes % 60}m`;
+      overtime = formatMinutesToTime(overtimeMinutes);
+    }
+
+    // Half Day logic: If they worked less than or equal to 4.5 hours (270 minutes)
+    if (durationMinutes <= 270 && durationMinutes > 0) {
+      attendanceStatus = 'Half Day';
     }
   }
 
@@ -57,7 +89,7 @@ function calculateAttendanceMetrics({ check_in_time, check_out_time }) {
     late_entry: lateEntry,
     early_exit: earlyExit,
     overtime,
-    working_hours: workingHours,
+    working_hours: workingHoursStr,
     attendance_status: attendanceStatus,
   };
 }

@@ -42,8 +42,10 @@ const EmployeeAttendanceSummary = () => {
 
   const [form, setForm] = useState({
     date: todayDate,
-    check_in_time: '09:30',
-    check_out_time: '18:00',
+    check_in_time: '',
+    check_out_time: '',
+    break_start_time: '',
+    break_end_time: '',
     attendance_status: 'Present',
     location: '',
   });
@@ -104,13 +106,33 @@ const EmployeeAttendanceSummary = () => {
     const nextForm = { ...form, [name]: value };
     setForm(nextForm);
 
-    if (name === "check_in_time" || name === "check_out_time") {
-      const computed = calculateMetrics(nextForm.check_in_time, nextForm.check_out_time);
+    if (name === "check_in_time" || name === "check_out_time" || name === "break_start_time" || name === "break_end_time") {
+      const computed = calculateMetrics(
+        name === "check_in_time" ? value : nextForm.check_in_time,
+        name === "check_out_time" ? value : nextForm.check_out_time,
+        name === "break_start_time" ? value : nextForm.break_start_time,
+        name === "break_end_time" ? value : nextForm.break_end_time
+      );
       setMetrics(computed);
     }
   };
 
-  const calculateMetrics = (checkIn, checkOut) => {
+  const fillCurrentTime = (field) => {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    const nextForm = { ...form, [field]: timeStr };
+    setForm(nextForm);
+    
+    const computed = calculateMetrics(
+      nextForm.check_in_time,
+      nextForm.check_out_time,
+      nextForm.break_start_time,
+      nextForm.break_end_time
+    );
+    setMetrics(computed);
+  };
+
+  const calculateMetrics = (checkIn, checkOut, breakStart, breakEnd) => {
     const parseTime = (value) => {
       if (!value) return null;
       const [time, modifier] = String(value).split(" ");
@@ -121,10 +143,21 @@ const EmployeeAttendanceSummary = () => {
       return total;
     };
 
-    const officeCheckIn = parseTime("9:30 AM");
-    const officeCheckOut = parseTime("6:00 PM");
+    const formatMinutesToTime = (totalMinutes) => {
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return `${h}h ${m}m`;
+    };
+
+    const officeCheckIn = parseTime("09:30");
+    const officeCheckOut = parseTime("18:00");
+    const autoBreakStart = parseTime("14:00");
+    const autoBreakEnd = parseTime("15:00");
+
     const checkInMinutes = parseTime(checkIn);
     const checkOutMinutes = parseTime(checkOut);
+    const breakStartMinutes = parseTime(breakStart);
+    const breakEndMinutes = parseTime(breakEnd);
 
     let workingHours = "0h 0m";
     let lateEntry = "No";
@@ -134,27 +167,39 @@ const EmployeeAttendanceSummary = () => {
     if (checkInMinutes !== null) {
       const lateBy = checkInMinutes - officeCheckIn;
       if (lateBy > 0) {
-        lateEntry = `${Math.floor(lateBy / 60)}h ${lateBy % 60}m`;
-      }
-    }
-
-    if (checkOutMinutes !== null) {
-      const exitBefore = officeCheckOut - checkOutMinutes;
-      if (exitBefore > 0) {
-        earlyExit = `${Math.floor(exitBefore / 60)}h ${exitBefore % 60}m`;
+        lateEntry = formatMinutesToTime(lateBy);
       }
     }
 
     if (checkInMinutes !== null && checkOutMinutes !== null) {
-      const durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
-      const hours = Math.floor(durationMinutes / 60);
-      const minutes = durationMinutes % 60;
-      workingHours = `${hours}h ${minutes}m`;
+      const exitBefore = officeCheckOut - checkOutMinutes;
+      if (exitBefore > 0) {
+        earlyExit = formatMinutesToTime(exitBefore);
+      }
+
+      let durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
+
+      let breakDuration = 0;
+      if (breakStartMinutes !== null && breakEndMinutes !== null) {
+        breakDuration = Math.max(0, breakEndMinutes - breakStartMinutes);
+      } else if (breakStartMinutes !== null && breakEndMinutes === null) {
+        breakDuration = Math.max(0, checkOutMinutes - breakStartMinutes);
+      } else if (checkInMinutes <= autoBreakStart && checkOutMinutes >= autoBreakEnd) {
+        breakDuration = 60;
+      }
+
+      durationMinutes = Math.max(0, durationMinutes - breakDuration);
+      workingHours = formatMinutesToTime(durationMinutes);
 
       const overtimeMinutes = Math.max(0, checkOutMinutes - officeCheckOut);
       if (overtimeMinutes > 0) {
-        overtime = `${Math.floor(overtimeMinutes / 60)}h ${overtimeMinutes % 60}m`;
+        overtime = formatMinutesToTime(overtimeMinutes);
       }
+    } else if (checkOutMinutes !== null) {
+       const exitBefore = officeCheckOut - checkOutMinutes;
+       if (exitBefore > 0) {
+         earlyExit = formatMinutesToTime(exitBefore);
+       }
     }
 
     return { working_hours: workingHours, late_entry: lateEntry, early_exit: earlyExit, overtime };
@@ -237,6 +282,8 @@ const EmployeeAttendanceSummary = () => {
         date: form.date, // always today
         check_in_time: form.check_in_time,
         check_out_time: form.check_out_time,
+        break_start_time: form.break_start_time,
+        break_end_time: form.break_end_time,
         working_hours: metrics.working_hours,
         late_entry: metrics.late_entry,
         early_exit: metrics.early_exit,
@@ -257,8 +304,26 @@ const EmployeeAttendanceSummary = () => {
   };
 
 
+  const getLiveDuration = (checkInTime) => {
+    if (!checkInTime) return '0h 0m';
+    const [h, m] = checkInTime.split(':').map(Number);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+    const diff = Math.max(0, Math.floor((new Date() - start) / 1000));
+    const hrs = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    return `${hrs}h ${mins}m`;
+  };
+
   const presentDays = history.filter(h => h.attendance_status === 'Present').length;
   const absentDays = history.filter(h => h.attendance_status === 'Absent').length;
+
+  // Real-time update for live duration
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -387,7 +452,9 @@ const EmployeeAttendanceSummary = () => {
                         </td>
                         <td className="px-5 py-4">{record.check_in_time || '--'}</td>
                         <td className="px-5 py-4">{record.check_out_time || '--'}</td>
-                        <td className="px-5 py-4">{record.working_hours || '--'}</td>
+                        <td className="px-5 py-4">
+                          {record.check_out_time ? record.working_hours : (record.check_in_time && record.date === todayDate) ? getLiveDuration(record.check_in_time) : '--'}
+                        </td>
                         <td className="px-5 py-4">
                           {record.location ? (
                             <div className="flex items-center gap-1 text-xs text-white/50 max-w-[150px] truncate" title={record.location}>
@@ -426,7 +493,9 @@ const EmployeeAttendanceSummary = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Working Hrs</span>
-                        <span className="text-white">{record.working_hours || '--'}</span>
+                        <span className="text-white">
+                          {record.check_out_time ? record.working_hours : (record.check_in_time && record.date === todayDate) ? getLiveDuration(record.check_in_time) : '--'}
+                        </span>
                       </div>
                     </div>
                     {record.location && (
@@ -486,11 +555,32 @@ const EmployeeAttendanceSummary = () => {
 
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                    <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
+                    </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                    <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
+                    <div className="flex gap-2">
+                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-white/70">Break End Time</label>
+                    <div className="flex gap-2">
+                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
+                    </div>
                   </div>
 
                   <div>
@@ -534,12 +624,13 @@ const EmployeeAttendanceSummary = () => {
 
               <div className="sticky bottom-0 bg-[#0f172a] border-t border-white/10 px-6 py-4 flex justify-end gap-3 shrink-0">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || !isWithinRadius}
-                  className={`rounded-2xl px-4 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
+                <button 
+                  type="submit" 
+                  onClick={handleSubmit} 
+                  disabled={submitting || !isWithinRadius} 
+                  className={`rounded-2xl px-6 py-3 font-medium text-white transition ${isWithinRadius ? 'bg-orange-500 hover:bg-orange-600' : 'bg-orange-500/50 cursor-not-allowed opacity-50'}`}
                 >
-                  {submitting ? "Saving..." : "Save Attendance"}
+                  {submitting ? 'Saving...' : 'Save / Update'}
                 </button>
               </div>
             </div>
