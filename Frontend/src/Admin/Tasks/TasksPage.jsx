@@ -1460,7 +1460,9 @@ export default function TasksPage({ initialPageKey = null }) {
               disabled={!assignForm.project_id}
             >
               <option value="" disabled>{assignForm.project_id ? 'Select task' : 'Select a project first'}</option>
-              {tasksList.map((task) => (
+              {tasksList
+                .filter((task) => (task.assignedTo === 'Unassigned' || !task.assigned_to_raw) && task.status === 'Pending')
+                .map((task) => (
                 <option key={task.uuid} value={task.uuid}>{task.name || task.module || task.uuid}</option>
               ))}
             </select>
