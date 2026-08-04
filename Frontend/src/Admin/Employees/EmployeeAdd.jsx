@@ -25,7 +25,7 @@ const EmployeeAdd = () => {
     dob: "",
     blood_group: "",
     marital_status: "",
-    nationality: "",
+    nationality: "India",
     aadhaar_number: "",
     pan_number: "",
     mobile_number: "",
@@ -35,7 +35,7 @@ const EmployeeAdd = () => {
     emergency_contact_person: "",
     emergency_contact_number: "",
     emergency_relationship: "",
-    designation: "",
+    department: "",
     team_lead: "",
     joining_date: "",
     confirmation_date: "",
@@ -50,10 +50,12 @@ const EmployeeAdd = () => {
     resume_url: "",
     aadhaar_url: "",
     pan_url: "",
-    passport_url: "",
-    offer_letter_url: "",
+    bank_passbook_url: "",
     appointment_letter_url: "",
     nda_url: "",
+    educational_details: [
+      { course: "", institution: "", percentage: "", year_of_passing: "" },
+    ],
   });
 
   const formatDate = (dateString) => {
@@ -138,7 +140,7 @@ const EmployeeAdd = () => {
             dob: formatDate(emp.dob),
             blood_group: emp.blood_group || "",
             marital_status: emp.marital_status || "",
-            nationality: emp.nationality || "",
+            nationality: emp.nationality || "India",
             aadhaar_number: emp.aadhaar_number || "",
             pan_number: emp.pan_number || "",
             mobile_number: emp.mobile_number || "",
@@ -148,7 +150,7 @@ const EmployeeAdd = () => {
             emergency_contact_person: emp.emergency_contact_person || "",
             emergency_contact_number: emp.emergency_contact_number || "",
             emergency_relationship: emp.emergency_relationship || "",
-            designation: emp.designation || "",
+            department: emp.department || emp.designation || "",
             team_lead: emp.team_lead || "",
             joining_date: formatDate(emp.joining_date),
             confirmation_date: formatDate(emp.confirmation_date),
@@ -164,22 +166,20 @@ const EmployeeAdd = () => {
             resume_url: "",
             aadhaar_url: "",
             pan_url: "",
-            passport_url: "",
-            offer_letter_url: "",
+            bank_passbook_url: emp.bank_passbook_url || emp.passport_url || "",
             appointment_letter_url: "",
             nda_url: "",
             username: "",
             official_email: "",
             password: "",
-            confirm_password: "",
+            educational_details: emp.educational_details ? JSON.parse(emp.educational_details) : [{ course: "", institution: "", percentage: "", year_of_passing: "" }],
           });
           setExistingFiles({
             profile_photo: emp.profile_photo || null,
             resume_url: emp.resume_url || null,
             aadhaar_url: emp.aadhaar_url || null,
             pan_url: emp.pan_url || null,
-            passport_url: emp.passport_url || null,
-            offer_letter_url: emp.offer_letter_url || null,
+            bank_passbook_url: emp.bank_passbook_url || emp.passport_url || null,
             appointment_letter_url: emp.appointment_letter_url || null,
             nda_url: emp.nda_url || null,
           });
@@ -275,71 +275,88 @@ const EmployeeAdd = () => {
       errors.upi_id = validateField("upi_id", data.upi_id);
     }
 
-    if (data.emergency_contact_number && validateField("emergency_contact_number", data.emergency_contact_number)) {
-      errors.emergency_contact_number = validateField("emergency_contact_number", data.emergency_contact_number);
+    if (data.personal_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.personal_email)) {
+      errors.personal_email = "Personal email must be a valid email address.";
+    }
+
+    if (Array.isArray(data.educational_details)) {
+      data.educational_details.forEach((row, index) => {
+        if (!row.course?.trim() || !row.institution?.trim() || !row.percentage?.trim() || !row.year_of_passing?.trim()) {
+          errors.educational_details = "All educational detail rows must be fully completed.";
+        }
+      });
     }
 
     return errors;
   };
 
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value, files, type } = e.target;
+    let sanitizedValue = value;
+
     if (type === "file") {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
-    } else {
-      let sanitizedValue = value;
+      const file = files?.[0];
+      if (!file) return;
 
-      switch (name) {
-        case "mobile_number":
-        case "alternate_mobile":
-        case "emergency_contact_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
-          break;
-        case "aadhaar_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
-          break;
-        case "pan_number":
-          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
-          break;
-        case "account_number":
-          sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
-          break;
-        case "ifsc_code":
-          sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
-          break;
-        case "upi_id":
-          sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
-          break;
-        default:
-          break;
-      }
-
-      setFormData((prev) => {
-        const newData = { ...prev, [name]: sanitizedValue };
-        if (!isEditMode) {
-          if (name === "first_name" || name === "last_name") {
-            const first = name === "first_name" ? sanitizedValue : prev.first_name;
-            const last = name === "last_name" ? sanitizedValue : prev.last_name;
-            newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/\s+/g, '');
-          }
-          if (name === "personal_email") {
-            newData.official_email = sanitizedValue;
-          }
-        }
-        return newData;
-      });
-
+      setFormData((prev) => ({ ...prev, [name]: file }));
       setFieldErrors((prev) => {
         const nextErrors = { ...prev };
-        const error = validateField(name, sanitizedValue);
-        if (error) {
-          nextErrors[name] = error;
-        } else {
-          delete nextErrors[name];
-        }
+        delete nextErrors[name];
         return nextErrors;
       });
+      return;
     }
+
+    switch (name) {
+      case "mobile_number":
+      case "alternate_mobile":
+      case "emergency_contact_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 10);
+        break;
+      case "aadhaar_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 12);
+        break;
+      case "pan_number":
+        sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 10).toUpperCase();
+        break;
+      case "account_number":
+        sanitizedValue = value.replace(/\D/g, "").slice(0, 20);
+        break;
+      case "ifsc_code":
+        sanitizedValue = value.replace(/[^A-Z0-9]/gi, "").slice(0, 11).toUpperCase();
+        break;
+      case "upi_id":
+        sanitizedValue = value.replace(/\s+/g, "").toLowerCase();
+        break;
+      default:
+        break;
+    }
+
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: sanitizedValue };
+      if (!isEditMode) {
+        if (name === "first_name" || name === "last_name") {
+          const first = name === "first_name" ? sanitizedValue : prev.first_name;
+          const last = name === "last_name" ? sanitizedValue : prev.last_name;
+          newData.username = `${first.toLowerCase()}${last ? "." + last.toLowerCase() : ""}`.replace(/\s+/g, "");
+        }
+        if (name === "personal_email") {
+          newData.official_email = sanitizedValue;
+        }
+      }
+      return newData;
+    });
+
+    setFieldErrors((prev) => {
+      const nextErrors = { ...prev };
+      const error = validateField(name, sanitizedValue);
+      if (error) {
+        nextErrors[name] = error;
+      } else {
+        delete nextErrors[name];
+      }
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -347,17 +364,7 @@ const EmployeeAdd = () => {
     setLoading(true);
     setError(null);
 
-    if (!isEditMode && formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
-    if (isEditMode && formData.password && formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
@@ -373,10 +380,15 @@ const EmployeeAdd = () => {
       const token = localStorage.getItem("token");
 
       const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== "" && formData[key] !== null) {
-          submitData.append(key, formData[key]);
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] === "" || formData[key] === null) return;
+
+        if (key === "educational_details") {
+          submitData.append(key, JSON.stringify(formData[key]));
+          return;
         }
+
+        submitData.append(key, formData[key]);
       });
 
       const url = isEditMode
