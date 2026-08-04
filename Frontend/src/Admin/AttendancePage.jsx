@@ -325,7 +325,7 @@ const AttendancePage = () => {
         </div>
 
         {/* Department Wise */}
-        <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+        {/* <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
            <h3 className="text-lg font-bold text-white mb-6">Department Wise Attendance</h3>
            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-h-48">
               <div className="h-48 w-full md:w-1/2">
@@ -356,7 +356,7 @@ const AttendancePage = () => {
                 ))}
               </div>
            </div>
-        </div>
+        </div> */}
 
         {/* Recent Activity */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 overflow-hidden flex flex-col">
