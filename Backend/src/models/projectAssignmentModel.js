@@ -327,7 +327,7 @@ async function listAllAssignments({ page = 1, limit = 15, search = '', role = ''
   const db = getDB();
   const [rows] = await db.execute(
     `SELECT pa.id, pa.project_id, pa.employee_ids, pa.status, pa.assigned_date, pa.created_at, pa.updated_at,
-            p.uuid AS project_uuid, p.project_name, p.current_status
+            p.uuid AS project_uuid, p.project_name, p.current_status, p.client_name, p.project_manager, p.total_project_cost, p.overall_progress, p.project_start_date, p.estimated_completion_date
      FROM project_assignments pa
      JOIN projects p ON pa.project_id = p.id
      ORDER BY pa.created_at DESC`

@@ -9,14 +9,12 @@ import {
   ClipboardList,
   Code2,
   Copy,
-  CreditCard,
   Edit3,
   Eye,
   FileText,
   Filter,
   Layers,
   RefreshCw,
-  Users,
   Plus,
   Search,
   Server,
@@ -32,31 +30,9 @@ const pageSize = 8;
 const createEmptyForm = () => ({
   planName: '',
   planCode: '',
-  projectType: '',
   category: 'Website',
   shortDescription: '',
   fullDescription: '',
-  basePrice: '',
-  discountPrice: '',
-  currency: 'INR',
-  taxPercentage: '0',
-  setupFee: '0',
-  renewalPrice: '0',
-  billingCycle: 'Monthly',
-  deliveryDays: '30',
-  minimumDeliveryDays: '15',
-  maximumDeliveryDays: '45',
-  priorityDeliveryAvailable: 'Yes',
-  rushDeliveryCharges: '0',
-  uiUxDesigner: '0',
-  frontendDeveloper: '0',
-  backendDeveloper: '0',
-  mobileDeveloper: '0',
-  qaEngineer: '0',
-  devOpsEngineer: '0',
-  projectManager: '0',
-  supportEngineer: '0',
-  estimatedTeamSize: '1',
   hostingIncluded: 'Yes',
   hostingType: 'Cloud Hosting',
   storageLimit: '50 GB',
@@ -95,14 +71,13 @@ const createEmptyForm = () => ({
   testingReport: 'Yes',
   featuredBadge: 'Recommended',
   status: 'Active',
-  displayOrder: '1',
-  planIcon: '',
   coverImage: '',
   planDocument: null,
   planDocumentName: '',
   newFeature: '',
   newModule: '',
   newTech: '',
+  newDuration: '',
   metaTitle: '',
   metaDescription: '',
   keywords: '',
@@ -112,9 +87,11 @@ const createEmptyForm = () => ({
   features: [],
   includedModules: [],
   technologyStack: [],
+  durations: [],
   activeProjectsUsingPlan: 0,
   completedProjectsUsingPlan: 0,
   createdBy: 'Admin',
+  projectId: '',
 });
 
 const selectClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
@@ -129,17 +106,6 @@ const generatePlanCode = (existingPlans = []) => {
     candidate = `PLAN-${String(nextIndex).padStart(3, '0')}`;
   }
   return candidate;
-};
-
-const formatCurrency = (value) => {
-  if (value === '' || value === null || value === undefined) return '—';
-  const numeric = Number(value);
-  if (Number.isNaN(numeric)) return value;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(numeric);
 };
 
 const formatDate = (value) => {
@@ -221,10 +187,20 @@ const techOptions = [
   'Docker',
 ];
 
+const durationOptions = [
+  '1 Week',
+  '2 Weeks',
+  '1 Month',
+  '2 Months',
+  '3 Months',
+  '6 Months',
+  '1 Year',
+  '2 Years',
+  'Lifetime',
+];
+
 const categories = ['Website', 'Web Application', 'Mobile Application', 'ERP', 'CRM', 'SaaS', 'E-commerce'];
-const projectTypes = ['Website', 'Web Application', 'Mobile Application', 'ERP', 'CRM', 'SaaS', 'E-commerce'];
 const statuses = ['Draft', 'Active', 'Inactive'];
-const billingCycles = ['One Time', 'Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'Lifetime'];
 const featuredBadges = ['Popular', 'Recommended', 'Best Seller', 'Premium', 'Enterprise', 'New Launch'];
 
 const initialPlans = [];
@@ -233,12 +209,8 @@ function ProjectPlansPage() {
   const [backendAvailable, setBackendAvailable] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedType, setSelectedType] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedFeatured, setSelectedFeatured] = useState('All');
-  const [selectedBilling, setSelectedBilling] = useState('All');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('updatedAtDesc');
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -247,6 +219,7 @@ function ProjectPlansPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [toast, setToast] = useState('');
   const [formData, setFormData] = useState(createEmptyForm());
+  const [projectsList, setProjectsList] = useState([]);
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -275,6 +248,7 @@ function ProjectPlansPage() {
           features: parseField(plan.features),
           includedModules: parseField(plan.includedModules),
           technologyStack: parseField(plan.technologyStack),
+          durations: parseField(plan.durations),
         }));
 
         setPlans(normalized);
@@ -286,6 +260,20 @@ function ProjectPlansPage() {
     };
 
     loadPlans();
+  }, []);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await api.get('/projects?limit=1000&page=1');
+        if (response?.data?.data) {
+          setProjectsList(response.data.data.filter((p) => p.current_status !== 'Cancelled'));
+        }
+      } catch (error) {
+        console.warn('Projects API unavailable', error);
+      }
+    };
+    loadProjects();
   }, []);
 
   useEffect(() => {
@@ -302,8 +290,6 @@ function ProjectPlansPage() {
     const featured = plans.filter((plan) => Boolean(plan.featuredBadge)).length;
     const popular = plans.reduce((acc, plan) => (plan.activeProjectsUsingPlan > acc.activeProjectsUsingPlan ? plan : acc), plans[0] ?? { activeProjectsUsingPlan: 0 });
     const activeProjects = plans.reduce((sum, plan) => sum + (Number(plan.activeProjectsUsingPlan) || 0), 0);
-    const monthlyRevenue = plans.filter((plan) => plan.status === 'Active').reduce((sum, plan) => sum + (Number(plan.basePrice) || 0), 0);
-    const annualRevenue = plans.filter((plan) => plan.status === 'Active').reduce((sum, plan) => sum + (Number(plan.renewalPrice) || 0), 0);
 
     return {
       total,
@@ -313,28 +299,20 @@ function ProjectPlansPage() {
       featured,
       popular: popular?.planName || 'None',
       activeProjects,
-      monthlyRevenue,
-      annualRevenue,
     };
   }, [plans]);
 
   const filteredPlans = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const min = Number(minPrice || 0);
-    const max = Number(maxPrice || Number.MAX_SAFE_INTEGER);
 
     return [...plans]
       .filter((plan) => {
-        const matchesQuery = !query || [plan.planName, plan.planId, plan.planCode, plan.projectType].some((value) => String(value).toLowerCase().includes(query));
+        const matchesQuery = !query || [plan.planName, plan.planId, plan.planCode].some((value) => String(value).toLowerCase().includes(query));
         const matchesCategory = selectedCategory === 'All' || plan.category === selectedCategory;
-        const matchesType = selectedType === 'All' || plan.projectType === selectedType;
         const matchesStatus = selectedStatus === 'All' || plan.status === selectedStatus;
         const matchesFeatured = selectedFeatured === 'All' || plan.featuredBadge === selectedFeatured;
-        const matchesBilling = selectedBilling === 'All' || plan.billingCycle === selectedBilling;
-        const matchesMin = Number(plan.discountPrice || plan.basePrice || 0) >= min;
-        const matchesMax = Number(plan.discountPrice || plan.basePrice || 0) <= max;
 
-        return matchesQuery && matchesCategory && matchesType && matchesStatus && matchesFeatured && matchesBilling && matchesMin && matchesMax;
+        return matchesQuery && matchesCategory && matchesStatus && matchesFeatured;
       })
       .sort((a, b) => {
         switch (sortBy) {
@@ -342,10 +320,6 @@ function ProjectPlansPage() {
             return a.planName.localeCompare(b.planName);
           case 'nameDesc':
             return b.planName.localeCompare(a.planName);
-          case 'priceAsc':
-            return (Number(a.discountPrice || a.basePrice || 0) || 0) - (Number(b.discountPrice || b.basePrice || 0) || 0);
-          case 'priceDesc':
-            return (Number(b.discountPrice || b.basePrice || 0) || 0) - (Number(a.discountPrice || a.basePrice || 0) || 0);
           case 'createdAtAsc':
             return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
           case 'createdAtDesc':
@@ -356,11 +330,11 @@ function ProjectPlansPage() {
             return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
         }
       });
-  }, [plans, searchQuery, selectedCategory, selectedType, selectedStatus, selectedFeatured, selectedBilling, minPrice, maxPrice, sortBy]);
+  }, [plans, searchQuery, selectedCategory, selectedStatus, selectedFeatured, sortBy]);
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, selectedCategory, selectedType, selectedStatus, selectedFeatured, selectedBilling, minPrice, maxPrice, sortBy]);
+  }, [searchQuery, selectedCategory, selectedStatus, selectedFeatured, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlans.length / pageSize));
   const pagedPlans = filteredPlans.slice((page - 1) * pageSize, page * pageSize);
@@ -393,7 +367,7 @@ function ProjectPlansPage() {
       features: [...(plan.features || [])],
       includedModules: [...(plan.includedModules || [])],
       technologyStack: [...(plan.technologyStack || [])],
-      planIcon: plan.planIcon || '',
+      durations: [...(plan.durations || [])],
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -408,7 +382,7 @@ function ProjectPlansPage() {
       features: [...(plan.features || [])],
       includedModules: [...(plan.includedModules || [])],
       technologyStack: [...(plan.technologyStack || [])],
-      planIcon: plan.planIcon || '',
+      durations: [...(plan.durations || [])],
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -460,29 +434,11 @@ function ProjectPlansPage() {
       setToast('Plan name is required.');
       return false;
     }
-    if (!formData.projectType.trim()) {
-      setToast('Project type is required.');
-      return false;
-    }
-    const basePrice = Number(formData.basePrice || 0);
-    const discountPrice = Number(formData.discountPrice || 0);
-    if (basePrice < 0) {
-      setToast('Base price cannot be negative.');
-      return false;
-    }
-    if (discountPrice > basePrice) {
-      setToast('Discount price cannot exceed base price.');
-      return false;
-    }
-    const deliveryDays = Number(formData.deliveryDays || 0);
-    if (deliveryDays <= 0) {
-      setToast('Delivery days must be greater than zero.');
-      return false;
-    }
     const duplicateFeatures = new Set(formData.features).size !== formData.features.length;
     const duplicateModules = new Set(formData.includedModules).size !== formData.includedModules.length;
     const duplicateStacks = new Set(formData.technologyStack).size !== formData.technologyStack.length;
-    if (duplicateFeatures || duplicateModules || duplicateStacks) {
+    const duplicateDurations = new Set(formData.durations).size !== formData.durations.length;
+    if (duplicateFeatures || duplicateModules || duplicateStacks || duplicateDurations) {
       setToast('Duplicate features, modules, or technology stack entries are not allowed.');
       return false;
     }
@@ -512,24 +468,15 @@ function ProjectPlansPage() {
       planId: currentPlan?.planId || `PLAN-${String(plans.length + 1).padStart(3, '0')}`,
       planCode: normalizedCode,
       planName: formData.planName.trim(),
-      projectType: formData.projectType.trim(),
       category: formData.category || 'Website',
-      basePrice: Number(formData.basePrice || 0),
-      discountPrice: Number(formData.discountPrice || 0),
-      taxPercentage: Number(formData.taxPercentage || 0),
-      setupFee: Number(formData.setupFee || 0),
-      renewalPrice: Number(formData.renewalPrice || 0),
-      deliveryDays: Number(formData.deliveryDays || 0),
-      minimumDeliveryDays: Number(formData.minimumDeliveryDays || 0),
-      maximumDeliveryDays: Number(formData.maximumDeliveryDays || 0),
-      rushDeliveryCharges: Number(formData.rushDeliveryCharges || 0),
-      displayOrder: Number(formData.displayOrder || 0),
       features: formData.features.filter(Boolean),
       includedModules: formData.includedModules.filter(Boolean),
       technologyStack: formData.technologyStack.filter(Boolean),
+      durations: formData.durations.filter(Boolean),
       activeProjectsUsingPlan: currentPlan?.activeProjectsUsingPlan || 0,
       completedProjectsUsingPlan: currentPlan?.completedProjectsUsingPlan || 0,
       createdBy: currentPlan?.createdBy || formData.createdBy || 'Admin',
+      projectId: formData.projectId || null,
       createdAt: currentPlan?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -538,6 +485,7 @@ function ProjectPlansPage() {
     delete sanitizedPayload.newFeature;
     delete sanitizedPayload.newModule;
     delete sanitizedPayload.newTech;
+    delete sanitizedPayload.newDuration;
     delete sanitizedPayload.planDocumentName;
 
     const useMultipart = formData.planDocument instanceof File;
@@ -585,6 +533,7 @@ function ProjectPlansPage() {
             features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
             includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
             technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            durations: Array.isArray(plan.durations) ? plan.durations : (() => { try { const p = JSON.parse(plan.durations); return Array.isArray(p) ? p : (plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
           });
           const updatedPlan = normalizePlan(updatedPlanRaw);
           setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
@@ -609,6 +558,7 @@ function ProjectPlansPage() {
             features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
             includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
             technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            durations: Array.isArray(plan.durations) ? plan.durations : (() => { try { const p = JSON.parse(plan.durations); return Array.isArray(p) ? p : (plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
           });
           const createdPlan = normalizePlanShort(createdPlanRaw);
           setPlans((prev) => [createdPlan, ...prev]);
@@ -734,8 +684,8 @@ function ProjectPlansPage() {
 
     if (action === 'csv') {
       const csvRows = [
-        ['Plan ID', 'Plan Code', 'Plan Name', 'Project Type', 'Category', 'Price', 'Status'],
-        ...plans.filter((plan) => selectedIds.includes(plan.id)).map((plan) => [plan.planId, plan.planCode, plan.planName, plan.projectType, plan.category, Number(plan.discountPrice || plan.basePrice || 0), plan.status]),
+        ['Plan ID', 'Plan Code', 'Plan Name', 'Category', 'Status'],
+        ...plans.filter((plan) => selectedIds.includes(plan.id)).map((plan) => [plan.planId, plan.planCode, plan.planName, plan.category, plan.status]),
       ];
       const csvContent = csvRows.map((row) => row.join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -809,7 +759,7 @@ function ProjectPlansPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
           <p className="text-sm text-white/60">Most Popular Plan</p>
           <p className="mt-1 text-lg font-semibold text-white">{stats.popular}</p>
@@ -817,10 +767,6 @@ function ProjectPlansPage() {
         <div className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
           <p className="text-sm text-white/60">Active Projects Using Plans</p>
           <p className="mt-1 text-lg font-semibold text-white">{stats.activeProjects}</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
-          <p className="text-sm text-white/60">Monthly / Annual Revenue</p>
-          <p className="mt-1 text-lg font-semibold text-white">{formatCurrency(stats.monthlyRevenue)} / {formatCurrency(stats.annualRevenue)}</p>
         </div>
       </div>
 
@@ -847,29 +793,13 @@ function ProjectPlansPage() {
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
-              <option value="All">Project Type</option>
-              {projectTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-            </select>
             <select value={selectedFeatured} onChange={(event) => setSelectedFeatured(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
               <option value="All">Featured</option>
               {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
             </select>
-            <select value={selectedBilling} onChange={(event) => setSelectedBilling(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
-              <option value="All">Billing</option>
-              {billingCycles.map((cycle) => <option key={cycle} value={cycle}>{cycle}</option>)}
-            </select>
           </div>
         </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <label className="text-sm text-white/70">
-            <span className="mb-1 block">Min Price</span>
-            <input type="number" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} className={fieldClasses} placeholder="0" />
-          </label>
-          <label className="text-sm text-white/70">
-            <span className="mb-1 block">Max Price</span>
-            <input type="number" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} className={fieldClasses} placeholder="100000" />
-          </label>
+        <div className="mt-3 grid gap-3 md:grid-cols-1">
           <label className="text-sm text-white/70">
             <span className="mb-1 block">Sort By</span>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className={fieldClasses}>
@@ -877,8 +807,6 @@ function ProjectPlansPage() {
               <option value="createdAtDesc">Created Date</option>
               <option value="nameAsc">Name A-Z</option>
               <option value="nameDesc">Name Z-A</option>
-              <option value="priceAsc">Price Low-High</option>
-              <option value="priceDesc">Price High-Low</option>
             </select>
           </label>
         </div>
@@ -927,11 +855,6 @@ function ProjectPlansPage() {
                   
                   <th className="px-3 py-3">Plan Code</th>
                   <th className="px-3 py-3">Plan Name</th>
-                  <th className="px-3 py-3">Project Type</th>
-                 
-                  <th className="px-3 py-3">Price</th>
-                  <th className="px-3 py-3">Billing</th>
-                  <th className="px-3 py-3">Delivery</th>
                   <th className="px-3 py-3">Status</th>
                   
                
@@ -953,11 +876,6 @@ function ProjectPlansPage() {
                         
                       </div>
                     </td>
-                    <td className="px-3 py-3">{plan.projectType}</td>
-                    
-                    <td className="px-3 py-3">{formatCurrency(plan.discountPrice || plan.basePrice)}</td>
-                    <td className="px-3 py-3">{plan.billingCycle}</td>
-                    <td className="px-3 py-3">{plan.deliveryDays} days</td>
                     <td className="px-3 py-3">
                       <span className={`rounded-full border px-2.5 py-1 text-xs ${statusStyles[plan.status] || 'border-white/10 bg-white/5 text-white/70'}`}>{plan.status}</span>
                     </td>
@@ -1034,10 +952,10 @@ function ProjectPlansPage() {
                   <input name="planCode" value={formData.planCode} onChange={handleFieldChange} className={fieldClasses} required disabled={mode === 'view'} />
                 </label>
                 <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Project Type</span>
-                  <select name="projectType" value={formData.projectType} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="">Choose</option>
-                    {projectTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                  <span className="mb-1 block">Link Project</span>
+                  <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
+                    <option value="">None</option>
+                    {projectsList.map((project) => <option key={project.uuid} value={project.uuid}>{project.project_name}</option>)}
                   </select>
                 </label>
                 <label className="text-sm text-white/70">
@@ -1067,15 +985,6 @@ function ProjectPlansPage() {
                   <textarea name="fullDescription" value={formData.fullDescription} onChange={handleFieldChange} className={`${fieldClasses} min-h-[90px]`} disabled={mode === 'view'} />
                 </label>
                 <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Display Order</span>
-                  <input type="number" name="displayOrder" value={formData.displayOrder} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Plan Icon</span>
-                  <input type="file" accept="image/*" onChange={(event) => handleFileChange(event, 'planIcon')} className={fieldClasses} disabled={mode === 'view'} />
-                  {formData.planIcon ? <img src={formData.planIcon} alt="Plan icon preview" className="mt-2 h-14 w-14 rounded-2xl object-cover" /> : null}
-                </label>
-                <label className="text-sm text-white/70">
                   <span className="mb-1 block">Project Document</span>
                   <input type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" onChange={(event) => handleFileChange(event, 'planDocument')} className={fieldClasses} disabled={mode === 'view'} />
                   {formData.planDocumentName ? (
@@ -1088,88 +997,6 @@ function ProjectPlansPage() {
                   <span className="mb-1 block">Cover Image</span>
                   <input type="file" accept="image/*" onChange={(event) => handleFileChange(event, 'coverImage')} className={fieldClasses} disabled={mode === 'view'} />
                   {formData.coverImage ? <img src={formData.coverImage} alt="Cover preview" className="mt-2 h-28 w-full rounded-2xl object-cover" /> : null}
-                </label>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-white/10 bg-[#101723] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <CreditCard size={16} className="text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">Pricing & Billing</h4>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Base Price</span>
-                  <input type="number" name="basePrice" value={formData.basePrice} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Discount Price</span>
-                  <input type="number" name="discountPrice" value={formData.discountPrice} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Currency</span>
-                  <input name="currency" value={formData.currency} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Tax %</span>
-                  <input type="number" name="taxPercentage" value={formData.taxPercentage} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Setup Fee</span>
-                  <input type="number" name="setupFee" value={formData.setupFee} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Renewal Price</span>
-                  <input type="number" name="renewalPrice" value={formData.renewalPrice} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Billing Cycle</span>
-                  <select name="billingCycle" value={formData.billingCycle} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {billingCycles.map((cycle) => <option key={cycle} value={cycle}>{cycle}</option>)}
-                  </select>
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Delivery Days</span>
-                  <input type="number" name="deliveryDays" value={formData.deliveryDays} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Priority Delivery</span>
-                  <select name="priorityDeliveryAvailable" value={formData.priorityDeliveryAvailable} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Rush Delivery Charges</span>
-                  <input type="number" name="rushDeliveryCharges" value={formData.rushDeliveryCharges} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-white/10 bg-[#101723] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <Users size={16} className="text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">Team Allocation</h4>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {[
-                  ['uiUxDesigner', 'UI/UX Designer'],
-                  ['frontendDeveloper', 'Frontend Developer'],
-                  ['backendDeveloper', 'Backend Developer'],
-                  ['mobileDeveloper', 'Mobile Developer'],
-                  ['qaEngineer', 'QA Engineer'],
-                  ['devOpsEngineer', 'DevOps Engineer'],
-                  ['projectManager', 'Project Manager'],
-                  ['supportEngineer', 'Support Engineer'],
-                ].map(([name, label]) => (
-                  <label key={name} className="text-sm text-white/70">
-                    <span className="mb-1 block">{label}</span>
-                    <input type="number" name={name} value={formData[name]} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                  </label>
-                ))}
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Estimated Team Size</span>
-                  <input type="number" name="estimatedTeamSize" value={formData.estimatedTeamSize} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
                 </label>
               </div>
             </section>
@@ -1316,6 +1143,53 @@ function ProjectPlansPage() {
                       <span key={item} className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-sm text-sky-300">
                         {item}
                         {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('technologyStack', item)}><X size={12} /></button> : null}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm text-white/70">Durations</p>
+                  <div className="flex flex-wrap gap-2">
+                    {durationOptions.map((option) => (
+                      <button type="button" key={option} onClick={() => addChoice('durations', option)} disabled={mode === 'view'} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 disabled:cursor-not-allowed">
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      value={formData.newDuration}
+                      onChange={(event) => setFormData((prev) => ({ ...prev, newDuration: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          addChoice('durations', formData.newDuration);
+                          setFormData((prev) => ({ ...prev, newDuration: '' }));
+                        }
+                      }}
+                      placeholder="Add a custom duration"
+                      className={fieldClasses}
+                      disabled={mode === 'view'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addChoice('durations', formData.newDuration);
+                        setFormData((prev) => ({ ...prev, newDuration: '' }));
+                      }}
+                      disabled={mode === 'view' || !formData.newDuration.trim()}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {formData.durations.map((item) => (
+                      <span key={item} className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-sm text-violet-300">
+                        {item}
+                        {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('durations', item)}><X size={12} /></button> : null}
                       </span>
                     ))}
                   </div>

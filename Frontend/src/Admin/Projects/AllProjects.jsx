@@ -739,6 +739,8 @@ export default function AllProjects() {
         </ModalPortal>
       )}
 
+
+
       {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">

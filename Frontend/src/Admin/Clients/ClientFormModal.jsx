@@ -86,7 +86,7 @@ function StatusPill({ value, colourMap }) {
 
 const DEFAULT_FORM = {
   company_name: '', client_name: '', email: '', phone_number: '',
-  contact_person: '', client_status: 'Lead', service_type: '',
+  contact_person: '', client_status: 'Lead', service_type: '', custom_service_type: '',
   business_name: '', business_type: '', requirement: '',
   notes_summary: '', follow_up_date: '', follow_up_time: '',
   next_follow_up_date: '', next_follow_up_time: '', discussion_summary: '',
@@ -152,7 +152,8 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
           phone_number:        editClient.phone_number        || '',
           contact_person:      editClient.contact_person      || '',
           client_status:       editClient.client_status       || 'Lead',
-          service_type:        editClient.service_type        || '',
+          service_type:        SERVICE_TYPES.includes(editClient.service_type) ? editClient.service_type : 'Other',
+          custom_service_type: SERVICE_TYPES.includes(editClient.service_type) ? '' : (editClient.service_type || ''),
           business_name:       editClient.business_name       || '',
           business_type:       editClient.business_type       || '',
           requirement:         editClient.requirement         || '',
@@ -183,11 +184,21 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
     e.preventDefault();
     setError('');
     setSuccess('');
+
     if (!form.client_name?.trim()) { setError('Client name is required.'); return; }
+    if (!form.service_type?.trim()) { setError('Service type is required.'); return; }
+    if (form.service_type === 'Other' && !form.custom_service_type?.trim()) {
+      setError('Please enter a custom service type.');
+      return;
+    }
 
     setLoading(true);
     try {
       const payload = { ...form };
+      if (payload.service_type === 'Other') {
+        payload.service_type = payload.custom_service_type?.trim() || null;
+      }
+      delete payload.custom_service_type;
       Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
 
       let clientUuid = editClient?.uuid;
@@ -314,8 +325,16 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                   </div>
                 </div>
                 <div>
-                  <FieldLabel icon={Briefcase} text="Service Type" />
-                  <select className={selectCls} value={form.service_type} onChange={set('service_type')}>
+                  <FieldLabel icon={Briefcase} text="Service Type" required />
+                  <select className={selectCls} value={form.service_type} onChange={(e) => {
+                    const value = e.target.value;
+                    setError('');
+                    setForm(f => ({
+                      ...f,
+                      service_type: value,
+                      custom_service_type: value === 'Other' ? f.custom_service_type : '',
+                    }));
+                  }}>
                     <option value="">— Select service —</option>
                     {SERVICE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -324,6 +343,17 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                   <FieldLabel icon={Building2} text="Business Name" />
                   <input className={inp} placeholder="Registered business name" value={form.business_name} onChange={set('business_name')} />
                 </div>
+                {form.service_type === 'Other' && (
+                  <div>
+                    <FieldLabel icon={Briefcase} text="Please enter service type" required />
+                    <input
+                      className={inp}
+                      placeholder="e.g. SaaS Platform, E-commerce"
+                      value={form.custom_service_type}
+                      onChange={set('custom_service_type')}
+                    />
+                  </div>
+                )}
                 <div>
                   <FieldLabel icon={Briefcase} text="Business Type" />
                   <input className={inp} placeholder="e.g. Startup, Enterprise" value={form.business_type} onChange={set('business_type')} />

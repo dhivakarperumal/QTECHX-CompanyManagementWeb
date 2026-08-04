@@ -1048,7 +1048,7 @@ async function ensureSchema(pool) {
       time_spent DECIMAL(10,2) NOT NULL DEFAULT 0,
       remaining_hours DECIMAL(10,2) NOT NULL DEFAULT 0,
       priority ENUM('Low','Medium','High','Critical') NOT NULL DEFAULT 'Medium',
-      status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled') NOT NULL DEFAULT 'Pending',
+      status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled','Issue') NOT NULL DEFAULT 'Pending',
       progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
       is_overdue TINYINT(1) NOT NULL DEFAULT 0,
       attachments TEXT NULL,
@@ -1071,6 +1071,14 @@ async function ensureSchema(pool) {
       CONSTRAINT fk_tasks_assigned_by FOREIGN KEY (assigned_by) REFERENCES employees (employee_id) ON DELETE SET NULL ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  try {
+    await pool.execute(
+      `ALTER TABLE tasks MODIFY COLUMN status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled','Issue') NOT NULL DEFAULT 'Pending'`
+    );
+  } catch (e) {
+    // Ignore error if already modified
+  }
 
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS project_assets (

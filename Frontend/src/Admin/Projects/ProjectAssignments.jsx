@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Users, Search, Plus, Loader2, AlertCircle, Trash2, X,
   FolderKanban, CheckCircle, RefreshCw, ChevronDown, Edit3,
-  LayoutGrid, Table2, Eye,
+  LayoutGrid, Table2, Eye, User, Building2, TrendingUp,
+  ChevronLeft, ChevronRight, Calendar,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -33,33 +34,34 @@ function Avatar({ name, image, index, size = 9 }) {
   );
 }
 
-const ROLE_STYLES = {
-  'Project Manager':    'bg-violet-500/15 text-violet-400 border-violet-500/25',
-  'UI/UX Designer':     'bg-pink-500/15 text-pink-400 border-pink-500/25',
-  'Frontend Developer': 'bg-blue-500/15 text-blue-400 border-blue-500/25',
-  'Backend Developer':  'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  'Tester':             'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  'DevOps':             'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
-  'QA':                 'bg-rose-500/15 text-rose-400 border-rose-500/25',
-};
-function RoleBadge({ role }) {
-  const cls = ROLE_STYLES[role] || 'bg-white/10 text-white/50 border-white/15';
-  return <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${cls}`}>{role}</span>;
-}
-
 const PROJECT_STATUS_STYLES = {
-  Planning:    'bg-blue-500/10 text-blue-300 border border-blue-500/20',
+  Planning:      'bg-blue-500/10 text-blue-300 border border-blue-500/20',
   'In Progress': 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20',
-  Testing:     'bg-violet-500/10 text-violet-300 border border-violet-500/20',
-  'On Hold':   'bg-orange-500/10 text-orange-300 border border-orange-500/20',
-  Live:        'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20',
-  Completed:   'bg-purple-500/10 text-purple-300 border border-purple-500/20',
-  Cancelled:   'bg-rose-500/10 text-rose-300 border border-rose-500/20',
+  Testing:       'bg-violet-500/10 text-violet-300 border border-violet-500/20',
+  'On Hold':     'bg-orange-500/10 text-orange-300 border border-orange-500/20',
+  Live:          'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20',
+  Completed:     'bg-purple-500/10 text-purple-300 border border-purple-500/20',
+  Cancelled:     'bg-rose-500/10 text-rose-300 border border-rose-500/20',
 };
 function ProjectStatusPill({ status }) {
   const cls = PROJECT_STATUS_STYLES[status] || 'bg-white/10 text-white/60 border border-white/15';
-  return <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls}`}>{status || 'Unknown'}</span>;
+  return <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls} inline-flex items-center gap-1.5`}>
+    <span className={`w-1.5 h-1.5 rounded-full ${status === 'Planning' ? 'bg-blue-400' : status === 'In Progress' ? 'bg-emerald-400' : status === 'Completed' ? 'bg-purple-400' : status === 'On Hold' ? 'bg-orange-400' : status === 'Live' ? 'bg-cyan-400' : status === 'Cancelled' ? 'bg-rose-400' : status === 'Testing' ? 'bg-violet-400' : 'bg-white/40'}`} />
+    {status || 'Unknown'}
+  </span>;
 }
+
+const formatCurrency = (value) => {
+  if (!value) return '—';
+  const num = Number(value);
+  if (Number.isNaN(num)) return value;
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
+};
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
 function AssignModal({ onClose, onAssigned }) {
@@ -247,38 +249,27 @@ export default function ProjectAssignments() {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
   const [search, setSearch]           = useState('');
-  const [roleFilter, setRoleFilter]   = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage]               = useState(1);
   const [limit, setLimit]             = useState(15);
   const [total, setTotal]             = useState(0);
   const [totalPages, setTotalPages]   = useState(1);
-  const [showAssign, setShowAssign]   = useState(false);  const [showEdit, setShowEdit] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
-  const [editRole, setEditRole] = useState('');
-  const [updating, setUpdating] = useState(false);  const [toast, setToast]             = useState('');
-  const [removeTarget, setRemoveTarget] = useState(null);
-  const [removing, setRemoving]       = useState(false);
+  const [showAssign, setShowAssign]   = useState(false);
+  const [toast, setToast]             = useState('');
   const [deleteProjectTarget, setDeleteProjectTarget] = useState(null);
   const [deletingProject, setDeletingProject] = useState(false);
   const [viewMode, setViewMode] = useState('table');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
-  const flattenGroupedAssignments = (grouped = []) => grouped.flatMap((project) => {
-    return project.employees.map((employee) => ({
-      ...employee,
-      project_uuid: project.project_uuid,
-      project_name: project.project_name,
-      current_status: project.current_status || project.status || 'Planning',
-    }));
-  });
+  const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 
   const fetchAssignments = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const params = new URLSearchParams({ page, limit });
       if (search) params.append('search', search);
-      if (roleFilter) params.append('role', roleFilter);
+      if (statusFilter) params.append('role', statusFilter);
       const { data } = await api.get(`/projects/assignments/all?${params}`);
       const rows = data.data || [];
       setAssignments(rows);
@@ -287,26 +278,10 @@ export default function ProjectAssignments() {
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load assignments');
     } finally { setLoading(false); }
-  }, [page, limit, search, roleFilter]);
+  }, [page, limit, search, statusFilter]);
 
   useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
-  useEffect(() => { setPage(1); }, [search, roleFilter, limit]);
-
-  const handleRemove = async () => {
-    if (!removeTarget) return;
-    setRemoving(true);
-    try {
-      await api.delete(`/projects/${removeTarget.project_uuid}/assignments`, {
-        data: { employee_id: removeTarget.employee_id }
-      });
-      showToast('Assignment removed successfully');
-      setRemoveTarget(null);
-      fetchAssignments();
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Remove failed');
-      setRemoveTarget(null);
-    } finally { setRemoving(false); }
-  };
+  useEffect(() => { setPage(1); }, [search, statusFilter, limit]);
 
   const handleDeleteProject = async () => {
     if (!deleteProjectTarget) return;
@@ -322,34 +297,51 @@ export default function ProjectAssignments() {
     } finally { setDeletingProject(false); }
   };
 
-  const handleEdit = async () => {
-    if (!editTarget || !editRole) return;
-    setUpdating(true);
-    try {
-      await api.put(`/projects/${editTarget.project_uuid}/assignments/${editTarget.id}`, {
-        employee_id: editTarget.employee_id,
-        role: editRole,
-      });
-      showToast('Assignment updated successfully');
-      setShowEdit(false);
-      setEditTarget(null);
-      setEditRole('');
-      fetchAssignments();
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Update failed');
-    } finally { setUpdating(false); }
-  };
-
-  const filtered = assignments;
-
-  // Group by project
-  const grouped = filtered.reduce((acc, a) => {
+  // Group assignments by project to build project-level data
+  const projectsMap = {};
+  assignments.forEach((a) => {
     const key = a.project_uuid;
-    const projectStatus = a.current_status || a.status || 'Planning';
-    if (!acc[key]) acc[key] = { project_name: a.project_name, status: projectStatus, members: [] };
-    acc[key].members.push(a);
-    return acc;
-  }, {});
+    if (!key) return;
+    if (!projectsMap[key]) {
+      projectsMap[key] = {
+        project_uuid: key,
+        project_name: a.project_name || 'Unnamed Project',
+        current_status: a.current_status || a.status || 'Planning',
+        project_manager: a.project_manager || '',
+        client_name: a.client_name || '',
+        total_project_cost: a.total_project_cost || null,
+        overall_progress: a.overall_progress ?? 0,
+        project_start_date: a.project_start_date || '',
+        estimated_completion_date: a.estimated_completion_date || '',
+        members: [],
+      };
+    }
+    projectsMap[key].members.push(a);
+    // Pick up manager name from a Project Manager role
+    if (a.role === 'Project Manager' && !projectsMap[key].project_manager) {
+      projectsMap[key].project_manager = a.full_name || [a.first_name, a.last_name].filter(Boolean).join(' ') || '';
+    }
+  });
+
+  const projectsList = Object.values(projectsMap);
+
+  // Filter by status if set
+  const filteredProjects = statusFilter
+    ? projectsList.filter(p => p.current_status === statusFilter)
+    : projectsList;
+
+  // Stats
+  const totalProjects = filteredProjects.length;
+  const totalMembers = filteredProjects.reduce((sum, p) => sum + p.members.length, 0);
+  const activeProjects = filteredProjects.filter(p => ['In Progress', 'Planning', 'Live', 'Testing'].includes(p.current_status)).length;
+  const completedProjects = filteredProjects.filter(p => p.current_status === 'Completed').length;
+
+  const stats = [
+    { label: 'Total Projects',    value: totalProjects,    icon: FolderKanban, cls: 'text-blue-400',    bg: 'bg-blue-500/15' },
+    { label: 'Total Members',     value: totalMembers,     icon: Users,        cls: 'text-orange-400',  bg: 'bg-orange-500/15' },
+    { label: 'Active Projects',   value: activeProjects,   icon: TrendingUp,   cls: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    { label: 'Completed',         value: completedProjects,icon: CheckCircle,  cls: 'text-purple-400',  bg: 'bg-purple-500/15' },
+  ];
 
   return (
     <div className="space-y-5 pb-10 text-white">
@@ -360,36 +352,7 @@ export default function ProjectAssignments() {
         </div>
       )}
 
-      {/* Remove confirm */}
-      {removeTarget && (
-        <ModalPortal>
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setRemoveTarget(null)} />
-          <div className="relative bg-[#111318] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center"><Trash2 size={18} className="text-rose-400" /></div>
-              <div>
-                <h3 className="text-white font-bold">Remove Assignment</h3>
-                <p className="text-white/40 text-xs">This cannot be undone</p>
-              </div>
-            </div>
-            <p className="text-white/60 text-sm mb-6">
-              Remove <span className="text-white font-semibold">{removeTarget.first_name} {removeTarget.last_name}</span> as <span className="text-orange-400 font-semibold">{removeTarget.role}</span> from <span className="text-white font-semibold">"{removeTarget.project_name}"</span>?
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setRemoveTarget(null)} disabled={removing}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/60 hover:text-white transition">Cancel</button>
-              <button onClick={handleRemove} disabled={removing}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition flex items-center justify-center gap-2">
-                {removing ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                {removing ? 'Removing…' : 'Remove'}
-              </button>
-            </div>
-          </div>
-        </div>
-        </ModalPortal>
-      )}
-
+      {/* Delete Project confirm */}
       {deleteProjectTarget && (
         <ModalPortal>
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -420,52 +383,6 @@ export default function ProjectAssignments() {
       )}
 
       {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} />}
-      {showEdit && editTarget && (
-        <ModalPortal>
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setShowEdit(false)} />
-          <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-white/8">
-              <div>
-                <h3 className="text-white font-bold text-lg">Edit Assignment</h3>
-                <p className="text-white/40 text-xs mt-0.5">Change role for {editTarget.first_name} {editTarget.last_name}</p>
-              </div>
-              <button onClick={() => setShowEdit(false)} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
-                <X size={15} />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-white/60 mb-1.5 block">Project</label>
-                <div className="rounded-xl border border-white/10 bg-[#0e1118] px-4 py-3 text-sm text-white">{editTarget.project_name}</div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-white/60 mb-1.5 block">Employee</label>
-                <div className="rounded-xl border border-white/10 bg-[#0e1118] px-4 py-3 text-sm text-white">{editTarget.first_name} {editTarget.last_name}</div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-white/60 mb-1.5 block">Role</label>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {ROLES.map((role) => (
-                    <button key={role} type="button" onClick={() => setEditRole(role)}
-                      className={`text-sm rounded-xl px-3 py-2 text-left border transition ${editRole === role ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/[0.05] hover:text-white'}`}>
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowEdit(false)} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white transition">Cancel</button>
-                <button onClick={handleEdit} disabled={!editRole || updating}
-                  className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-semibold hover:opacity-90 transition disabled:opacity-50">
-                  {updating ? 'Updating…' : 'Update'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        </ModalPortal>
-      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -474,9 +391,9 @@ export default function ProjectAssignments() {
             <Users size={22} className="text-pink-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Project Assignments</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Assigned Projects</h1>
             <p className="text-white/40 text-xs mt-0.5">
-              {loading ? 'Loading…' : `${assignments.length} assignment${assignments.length !== 1 ? 's' : ''} across ${Object.keys(grouped).length} project${Object.keys(grouped).length !== 1 ? 's' : ''}`}
+              {loading ? 'Loading…' : `${totalProjects} project${totalProjects !== 1 ? 's' : ''} with ${totalMembers} team member${totalMembers !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
@@ -493,87 +410,10 @@ export default function ProjectAssignments() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-          <input type="text" placeholder="Search by employee, project, designation…"
-            value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
-          {search && <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
-        </div>
-        <div className="relative">
-          <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
-            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
-            <option value="">All Roles</option>
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-          <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
-            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
-            {[15, 25, 50].map((size) => (
-              <option key={size} value={size}>{size} per page</option>
-            ))}
-          </select>
-          <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.04] p-1">
-          <button
-            type="button"
-            onClick={() => setViewMode('table')}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
-          >
-            <Table2 size={14} /> 
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('card')}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
-          >
-            <LayoutGrid size={14} /> 
-          </button>
-        </div>
-      </div>
-      </div>
-
-      {/* Stats Cards */}
-      {!loading && !error && assignments.length > 0 && (
+      {/* Stats */}
+      {!loading && !error && filteredProjects.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: 'Total Assignments',
-              value: total,
-              icon: Users,
-              bg: 'bg-blue-500/10 border border-blue-500/20',
-              cls: 'text-blue-400'
-            },
-            {
-              label: 'Projects',
-              value: Object.keys(grouped).length,
-              icon: FolderKanban,
-              bg: 'bg-orange-500/10 border border-orange-500/20',
-              cls: 'text-orange-400'
-            },
-            {
-              label: 'Active Members',
-              value: assignments.filter(a => ['In Progress', 'Planning', 'Live'].includes(a.current_status)).length,
-              icon: CheckCircle,
-              bg: 'bg-emerald-500/10 border border-emerald-500/20',
-              cls: 'text-emerald-400'
-            },
-            {
-              label: 'Unique Roles',
-              value: [...new Set(assignments.map(a => a.role).filter(Boolean))].length,
-              icon: LayoutGrid,
-              bg: 'bg-purple-500/10 border border-purple-500/20',
-              cls: 'text-purple-400'
-            },
-          ].map((s) => {
+          {stats.map((s) => {
             const Icon = s.icon;
             return (
               <div key={s.label} className="bg-[#111318] border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.02] transition">
@@ -589,6 +429,52 @@ export default function ProjectAssignments() {
           })}
         </div>
       )}
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+          <input type="text" placeholder="Search by project name, manager…"
+            value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+            className="w-full bg-[#111318] border border-white/10 text-white text-sm rounded-xl pl-10 pr-9 py-2.5 outline-none focus:border-orange-500/50 transition placeholder:text-white/20" />
+          {search && <button onClick={() => { setSearch(''); setPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"><X size={13} /></button>}
+        </div>
+        <div className="relative">
+          <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
+            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
+            <option value="">All Statuses</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+        </div>
+
+        <div className="relative">
+          <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
+            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-8">
+            {[15, 25, 50].map((size) => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
+          </select>
+          <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+        </div>
+
+        <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.04] p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'table' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
+          >
+            <Table2 size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('card')}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${viewMode === 'card' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'text-white/60 hover:text-white'}`}
+          >
+            <LayoutGrid size={14} />
+          </button>
+        </div>
+      </div>
 
       {/* Error */}
       {error && (
@@ -606,14 +492,14 @@ export default function ProjectAssignments() {
       )}
 
       {/* Empty */}
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && filteredProjects.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-white/30">
           <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-            <Users size={28} className="opacity-40" />
+            <FolderKanban size={28} className="opacity-40" />
           </div>
-          <p className="text-base font-semibold text-white/40">No assignments found</p>
-          <p className="text-xs mt-1">{search || roleFilter ? 'Try adjusting your filters.' : 'Click "Assign Employee" to get started.'}</p>
-          {!search && !roleFilter && (
+          <p className="text-base font-semibold text-white/40">No assigned projects found</p>
+          <p className="text-xs mt-1">{search || statusFilter ? 'Try adjusting your filters.' : 'Click "Assign Employee" to get started.'}</p>
+          {!search && !statusFilter && (
             <button onClick={() => setShowAssign(true)}
               className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition"
               style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
@@ -623,213 +509,165 @@ export default function ProjectAssignments() {
         </div>
       )}
 
-      {/* Assignments Table (grouped by project) */}
-      {!loading && !error && filtered.length > 0 && (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([projectUuid, { project_name, status, members }]) => (
-            <div key={projectUuid} className="bg-white/[0.025] border border-white/8 rounded-2xl overflow-hidden">
+      {/* Table View */}
+      {!loading && !error && filteredProjects.length > 0 && viewMode === 'table' && (
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[820px] text-sm">
+              <thead>
+                <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Project</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
+                 
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Members</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Progress</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Cost</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProjects.map((p, i) => (
+                  <tr
+                    key={p.project_uuid}
+                    className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={p.project_name} index={i} size={10} />
+                        <div>
+                          <div className="text-white font-semibold text-sm leading-tight">{p.project_name}</div>
+                          {p.client_name && (
+                            <p className="text-white/35 text-xs mt-0.5 flex items-center gap-1">
+                              <Building2 size={9} /> {p.client_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5"><ProjectStatusPill status={p.current_status} /></td>
+                    
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2">
+                          {p.members.slice(0, 4).map((m, mi) => (
+                            <div key={m.employee_id || mi} className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold border-2 border-[#111318]"
+                              style={{ background: AVATAR_COLOURS[mi % AVATAR_COLOURS.length] + '40', color: AVATAR_COLOURS[mi % AVATAR_COLOURS.length] }}>
+                              {initials(m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || '?')}
+                            </div>
+                          ))}
+                          {p.members.length > 4 && (
+                            <div className="w-6 h-6 rounded-full bg-white/10 text-white/50 text-[8px] font-bold flex items-center justify-center border-2 border-[#111318]">
+                              +{p.members.length - 4}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-white/40 text-xs">{p.members.length}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                        </div>
+                        <span className="text-white/50 text-xs">{p.overall_progress || 0}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="text-white/60 text-xs font-medium bg-white/[0.05] border border-white/10 px-2.5 py-1 rounded-md">
+                        {formatCurrency(p.total_project_cost)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => navigate(`/admin/projects/assignments/view/${p.project_uuid}`)}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View Details">
+                          <Eye size={13} />
+                        </button>
+                        <button onClick={() => setDeleteProjectTarget({ project_uuid: p.project_uuid, project_name: p.project_name })}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition" title="Delete Project">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Grid/Card View */}
+      {!loading && !error && filteredProjects.length > 0 && viewMode === 'card' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filteredProjects.map((p, i) => (
+            <div
+              key={p.project_uuid}
+              className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-4 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200"
+            >
               {/* Project header */}
-              <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-b border-white/8">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center shrink-0">
-                    <FolderKanban size={15} className="text-orange-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm">{project_name}</h3>
-                    <p className="text-white/35 text-xs">{members.length} member{members.length !== 1 ? 's' : ''} assigned</p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar name={p.project_name} index={i} size={10} />
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm leading-tight truncate">{p.project_name}</p>
+                    {p.client_name && <p className="text-white/35 text-xs mt-0.5 truncate flex items-center gap-1"><Building2 size={9} /> {p.client_name}</p>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <ProjectStatusPill status={status} />
-                  <button
-                    onClick={() => navigate(`/admin/projects/assignments/view/${projectUuid}`)}
-                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
-                    title="View assignment details"
-                  >
-                    <Eye size={14} />
-                  </button>
-                  <button
-                    onClick={() => setDeleteProjectTarget({ project_uuid: projectUuid, project_name })}
-                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
-                    title="Delete project"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                <ProjectStatusPill status={p.current_status} />
+              </div>
+
+              {/* Manager */}
+              {p.project_manager && (
+                <p className="text-white/45 text-xs flex items-center gap-2">
+                  <User size={11} className="text-white/25 shrink-0" /> {p.project_manager}
+                </p>
+              )}
+
+              {/* Team avatars */}
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {p.members.slice(0, 5).map((m, mi) => (
+                    <div key={m.employee_id || mi} className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold border-2 border-[#111318]"
+                      style={{ background: AVATAR_COLOURS[mi % AVATAR_COLOURS.length] + '40', color: AVATAR_COLOURS[mi % AVATAR_COLOURS.length] }}>
+                      {initials(m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || '?')}
+                    </div>
+                  ))}
+                  {p.members.length > 5 && (
+                    <div className="w-7 h-7 rounded-full bg-white/10 text-white/50 text-[9px] font-bold flex items-center justify-center border-2 border-[#111318]">
+                      +{p.members.length - 5}
+                    </div>
+                  )}
+                </div>
+                <span className="text-white/40 text-xs">{p.members.length} member{p.members.length !== 1 ? 's' : ''}</span>
+              </div>
+
+              {/* Progress */}
+              <div>
+                <div className="flex justify-between text-xs text-white/40 mb-1.5">
+                  <span>Progress</span><span>{p.overall_progress || 0}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
                 </div>
               </div>
 
-              {viewMode === 'table' ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[600px] text-sm">
-                    <thead>
-                      <tr className="border-b border-white/[0.05]">
-                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Employee</th>
-                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">EMP ID</th>
-                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Contact</th>
-                        <th className="text-left text-[10px] font-bold text-white/30 uppercase tracking-widest px-4 py-2.5">Assigned On</th>
-                        <th className="text-right text-[10px] font-bold text-white/30 uppercase tracking-widest px-5 py-2.5">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map((m, i) => (
-                        <tr key={`${m.employee_id}-${m.role}`} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition">
-                          <td className="px-4 py-3">
-                            <div className="flex items-start gap-3">
-                              <Avatar
-                                name={m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_code || 'EMP'}
-                                image={m.profile_photo}
-                                index={i}
-                              />
-                              <div className="min-w-0">
-                                <p className="text-white font-semibold text-sm truncate">
-                                  {m.full_name ||
-                                    [m.first_name, m.last_name].filter(Boolean).join(' ') ||
-                                    m.employee_name ||
-                                    m.employee_code ||
-                                    '—'}
-                                </p>
-                                {(m.designation || m.role) && (
-                                  <p className="text-white/40 text-[10px] truncate">{m.designation || m.role}</p>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="text-white font-semibold text-sm truncate">{m.employee_code || '—'}</div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="space-y-1 text-[10px] text-white/40">
-                              {m.personal_email || m.email || m.official_email ? (
-                                <div>{m.personal_email || m.email || m.official_email}</div>
-                              ) : (
-                                <div>No email</div>
-                              )}
-                              {m.mobile_number || m.phone_number || m.alternate_mobile ? (
-                                <div>{m.mobile_number || m.phone_number || m.alternate_mobile}</div>
-                              ) : (
-                                <div>No phone</div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-white/35 text-xs">
-                              {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
-                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/25 hover:text-blue-300 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition"
-                                title="View Employee">
-                                <Eye size={13} />
-                              </button>
-                              <button onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
-                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/25 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 flex items-center justify-center transition"
-                                title="Edit">
-                                <Edit3 size={13} />
-                              </button>
-                              <button onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
-                                className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/25 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
-                                title="Remove">
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
+                <span className="text-white/50 text-xs font-medium">{formatCurrency(p.total_project_cost)}</span>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => navigate(`/admin/projects/assignments/view/${p.project_uuid}`)}
+                    className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
+                  <button onClick={() => setDeleteProjectTarget({ project_uuid: p.project_uuid, project_name: p.project_name })}
+                    className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition"><Trash2 size={13} /></button>
                 </div>
-              ) : (
-                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {members.map((m, i) => {
-                    const fullName = m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.employee_name || m.employee_code || '—';
-                    const avatarColor = AVATAR_COLOURS[(i) % AVATAR_COLOURS.length];
-                    return (
-                      <div
-                        key={`${m.employee_id}-${m.role}-${projectUuid}`}
-                        className="group relative bg-[#0e1118] border border-white/8 rounded-2xl overflow-hidden hover:border-white/[0.15] hover:-translate-y-0.5 transition-all duration-200 shadow-lg shadow-black/20"
-                      >
-                        {/* Coloured top accent */}
-                        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${avatarColor}99, ${avatarColor}22)` }} />
-
-                        <div className="p-4">
-                          {/* Top row: Avatar + Name + Role badge */}
-                          <div className="flex items-start justify-between gap-3 mb-4">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <Avatar
-                                name={fullName}
-                                image={m.profile_photo}
-                                index={i}
-                                size={11}
-                              />
-                              <div className="min-w-0">
-                                <p className="text-white font-bold text-sm leading-tight truncate">{fullName}</p>
-                                {m.designation && (
-                                  <p className="text-white/40 text-[10px] mt-0.5 truncate">{m.designation}</p>
-                                )}
-                              </div>
-                            </div>
-                            {m.role && <RoleBadge role={m.role} />}
-                          </div>
-
-                          {/* Info rows */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
-                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">EMP ID</span>
-                              <span className="text-white/80 text-xs font-bold truncate">{m.employee_code || '—'}</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
-                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Email</span>
-                              <span className="text-white/60 text-[10px] truncate max-w-[140px]">{m.personal_email || m.email || m.official_email || 'No email'}</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
-                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Phone</span>
-                              <span className="text-white/60 text-xs">{m.mobile_number || m.phone_number || m.alternate_mobile || 'No phone'}</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 bg-white/[0.03] rounded-xl px-3 py-2">
-                              <span className="text-white/35 text-[10px] uppercase tracking-widest font-semibold shrink-0">Assigned</span>
-                              <span className="text-white/60 text-xs">
-                                {m.assigned_date ? new Date(m.assigned_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Action buttons */}
-                          <div className="mt-4 flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
-                            <button
-                              onClick={() => navigate(`/admin/employees/view/${m.employee_id}`)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-300 border border-transparent hover:border-blue-500/25 text-xs font-semibold transition"
-                              title="View Employee"
-                            >
-                              <Eye size={12} /> View
-                            </button>
-                            <button
-                              onClick={() => { setEditTarget({ ...m, project_uuid: projectUuid, project_name }); setEditRole(m.role); setShowEdit(true); }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emerald-500/15 text-white/40 hover:text-emerald-300 border border-transparent hover:border-emerald-500/25 text-xs font-semibold transition"
-                              title="Edit Role"
-                            >
-                              <Edit3 size={12} /> Edit
-                            </button>
-                            <button
-                              onClick={() => setRemoveTarget({ ...m, project_uuid: projectUuid, project_name })}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/40 hover:text-rose-400 border border-transparent hover:border-rose-500/25 text-xs font-semibold transition"
-                              title="Remove"
-                            >
-                              <Trash2 size={12} /> Remove
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Pagination */}
       {!loading && !error && totalPages > 1 && (
         <div className="flex items-center justify-between pt-4">
           <p className="text-xs text-white/40">Page {page} of {totalPages} · {total} total</p>

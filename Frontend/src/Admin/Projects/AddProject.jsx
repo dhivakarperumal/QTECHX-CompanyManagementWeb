@@ -1,5 +1,5 @@
-﻿import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle,
   AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
@@ -92,11 +92,11 @@ function EmpAvatar({ name, index, size = 8 }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AddProject() {
   const { id } = useParams();
-  const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const isEdit = Boolean(id);
 
   const [formData, setFormData]         = useState(BLANK);
-  const [fetchLoading, setFetchLoading] = useState(isEdit);
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [projectCodeLoading, setProjectCodeLoading] = useState(false);
   const [clientLoading, setClientLoading] = useState(false);
   const [clients, setClients] = useState([]);
@@ -108,9 +108,14 @@ export default function AddProject() {
   const [success, setSuccess]           = useState('');
 
   useEffect(() => {
-    if (!isEdit) return;
-    (async () => {
-      setFetchLoading(true);
+    setSuccess('');
+    setError('');
+    if (!isEdit) {
+      setFormData(BLANK);
+      setDocumentFiles({});
+    } else {
+      (async () => {
+        setFetchLoading(true);
       try {
         const { data } = await api.get(`/projects/${id}`);
         if (!data.success) throw new Error(data.message || 'Not found');
@@ -119,6 +124,7 @@ export default function AddProject() {
         setError(err?.response?.data?.message || err.message || 'Failed to load project');
       } finally { setFetchLoading(false); }
     })();
+    }
   }, [id, isEdit]);
 
   useEffect(() => {
@@ -234,7 +240,9 @@ export default function AddProject() {
         : await api.post('/projects', form);
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
       setSuccess(isEdit ? 'Project updated!' : 'Project created!');
-      setTimeout(() => navigate('/admin/projects'), 1400);
+      setTimeout(() => {
+        navigate('/admin/projects');
+      }, 1000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to save project');
     } finally { setLoading(false); }
@@ -242,7 +250,7 @@ export default function AddProject() {
 
   if (fetchLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={30} className="animate-spin text-orange-500/70" />
           <p className="text-sm text-white/40">Loading project…</p>
@@ -252,37 +260,42 @@ export default function AddProject() {
   }
 
   return (
-    <div className="space-y-6 text-white pb-10">
-      <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/admin/projects')}
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
-          <ArrowLeft size={16} />
-        </button>
-        <div>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
-            <FileText size={11} /> {isEdit ? 'Edit Project' : 'New Project'}
+    <div className="space-y-6 pb-6 text-white min-h-screen">
+      <div className="w-full bg-[#0d0f14] border border-white/10 rounded-2xl flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-b border-white/8 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center">
+              <FileText size={18} className="text-orange-500" />
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-lg leading-tight">
+                {isEdit ? (formData.project_name || 'Edit Project') : 'Create a Project'}
+              </h2>
+              <p className="text-white/40 text-xs mt-0.5">
+                {isEdit ? 'Update project details and save changes.' : 'Fill in project details, timeline, team, and documents.'}
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            {isEdit ? (formData.project_name || 'Edit Project') : 'Create a Project'}
-          </h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            {isEdit ? 'Update project details and save changes.' : 'Fill in project details, timeline, team, and documents.'}
-          </p>
+          <button onClick={() => navigate('/admin/projects')} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
+            <X size={16} />
+          </button>
         </div>
-      </div>
 
-      {success && (
-        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
-          <CheckCircle size={16} /> {success}
-        </div>
-      )}
-      {error && (
-        <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl">
-          <AlertCircle size={16} /> {error}
-        </div>
-      )}
+        {/* Form Body */}
+        <div className="px-6 py-5">
+          {success && (
+            <div className="mb-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
+              <CheckCircle size={16} /> {success}
+            </div>
+          )}
+          {error && (
+            <div className="mb-5 flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl">
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+          <form id="project-form" onSubmit={handleSave} className="space-y-6 pb-6">
         {/* Basic Info */}
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
@@ -589,26 +602,29 @@ export default function AddProject() {
           </div>
         </section>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-2">
-          <button type="submit" disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-t border-white/8 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
+          {!isEdit && (
+            <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
+              Reset
+            </button>
+          )}
+          <button type="button" onClick={() => navigate('/admin/projects')} disabled={loading}
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
+            Cancel
+          </button>
+          <button type="submit" form="project-form" disabled={loading}
+            className="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-semibold text-white transition shadow-lg shadow-orange-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
             {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
           </button>
-          {!isEdit && (
-            <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-              <RefreshCw size={15} /> Reset
-            </button>
-          )}
-          <button type="button" onClick={() => navigate('/admin/projects')} disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-40">
-            <ArrowLeft size={15} /> Cancel
-          </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
