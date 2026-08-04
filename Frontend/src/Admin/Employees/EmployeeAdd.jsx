@@ -416,6 +416,21 @@ const EmployeeAdd = () => {
 
     if (!data.dob) {
       errors.dob = "Date of birth is required.";
+    } else {
+      const dobDate = new Date(data.dob);
+      if (Number.isNaN(dobDate.getTime())) {
+        errors.dob = "Date of birth is invalid.";
+      } else {
+        const today = new Date();
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+          age -= 1;
+        }
+        if (age < 18) {
+          errors.dob = "Employee must be at least 18 years old.";
+        }
+      }
     }
 
     if (!data.salary_type) {
@@ -548,7 +563,8 @@ const EmployeeAdd = () => {
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
-      setError("Please correct the highlighted fields before saving.");
+      const errorMessages = Object.values(validationErrors).join(" | ");
+      setError(errorMessages);
       setLoading(false);
       return;
     }
