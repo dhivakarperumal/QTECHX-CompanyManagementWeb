@@ -1275,6 +1275,8 @@ async function ensureAttendanceSchema(pool) {
       year INT NOT NULL,
       check_in_time VARCHAR(20) NULL,
       check_out_time VARCHAR(20) NULL,
+      break_start_time VARCHAR(20) NULL,
+      break_end_time VARCHAR(20) NULL,
       working_hours VARCHAR(20) NULL,
       late_entry VARCHAR(20) NULL,
       early_exit VARCHAR(20) NULL,
@@ -1291,6 +1293,23 @@ async function ensureAttendanceSchema(pool) {
       KEY idx_attendance_month_year (month, year)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  const [columns] = await pool.execute('SHOW COLUMNS FROM attendance');
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('break_start_time', 'VARCHAR(20) NULL');
+  addColumn('break_end_time', 'VARCHAR(20) NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE attendance ${addColumnStatements.join(', ')}`);
+  }
 }
 
 async function ensureExpenseSchema(pool) {

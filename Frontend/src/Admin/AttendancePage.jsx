@@ -1,40 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Clock3, MapPin, PlusCircle, X, Eye, Loader2, UserRoundCheck, UserRoundX, LayoutGrid, List } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays } from "lucide-react";
 import api from "../api";
 import { Link } from "react-router-dom";
-
-const today = new Date();
-const defaultMonth = today.getMonth() + 1;
-const defaultYear = today.getFullYear();
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 const AttendancePage = () => {
-  const [employees, setEmployees] = useState([]);
-  const [summary, setSummary] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
-  const [selectedYear, setSelectedYear] = useState(defaultYear);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [summaryData, setSummaryData] = useState([]);
+  const [employeeData, setEmployeeData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [viewLoading, setViewLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [form, setForm] = useState({
-    employee_id: "",
-    date: today.toISOString().slice(0, 10),
-    check_in_time: "09:30",
-    check_out_time: "18:00",
-    attendance_status: "Present",
-    location: "",
-  });
-  const [metrics, setMetrics] = useState({
-    working_hours: "8h 30m",
-    late_entry: "No",
-    early_exit: "No",
-    overtime: "No",
-  });
-  const [employeeAttendance, setEmployeeAttendance] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [viewMode, setViewMode] = useState("table");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const today = new Date();
+  const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const formattedToday = today.toLocaleDateString('en-GB', dateOptions);
 
   useEffect(() => {
     loadData();
@@ -42,446 +21,276 @@ const AttendancePage = () => {
 
   const loadData = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const employeeRes = await api.get("/employees?limit=200");
-      setEmployees(employeeRes?.data?.data || []);
+      const [empRes, sumRes] = await Promise.all([
+        api.get("/employees?limit=200"),
+        api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`)
+      ]);
+      setEmployeeData(empRes?.data?.data || []);
+      setSummaryData(sumRes?.data?.data || []);
     } catch (err) {
-      console.error("Failed to load employees", err);
-      setError("Unable to load employees. Please refresh or check your login.");
-    }
-
-    try {
-      const summaryRes = await api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`);
-      setSummary(summaryRes?.data?.data || []);
-    } catch (err) {
-      console.error("Failed to load attendance summary", err);
-      setError((prev) => prev ? prev + " Attendance summary could not be loaded." : "Attendance summary could not be loaded.");
+      console.error("Failed to load data", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    const nextForm = { ...form, [name]: value };
-    setForm(nextForm);
+  // Metrics Calculation
+  const totalEmployees = employeeData.length;
+  const presentToday = summaryData.filter(s => s.today_status === 'Present').length;
+  const absentToday = summaryData.filter(s => s.today_status === 'Absent' || s.today_status === 'Leave').length;
+  const onLeaveToday = summaryData.filter(s => s.today_status === 'Leave').length;
+  const lateToday = summaryData.filter(s => s.today_status === 'Late').length;
+  
+  // Estimate working now (based on Present and not clocked out if we had live data, assuming present = working for this summary)
+  const workingNow = presentToday; 
 
-    if (name === "check_in_time" || name === "check_out_time") {
-      const computed = calculateMetrics(nextForm.check_in_time, nextForm.check_out_time);
-      setMetrics(computed);
-    }
-  };
+  const overviewData = [
+    { name: 'Present', value: presentToday, color: '#10b981' },
+    { name: 'Late', value: lateToday, color: '#f59e0b' },
+    { name: 'Absent', value: absentToday, color: '#ef4444' },
+    { name: 'Half Day', value: 0, color: '#8b5cf6' },
+    { name: 'On Leave', value: onLeaveToday, color: '#3b82f6' }
+  ];
 
-  const calculateMetrics = (checkIn, checkOut) => {
-    const parseTime = (value) => {
-      if (!value) return null;
-      const [time, modifier] = String(value).split(" ");
-      const [hours, minutes] = time.split(":").map(Number);
-      let total = hours * 60 + minutes;
-      if (modifier === "PM" && hours !== 12) total += 12 * 60;
-      if (modifier === "AM" && hours === 12) total -= 12 * 60;
-      return total;
-    };
+  const presentPercentage = totalEmployees > 0 ? ((presentToday / totalEmployees) * 100).toFixed(1) : 0;
 
-    const officeCheckIn = parseTime("9:30 AM");
-    const officeCheckOut = parseTime("6:00 PM");
-    const checkInMinutes = parseTime(checkIn);
-    const checkOutMinutes = parseTime(checkOut);
+  // Mock Trend Data
+  const trendData = [
+    { name: 'Mon', count: 120 }, { name: 'Tue', count: 132 }, { name: 'Wed', count: 125 },
+    { name: 'Thu', count: 120 }, { name: 'Fri', count: 110 }, { name: 'Sat', count: 20 }, { name: 'Sun', count: 5 }
+  ];
 
-    let workingHours = "0h 0m";
-    let lateEntry = "No";
-    let earlyExit = "No";
-    let overtime = "No";
-
-    if (checkInMinutes !== null) {
-      const lateBy = checkInMinutes - officeCheckIn;
-      if (lateBy > 0) {
-        lateEntry = `${Math.floor(lateBy / 60)}h ${lateBy % 60}m`;
-      }
-    }
-
-    if (checkOutMinutes !== null) {
-      const exitBefore = officeCheckOut - checkOutMinutes;
-      if (exitBefore > 0) {
-        earlyExit = `${Math.floor(exitBefore / 60)}h ${exitBefore % 60}m`;
-      }
-    }
-
-    if (checkInMinutes !== null && checkOutMinutes !== null) {
-      const durationMinutes = Math.max(0, checkOutMinutes - checkInMinutes);
-      const hours = Math.floor(durationMinutes / 60);
-      const minutes = durationMinutes % 60;
-      workingHours = `${hours}h ${minutes}m`;
-
-      const overtimeMinutes = Math.max(0, checkOutMinutes - officeCheckOut);
-      if (overtimeMinutes > 0) {
-        overtime = `${Math.floor(overtimeMinutes / 60)}h ${overtimeMinutes % 60}m`;
-      }
-    }
-
-    return { working_hours: workingHours, late_entry: lateEntry, early_exit: earlyExit, overtime };
-  };
-
-  useEffect(() => {
-    setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
-  }, []);
-
-  const openAddModal = () => {
-    setForm((prev) => ({ ...prev, employee_id: employees[0]?.employee_id || "" }));
-    setIsModalOpen(true);
-  };
-
-  // const handleLocation = () => {
-  //   if (!navigator.geolocation) {
-  //     setForm((prev) => ({ ...prev, location: "Geolocation not supported" }));
-  //     return;
-  //   }
-
-  //   navigator.geolocation.getCurrentPosition(
-  //     (position) => {
-  //       setForm((prev) => ({
-  //         ...prev,
-  //         location: `Lat: ${position.coords.latitude}, Lng: ${position.coords.longitude}`,
-  //       }));
-  //     },
-  //     () => {
-  //       setForm((prev) => ({ ...prev, location: "Location permission denied" }));
-  //     }
-  //   );
-  // };
-
-
-  const handleLocation = () => {
-    if (!navigator.geolocation) {
-      setForm((prev) => ({
-        ...prev,
-        location: "Geolocation not supported",
-      }));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-          );
-
-          const data = await response.json();
-
-          const address = data.address || {};
-
-          const fullAddress = [
-            address.house_number,
-            address.road,
-            address.neighbourhood,
-            address.suburb,
-            address.village,
-            address.town,
-            address.city,
-            address.county,
-            address.state,
-            address.postcode,
-            address.country,
-          ]
-            .filter(Boolean)
-            .join(", ");
-
-          setForm((prev) => ({
-            ...prev,
-            location: `Latitude: ${latitude}
-Longitude: ${longitude}
-
-Address: ${fullAddress}`,
-          }));
-
-          console.log({
-            latitude,
-            longitude,
-            address: fullAddress,
-          });
-        } catch (err) {
-          console.error(err);
-
-          setForm((prev) => ({
-            ...prev,
-            location: `Latitude: ${position.coords.latitude}
-Longitude: ${position.coords.longitude}`,
-          }));
-        }
-      },
-      (error) => {
-        console.error(error);
-        alert("Unable to fetch location");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    );
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post("/attendance", {
-        employee_id: form.employee_id,
-        date: form.date,
-        check_in_time: form.check_in_time,
-        check_out_time: form.check_out_time,
-        working_hours: metrics.working_hours,
-        late_entry: metrics.late_entry,
-        early_exit: metrics.early_exit,
-        overtime: metrics.overtime,
-        attendance_status: form.attendance_status,
-        location: form.location,
-      });
-      setIsModalOpen(false);
-      setForm({
-        employee_id: "",
-        date: today.toISOString().slice(0, 10),
-        check_in_time: "09:30",
-        check_out_time: "18:00",
-        attendance_status: "Present",
-        location: "",
-      });
-      setMetrics({ working_hours: "8h 30m", late_entry: "No", early_exit: "No", overtime: "No" });
-      loadData();
-    } catch (error) {
-      console.error("Failed to add attendance", error);
-      alert(error?.response?.data?.message || "Could not save attendance");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-
-  const employeeCards = useMemo(() => {
-    return summary.length ? summary : employees.map((employee) => ({
-      employee_id: employee.employee_id,
-      employee_code: employee.employee_code,
-      employee_name: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
-      present_days: 0,
-      absent_days: 0,
-    }));
-  }, [summary, employees]);
+  // Department Mock Data
+  const departmentData = [
+    { name: 'Design', value: 30, color: '#3b82f6' },
+    { name: 'Development', value: 45, color: '#10b981' },
+    { name: 'Marketing', value: 20, color: '#8b5cf6' },
+    { name: 'HR', value: 15, color: '#f59e0b' },
+    { name: 'Sales', value: 15, color: '#ef4444' }
+  ];
 
   return (
-    <div className="space-y-6 text-white">
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-6 text-slate-800 bg-slate-50 min-h-screen pb-10 font-sans">
+      
+      {/* Header */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Employee Attendance</p>
-          <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
-          <p className="mt-2 text-sm text-white/60">Track day-to-day attendance, manage check-ins, and review monthly reports.</p>
+          <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
         </div>
-        <div className="flex flex-wrap gap-3">
-
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
-              {Array.from({ length: 12 }, (_, index) => (
-                <option key={index + 1} value={index + 1} className="bg-slate-900">{new Date(2024, index).toLocaleString("en", { month: "long" })}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="bg-transparent outline-none">
-              {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
-                <option key={year} value={year} className="bg-slate-900">{year}</option>
-              ))}
-            </select>
-          </div>
-          <button onClick={openAddModal} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
-            <PlusCircle size={16} /> Add Attendance
-          </button>
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode("table")} className={`rounded-full p-2 transition ${viewMode === "table" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode("card")} className={`rounded-full p-2 transition ${viewMode === "card" ? "bg-orange-500 text-white" : "text-white/60 hover:text-white"}`} title="Card view"><LayoutGrid size={16} /></button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium bg-slate-100 px-4 py-2 rounded-lg">
+            <CalendarDays size={16} />
+            <span>{formattedToday}</span>
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10">
-          <Loader2 className="mr-3 animate-spin" /> Loading attendance details...
-        </div>
-      ) : (
-        <>
-          {error && (
-            <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">
-              {error}
-            </div>
-          )}
-          {viewMode === "table" ? (
-            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#0f172a]/70">
-              <table className="min-w-full text-sm">
-                <thead className="bg-white/5 text-white/60">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Employee</th>
-                    <th className="px-4 py-3 text-left">Employee ID</th>
-                    <th className="px-4 py-3 text-left">Present</th>
-                    <th className="px-4 py-3 text-left">Absent</th>
-                    <th className="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {employeeCards.length === 0 ? (
-                    <tr><td colSpan="5" className="px-4 py-8 text-center text-white/60">No employees found.</td></tr>
-                  ) : employeeCards.map((employee) => (
-                    <tr key={employee.employee_id} className="hover:bg-white/5">
-                      <td className="px-4 py-3 font-semibold text-white">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</td>
-                      <td className="px-4 py-3 text-white/60">{employee.employee_id}</td>
-                      <td className="px-4 py-3 text-emerald-400">{employee.present_days || 0}</td>
-                      <td className="px-4 py-3 text-rose-400">{employee.absent_days || 0}</td>
-                      <td className="px-4 py-3 text-right">
-                        <Link to={`/admin/attendance/view/${employee.employee_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
-                          <Eye size={14} /> View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {employeeCards.length === 0 ? (
-                <div className="col-span-full rounded-3xl border border-white/10 bg-[#0f172a]/70 p-10 text-center text-white/60">
-                  No employees found.
+      {/* Top Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <StatCard icon={<Users className="text-blue-500" />} title="Total Employees" value={totalEmployees} subtext="+8 This Month" bgColor="bg-blue-50" />
+        <StatCard icon={<UserCheck className="text-emerald-500" />} title="Present Today" value={presentToday} subtext={`${presentPercentage}% of total`} bgColor="bg-emerald-50" />
+        <StatCard icon={<UserX className="text-rose-500" />} title="Absent Today" value={absentToday} subtext={`${((absentToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-rose-50" />
+        <StatCard icon={<UserMinus className="text-orange-500" />} title="On Leave Today" value={onLeaveToday} subtext={`${((onLeaveToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-orange-50" />
+        <StatCard icon={<Clock className="text-purple-500" />} title="Late Today" value={lateToday} subtext={`${presentToday > 0 ? ((lateToday/presentToday)*100).toFixed(1) : 0}% of present`} bgColor="bg-purple-50" />
+        <StatCard icon={<UserCog className="text-indigo-500" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-50" />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column - Larger */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Overview Chart */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">Today's Attendance Overview</h3>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-48 h-48 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={overviewData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
+                      {overviewData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-bold text-slate-800">{presentPercentage}%</span>
+                  <span className="text-xs text-emerald-500 font-medium">Present</span>
                 </div>
-              ) : (
-                employeeCards.map((employee) => (
-                  <div key={employee.employee_id} className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-white/40">{employee.employee_code || "EMP"}</p>
-                        <h3 className="mt-1 text-lg font-semibold">{employee.employee_name || `${employee.first_name || ""} ${employee.last_name || ""}`.trim()}</h3>
-                      </div>
-                      <div className={`rounded-full p-2 ${employee.present_days > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-slate-700/60 text-slate-300"}`}>
-                        {employee.present_days > 0 ? <UserRoundCheck size={18} /> : <UserRoundX size={18} />}
-                      </div>
+              </div>
+              
+              <div className="flex-1 grid grid-cols-2 gap-y-4 gap-x-8">
+                {overviewData.map(item => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-sm font-medium text-slate-600">{item.name}</span>
                     </div>
-                    <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-white/40">Present Days</p>
-                        <p className="mt-1 text-xl font-semibold text-emerald-400">{employee.present_days || 0}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-white/40">Absent Days</p>
-                        <p className="mt-1 text-xl font-semibold text-rose-400">{employee.absent_days || 0}</p>
-                      </div>
-                    </div>
-                    <div className="mt-5 flex items-center justify-between text-sm text-white/60">
-                      <span className="font-medium">Employee ID: {employee.employee_id}</span>
-                      <Link to={`/admin/attendance/view/${employee.employee_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
-                        <Eye size={14} /> View
-                      </Link>
-                    </div>
+                    <span className="text-sm font-bold text-slate-800">{item.value}</span>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
             </div>
-          )}
-        </>
-      )}
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f172a] p-6 shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-orange-400">New record</p>
-                <h3 className="text-xl font-semibold">Add attendance</h3>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/70">Employee</label>
-                <select name="employee_id" value={form.employee_id} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                  <option value="" disabled>Select employee</option>
-                  {employees.map((employee) => (
-                    <option key={employee.employee_id} value={employee.employee_id} className="bg-slate-900">
-                      {employee.first_name} {employee.last_name} ({employee.employee_code || employee.employee_id})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Date</label>
-                <input type="date" name="date" value={form.date} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                  <option value="Present" className="bg-slate-900">Present</option>
-                  <option value="Absent" className="bg-slate-900">Absent</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
-                <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
-                <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Working Hours</label>
-                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
-                  <Clock3 size={16} className="text-orange-400" />
-                  <span>{metrics.working_hours}</span>
-                </div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Late Entry</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Early Exit</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/70">Overtime</label>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/70">Location</label>
-                <div className="flex flex-col gap-3 md:flex-row">
-                  <input name="location" value={form.location} onChange={handleFormChange} placeholder="Use the button to fetch current location" className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                  <button type="button" onClick={handleLocation} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10">
-                    <MapPin size={16} /> Fetch Location
-                  </button>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-4 py-3 text-white/70 hover:bg-white/10">Cancel</button>
-                <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 px-4 py-3 font-medium text-white transition hover:bg-orange-600 disabled:opacity-70">
-                  {submitting ? "Saving..." : "Save Attendance"}
-                </button>
-              </div>
-            </form>
           </div>
+
+          {/* Timesheet */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+             <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-slate-800">Today's Timesheet (Live)</h3>
+             </div>
+             <div className="overflow-x-auto">
+               <table className="w-full text-sm text-left">
+                 <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
+                   <tr>
+                     <th className="py-3 px-4 rounded-tl-lg">Employee</th>
+                     <th className="py-3 px-4">Start Time</th>
+                     <th className="py-3 px-4">End Time</th>
+                     <th className="py-3 px-4">Status</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-50">
+                    {summaryData.slice(0, 5).map((row, i) => (
+                      <tr key={i} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-4 font-medium text-slate-700">{row.employee_name}</td>
+                        <td className="py-3 px-4 text-slate-500">{row.today_status === 'Present' || row.today_status === 'Late' ? '09:30 AM' : '--'}</td>
+                        <td className="py-3 px-4 text-slate-500">--</td>
+                        <td className="py-3 px-4">
+                           <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
+                              row.today_status === 'Present' ? 'bg-emerald-100 text-emerald-600' : 
+                              row.today_status === 'Late' ? 'bg-purple-100 text-purple-600' :
+                              'bg-rose-100 text-rose-600'
+                           }`}>
+                             {row.today_status || 'Unknown'}
+                           </span>
+                        </td>
+                      </tr>
+                    ))}
+                 </tbody>
+               </table>
+             </div>
+          </div>
+
         </div>
-      )}
+
+        {/* Right Column - Smaller */}
+        <div className="space-y-6">
+          
+          {/* Live Status */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-96 flex flex-col">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Live Status <span className="text-xs font-normal text-slate-400">(Real-time)</span></h3>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+               {summaryData.slice(0, 6).map((user, i) => (
+                 <div key={i} className="flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 uppercase">
+                        {user.employee_name.charAt(0)}
+                     </div>
+                     <div>
+                       <p className="text-sm font-bold text-slate-800">{user.employee_name}</p>
+                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-500' : user.today_status === 'Late' ? 'text-purple-500' : 'text-slate-400'}`}>
+                         <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
+                       </p>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-sm font-bold text-slate-800">09:00 AM</p>
+                   </div>
+                 </div>
+               ))}
+            </div>
+            <button className="w-full mt-4 py-2 text-sm font-bold text-blue-600 hover:text-blue-700 transition">
+              View All Employees &rarr;
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        {/* Trend */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+           <h3 className="text-lg font-bold text-slate-800 mb-6">Attendance Trend <span className="text-xs font-normal text-slate-400">(This Week)</span></h3>
+           <div className="h-48 w-full">
+             <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={trendData}>
+                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                 <RechartsTooltip />
+                 <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+               </LineChart>
+             </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Department Wise */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+           <h3 className="text-lg font-bold text-slate-800 mb-6">Department Wise Attendance</h3>
+           <div className="flex items-center justify-between h-48">
+              <div className="w-1/2 h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={departmentData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
+                      {departmentData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-1/2 space-y-3 pl-4">
+                {departmentData.map(item => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-slate-600 font-medium">{item.name}</span>
+                    </div>
+                    <span className="text-slate-400">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+           </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+           <h3 className="text-lg font-bold text-slate-800 mb-4">Recent Activity</h3>
+           <div className="flex-1 overflow-y-auto space-y-4">
+             {summaryData.slice(0, 4).map((user, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mt-1">
+                     <span className="text-xs font-bold text-slate-500 uppercase">{user.employee_name.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-700 font-medium"><span className="font-bold text-slate-800">{user.employee_name}</span> logged in</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Today, 09:02 AM</p>
+                  </div>
+                </div>
+             ))}
+           </div>
+        </div>
+
+      </div>
 
     </div>
   );
 };
+
+const StatCard = ({ icon, title, value, subtext, bgColor }) => (
+  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center items-center text-center hover:shadow-md transition cursor-default">
+    <div className={`w-12 h-12 rounded-full ${bgColor} flex items-center justify-center mb-3`}>
+      {icon}
+    </div>
+    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+    <h3 className="text-2xl font-black text-slate-800 mt-1 mb-1">{value}</h3>
+    <p className={`text-xs font-medium ${subtext.includes('+') || subtext.includes('Working') ? 'text-emerald-500' : 'text-slate-400'}`}>{subtext}</p>
+  </div>
+);
 
 export default AttendancePage;
