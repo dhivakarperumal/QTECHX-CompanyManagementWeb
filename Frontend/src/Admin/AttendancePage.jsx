@@ -411,7 +411,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
                     </div>
                   </div>
                   <div>
@@ -424,7 +424,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
                   
@@ -438,7 +438,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
                     </div>
                   </div>
                   <div>
@@ -451,7 +451,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Now</button>
+                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
                   
