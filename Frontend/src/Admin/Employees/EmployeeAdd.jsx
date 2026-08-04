@@ -898,9 +898,8 @@ const EmployeeAdd = () => {
               </div>
             ))}
           </div>
-          {fieldErrors.educational_details && <p className="mt-3 text-sm text-red-400">{fieldErrors.educational_details}</p>
+          {fieldErrors.educational_details && <p className="mt-3 text-sm text-red-400">{fieldErrors.educational_details}</p>}
         </div>
-        
 
         {/* Documents */}
         <div className={sectionClass}>
