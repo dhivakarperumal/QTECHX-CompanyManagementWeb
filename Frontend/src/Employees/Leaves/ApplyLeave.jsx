@@ -31,6 +31,9 @@ const ApplyLeave = () => {
   const [loading, setLoading] = useState(false);
   const [leaveSettings, setLeaveSettings] = useState([]);
   const [employeeLeaves, setEmployeeLeaves] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [holidayOverlap, setHolidayOverlap] = useState(false);
+  const [holidayMessage, setHolidayMessage] = useState('');
   const [settingsLoading, setSettingsLoading] = useState(true);
   const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
   const enrichedLeaveSettings = leaveSettings.map((setting) => {
@@ -49,13 +52,15 @@ const ApplyLeave = () => {
   useEffect(() => {
     const fetchLeaveSettings = async () => {
       try {
-        const [settingsRes, leavesRes] = await Promise.all([
+        const [settingsRes, leavesRes, eventsRes] = await Promise.all([
           api.get('/leave-settings'),
-          api.get('/employee-leaves/my-leaves')
+          api.get('/employee-leaves/my-leaves'),
+          api.get('/events')
         ]);
 
         setLeaveSettings(settingsRes.data?.data || []);
         setEmployeeLeaves(leavesRes.data?.data || []);
+        setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
       } catch (error) {
         console.error('Failed to load leave settings', error);
       } finally {
@@ -85,6 +90,37 @@ const ApplyLeave = () => {
     }
   }, [formData.from_date, formData.to_date, formData.day_type]);
 
+  useEffect(() => {
+    if (formData.day_type === 'Half Day' && formData.from_date) {
+      setFormData(prev => ({ ...prev, to_date: prev.from_date || formData.from_date }));
+    }
+  }, [formData.day_type, formData.from_date]);
+
+  useEffect(() => {
+    if (!formData.from_date || !formData.to_date || !events?.length) {
+      setHolidayOverlap(false);
+      setHolidayMessage('');
+      return;
+    }
+
+    const from = new Date(formData.from_date);
+    const to = new Date(formData.to_date);
+    const overlappingHoliday = events.some((event) => {
+      if (String(event.eventType).toLowerCase() !== 'holiday') return false;
+      const eventStart = new Date(event.startDate);
+      const eventEnd = new Date(event.endDate || event.startDate);
+      return eventStart <= to && eventEnd >= from;
+    });
+
+    if (overlappingHoliday) {
+      setHolidayOverlap(true);
+      setHolidayMessage('Selected leave dates overlap with a holiday. Please adjust the range.');
+    } else {
+      setHolidayOverlap(false);
+      setHolidayMessage('');
+    }
+  }, [formData.from_date, formData.to_date, events]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -101,6 +137,11 @@ const ApplyLeave = () => {
     }
 
     const selectedSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type);
+    if (holidayOverlap) {
+      toast.error('Selected leave dates overlap with a holiday. Please adjust the range.');
+      return;
+    }
+
     if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
       toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
       return;

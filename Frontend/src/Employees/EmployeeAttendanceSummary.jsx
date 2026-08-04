@@ -39,6 +39,8 @@ const EmployeeAttendanceSummary = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [hasMarkedToday, setHasMarkedToday] = useState(false);
+  const [approvedLeaveToday, setApprovedLeaveToday] = useState(false);
+  const [todayHoliday, setTodayHoliday] = useState(false);
 
   const [form, setForm] = useState({
     date: todayDate,
@@ -76,23 +78,37 @@ const EmployeeAttendanceSummary = () => {
       }
 
       const targetId = possibleIds.find(id => id.length > 20) || possibleIds[0];
-      const res = await api.get(`/attendance/${targetId}?month=${selectedMonth}&year=${selectedYear}`);
-      if (res.data && res.data.data) {
+      const [attendanceRes, leaveRes, eventsRes] = await Promise.all([
+        api.get(`/attendance/${targetId}?month=${selectedMonth}&year=${selectedYear}`),
+        api.get('/employee-leaves/my-leaves'),
+        api.get('/events')
+      ]);
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+
+      if (attendanceRes.data && attendanceRes.data.data) {
         // the backend already filters for this employee
-        const myData = res.data.data;
+        const myData = attendanceRes.data.data;
         // sort by date descending
         myData.sort((a, b) => new Date(b.date || b.attendance_date) - new Date(a.date || a.attendance_date));
         setHistory(myData);
 
         // Check if marked today
-        const dateStr = new Date().toISOString().slice(0, 10);
         const todayRecord = myData.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-        if (todayRecord) {
-          setHasMarkedToday(true);
-        } else {
-          setHasMarkedToday(false);
-        }
+        setHasMarkedToday(Boolean(todayRecord));
+      } else {
+        setHasMarkedToday(false);
       }
+
+      const approved = Array.isArray(leaveRes.data?.data)
+        ? leaveRes.data.data.some((leave) => leave.status === 'Approved' && leave.from_date <= dateStr && leave.to_date >= dateStr)
+        : false;
+      setApprovedLeaveToday(approved);
+
+      const holiday = Array.isArray(eventsRes.data)
+        ? eventsRes.data.some((event) => String(event.eventType).toLowerCase() === 'holiday' && new Date(event.startDate) <= new Date(dateStr) && new Date(event.endDate || event.startDate) >= new Date(dateStr))
+        : false;
+      setTodayHoliday(holiday);
     } catch (err) {
       console.error("Failed to load attendance", err);
       setError("Unable to load your attendance history.");
@@ -351,15 +367,35 @@ const EmployeeAttendanceSummary = () => {
                 alert("You have already marked your attendance for today.");
                 return;
               }
+              if (todayHoliday) {
+                alert("Attendance cannot be marked today because today is a holiday.");
+                return;
+              }
+              if (approvedLeaveToday) {
+                alert("Attendance cannot be marked today because approved leave exists for this date.");
+                return;
+              }
               setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
               setIsModalOpen(true);
             }}
-            disabled={hasMarkedToday}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition ${hasMarkedToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
+            disabled={hasMarkedToday || todayHoliday || approvedLeaveToday}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition ${hasMarkedToday || todayHoliday || approvedLeaveToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
           >
             <PlusCircle size={16} /> Mark Attendance Today
           </button>
           
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            {todayHoliday && (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-900/20 px-4 py-3 text-sm text-amber-100">
+                Today is a holiday. Attendance is blocked.
+              </div>
+            )}
+            {approvedLeaveToday && (
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-900/20 px-4 py-3 text-sm text-rose-100">
+                Approved leave exists for today. Attendance is blocked.
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
             <CalendarDays size={16} className="text-orange-400" />
             <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">

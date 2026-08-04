@@ -18,11 +18,19 @@ async function clockIn(req, res) {
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
-      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) = ?", 
-      [attendanceDate]
+      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) <= ? AND DATE(endDate) >= ?",
+      [attendanceDate, attendanceDate]
     );
     if (holidayEvents.length > 0) {
       return res.status(403).json({ message: "Attendance cannot be marked on a Holiday" });
+    }
+
+    const [leaveRows] = await db.execute(
+      `SELECT id FROM employee_leaves WHERE employee_id = ? AND status = 'Approved' AND from_date <= ? AND to_date >= ? LIMIT 1`,
+      [payload.employee_id, attendanceDate, attendanceDate]
+    );
+    if (leaveRows.length > 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked while approved leave exists for this date." });
     }
 
     const existing = await getEmployeeAttendanceToday(payload.employee_id, attendanceDate);
@@ -165,11 +173,19 @@ async function create(req, res) {
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
-      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) = ?", 
-      [attendanceDate]
+      "SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) <= ? AND DATE(endDate) >= ?",
+      [attendanceDate, attendanceDate]
     );
     if (holidayEvents.length > 0) {
       return res.status(403).json({ message: "Attendance cannot be marked on a Holiday" });
+    }
+
+    const [leaveRows] = await db.execute(
+      `SELECT id FROM employee_leaves WHERE employee_id = ? AND status = 'Approved' AND from_date <= ? AND to_date >= ? LIMIT 1`,
+      [payload.employee_id, attendanceDate, attendanceDate]
+    );
+    if (leaveRows.length > 0) {
+      return res.status(403).json({ message: "Attendance cannot be marked while approved leave exists for this date." });
     }
 
     const computed = calculateAttendanceMetrics({

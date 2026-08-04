@@ -1,6 +1,7 @@
 const LeaveModel = require("../models/employeeLeaveModel");
 const leaveSettingsModel = require("../models/leaveSettingsModel");
 const employeeModel = require("../models/employeeModel");
+const { getDB } = require("../config/db");
 
 function getAuthenticatedEmployeeId(req) {
   return req.user?.employee_id || req.user?.id || req.user?.user_id || null;
@@ -27,6 +28,19 @@ async function applyLeave(req, res) {
       return res.status(400).json({
         success: false,
         message: `${leave_type} limit exceeded. Maximum allowed days: ${maxDays}`
+      });
+    }
+
+    const db = getDB();
+    const [holidayRows] = await db.execute(
+      `SELECT id FROM events WHERE eventType = 'Holiday' AND DATE(startDate) <= ? AND DATE(endDate) >= ? LIMIT 1`,
+      [to_date, from_date]
+    );
+
+    if (holidayRows.length > 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Leave cannot be applied for a holiday date. Please choose a different range.'
       });
     }
 

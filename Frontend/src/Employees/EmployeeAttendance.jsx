@@ -46,6 +46,8 @@ const EmployeeAttendance = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [attendanceRecord, setAttendanceRecord] = useState(null);
   const [isWithinRadius, setIsWithinRadius] = useState(false);
+  const [approvedLeaveToday, setApprovedLeaveToday] = useState(false);
+  const [todayHoliday, setTodayHoliday] = useState(false);
 
   const [locationStr, setLocationStr] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -72,15 +74,30 @@ const EmployeeAttendance = () => {
       const year = d.getFullYear();
       const dateStr = d.toISOString().slice(0, 10);
 
-      const res = await api.get(`/attendance/${targetId}?month=${month}&year=${year}`);
-      if (res.data && res.data.data) {
-        const todayRecord = res.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+      const [attendanceRes, leaveRes, eventsRes] = await Promise.all([
+        api.get(`/attendance/${targetId}?month=${month}&year=${year}`),
+        api.get('/employee-leaves/my-leaves'),
+        api.get('/events')
+      ]);
+
+      if (attendanceRes.data && attendanceRes.data.data) {
+        const todayRecord = attendanceRes.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
         if (todayRecord) {
           setAttendanceRecord(todayRecord);
         } else {
           setAttendanceRecord(null);
         }
       }
+
+      const approved = Array.isArray(leaveRes.data?.data)
+        ? leaveRes.data.data.some((leave) => leave.status === 'Approved' && leave.from_date <= dateStr && leave.to_date >= dateStr)
+        : false;
+      setApprovedLeaveToday(approved);
+
+      const holiday = Array.isArray(eventsRes.data)
+        ? eventsRes.data.some((event) => String(event.eventType).toLowerCase() === 'holiday' && new Date(event.startDate) <= new Date(dateStr) && new Date(event.endDate || event.startDate) >= new Date(dateStr))
+        : false;
+      setTodayHoliday(holiday);
     } catch (err) {
       console.warn("Could not fetch attendance summary", err);
     } finally {
@@ -135,9 +152,19 @@ const EmployeeAttendance = () => {
   };
 
   const executeAction = async (endpoint, payload = {}) => {
-    if (endpoint === '/attendance/clock-in' && !isWithinRadius) {
-      setError(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to clock in.`);
-      return;
+    if (endpoint === '/attendance/clock-in') {
+      if (todayHoliday) {
+        setError('Attendance cannot be marked on a holiday.');
+        return;
+      }
+      if (approvedLeaveToday) {
+        setError('Attendance cannot be marked while approved leave exists for today.');
+        return;
+      }
+      if (!isWithinRadius) {
+        setError(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to clock in.`);
+        return;
+      }
     }
     setLoading(true);
     setError(null);
@@ -249,7 +276,7 @@ const EmployeeAttendance = () => {
               {!attendanceRecord?.check_in_time ? (
                 <button
                   onClick={() => executeAction('/attendance/clock-in')}
-                  disabled={loading || !isWithinRadius}
+                  disabled={loading || !isWithinRadius || todayHoliday || approvedLeaveToday}
                   className="col-span-2 rounded-2xl bg-emerald-500 py-3 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null}
@@ -297,9 +324,21 @@ const EmployeeAttendance = () => {
             <h3 className="text-xl font-semibold mb-4">Location Verification</h3>
 
             {!attendanceRecord?.check_in_time && (
-              <p className="text-sm text-white/60 mb-6">
-                You must be at the office to clock in. Office is located at {OFFICE_LAT}, {OFFICE_LNG}. Please fetch your location to verify.
-              </p>
+              <>
+                {todayHoliday && (
+                  <div className="rounded-2xl border border-amber-500/30 bg-amber-900/20 p-4 mb-4 text-amber-100">
+                    Attendance is blocked because today is marked as a holiday.
+                  </div>
+                )}
+                {approvedLeaveToday && (
+                  <div className="rounded-2xl border border-rose-500/30 bg-rose-900/20 p-4 mb-4 text-rose-100">
+                    Attendance cannot be marked while you have approved leave today.
+                  </div>
+                )}
+                <p className="text-sm text-white/60 mb-6">
+                  You must be at the office to clock in. Office is located at {OFFICE_LAT}, {OFFICE_LNG}. Please fetch your location to verify.
+                </p>
+              </>
             )}
 
             <textarea
@@ -313,7 +352,8 @@ const EmployeeAttendance = () => {
             {!attendanceRecord?.check_in_time && (
               <button
                 onClick={handleLocation}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10"
+                disabled={todayHoliday || approvedLeaveToday}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-orange-400/40 px-4 py-3 text-orange-300 transition hover:bg-orange-400/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <MapPin size={16} /> Fetch Location
               </button>
