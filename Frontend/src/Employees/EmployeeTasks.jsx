@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -209,7 +210,7 @@ export default function EmployeeTasks() {
     return tasks.filter(task => {
       const ok = !q || `${task.task_name || ''} ${task.description || ''} ${task.project_name || ''}`.toLowerCase().includes(q);
       if (!ok) return false;
-      if (filterKey === 'pending')    return ['Pending', 'To Do'].includes(task.status);
+      if (filterKey === 'pending')    return ['Pending', 'To Do', 'Issue', 'On Hold'].includes(task.status);
       if (filterKey === 'completed')  return task.status === 'Completed';
       if (filterKey === 'today')      return isSameDay(task.assignment_date) || isSameDay(task.created_at);
       if (filterKey === 'processing') return ['In Progress', 'Review', 'Testing'].includes(task.status);
@@ -220,7 +221,7 @@ export default function EmployeeTasks() {
   const counts = useMemo(() => ({
     total:      pagination.total || tasks.length,
     completed:  tasks.filter(t => t.status === 'Completed').length,
-    pending:    tasks.filter(t => ['Pending', 'To Do'].includes(t.status)).length,
+    pending:    tasks.filter(t => ['Pending', 'To Do', 'Issue', 'On Hold'].includes(t.status)).length,
     inProgress: tasks.filter(t => ['In Progress', 'Review', 'Testing'].includes(t.status)).length,
   }), [pagination.total, tasks]);
 
@@ -782,8 +783,8 @@ export default function EmployeeTasks() {
       )}
 
       {/* cancel modal */}
-      {cancelModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {cancelModal.isOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d24] p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-rose-400 mb-2">Cancel Task</h3>
             <p className="text-sm text-white/50 mb-4">
@@ -816,12 +817,13 @@ export default function EmployeeTasks() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* issue modal */}
-      {issueModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {issueModal.isOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d24] p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-red-400 mb-2">Report Issue</h3>
             <p className="text-sm text-white/50 mb-4">
@@ -896,7 +898,8 @@ export default function EmployeeTasks() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
