@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Building2, FileText, RefreshCw, Save, Users, Code2, CheckCircle,
   AlertCircle, ArrowLeft, Loader2, Search, X, UserPlus, Trash2,
@@ -90,8 +90,9 @@ function EmpAvatar({ name, index, size = 8 }) {
 
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
-  const id = editId;
+export default function AddProject() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const isEdit = Boolean(id);
 
   const [formData, setFormData]         = useState(BLANK);
@@ -107,7 +108,6 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
   const [success, setSuccess]           = useState('');
 
   useEffect(() => {
-    if (!isOpen) return;
     setSuccess('');
     setError('');
     if (!isEdit) {
@@ -125,10 +125,9 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
       } finally { setFetchLoading(false); }
     })();
     }
-  }, [id, isEdit, isOpen]);
+  }, [id, isEdit]);
 
   useEffect(() => {
-    if (!isOpen) return;
     (async () => {
       setClientLoading(true);
       try {
@@ -144,7 +143,7 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
         setClientLoading(false);
       }
     })();
-  }, [isOpen]);
+  }, []);
 
   const handleSelectClient = (uuid) => {
     setSelectedClientUuid(uuid);
@@ -161,7 +160,7 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
   };
 
   useEffect(() => {
-    if (!isOpen || isEdit || formData.project_code.trim()) return;
+    if (isEdit || formData.project_code.trim()) return;
     (async () => {
       setProjectCodeLoading(true);
       try {
@@ -172,7 +171,7 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
         console.warn('Project code generation failed:', err?.message || err);
       } finally { setProjectCodeLoading(false); }
     })();
-  }, [isOpen, isEdit, formData.project_code]);
+  }, [isEdit, formData.project_code]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -242,40 +241,29 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
       setSuccess(isEdit ? 'Project updated!' : 'Project created!');
       setTimeout(() => {
-        if (onSuccess) onSuccess();
-        if (onClose) onClose();
+        navigate('/admin/projects');
       }, 1000);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to save project');
     } finally { setLoading(false); }
   };
 
-  if (!isOpen) return null;
-
   if (fetchLoading) {
-    return createPortal(
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md">
+    return (
+      <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={30} className="animate-spin text-orange-500/70" />
           <p className="text-sm text-white/40">Loading project…</p>
         </div>
-      </div>,
-      document.body
+      </div>
     );
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex justify-end">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
-      
-      {/* Drawer */}
-      <div 
-        className="relative w-full max-w-4xl bg-[#0d0f14] border-l border-white/10 h-full flex flex-col shadow-2xl"
-        style={{ animation: 'slideInRight 0.3s cubic-bezier(0.16,1,0.3,1)' }}
-      >
+  return (
+    <div className="space-y-6 pb-6 text-white min-h-screen">
+      <div className="w-full bg-[#0d0f14] border border-white/10 rounded-2xl flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-b border-white/8 px-6 py-4 flex items-center justify-between z-10">
+        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-b border-white/8 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center">
               <FileText size={18} className="text-orange-500" />
@@ -289,13 +277,13 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
+          <button onClick={() => navigate('/admin/projects')} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
             <X size={16} />
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
+        {/* Form Body */}
+        <div className="px-6 py-5">
           {success && (
             <div className="mb-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
               <CheckCircle size={16} /> {success}
@@ -618,14 +606,14 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-t border-white/8 px-6 py-4 flex items-center justify-end gap-3 z-10">
+        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-t border-white/8 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
           {!isEdit && (
             <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
               className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
               Reset
             </button>
           )}
-          <button type="button" onClick={onClose} disabled={loading}
+          <button type="button" onClick={() => navigate('/admin/projects')} disabled={loading}
             className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
             Cancel
           </button>
@@ -637,26 +625,6 @@ export default function AddProject({ isOpen, onClose, onSuccess, editId }) {
           </button>
         </div>
       </div>
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-      `}</style>
-    </div>,
-    document.body
+    </div>
   );
 }

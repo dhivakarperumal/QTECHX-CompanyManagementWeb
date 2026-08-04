@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
-import AddProject from './AddProject';
 
 const formatCurrency = (value) => {
   if (!value) return '—';
@@ -90,8 +89,6 @@ export default function AllProjects() {
   const [statusModalLoading, setStatusModalLoading] = useState(false);
   const [statusModalError, setStatusModalError] = useState('');
   const [limit, setLimit] = useState(15);
-  const [showProjectModal, setShowProjectModal] = useState(false);
-  const [editProjectId, setEditProjectId] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
@@ -335,7 +332,7 @@ export default function AllProjects() {
           >
             <User size={15} /> Project Assign 
           </button>
-          <button onClick={() => { setEditProjectId(null); setShowProjectModal(true); }}
+          <button onClick={() => navigate('/admin/projects/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             <Plus size={15} /> Add Project
@@ -547,7 +544,7 @@ export default function AllProjects() {
           <p className="text-base font-semibold text-white/40">No projects found</p>
           <p className="text-xs mt-1">{search || statusFilter ? 'Try adjusting your filters.' : 'Add your first project to get started.'}</p>
           {!search && !statusFilter && (
-            <button onClick={() => { setEditProjectId(null); setShowProjectModal(true); }}
+            <button onClick={() => navigate('/admin/projects/add')}
               className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90"
               style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
               <Plus size={14} /> Add First Project
@@ -618,7 +615,7 @@ export default function AllProjects() {
                         <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition" title="View">
                           <Eye size={13} />
                         </button>
-                        <button onClick={() => { setEditProjectId(p.uuid); setShowProjectModal(true); }}
+                        <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)}
                           className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition" title="Edit">
                           <Edit2 size={13} />
                         </button>
@@ -671,7 +668,7 @@ export default function AllProjects() {
                 <span className="text-white/50 text-xs font-medium">{formatCurrency(p.total_project_cost)}</span>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => navigate(`/admin/projects/view/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition"><Eye size={13} /></button>
-                  <button onClick={() => { setEditProjectId(p.uuid); setShowProjectModal(true); }} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition"><Edit2 size={13} /></button>
+                  <button onClick={() => navigate(`/admin/projects/edit/${p.uuid}`)} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition"><Edit2 size={13} /></button>
                   <button onClick={() => setDeleteTarget(p)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition"><Trash2 size={13} /></button>
                 </div>
               </div>
@@ -742,12 +739,7 @@ export default function AllProjects() {
         </ModalPortal>
       )}
 
-      <AddProject 
-        isOpen={showProjectModal}
-        onClose={() => setShowProjectModal(false)}
-        onSuccess={fetchProjects}
-        editId={editProjectId}
-      />
+
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
