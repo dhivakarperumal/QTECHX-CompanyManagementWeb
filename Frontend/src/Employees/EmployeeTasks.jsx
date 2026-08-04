@@ -603,6 +603,19 @@ export default function EmployeeTasks() {
                             />
                           </label>
 
+                          {/* report issue */}
+                          {task.status !== 'Completed' && (
+                            <button
+                              type="button"
+                              title="Report Issue"
+                              disabled={isUpdating}
+                              onClick={() => setIssueModal({ isOpen: true, task, taskName: task.task_name || '', description: task.description || '', facingIssue: '', document: null })}
+                              className="w-8 h-8 rounded-xl border border-red-500/30 bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                            >
+                              <AlertCircle size={14} />
+                            </button>
+                          )}
+
                           {/* quick complete */}
                           {task.status !== 'Completed' && (
                             <button
@@ -723,6 +736,17 @@ export default function EmployeeTasks() {
                       }}
                     />
                   </label>
+                  {task.status !== 'Completed' && (
+                    <button
+                      type="button"
+                      title="Report Issue"
+                      disabled={isUpdating}
+                      onClick={() => setIssueModal({ isOpen: true, task, taskName: task.task_name || '', description: task.description || '', facingIssue: '', document: null })}
+                      className="w-9 h-9 rounded-xl border border-red-500/30 bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                    >
+                      <AlertCircle size={13} />
+                    </button>
+                  )}
                   {task.status !== 'Completed' && (
                     <button
                       type="button"
