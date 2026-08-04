@@ -2,6 +2,114 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiArrowLeft, FiSave, FiEye, FiEyeOff } from "react-icons/fi";
+const countries = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahrain",
+  "Bangladesh",
+  "Belarus",
+  "Belgium",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Chile",
+  "China",
+  "Colombia",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "Estonia",
+  "Ethiopia",
+  "Finland",
+  "France",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Hong Kong",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kuwait",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lithuania",
+  "Luxembourg",
+  "Malaysia",
+  "Maldives",
+  "Mexico",
+  "Monaco",
+  "Mongolia",
+  "Morocco",
+  "Myanmar",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nigeria",
+  "North Korea",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palestine",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Saudi Arabia",
+  "Singapore",
+  "South Africa",
+  "South Korea",
+  "Spain",
+  "Sri Lanka",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Thailand",
+  "Turkey",
+  "UAE",
+  "Ukraine",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zimbabwe"
+];
 
 const EmployeeAdd = () => {
   const navigate = useNavigate();
@@ -216,7 +324,7 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
-  const departments = ["Frontend","Backend"];
+  const departments = ["Frontend", "Backend"];
 
   const validateField = (name, value) => {
     if (!value) return "";
@@ -576,9 +684,21 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <select name="nationality" value={formData.nationality} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="India">India</option>
-                <option value="Other">Other</option>
+              <select
+                name="nationality"
+                value={formData.nationality}
+                onChange={handleChange}
+                className={`${inputClass} bg-[#111827] text-white border border-white/20`}
+              >
+                {countries.map((country) => (
+                  <option
+                    key={country}
+                    value={country}
+                    className="bg-[#111827] text-white"
+                  >
+                    {country}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -726,43 +846,43 @@ const EmployeeAdd = () => {
           </div>
         </div>
 
-          {/* Educational Details */}
-          <div className={sectionClass}>
-            <div className="mb-4 border-b border-white/10 pb-3">
-              <h2 className="text-lg font-semibold text-white">Educational Details</h2>
-              <p className="text-xs text-white/40">Add academic qualifications (multiple rows)</p>
-            </div>
-            <div className="space-y-3">
-              {(formData.educational_details || []).map((row, idx) => (
-                <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-4 items-end">
-                  <div>
-                    <label className={labelClass}>Course</label>
-                    <input value={row.course} onChange={e => handleEducationChange(idx, 'course', e.target.value)} className={inputClass} placeholder="Course" />
+        {/* Educational Details */}
+        <div className={sectionClass}>
+          <div className="mb-4 border-b border-white/10 pb-3">
+            <h2 className="text-lg font-semibold text-white">Educational Details</h2>
+            <p className="text-xs text-white/40">Add academic qualifications (multiple rows)</p>
+          </div>
+          <div className="space-y-3">
+            {(formData.educational_details || []).map((row, idx) => (
+              <div key={idx} className="grid grid-cols-1 gap-3 md:grid-cols-4 items-end">
+                <div>
+                  <label className={labelClass}>Course</label>
+                  <input value={row.course} onChange={e => handleEducationChange(idx, 'course', e.target.value)} className={inputClass} placeholder="Course" />
+                </div>
+                <div>
+                  <label className={labelClass}>Institution</label>
+                  <input value={row.institution} onChange={e => handleEducationChange(idx, 'institution', e.target.value)} className={inputClass} placeholder="Institution" />
+                </div>
+                <div>
+                  <label className={labelClass}>Percentage</label>
+                  <input value={row.percentage} onChange={e => handleEducationChange(idx, 'percentage', e.target.value)} className={inputClass} placeholder="Percentage" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div style={{ flex: 1 }}>
+                    <label className={labelClass}>Year of Passing</label>
+                    <input value={row.year_of_passing} onChange={e => handleEducationChange(idx, 'year_of_passing', e.target.value)} className={inputClass} placeholder="YYYY" />
                   </div>
-                  <div>
-                    <label className={labelClass}>Institution</label>
-                    <input value={row.institution} onChange={e => handleEducationChange(idx, 'institution', e.target.value)} className={inputClass} placeholder="Institution" />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Percentage</label>
-                    <input value={row.percentage} onChange={e => handleEducationChange(idx, 'percentage', e.target.value)} className={inputClass} placeholder="Percentage" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div style={{ flex: 1 }}>
-                      <label className={labelClass}>Year of Passing</label>
-                      <input value={row.year_of_passing} onChange={e => handleEducationChange(idx, 'year_of_passing', e.target.value)} className={inputClass} placeholder="YYYY" />
-                    </div>
-                    <div className="mt-6 flex gap-2">
-                      <button type="button" onClick={() => addEducationRow()} className="rounded-xl bg-white/5 px-3 py-1 text-sm">+</button>
-                      {idx > 0 && <button type="button" onClick={() => removeEducationRow(idx)} className="rounded-xl bg-white/5 px-3 py-1 text-sm">-</button>}
-                    </div>
+                  <div className="mt-6 flex gap-2">
+                    <button type="button" onClick={() => addEducationRow()} className="rounded-xl bg-white/5 px-3 py-1 text-sm">+</button>
+                    {idx > 0 && <button type="button" onClick={() => removeEducationRow(idx)} className="rounded-xl bg-white/5 px-3 py-1 text-sm">-</button>}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* Documents */}
+        {/* Documents */}
         <div className={sectionClass}>
           <div className="mb-4 border-b border-white/10 pb-3">
             <h2 className="text-lg font-semibold text-white">Documents</h2>
