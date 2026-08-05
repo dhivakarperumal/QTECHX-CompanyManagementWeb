@@ -2,6 +2,82 @@ import { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
+
 
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
@@ -395,21 +471,66 @@ const EmployeeAttendanceSummary = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm min-w-[140px]">
             <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
-              {Array.from({ length: 12 }, (_, index) => (
-                <option key={index + 1} value={index + 1} className="bg-slate-900">{new Date(2024, index).toLocaleString("en", { month: "long" })}</option>
-              ))}
-            </select>
+            <Select
+              styles={{
+                ...customSelectStyles,
+                control: (base, state) => ({
+                  ...customSelectStyles.control(base, state),
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  minHeight: '30px',
+                  height: '30px',
+                  boxShadow: 'none',
+                  '&:hover': { border: 'none' },
+                }),
+                menu: (base) => ({
+                  ...customSelectStyles.menu(base),
+                  width: '120px',
+                })
+              }}
+              value={{
+                value: selectedMonth,
+                label: new Date(2024, selectedMonth - 1).toLocaleString("en", { month: "long" })
+              }}
+              onChange={(option) => setSelectedMonth(Number(option.value))}
+              options={Array.from({ length: 12 }, (_, index) => ({
+                value: index + 1,
+                label: new Date(2024, index).toLocaleString("en", { month: "long" })
+              }))}
+              isSearchable={false}
+              className="flex-1"
+            />
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm min-w-[120px]">
             <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="bg-transparent outline-none">
-              {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
-                <option key={year} value={year} className="bg-slate-900">{year}</option>
-              ))}
-            </select>
+            <Select
+              styles={{
+                ...customSelectStyles,
+                control: (base, state) => ({
+                  ...customSelectStyles.control(base, state),
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  minHeight: '30px',
+                  height: '30px',
+                  boxShadow: 'none',
+                  '&:hover': { border: 'none' },
+                }),
+                menu: (base) => ({
+                  ...customSelectStyles.menu(base),
+                  width: '100px',
+                })
+              }}
+              value={{ value: selectedYear, label: selectedYear }}
+              onChange={(option) => setSelectedYear(Number(option.value))}
+              options={[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => ({
+                value: year,
+                label: year
+              }))}
+              isSearchable={false}
+              className="flex-1"
+            />
           </div>
           {/* View Toggle */}
           <div className="flex items-center gap-1 bg-black/20 p-1 rounded-full border border-white/10">
@@ -593,10 +714,16 @@ const EmployeeAttendanceSummary = () => {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                    <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                      <option value="Present" className="bg-slate-900">Present</option>
-                      <option value="Absent" className="bg-slate-900">Absent</option>
-                    </select>
+                    <Select
+                      styles={customSelectStyles}
+                      value={{ value: form.attendance_status, label: form.attendance_status }}
+                      onChange={(option) => handleFormChange({ target: { name: 'attendance_status', value: option ? option.value : '' } })}
+                      options={[
+                        { value: 'Present', label: 'Present' },
+                        { value: 'Absent', label: 'Absent' }
+                      ]}
+                      isSearchable={false}
+                    />
                   </div>
 
                   <div>

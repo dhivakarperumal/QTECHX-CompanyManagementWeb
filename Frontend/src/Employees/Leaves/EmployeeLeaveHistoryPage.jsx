@@ -18,6 +18,82 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
+
 
 const EmployeeLeaveHistoryPage = () => {
   const { user } = useAuth();
@@ -285,33 +361,35 @@ const EmployeeLeaveHistoryPage = () => {
               className="w-full h-11 rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-          >
-            <option value="All">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <select
-            value={leaveTypeFilter}
-            onChange={(e) => setLeaveTypeFilter(e.target.value)}
-            className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-          >
-            {leaveTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-          >
-            <option value="Newest">Newest First</option>
-            <option value="Oldest">Oldest First</option>
-          </select>
+          <Select
+            styles={customSelectStyles}
+            value={{ value: statusFilter, label: statusFilter === 'All' ? 'All Status' : statusFilter }}
+            onChange={(option) => setStatusFilter(option ? option.value : 'All')}
+            options={[
+              { value: 'All', label: 'All Status' },
+              { value: 'Pending', label: 'Pending' },
+              { value: 'Approved', label: 'Approved' },
+              { value: 'Rejected', label: 'Rejected' }
+            ]}
+            isSearchable={false}
+          />
+          <Select
+            styles={customSelectStyles}
+            value={{ value: leaveTypeFilter, label: leaveTypeFilter }}
+            onChange={(option) => setLeaveTypeFilter(option ? option.value : 'All')}
+            options={leaveTypes.map((type) => ({ value: type, label: type }))}
+            isSearchable={false}
+          />
+          <Select
+            styles={customSelectStyles}
+            value={{ value: sortBy, label: sortBy === 'Newest' ? 'Newest First' : 'Oldest First' }}
+            onChange={(option) => setSortBy(option ? option.value : 'Newest')}
+            options={[
+              { value: 'Newest', label: 'Newest First' },
+              { value: 'Oldest', label: 'Oldest First' }
+            ]}
+            isSearchable={false}
+          />
         </div>
 
         <div className="flex justify-between items-center">

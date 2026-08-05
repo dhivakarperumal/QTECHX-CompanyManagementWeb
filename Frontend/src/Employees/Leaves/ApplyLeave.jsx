@@ -5,6 +5,82 @@ import toast from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
+
 
 const defaultLeaveTypes = [
   "Casual Leave",
@@ -246,17 +322,13 @@ const ApplyLeave = () => {
                   {/* Leave Fields */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-white/70">Leave Type</label>
-                    <select 
-                      name="leave_type" 
-                      value={formData.leave_type} 
-                      onChange={handleChange} 
-                      required
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
-                    >
-                      {availableLeaveTypes.map(type => (
-                        <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
-                      ))}
-                    </select>
+                    <Select
+                      styles={customSelectStyles}
+                      value={{ value: formData.leave_type, label: formData.leave_type }}
+                      onChange={(option) => handleChange({ target: { name: 'leave_type', value: option ? option.value : '' } })}
+                      options={availableLeaveTypes.map(type => ({ value: type, label: type }))}
+                      isSearchable={false}
+                    />
                     {!settingsLoading && (
                       <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
                         <p className="font-semibold text-white">Leave balance</p>
