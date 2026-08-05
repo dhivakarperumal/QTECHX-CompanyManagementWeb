@@ -1,4 +1,91 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Save, RefreshCw, ArrowLeft, Loader2,
@@ -384,36 +471,53 @@ export default function EmployeeSalary() {
             <div className="grid gap-4 md:grid-cols-3">
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Employee *</span>
-                <select className={editId ? readOnlyFieldClass : fieldClass} name="employee_id" value={formData.employee_id} onChange={handleChange} required disabled={editId}>
-                  <option value="">Select Employee</option>
-                  {employeeLoading ? (
-                    <option value="">Loading...</option>
-                  ) : (
-                    employees.map(emp => (
-                      <option key={emp.employee_id} value={emp.employee_id}>
-                        {emp.first_name} {emp.last_name} ({emp.employee_code || 'No Code'})
-                      </option>
-                    ))
-                  )}
-                </select>
+                <Select
+                  options={[
+                    ...employees.map(emp => ({
+                      value: emp.employee_id,
+                      label: `${emp.first_name} ${emp.last_name} (${emp.employee_code || 'No Code'})`
+                    }))
+                  ]}
+                  value={formData.employee_id ? {
+                    value: formData.employee_id,
+                    label: employees.find(e => e.employee_id === formData.employee_id)
+                      ? `${employees.find(e => e.employee_id === formData.employee_id).first_name} ${employees.find(e => e.employee_id === formData.employee_id).last_name} (${employees.find(e => e.employee_id === formData.employee_id).employee_code || 'No Code'})`
+                      : ''
+                  } : null}
+                  onChange={(option) => handleChange({ target: { name: 'employee_id', value: option ? option.value : '' } })}
+                  styles={customSelectStyles}
+                  isDisabled={editId}
+                  placeholder={employeeLoading ? "Loading..." : "Select Employee"}
+                  isSearchable={true}
+                />
               </label>
 
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Month *</span>
-                <select className={editId ? readOnlyFieldClass : fieldClass} name="month" value={formData.month} onChange={handleChange} required disabled={editId}>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                    <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
-                  ))}
-                </select>
+                <Select
+                  options={Array.from({ length: 12 }, (_, i) => i + 1).map(m => ({
+                    value: m, label: new Date(0, m - 1).toLocaleString('default', { month: 'long' })
+                  }))}
+                  value={formData.month ? { value: formData.month, label: new Date(0, formData.month - 1).toLocaleString('default', { month: 'long' }) } : null}
+                  onChange={(option) => handleChange({ target: { name: 'month', value: option ? option.value : '' } })}
+                  styles={customSelectStyles}
+                  isDisabled={editId}
+                  isSearchable={false}
+                />
               </label>
 
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Year *</span>
-                <select className={editId ? readOnlyFieldClass : fieldClass} name="year" value={formData.year} onChange={handleChange} required disabled={editId}>
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
+                <Select
+                  options={Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(y => ({
+                    value: y, label: String(y)
+                  }))}
+                  value={formData.year ? { value: formData.year, label: String(formData.year) } : null}
+                  onChange={(option) => handleChange({ target: { name: 'year', value: option ? option.value : '' } })}
+                  styles={customSelectStyles}
+                  isDisabled={editId}
+                  isSearchable={false}
+                />
               </label>
             </div>
             {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading employee salary details...</p>}
@@ -541,18 +645,32 @@ export default function EmployeeSalary() {
                 className="w-48 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70"
               />
             </div>
-            <select value={historyMonthFilter} onChange={(e) => setHistoryMonthFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="all">All Months</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                <option key={month} value={month}>{new Date(0, month - 1).toLocaleString('default', { month: 'long' })}</option>
-              ))}
-            </select>
-            <select value={historyYearFilter} onChange={(e) => setHistoryYearFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="all">All Years</option>
-              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
+            <Select
+              options={[
+                { value: 'all', label: 'All Months' },
+                ...Array.from({ length: 12 }, (_, i) => i + 1).map(month => ({
+                  value: month, label: new Date(0, month - 1).toLocaleString('default', { month: 'long' })
+                }))
+              ]}
+              value={{ value: historyMonthFilter, label: historyMonthFilter === 'all' ? 'All Months' : new Date(0, historyMonthFilter - 1).toLocaleString('default', { month: 'long' }) }}
+              onChange={(option) => setHistoryMonthFilter(option ? option.value : 'all')}
+              styles={customSelectStyles}
+              className="w-40"
+              isSearchable={false}
+            />
+            <Select
+              options={[
+                { value: 'all', label: 'All Years' },
+                ...Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => ({
+                  value: year, label: String(year)
+                }))
+              ]}
+              value={{ value: historyYearFilter, label: historyYearFilter === 'all' ? 'All Years' : String(historyYearFilter) }}
+              onChange={(option) => setHistoryYearFilter(option ? option.value : 'all')}
+              styles={customSelectStyles}
+              className="w-40"
+              isSearchable={false}
+            />
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
               <button onClick={() => {
                 setEmployeeViewMode("table");

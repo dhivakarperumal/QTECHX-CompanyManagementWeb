@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
 import {
   FolderKanban, Search, TrendingUp, RefreshCw, Plus,
   LayoutGrid, List, CheckCircle, AlertCircle, PlayCircle,
@@ -7,6 +8,93 @@ import {
 } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const formatCurrency = (value) => {
   if (!value) return '—';
@@ -380,12 +468,16 @@ export default function AllProjects() {
               <div>
                 <label className="text-sm font-medium text-white/60 mb-1.5 block">Select Project</label>
                 <div className="relative">
-                  <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
-                    className="w-full bg-[#0e1118] border border-white/10 text-sm text-white rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50 appearance-none pr-10">
-                    <option value="">— Choose a project —</option>
-                    {assignmentProjects.map(p => <option key={p.uuid} value={p.uuid}>{p.project_name}</option>)}
-                  </select>
-                  <ChevronDown size={13} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
+                  <Select
+                    value={selectedProjectId ? { value: selectedProjectId, label: assignmentProjects.find(p => p.uuid === selectedProjectId)?.project_name || selectedProjectId } : { value: '', label: '— Choose a project —' }}
+                    onChange={option => setSelectedProjectId(option ? option.value : '')}
+                    options={[
+                      { value: '', label: '— Choose a project —' },
+                      ...assignmentProjects.map(p => ({ value: p.uuid, label: p.project_name }))
+                    ]}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                  />
                 </div>
               </div>
 
@@ -492,18 +584,28 @@ export default function AllProjects() {
             </button>
           )}
         </div>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50">
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div className="w-40 shrink-0">
+          <Select
+            value={statusFilter ? { value: statusFilter, label: statusFilter } : { value: '', label: 'All Statuses' }}
+            onChange={option => { setStatusFilter(option ? option.value : ''); setPage(1); }}
+            options={[
+              { value: '', label: 'All Statuses' },
+              ...STATUS_OPTIONS.map(s => ({ value: s, label: s }))
+            ]}
+            styles={customSelectStyles}
+            isSearchable={false}
+          />
+        </div>
         <div className="flex items-center gap-2">
-          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}
-            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500/50">
-            {[10, 15, 25, 50].map((size) => (
-              <option key={size} value={size}>{size} per page</option>
-            ))}
-          </select>
+          <div className="w-32 shrink-0">
+            <Select
+              value={{ value: limit, label: `${limit} per page` }}
+              onChange={option => setLimit(option ? Number(option.value) : 10)}
+              options={[10, 15, 25, 50].map(size => ({ value: size, label: `${size} per page` }))}
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
+          </div>
         </div>
         <div className="flex bg-[#111318] border border-white/10 rounded-xl p-1">
           <button onClick={() => setViewMode('table')}

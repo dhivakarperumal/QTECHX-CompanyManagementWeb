@@ -421,3 +421,31 @@ html, body, #root {
   pointer-events: auto;
 }
 
+/* Global Admin Select */
+.admin-select {
+  background: #1b1d24;
+  color: #fff;
+  border: 1px solid #f97316;
+  border-radius: 12px;
+  outline: none;
+}
+
+.admin-select:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+/* Dropdown options */
+.admin-select option {
+  background: #1b1d24;
+  color: #fff;
+}
+
+/* Selected option (works in some browsers) */
+.admin-select option:checked,
+.admin-select option:hover,
+.admin-select option:focus,
+.admin-select option:active {
+  background: #f97316 !important;
+  color: #fff !important;
+}

@@ -8,6 +8,93 @@ import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -321,18 +408,22 @@ export default function ProjectPayment() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Project *</span>
-                <select className={fieldClass} name="project_id" value={formData.project_id} onChange={handleChange} required>
-                  <option value="">Select Project</option>
-                  {projectsLoading ? (
-                    <option value="">Loading...</option>
-                  ) : (
-                    projects.map(proj => (
-                      <option key={proj.id} value={proj.id}>
-                        {proj.project_name} ({proj.project_code})
-                      </option>
-                    ))
-                  )}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="project_id"
+                  value={formData.project_id ? {
+                    value: formData.project_id,
+                    label: projects.find(p => String(p.id) === String(formData.project_id)) 
+                           ? `${projects.find(p => String(p.id) === String(formData.project_id)).project_name} (${projects.find(p => String(p.id) === String(formData.project_id)).project_code})` 
+                           : formData.project_id
+                  } : null}
+                  onChange={(option) => handleChange({ target: { name: 'project_id', value: option ? option.value : '' } })}
+                  options={projects.map(proj => ({ value: proj.id, label: `${proj.project_name} (${proj.project_code})` }))}
+                  placeholder="Select Project"
+                  isLoading={projectsLoading}
+                  isClearable
+                  required
+                />
               </label>
             </div>
 
@@ -387,14 +478,22 @@ export default function ProjectPayment() {
 
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Payment Mode *</span>
-                <select className={fieldClass} name="payment_mode" value={formData.payment_mode} onChange={handleChange} required>
-                  <option value="">Select Mode</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Other">Other</option>
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="payment_mode"
+                  value={formData.payment_mode ? { value: formData.payment_mode, label: formData.payment_mode } : null}
+                  onChange={(option) => handleChange({ target: { name: 'payment_mode', value: option ? option.value : '' } })}
+                  options={[
+                    { value: 'UPI', label: 'UPI' },
+                    { value: 'Cash', label: 'Cash' },
+                    { value: 'Bank Transfer', label: 'Bank Transfer' },
+                    { value: 'Cheque', label: 'Cheque' },
+                    { value: 'Other', label: 'Other' }
+                  ]}
+                  placeholder="Select Mode"
+                  isClearable
+                  required
+                />
               </label>
 
               <label className="text-sm text-white/60 lg:col-span-2">
@@ -457,14 +556,33 @@ export default function ProjectPayment() {
               <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input type="text" value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} placeholder="Client" className="w-40 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70" />
             </div>
-            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="All">All modes</option>
-              <option value="UPI">UPI</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Cheque">Cheque</option>
-              <option value="Other">Other</option>
-            </select>
+            <div className="w-40">
+              <Select
+                styles={{
+                  ...customSelectStyles,
+                  control: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: '#0e1118',
+                    borderColor: state.isFocused ? 'rgba(249, 115, 22, 0.7)' : 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '0.75rem',
+                    minHeight: '38px',
+                    boxShadow: 'none',
+                    '&:hover': { borderColor: 'rgba(249, 115, 22, 0.7)' }
+                  })
+                }}
+                value={{ value: modeFilter, label: modeFilter === 'All' ? 'All modes' : modeFilter }}
+                onChange={(option) => setModeFilter(option ? option.value : 'All')}
+                options={[
+                  { value: 'All', label: 'All modes' },
+                  { value: 'UPI', label: 'UPI' },
+                  { value: 'Cash', label: 'Cash' },
+                  { value: 'Bank Transfer', label: 'Bank Transfer' },
+                  { value: 'Cheque', label: 'Cheque' },
+                  { value: 'Other', label: 'Other' }
+                ]}
+                isSearchable={false}
+              />
+            </div>
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
               <button onClick={() => setProjectViewMode("table")} className={`rounded-lg p-2 transition ${projectViewMode  === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
               <button onClick={() => setProjectViewMode('card')} className={`rounded-lg p-2 transition ${projectViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>

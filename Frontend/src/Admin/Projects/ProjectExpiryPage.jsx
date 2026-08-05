@@ -1,7 +1,94 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Select from 'react-select';
 import { CalendarClock, Search, Plus, Eye, Edit, RefreshCcw, History, Send, Download, Printer, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import api from '../../api';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const expiryTypeOptions = ['Hosting', 'Domain', 'SSL', 'Maintenance', 'License', 'Subscription', 'Support Plan'];
 const renewalStatusOptions = ['Active', 'Expiring Soon', 'Expired', 'Renewed'];
@@ -313,28 +400,48 @@ export default function ProjectExpiryPage() {
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <select value={filters.project_id} onChange={(e) => setFilters({ ...filters, project_id: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-              <option value="">All projects</option>
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.project_name}</option>)}
-            </select>
-            <select value={filters.client_id} onChange={(e) => setFilters({ ...filters, client_id: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-              <option value="">All clients</option>
-              {clients.map((client) => <option key={client.id} value={client.id}>{client.client_name || client.company_name}</option>)}
-            </select>
-            <select value={filters.expiry_type} onChange={(e) => setFilters({ ...filters, expiry_type: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-              <option value="">All expiry types</option>
-              {expiryTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-            <select value={filters.renewal_status} onChange={(e) => setFilters({ ...filters, renewal_status: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-              <option value="">All renewal status</option>
-              {renewalStatusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
+            <Select
+              value={filters.project_id ? { value: filters.project_id, label: projects.find(p => String(p.id) === String(filters.project_id))?.project_name || 'All projects' } : null}
+              onChange={(option) => setFilters({ ...filters, project_id: option ? option.value : '' })}
+              options={[{ value: '', label: 'All projects' }, ...projects.map(p => ({ value: p.id, label: p.project_name }))]}
+              styles={customSelectStyles}
+              placeholder="All projects"
+              isSearchable={false}
+            />
+            <Select
+              value={filters.client_id ? { value: filters.client_id, label: clients.find(c => String(c.id) === String(filters.client_id))?.client_name || clients.find(c => String(c.id) === String(filters.client_id))?.company_name || 'All clients' } : null}
+              onChange={(option) => setFilters({ ...filters, client_id: option ? option.value : '' })}
+              options={[{ value: '', label: 'All clients' }, ...clients.map(c => ({ value: c.id, label: c.client_name || c.company_name }))]}
+              styles={customSelectStyles}
+              placeholder="All clients"
+              isSearchable={false}
+            />
+            <Select
+              value={filters.expiry_type ? { value: filters.expiry_type, label: filters.expiry_type } : null}
+              onChange={(option) => setFilters({ ...filters, expiry_type: option ? option.value : '' })}
+              options={[{ value: '', label: 'All expiry types' }, ...expiryTypeOptions.map(o => ({ value: o, label: o }))]}
+              styles={customSelectStyles}
+              placeholder="All expiry types"
+              isSearchable={false}
+            />
+            <Select
+              value={filters.renewal_status ? { value: filters.renewal_status, label: filters.renewal_status } : null}
+              onChange={(option) => setFilters({ ...filters, renewal_status: option ? option.value : '' })}
+              options={[{ value: '', label: 'All renewal status' }, ...renewalStatusOptions.map(o => ({ value: o, label: o }))]}
+              styles={customSelectStyles}
+              placeholder="All renewal status"
+              isSearchable={false}
+            />
             <input type="date" value={filters.from_date} onChange={(e) => setFilters({ ...filters, from_date: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50" />
             <input type="date" value={filters.to_date} onChange={(e) => setFilters({ ...filters, to_date: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50" />
-            <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-              <option value="">All status</option>
-              {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
+            <Select
+              value={filters.status ? { value: filters.status, label: filters.status } : null}
+              onChange={(option) => setFilters({ ...filters, status: option ? option.value : '' })}
+              options={[{ value: '', label: 'All status' }, ...statusOptions.map(o => ({ value: o, label: o }))]}
+              styles={customSelectStyles}
+              placeholder="All status"
+              isSearchable={false}
+            />
             <div className="flex flex-wrap gap-2">
               {[
                 ['expiring_today', 'Today'],
@@ -465,9 +572,13 @@ export default function ProjectExpiryPage() {
               <form onSubmit={handleRenewSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm text-slate-400">Renewal Type</label>
-                  <select value={renewForm.renewal_type} onChange={(e) => setRenewForm({ ...renewForm, renewal_type: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                    {expiryTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  <Select
+                    value={renewForm.renewal_type ? { value: renewForm.renewal_type, label: renewForm.renewal_type } : null}
+                    onChange={(option) => setRenewForm({ ...renewForm, renewal_type: option ? option.value : '' })}
+                    options={expiryTypeOptions.map((option) => ({ value: option, label: option }))}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                  />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-slate-400">New Expiry Date</label>
@@ -487,24 +598,36 @@ export default function ProjectExpiryPage() {
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-slate-400">Payment Method</label>
-                  <select value={renewForm.payment_method} onChange={(e) => setRenewForm({ ...renewForm, payment_method: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                    <option value="">Select method</option>
-                    <option value="UPI">UPI</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Card</option>
-                    <option value="Net Banking">Net Banking</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Others">Others</option>
-                  </select>
+                  <Select
+                    value={renewForm.payment_method ? { value: renewForm.payment_method, label: renewForm.payment_method } : null}
+                    onChange={(option) => setRenewForm({ ...renewForm, payment_method: option ? option.value : '' })}
+                    options={[
+                      { value: 'UPI', label: 'UPI' },
+                      { value: 'Cash', label: 'Cash' },
+                      { value: 'Card', label: 'Card' },
+                      { value: 'Net Banking', label: 'Net Banking' },
+                      { value: 'Cheque', label: 'Cheque' },
+                      { value: 'Others', label: 'Others' }
+                    ]}
+                    styles={customSelectStyles}
+                    placeholder="Select method"
+                    isSearchable={false}
+                  />
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm text-slate-400">Payment Status</label>
-                  <select value={renewForm.payment_status} onChange={(e) => setRenewForm({ ...renewForm, payment_status: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                    <option value="Pending">Pending</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Failed">Failed</option>
-                  </select>
+                  <Select
+                    value={renewForm.payment_status ? { value: renewForm.payment_status, label: renewForm.payment_status } : null}
+                    onChange={(option) => setRenewForm({ ...renewForm, payment_status: option ? option.value : '' })}
+                    options={[
+                      { value: 'Pending', label: 'Pending' },
+                      { value: 'Paid', label: 'Paid' },
+                      { value: 'Failed', label: 'Failed' }
+                    ]}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm text-slate-400">Notes</label>
@@ -573,26 +696,38 @@ export default function ProjectExpiryPage() {
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm text-slate-400">Project</label>
-                <select value={form.project_id} onChange={(e) => handleProjectSelect(e.target.value)} required className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  <option value="">Select project</option>
-                  {projects.map((project) => <option key={project.id} value={project.id}>{project.project_name}</option>)}
-                </select>
+                <Select
+                  value={form.project_id ? { value: form.project_id, label: projects.find(p => String(p.id) === String(form.project_id))?.project_name || 'Select project' } : null}
+                  onChange={(option) => handleProjectSelect(option ? option.value : '')}
+                  options={projects.map(p => ({ value: p.id, label: p.project_name }))}
+                  styles={customSelectStyles}
+                  placeholder="Select project"
+                  isSearchable={true}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-sm text-slate-400 flex items-center gap-1.5">
                   Client
                   {form.client_name && <span className="text-xs text-orange-400 font-medium">(auto-filled)</span>}
                 </label>
-                <select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  <option value="">Select client</option>
-                  {clients.map((client) => <option key={client.id} value={client.id}>{client.client_name || client.company_name}</option>)}
-                </select>
+                <Select
+                  value={form.client_id ? { value: form.client_id, label: clients.find(c => String(c.id) === String(form.client_id))?.client_name || clients.find(c => String(c.id) === String(form.client_id))?.company_name || 'Select client' } : null}
+                  onChange={(option) => setForm({ ...form, client_id: option ? option.value : '' })}
+                  options={clients.map(c => ({ value: c.id, label: c.client_name || c.company_name }))}
+                  styles={customSelectStyles}
+                  placeholder="Select client"
+                  isSearchable={true}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-sm text-slate-400">Expiry Type</label>
-                <select value={form.expiry_type} onChange={(e) => setForm({ ...form, expiry_type: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  {expiryTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+                <Select
+                  value={form.expiry_type ? { value: form.expiry_type, label: form.expiry_type } : null}
+                  onChange={(option) => setForm({ ...form, expiry_type: option ? option.value : '' })}
+                  options={expiryTypeOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </div>
               <div>
                 <label className="mb-2 flex items-center gap-1.5 text-sm text-slate-400">
@@ -664,30 +799,46 @@ export default function ProjectExpiryPage() {
               </div>
               <div>
                 <label className="mb-2 block text-sm text-slate-400">Payment Status</label>
-                <select value={form.payment_status} onChange={(e) => setForm({ ...form, payment_status: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  <option value="Pending">Pending</option>
-                  <option value="Paid">Paid</option>
-                  <option value="Failed">Failed</option>
-                </select>
+                <Select
+                  value={form.payment_status ? { value: form.payment_status, label: form.payment_status } : null}
+                  onChange={(option) => setForm({ ...form, payment_status: option ? option.value : '' })}
+                  options={[
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'Paid', label: 'Paid' },
+                    { value: 'Failed', label: 'Failed' }
+                  ]}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-sm text-slate-400">Payment Method</label>
-                <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  <option value="">Select method</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Card">Card</option>
-                  <option value="Net Banking">Net Banking</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Others">Others</option>
-                </select>
+                <Select
+                  value={form.payment_method ? { value: form.payment_method, label: form.payment_method } : null}
+                  onChange={(option) => setForm({ ...form, payment_method: option ? option.value : '' })}
+                  options={[
+                    { value: 'UPI', label: 'UPI' },
+                    { value: 'Cash', label: 'Cash' },
+                    { value: 'Card', label: 'Card' },
+                    { value: 'Net Banking', label: 'Net Banking' },
+                    { value: 'Cheque', label: 'Cheque' },
+                    { value: 'Others', label: 'Others' }
+                  ]}
+                  styles={customSelectStyles}
+                  placeholder="Select method"
+                  isSearchable={false}
+                />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm text-slate-400">Renewal Status</label>
-                <select value={form.renewal_status} onChange={(e) => setForm({ ...form, renewal_status: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-white outline-none focus:border-orange-500/50 [&>option]:bg-[#111318]">
-                  {renewalStatusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+                <Select
+                  value={form.renewal_status ? { value: form.renewal_status, label: form.renewal_status } : null}
+                  onChange={(option) => setForm({ ...form, renewal_status: option ? option.value : '' })}
+                  options={renewalStatusOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm text-slate-400">Internal Notes</label>

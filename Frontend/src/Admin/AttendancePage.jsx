@@ -3,6 +3,42 @@ import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusC
 import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useCallback } from "react";
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: state.isFocused ? 'rgba(249, 115, 22, 0.5)' : 'rgba(255, 255, 255, 0.1)',
+    color: 'white',
+    borderRadius: '1rem',
+    minHeight: '48px',
+    boxShadow: state.isFocused ? '0 0 0 1px rgba(249, 115, 22, 0.3)' : 'none',
+    '&:hover': { borderColor: 'rgba(249, 115, 22, 0.5)' }
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#0f172a',
+    borderRadius: '1rem',
+    border: '1px solid rgba(255,255,255,0.1)',
+    zIndex: 9999
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? 'rgba(249, 115, 22, 0.2)' : state.isFocused ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+    color: state.isSelected ? '#f97316' : '#fff',
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: 'rgba(249, 115, 22, 0.2)',
+      color: '#f97316'
+    }
+  }),
+  singleValue: (provided) => ({ ...provided, color: '#fff' }),
+  input: (provided) => ({ ...provided, color: '#fff' }),
+  placeholder: (provided) => ({ ...provided, color: 'rgba(255,255,255,0.3)' }),
+  indicatorSeparator: () => ({ display: 'none' })
+};
+
 
 const AttendancePage = () => {
   const [summaryData, setSummaryData] = useState([]);
@@ -370,19 +406,27 @@ const AttendancePage = () => {
                 <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="mb-2 block text-sm text-white/70">Select Employee</label>
-                    <select
-                      name="employee_id"
-                      value={form.employee_id}
-                      onChange={handleFormChange}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
-                    >
-                      <option value="" className="bg-slate-900 text-white/50">-- Select Employee --</option>
-                      {employeeData.map((emp) => (
-                        <option key={emp.employee_id} value={emp.employee_id} className="bg-slate-900 text-white">
-                          {emp.first_name} {emp.last_name} ({emp.employee_code})
-                        </option>
-                      ))}
-                    </select>
+                    <Select
+                      options={employeeData.map((emp) => ({
+                        value: emp.employee_id,
+                        label: `${emp.first_name} ${emp.last_name} (${emp.employee_code})`
+                      }))}
+                      value={
+                        form.employee_id
+                          ? {
+                              value: form.employee_id,
+                              label: (() => {
+                                const emp = employeeData.find(e => e.employee_id === form.employee_id);
+                                return emp ? `${emp.first_name} ${emp.last_name} (${emp.employee_code})` : form.employee_id;
+                              })()
+                            }
+                          : null
+                      }
+                      onChange={(opt) => handleFormChange({ target: { name: 'employee_id', value: opt ? opt.value : '' } })}
+                      styles={customSelectStyles}
+                      placeholder="-- Select Employee --"
+                      isSearchable={true}
+                    />
                   </div>
                   
                   <div>
@@ -397,17 +441,18 @@ const AttendancePage = () => {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                    <select
-                      name="attendance_status"
-                      value={form.attendance_status}
-                      onChange={handleFormChange}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
-                    >
-                      <option value="Present" className="bg-slate-900">Present</option>
-                      <option value="Absent" className="bg-slate-900">Absent</option>
-                      <option value="Half Day" className="bg-slate-900">Half Day</option>
-                      <option value="Leave" className="bg-slate-900">Leave</option>
-                    </select>
+                    <Select
+                      options={[
+                        { value: 'Present', label: 'Present' },
+                        { value: 'Absent', label: 'Absent' },
+                        { value: 'Half Day', label: 'Half Day' },
+                        { value: 'Leave', label: 'Leave' }
+                      ]}
+                      value={form.attendance_status ? { value: form.attendance_status, label: form.attendance_status } : null}
+                      onChange={(opt) => handleFormChange({ target: { name: 'attendance_status', value: opt ? opt.value : '' } })}
+                      styles={customSelectStyles}
+                      isSearchable={false}
+                    />
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>

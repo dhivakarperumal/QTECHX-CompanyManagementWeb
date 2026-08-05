@@ -8,6 +8,93 @@ import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
@@ -284,24 +371,40 @@ export default function Incomes() {
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Income Type *</span>
-              <select className={fieldClass} name="income_type" value={formData.income_type} onChange={handleChange} required>
-                <option value="">Select Type</option>
-                <option value="Internship Payment">Internship Payment</option>
-                <option value="Other">Other</option>
-              </select>
+              <Select
+                styles={customSelectStyles}
+                name="income_type"
+                value={formData.income_type ? { value: formData.income_type, label: formData.income_type } : null}
+                onChange={(option) => handleChange({ target: { name: 'income_type', value: option ? option.value : '' } })}
+                options={[
+                  { value: 'Internship Payment', label: 'Internship Payment' },
+                  { value: 'Other', label: 'Other' }
+                ]}
+                placeholder="Select Type"
+                isClearable
+                required
+              />
             </label>
 
             {formData.income_type === 'Internship Payment' && (
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Select Intern *</span>
-                <select className={fieldClass} name="intern_id" value={formData.intern_id} onChange={handleChange} required>
-                  <option value="">Select Intern</option>
-                  {internsLoading ? <option disabled>Loading interns...</option> : interns.map(intern => (
-                    <option key={intern.uuid || intern.id} value={intern.uuid || String(intern.id)}>
-                      {intern.full_name} ({intern.person_id})
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="intern_id"
+                  value={formData.intern_id ? {
+                    value: formData.intern_id,
+                    label: interns.find(i => (i.uuid || String(i.id)) === String(formData.intern_id))
+                           ? `${interns.find(i => (i.uuid || String(i.id)) === String(formData.intern_id)).full_name} (${interns.find(i => (i.uuid || String(i.id)) === String(formData.intern_id)).person_id})`
+                           : formData.intern_id
+                  } : null}
+                  onChange={(option) => handleChange({ target: { name: 'intern_id', value: option ? option.value : '' } })}
+                  options={interns.map(intern => ({ value: intern.uuid || String(intern.id), label: `${intern.full_name} (${intern.person_id})` }))}
+                  placeholder="Select Intern"
+                  isLoading={internsLoading}
+                  isClearable
+                  required
+                />
               </label>
             )}
 
@@ -324,14 +427,22 @@ export default function Incomes() {
 
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Payment Mode *</span>
-              <select className={fieldClass} name="payment_type" value={formData.payment_type} onChange={handleChange} required>
-                <option value="">Select Mode</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="UPI">UPI</option>
-                <option value="Cheque">Cheque</option>
-                <option value="Other">Other</option>
-              </select>
+              <Select
+                styles={customSelectStyles}
+                name="payment_type"
+                value={formData.payment_type ? { value: formData.payment_type, label: formData.payment_type } : null}
+                onChange={(option) => handleChange({ target: { name: 'payment_type', value: option ? option.value : '' } })}
+                options={[
+                  { value: 'Cash', label: 'Cash' },
+                  { value: 'Bank Transfer', label: 'Bank Transfer' },
+                  { value: 'UPI', label: 'UPI' },
+                  { value: 'Cheque', label: 'Cheque' },
+                  { value: 'Other', label: 'Other' }
+                ]}
+                placeholder="Select Mode"
+                isClearable
+                required
+              />
             </label>
 
             <label className="text-sm text-white/60">
@@ -375,24 +486,42 @@ export default function Incomes() {
               <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search income" className="w-44 rounded-xl border border-white/10 bg-[#0e1118] py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70" />
             </div>
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="All">All types</option>
-              <option value="Internship Payment">Internship Payment</option>
-              <option value="Other">Other</option>
-            </select>
-            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="All">All modes</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="UPI">UPI</option>
-              <option value="Cheque">Cheque</option>
-              <option value="Other">Other</option>
-            </select>
-            <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2 text-sm text-white outline-none focus:border-orange-500/70">
-              <option value="all">All dates</option>
-              <option value="today">Today</option>
-              <option value="this_month">This month</option>
-            </select>
+            <div className="w-40">
+              <Select
+                styles={{
+                  ...customSelectStyles,
+                  control: (provided, state) => ({ ...provided, backgroundColor: '#0e1118', borderColor: state.isFocused ? 'rgba(249, 115, 22, 0.7)' : 'rgba(255, 255, 255, 0.1)', borderRadius: '0.75rem', minHeight: '38px', boxShadow: 'none' })
+                }}
+                value={{ value: typeFilter, label: typeFilter === 'All' ? 'All types' : typeFilter }}
+                onChange={(option) => setTypeFilter(option ? option.value : 'All')}
+                options={[ { value: 'All', label: 'All types' }, { value: 'Internship Payment', label: 'Internship Payment' }, { value: 'Other', label: 'Other' } ]}
+                isSearchable={false}
+              />
+            </div>
+            <div className="w-36">
+              <Select
+                styles={{
+                  ...customSelectStyles,
+                  control: (provided, state) => ({ ...provided, backgroundColor: '#0e1118', borderColor: state.isFocused ? 'rgba(249, 115, 22, 0.7)' : 'rgba(255, 255, 255, 0.1)', borderRadius: '0.75rem', minHeight: '38px', boxShadow: 'none' })
+                }}
+                value={{ value: modeFilter, label: modeFilter === 'All' ? 'All modes' : modeFilter }}
+                onChange={(option) => setModeFilter(option ? option.value : 'All')}
+                options={[ { value: 'All', label: 'All modes' }, { value: 'Cash', label: 'Cash' }, { value: 'Bank Transfer', label: 'Bank Transfer' }, { value: 'UPI', label: 'UPI' }, { value: 'Cheque', label: 'Cheque' }, { value: 'Other', label: 'Other' } ]}
+                isSearchable={false}
+              />
+            </div>
+            <div className="w-36">
+              <Select
+                styles={{
+                  ...customSelectStyles,
+                  control: (provided, state) => ({ ...provided, backgroundColor: '#0e1118', borderColor: state.isFocused ? 'rgba(249, 115, 22, 0.7)' : 'rgba(255, 255, 255, 0.1)', borderRadius: '0.75rem', minHeight: '38px', boxShadow: 'none' })
+                }}
+                value={{ value: dateFilter, label: dateFilter === 'all' ? 'All dates' : dateFilter === 'today' ? 'Today' : 'This month' }}
+                onChange={(option) => setDateFilter(option ? option.value : 'all')}
+                options={[ { value: 'all', label: 'All dates' }, { value: 'today', label: 'Today' }, { value: 'this_month', label: 'This month' } ]}
+                isSearchable={false}
+              />
+            </div>
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
               <button onClick={() => setIncomeViewMode('table')} className={`rounded-lg p-2 transition ${incomeViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
               <button onClick={() => setIncomeViewMode('card')} className={`rounded-lg p-2 transition ${incomeViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>

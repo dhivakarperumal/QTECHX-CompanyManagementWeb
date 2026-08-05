@@ -1,4 +1,91 @@
 import { useState, useEffect, useMemo } from 'react';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import { UserCheck, Edit2, Trash2, Loader2, Save, X, Plus, Search, LayoutGrid, List } from 'lucide-react';
@@ -202,30 +289,30 @@ const TraineeTaskAssign = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
-                <select
-                  value={selectedTask}
-                  onChange={(e) => setSelectedTask(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                >
-                  <option value="" className="text-black">-- Select Task --</option>
-                  {tasks.map(t => (
-                    <option key={t.uuid} value={t.uuid} className="text-black">{t.task_name}</option>
-                  ))}
-                </select>
+                <Select
+                  options={[
+                    ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
+                  ]}
+                  value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                  onChange={(option) => setSelectedTask(option ? option.value : '')}
+                  styles={customSelectStyles}
+                  isSearchable={true}
+                  placeholder="-- Select Task --"
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
-                <select
-                  value={selectedTrainee}
-                  onChange={(e) => setSelectedTrainee(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                >
-                  <option value="" className="text-black">-- Select Trainee --</option>
-                  {trainees.map(t => (
-                    <option key={t.uuid} value={t.uuid} className="text-black">{t.full_name} ({t.type})</option>
-                  ))}
-                </select>
+                <Select
+                  options={[
+                    ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
+                  ]}
+                  value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
+                  onChange={(option) => setSelectedTrainee(option ? option.value : '')}
+                  styles={customSelectStyles}
+                  isSearchable={true}
+                  placeholder="-- Select Trainee --"
+                />
               </div>
 
               <div>
@@ -317,15 +404,18 @@ const TraineeTaskAssign = () => {
               />
             </div>
 
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-            >
-              <option value="All" className="text-black">All Types</option>
-              <option value="Trainee" className="text-black">Trainee</option>
-              <option value="Intern" className="text-black">Intern</option>
-            </select>
+            <Select
+              options={[
+                { value: 'All', label: 'All Types' },
+                { value: 'Trainee', label: 'Trainee' },
+                { value: 'Intern', label: 'Intern' }
+              ]}
+              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
+              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
+              styles={customSelectStyles}
+              isSearchable={false}
+              className="w-40"
+            />
             {/* Card / Table Toggle */}
             <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
               <button
@@ -395,18 +485,27 @@ const TraineeTaskAssign = () => {
                         </td>
                         <td className="px-4 py-4">
                           {isEditing ? (
-                            <select
-                              value={editStatus}
-                              onChange={(e) => setEditStatus(e.target.value)}
-                              className="rounded-lg border border-white/10 bg-white/4 px-2 py-1 text-sm text-white outline-none focus:border-orange-500/50"
-                            >
-                              <option value="Pending" className="text-black">Pending</option>
-                              <option value="In Progress" className="text-black">In Progress</option>
-                              <option value="Review" className="text-black">Review</option>
-                              <option value="On Hold" className="text-black">On Hold</option>
-                              <option value="Completed" className="text-black">Completed</option>
-                              <option value="Cancelled" className="text-black">Cancelled</option>
-                            </select>
+                            <Select
+                              options={[
+                                { value: 'Pending', label: 'Pending' },
+                                { value: 'In Progress', label: 'In Progress' },
+                                { value: 'Review', label: 'Review' },
+                                { value: 'On Hold', label: 'On Hold' },
+                                { value: 'Completed', label: 'Completed' },
+                                { value: 'Cancelled', label: 'Cancelled' }
+                              ]}
+                              value={{ value: editStatus, label: editStatus }}
+                              onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
+                              styles={{
+                                ...customSelectStyles,
+                                control: (provided, state) => ({
+                                  ...customSelectStyles.control(provided, state),
+                                  minHeight: '30px',
+                                  height: '30px',
+                                }),
+                              }}
+                              isSearchable={false}
+                            />
                           ) : (
                             <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
                               ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :

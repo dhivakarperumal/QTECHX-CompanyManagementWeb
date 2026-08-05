@@ -6,6 +6,93 @@ import {
 } from 'lucide-react';
 import api, { API_URL } from '../../api';
 import { calculateProjectTotal } from './projectCostUtils';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const BACKEND_BASE_URL = API_URL.replace(/\/api$/, '');
 
@@ -344,9 +431,13 @@ export default function AddProject() {
             })}
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Current Status</span>
-              <select className={fieldClass} name="current_status" value={formData.current_status} onChange={handleChange}>
-                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <Select
+                options={STATUS_OPTIONS.map(s => ({ value: s, label: s }))}
+                value={formData.current_status ? { value: formData.current_status, label: formData.current_status } : null}
+                onChange={(opt) => handleChange({ target: { name: 'current_status', value: opt ? opt.value : '' } })}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Total Cost (₹)</span>
@@ -426,28 +517,43 @@ export default function AddProject() {
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Select Existing Client</span>
               <div className="flex gap-2">
-                <select className={fieldClass} value={selectedClientUuid} onChange={(e) => handleSelectClient(e.target.value)}>
-                  <option value="">Choose a client to auto-fill details</option>
-                  {clientLoading ? (
-                    <option value="">Loading clients...</option>
-                  ) : clients.length === 0 ? (
-                    <option value="">No clients available</option>
-                  ) : (
-                    clients
-                      .filter((client) => {
-                        if (!clientFilter.trim()) return true;
-                        const term = clientFilter.toLowerCase();
-                        return [client.client_name, client.company_name, client.email, client.phone_number]
-                          .filter(Boolean)
-                          .some((value) => value.toLowerCase().includes(term));
-                      })
-                      .map((client) => (
-                        <option key={client.uuid || client.id} value={client.uuid || client.id}>
-                          {client.client_name || 'Unnamed client'}{client.company_name ? ` — ${client.company_name}` : ''}
-                        </option>
-                      ))
-                  )}
-                </select>
+                <div className="flex-1">
+                  <Select
+                    options={
+                      clientLoading 
+                        ? [{ value: '', label: 'Loading clients...' }]
+                        : clients.length === 0 
+                          ? [{ value: '', label: 'No clients available' }]
+                          : clients
+                              .filter((client) => {
+                                if (!clientFilter.trim()) return true;
+                                const term = clientFilter.toLowerCase();
+                                return [client.client_name, client.company_name, client.email, client.phone_number]
+                                  .filter(Boolean)
+                                  .some((value) => value.toLowerCase().includes(term));
+                              })
+                              .map((client) => ({
+                                value: client.uuid || client.id,
+                                label: `${client.client_name || 'Unnamed client'}${client.company_name ? ` — ${client.company_name}` : ''}`
+                              }))
+                    }
+                    value={
+                      selectedClientUuid
+                        ? {
+                            value: selectedClientUuid,
+                            label: (() => {
+                              const client = clients.find(c => (c.uuid || c.id) === selectedClientUuid);
+                              return client ? `${client.client_name || 'Unnamed client'}${client.company_name ? ` — ${client.company_name}` : ''}` : selectedClientUuid;
+                            })()
+                          }
+                        : null
+                    }
+                    onChange={(opt) => handleSelectClient(opt ? opt.value : '')}
+                    styles={customSelectStyles}
+                    placeholder="Choose a client to auto-fill details"
+                    isSearchable={true}
+                  />
+                </div>
                 <button type="button" onClick={() => setSelectedClientUuid('')}
                   className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition"
                   title="Clear client selection">
@@ -467,9 +573,13 @@ export default function AddProject() {
             ))}
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">NDA Signed</span>
-              <select className={fieldClass} name="nda_signed" value={formData.nda_signed} onChange={handleChange}>
-                <option value="No">No</option><option value="Yes">Yes</option>
-              </select>
+              <Select
+                options={[{ value: 'No', label: 'No' }, { value: 'Yes', label: 'Yes' }]}
+                value={formData.nda_signed ? { value: formData.nda_signed, label: formData.nda_signed } : null}
+                onChange={(opt) => handleChange({ target: { name: 'nda_signed', value: opt ? opt.value : '' } })}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Upload NDA Document</span>
@@ -484,9 +594,13 @@ export default function AddProject() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Agreement Uploaded</span>
-              <select className={fieldClass} name="agreement_uploaded" value={formData.agreement_uploaded} onChange={handleChange}>
-                <option value="No">No</option><option value="Yes">Yes</option>
-              </select>
+              <Select
+                options={[{ value: 'No', label: 'No' }, { value: 'Yes', label: 'Yes' }]}
+                value={formData.agreement_uploaded ? { value: formData.agreement_uploaded, label: formData.agreement_uploaded } : null}
+                onChange={(opt) => handleChange({ target: { name: 'agreement_uploaded', value: opt ? opt.value : '' } })}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
               {formData.agreement_uploaded === 'Yes' && (
                 <p className="mt-1 text-xs text-orange-300">Yes means you should upload the agreement file below.</p>
               )}

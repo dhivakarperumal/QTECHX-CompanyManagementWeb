@@ -3,6 +3,93 @@ import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Eye, Edit3, Trash2, Plus, UserPlus, X, CheckCircle, AlertCircle, Loader2, ClipboardList, Paperclip, Download, User, Play, Search, LayoutGrid, List, Calendar, Flag, Layers, FileText, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import api from '../../api';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const tabs = [
   { key: "overview", label: "All Tasks" },
@@ -735,30 +822,30 @@ export default function TasksPage({ initialPageKey = null }) {
 
         {/* Right: Status filter + Project filter + View toggle */}
         <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-3 py-2.5 outline-none focus:border-orange-500/50"
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="On Hold">On Hold</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+          <div className="min-w-[150px]">
+            <Select
+              value={statusFilter ? { value: statusFilter, label: statusFilter } : null}
+              onChange={option => setStatusFilter(option ? option.value : '')}
+              options={['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled'].map(s => ({ value: s, label: s }))}
+              placeholder="All Statuses"
+              styles={customSelectStyles}
+              isSearchable={false}
+              isClearable
+            />
+          </div>
 
           {['overview', 'board', 'completed'].includes(pageKey) && (
-            <select
-              value={selectedProject}
-              onChange={(e) => handleProjectChange(e.target.value)}
-              className="bg-[#111318] border border-white/10 text-sm text-white/70 rounded-xl px-3 py-2.5 outline-none focus:border-orange-500/50"
-            >
-              <option value="">All Projects</option>
-              {availableTaskProjects.map((project) => (
-                <option key={project.uuid} value={project.uuid}>{project.name}</option>
-              ))}
-            </select>
+            <div className="min-w-[160px]">
+              <Select
+                value={selectedProject ? { value: selectedProject, label: availableTaskProjects.find(p => p.uuid === selectedProject)?.name || selectedProject } : null}
+                onChange={option => handleProjectChange(option ? option.value : '')}
+                options={availableTaskProjects.map(p => ({ value: p.uuid, label: p.name }))}
+                placeholder="All Projects"
+                styles={customSelectStyles}
+                isSearchable={false}
+                isClearable
+              />
+            </div>
           )}
 
           {/* View mode toggle */}
@@ -1209,12 +1296,14 @@ export default function TasksPage({ initialPageKey = null }) {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             <FieldBox label="Project *">
-              <select value={taskUpdateForm.project_id} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
-                <option value="" disabled>Select project</option>
-                {projects.map((project) => (
-                  <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
-                ))}
-              </select>
+              <Select
+                value={taskUpdateForm.project_id ? { value: taskUpdateForm.project_id, label: projects.find(p => p.uuid === taskUpdateForm.project_id)?.project_name || taskUpdateForm.project_id } : null}
+                onChange={option => setTaskUpdateForm(p => ({ ...p, project_id: option ? option.value : '' }))}
+                options={projects.map(p => ({ value: p.uuid, label: p.project_name || p.short_name || p.project_code }))}
+                placeholder="Select project"
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </FieldBox>
             <FieldBox label="Module">
               <input value={taskUpdateForm.module_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="e.g. Authentication" />
@@ -1223,20 +1312,24 @@ export default function TasksPage({ initialPageKey = null }) {
               <input value={taskUpdateForm.task_name} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter task name" />
             </FieldBox>
             <FieldBox label="Priority">
-              <select value={taskUpdateForm.priority} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
-                <option value="" disabled>Select priority</option>
-                {['Low', 'Medium', 'High', 'Critical'].map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
+              <Select
+                value={taskUpdateForm.priority ? { value: taskUpdateForm.priority, label: taskUpdateForm.priority } : null}
+                onChange={option => setTaskUpdateForm(p => ({ ...p, priority: option ? option.value : '' }))}
+                options={['Low', 'Medium', 'High', 'Critical'].map(v => ({ value: v, label: v }))}
+                placeholder="Select priority"
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </FieldBox>
             <FieldBox label="Status">
-              <select value={taskUpdateForm.status} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, status: e.target.value }))} className={inputCls}>
-                <option value="" disabled>Select status</option>
-                {['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map((value) => (
-                  <option key={value} value={value}>{value}</option>
-                ))}
-              </select>
+              <Select
+                value={taskUpdateForm.status ? { value: taskUpdateForm.status, label: taskUpdateForm.status } : null}
+                onChange={option => setTaskUpdateForm(p => ({ ...p, status: option ? option.value : '' }))}
+                options={['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map(v => ({ value: v, label: v }))}
+                placeholder="Select status"
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </FieldBox>
             <FieldBox label="Start Date">
               <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
@@ -1355,12 +1448,14 @@ export default function TasksPage({ initialPageKey = null }) {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldBox label="Project *">
-            <select value={taskForm.project_id} onChange={(e) => setTaskForm((p) => ({ ...p, project_id: e.target.value }))} className={inputCls}>
-              <option value="" disabled>Select project</option>
-              {projects.map((project) => (
-                <option key={project.uuid} value={project.uuid}>{project.project_name || project.short_name || project.project_code}</option>
-              ))}
-            </select>
+            <Select
+              value={taskForm.project_id ? { value: taskForm.project_id, label: projects.find(p => p.uuid === taskForm.project_id)?.project_name || taskForm.project_id } : null}
+              onChange={option => setTaskForm(p => ({ ...p, project_id: option ? option.value : '' }))}
+              options={projects.map(p => ({ value: p.uuid, label: p.project_name || p.short_name || p.project_code }))}
+              placeholder="Select project"
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
           <FieldBox label="Module">
             <input value={taskForm.module_name} onChange={(e) => setTaskForm((p) => ({ ...p, module_name: e.target.value }))} className={inputCls} placeholder="e.g. Authentication" />
@@ -1369,20 +1464,24 @@ export default function TasksPage({ initialPageKey = null }) {
             <input value={taskForm.task_name} onChange={(e) => setTaskForm((p) => ({ ...p, task_name: e.target.value }))} className={inputCls} placeholder="Enter task name" />
           </FieldBox>
           <FieldBox label="Priority">
-            <select value={taskForm.priority} onChange={(e) => setTaskForm((p) => ({ ...p, priority: e.target.value }))} className={inputCls}>
-              <option value="" disabled>Select priority</option>
-              {['Low', 'Medium', 'High', 'Critical'].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
+            <Select
+              value={taskForm.priority ? { value: taskForm.priority, label: taskForm.priority } : null}
+              onChange={option => setTaskForm(p => ({ ...p, priority: option ? option.value : '' }))}
+              options={['Low', 'Medium', 'High', 'Critical'].map(v => ({ value: v, label: v }))}
+              placeholder="Select priority"
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
           <FieldBox label="Status">
-            <select value={taskForm.status} onChange={(e) => setTaskForm((p) => ({ ...p, status: e.target.value }))} className={inputCls}>
-              <option value="" disabled>Select status</option>
-              {['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
+            <Select
+              value={taskForm.status ? { value: taskForm.status, label: taskForm.status } : null}
+              onChange={option => setTaskForm(p => ({ ...p, status: option ? option.value : '' }))}
+              options={['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map(v => ({ value: v, label: v }))}
+              placeholder="Select status"
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
           <FieldBox label="Start Date">
             <input type="date" value={taskForm.start_date} onChange={(e) => setTaskForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
@@ -1467,59 +1566,48 @@ export default function TasksPage({ initialPageKey = null }) {
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldBox label="Project *">
-            <select
-              value={assignForm.project_id}
-              onChange={(e) => setAssignForm((p) => ({ ...p, project_id: e.target.value, task_uuid: '', assigned_to: '' }))}
-              className={inputCls}
-            >
-              <option value="" disabled>Select project</option>
-              {projects.map((project) => (
-                <option key={project.uuid} value={project.uuid}>
-                  {project.project_name || project.short_name || project.project_code}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={assignForm.project_id ? { value: assignForm.project_id, label: projects.find(p => p.uuid === assignForm.project_id)?.project_name || assignForm.project_id } : null}
+              onChange={option => setAssignForm(p => ({ ...p, project_id: option ? option.value : '', task_uuid: '', assigned_to: '' }))}
+              options={projects.map(p => ({ value: p.uuid, label: p.project_name || p.short_name || p.project_code }))}
+              placeholder="Select project"
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
 
           <FieldBox label="Task *">
-            <select
-              value={assignForm.task_uuid}
-              onChange={(e) => setAssignForm((p) => ({ ...p, task_uuid: e.target.value }))}
-              className={inputCls}
-              disabled={!assignForm.project_id}
-            >
-              <option value="" disabled>{assignForm.project_id ? 'Select task' : 'Select a project first'}</option>
-              {tasksList
+            <Select
+              value={assignForm.task_uuid ? { value: assignForm.task_uuid, label: tasksList.find(t => t.uuid === assignForm.task_uuid)?.name || assignForm.task_uuid } : null}
+              onChange={option => setAssignForm(p => ({ ...p, task_uuid: option ? option.value : '' }))}
+              options={tasksList
                 .filter((task) => (task.assignedTo === 'Unassigned' || !task.assigned_to_raw) && task.status === 'Pending')
-                .map((task) => (
-                <option key={task.uuid} value={task.uuid}>{task.name || task.module || task.uuid}</option>
-              ))}
-            </select>
+                .map((task) => ({ value: task.uuid, label: task.name || task.module || task.uuid }))}
+              placeholder={assignForm.project_id ? 'Select task' : 'Select a project first'}
+              isDisabled={!assignForm.project_id}
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
 
           <FieldBox label="Assign To Employee *">
-            <select
-              value={assignForm.assigned_to}
-              onChange={(e) => setAssignForm((p) => ({ ...p, assigned_to: e.target.value }))}
-              className={inputCls}
-              disabled={!assignForm.project_id}
-            >
-              <option value="" disabled>
-                {projectEmployeesLoading ? 'Loading employees…' : assignForm.project_id ? 'Select employee' : 'Select a project first'}
-              </option>
-              {assignedEmployees.length > 0 ? (
-                assignedEmployees.map((employee) => (
-                  <option key={employee.employee_id} value={employee.employee_id}>
-                    {`${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_id}
-                    {employee.employee_code ? ` (${employee.employee_code})` : ''}
-                  </option>
-                ))
-              ) : (
-                !projectEmployeesLoading && assignForm.project_id && (
-                  <option value="" disabled>No employees assigned to this project</option>
-                )
-              )}
-            </select>
+            <Select
+              value={assignForm.assigned_to ? {
+                value: assignForm.assigned_to,
+                label: assignedEmployees.find(e => e.employee_id === assignForm.assigned_to)
+                  ? `${assignedEmployees.find(e => e.employee_id === assignForm.assigned_to).first_name || ''} ${assignedEmployees.find(e => e.employee_id === assignForm.assigned_to).last_name || ''}`.trim() || assignForm.assigned_to
+                  : assignForm.assigned_to
+              } : null}
+              onChange={option => setAssignForm(p => ({ ...p, assigned_to: option ? option.value : '' }))}
+              options={assignedEmployees.map((employee) => ({
+                value: employee.employee_id,
+                label: `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_id
+              }))}
+              placeholder={projectEmployeesLoading ? 'Loading employees…' : assignForm.project_id ? 'Select employee' : 'Select a project first'}
+              isDisabled={!assignForm.project_id || projectEmployeesLoading}
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
 
           <FieldBox label="Team / Department">
@@ -1531,12 +1619,14 @@ export default function TasksPage({ initialPageKey = null }) {
           </FieldBox>
 
           <FieldBox label="Status">
-            <select value={assignForm.status} onChange={(e) => setAssignForm((p) => ({ ...p, status: e.target.value }))} className={inputCls}>
-              <option value="" disabled>Select status</option>
-              {['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
+            <Select
+              value={assignForm.status ? { value: assignForm.status, label: assignForm.status } : null}
+              onChange={option => setAssignForm(p => ({ ...p, status: option ? option.value : '' }))}
+              options={['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'].map(v => ({ value: v, label: v }))}
+              placeholder="Select status"
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
           </FieldBox>
 
           <div className="sm:col-span-2">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Select from 'react-select';
 import api from '../../api';
 import dayjs from 'dayjs';
 import {
@@ -27,6 +28,92 @@ import {
 } from 'lucide-react';
 
 const pageSize = 8;
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    // '&:hover': {
+    //   border: '1px solid #f97316',
+    // },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const createEmptyForm = () => ({
   planName: '',
@@ -1006,15 +1093,31 @@ function ProjectPlansPage() {
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Category</span>
-                  <select name="category" value={formData.category} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-                  </select>
+                  <Select
+                    name="category"
+                    value={{ value: formData.category, label: formData.category }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'category', value: option ? option.value : '' } })}
+                    options={categories.map((category) => ({ value: category, label: category }))}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Status</span>
-                  <select name="status" value={formData.status} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-                  </select>
+                  <Select
+                    name="status"
+                    value={{ value: formData.status, label: formData.status }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'status', value: option ? option.value : '' } })}
+                    options={statuses.map((status) => ({ value: status, label: status }))}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70 md:col-span-2">
                   <span className="mb-1 block">Short Description</span>
@@ -1213,10 +1316,20 @@ function ProjectPlansPage() {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Hosting Included</span>
-                  <select name="hostingIncluded" value={formData.hostingIncluded} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
+                  <Select
+                    name="hostingIncluded"
+                    value={{ value: formData.hostingIncluded, label: formData.hostingIncluded }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'hostingIncluded', value: option ? option.value : '' } })}
+                    options={[
+                      { value: 'Yes', label: 'Yes' },
+                      { value: 'No', label: 'No' }
+                    ]}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Hosting Type</span>
@@ -1232,10 +1345,20 @@ function ProjectPlansPage() {
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Domain Included</span>
-                  <select name="domainIncluded" value={formData.domainIncluded} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
+                  <Select
+                    name="domainIncluded"
+                    value={{ value: formData.domainIncluded, label: formData.domainIncluded }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'domainIncluded', value: option ? option.value : '' } })}
+                    options={[
+                      { value: 'Yes', label: 'Yes' },
+                      { value: 'No', label: 'No' }
+                    ]}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Domain Extension</span>

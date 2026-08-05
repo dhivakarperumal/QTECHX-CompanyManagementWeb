@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../PrivateRouter/AuthContext';
+import Select from 'react-select';
 import api from '../../api';
 import dayjs from 'dayjs';
 import {
@@ -23,6 +24,92 @@ import {
 } from 'lucide-react';
 
 const SELECTED_PROJECT_KEY = 'qtechx-project-selected-id';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const buildAssetEntriesFromProject = (project, createId) => {
   const entries = [];
@@ -540,30 +627,47 @@ function ProjectAssetsPage() {
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-48">
-            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="w-full bg-[#0e1118] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white appearance-none focus:outline-none focus:border-orange-500/50"
-            >
-              <option value="all">All Types</option>
-              <option value="image">Images</option>
-              <option value="zip">ZIP Archives</option>
-            </select>
+          <div className="relative flex-1 md:w-48 z-20">
+            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 z-10" />
+            <div className="pl-8">
+              <Select
+                value={[
+                  { value: 'all', label: 'All Types' },
+                  { value: 'image', label: 'Images' },
+                  { value: 'zip', label: 'ZIP Archives' }
+                ].find(opt => opt.value === filterType)}
+                onChange={(option) => setFilterType(option ? option.value : 'all')}
+                options={[
+                  { value: 'all', label: 'All Types' },
+                  { value: 'image', label: 'Images' },
+                  { value: 'zip', label: 'ZIP Archives' }
+                ]}
+                styles={{
+                  ...customSelectStyles,
+                  control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118', minHeight: '38px' })
+                }}
+                isSearchable={false}
+              />
+            </div>
           </div>
           
-          <div className="relative flex-1 md:w-48">
-            <select
-              value={filterProject}
-              onChange={(e) => setFilterProject(e.target.value)}
-              className="w-full bg-[#0e1118] border border-white/10 rounded-xl py-2 px-4 text-sm text-white appearance-none focus:outline-none focus:border-orange-500/50"
-            >
-              <option value="all">All Projects</option>
-              {projects.map((p) => (
-                <option key={p.uuid || p.id} value={p.uuid || p.id}>{p.project_name || p.projectName || `Project ${p.id}`}</option>
-              ))}
-            </select>
+          <div className="relative flex-1 md:w-48 z-10">
+            <Select
+              value={
+                filterProject === 'all' 
+                  ? { value: 'all', label: 'All Projects' } 
+                  : { value: filterProject, label: projects.find(p => (p.uuid || p.id) === filterProject)?.project_name || projects.find(p => (p.uuid || p.id) === filterProject)?.projectName || 'Project' }
+              }
+              onChange={(option) => setFilterProject(option ? option.value : 'all')}
+              options={[
+                { value: 'all', label: 'All Projects' },
+                ...projects.map((p) => ({ value: p.uuid || p.id, label: p.project_name || p.projectName || `Project ${p.id}` }))
+              ]}
+              styles={{
+                ...customSelectStyles,
+                control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118', minHeight: '38px' })
+              }}
+            />
           </div>
 
           <div className="flex bg-[#0e1118] border border-white/10 rounded-xl p-1">
@@ -714,17 +818,19 @@ function ProjectAssetsPage() {
 
             <label className="block text-sm text-white/70">
               <span className="mb-2 block">Select project</span>
-              <select
-                className="w-full rounded-2xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 [&>option]:bg-[#111318]"
-                value={selectedProjectId}
-                onChange={(event) => setSelectedProjectId(event.target.value)}
-              >
-                {projects.map((project) => (
-                  <option key={project.uuid || project.id} value={project.uuid || project.id}>
-                    {project.project_name || project.projectName || `Project ${project.id}`}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={
+                  selectedProjectId 
+                    ? { value: selectedProjectId, label: projects.find(p => (p.uuid || p.id) === selectedProjectId)?.project_name || projects.find(p => (p.uuid || p.id) === selectedProjectId)?.projectName || 'Project' }
+                    : null
+                }
+                onChange={(option) => setSelectedProjectId(option ? option.value : '')}
+                options={projects.map((p) => ({ value: p.uuid || p.id, label: p.project_name || p.projectName || `Project ${p.id}` }))}
+                styles={{
+                  ...customSelectStyles,
+                  control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118' })
+                }}
+              />
             </label>
 
             {selectedProject ? (
