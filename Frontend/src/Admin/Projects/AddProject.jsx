@@ -156,8 +156,8 @@ const toForm = (p) => ({
   source_code_backup: p.source_code_backup || '',
 });
 
-const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
-const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
+const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
+const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 const DOCUMENT_FIELDS = ['proposal_doc','quotation_doc','api_documentation','database_schema','source_code_backup'];
 
@@ -348,48 +348,36 @@ export default function AddProject() {
 
   return (
     <div className="space-y-6 pb-6 text-white min-h-screen">
-      <div className="w-full bg-[#0d0f14] border border-white/10 rounded-2xl flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-b border-white/8 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center">
-              <FileText size={18} className="text-orange-500" />
-            </div>
-            <div>
-              <h2 className="text-white font-bold text-lg leading-tight">
-                {isEdit ? (formData.project_name || 'Edit Project') : 'Create a Project'}
-              </h2>
-              <p className="text-white/40 text-xs mt-0.5">
-                {isEdit ? 'Update project details and save changes.' : 'Fill in project details, timeline, team, and documents.'}
-              </p>
-            </div>
-          </div>
-          <button onClick={() => navigate('/admin/projects')} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
-            <X size={16} />
-          </button>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{isEdit ? (formData.project_name || 'Edit Project') : 'Create a Project'}</h1>
+          <p className="text-sm text-white/40 mt-1">{isEdit ? 'Update project details and save changes.' : 'Fill in project details, timeline, team, and documents.'}</p>
         </div>
+        <button onClick={() => navigate('/admin/projects')} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
+          <X size={16} />
+        </button>
+      </div>
 
-        {/* Form Body */}
-        <div className="px-6 py-5">
-          {success && (
-            <div className="mb-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
-              <CheckCircle size={16} /> {success}
-            </div>
-          )}
-          {error && (
-            <div className="mb-5 flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl">
-              <AlertCircle size={16} /> {error}
-            </div>
-          )}
+      {success && (
+        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
+          <CheckCircle size={16} /> {success}
+        </div>
+      )}
+      {error && (
+        <div className="mb-5 flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl">
+          <AlertCircle size={16} /> {error}
+        </div>
+      )}
 
-          <form id="project-form" onSubmit={handleSave} className="space-y-6 pb-6">
-        {/* Basic Info */}
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><Building2 size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Basic Information</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
+      <div className="px-6 py-5">
+        <form id="project-form" onSubmit={handleSave} className="space-y-6 pb-6">
+          {/* Basic Info */}
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><Building2 size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Basic Information</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
             {['project_code','project_name','short_name','project_category','industry'].map((name) => {
               const labels = {
                 project_code: 'Project Code',
@@ -715,12 +703,11 @@ export default function AddProject() {
             })}
           </div>
         </section>
+      </form>
+    </div>
 
-          </form>
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 bg-[#0d0f14]/95 backdrop-blur border-t border-white/8 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
+    {/* Footer */}
+        <div className="flex justify-end gap-3">
           {!isEdit && (
             <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
               className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
@@ -732,7 +719,7 @@ export default function AddProject() {
             Cancel
           </button>
           <button type="submit" form="project-form" disabled={loading}
-            className="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-semibold text-white transition shadow-lg shadow-orange-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
             {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
