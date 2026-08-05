@@ -456,12 +456,10 @@ export default function Incomes() {
               <input type="text" className={fieldClass} name="paid_to" value={formData.paid_to} onChange={handleChange} required />
             </label>
             
-            {editId && (
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Invoice Number</span>
-                <input type="text" className={`${fieldClass} opacity-50 cursor-not-allowed`} value={formData.invoice_number || 'Auto-generated'} disabled />
-              </label>
-            )}
+            <label className="text-sm text-white/60">
+              <span className="mb-1.5 block font-medium">Invoice Number</span>
+              <input type="text" className={`${fieldClass} opacity-50 cursor-not-allowed`} value={formData.invoice_number || 'Auto-generated on Save'} disabled />
+            </label>
           </div>
 
           <div className="mt-5 flex justify-end gap-3 pt-5 border-t border-white/10">
