@@ -1087,7 +1087,12 @@ function ProjectPlansPage() {
                   <span className="mb-1 block">Link Project</span>
                   <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
                     <option value="">None</option>
-                    {projectsList.map((project) => (
+                    {projectsList
+                      .filter((project) => {
+                        const isAssigned = plans.some((p) => String(p.projectId) === String(project.uuid) && p.id !== currentPlan?.id);
+                        return !isAssigned;
+                      })
+                      .map((project) => (
                       <option key={project.uuid} value={project.uuid}>
                         {project.project_code || 'PRJ'} - {project.project_name}
                       </option>

@@ -641,12 +641,20 @@ export default function AssignTaskPage() {
                             {mod.title || "—"}
                           </span>
                         </td>
-                        {/* Duration (show in hours) */}
+                        {/* Duration */}
                         <td className="px-4 py-3 text-white/70 whitespace-nowrap">
                           {(() => {
-                            // prefer explicit hours field, else convert days→hours (8h/day)
-                            const hrs = mod.duration_hours ?? (mod.duration ? Number(mod.duration) * 8 : null);
-                            return hrs ? `${hrs} hours` : "—";
+                            if (mod.duration_hours) return `${mod.duration_hours} hours`;
+                            if (!mod.duration) return "—";
+                            
+                            // If it already contains text/units, show as is
+                            if (/[a-zA-Z]/.test(mod.duration)) {
+                              return mod.duration;
+                            }
+                            
+                            // Fallback for old numeric-only data
+                            const num = Number(mod.duration);
+                            return !isNaN(num) ? `${num * 8} hours` : mod.duration;
                           })()}
                         </td>
                         {/* Created At */}
