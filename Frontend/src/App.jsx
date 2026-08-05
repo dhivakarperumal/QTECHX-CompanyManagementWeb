@@ -34,7 +34,16 @@ function App() {
       <ScrollToTop/>
       <ScrollNavigator/>
       <Outlet />
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        containerStyle={{ zIndex: 20000 }}
+        toastOptions={{
+          style: {
+            zIndex: 20000,
+          },
+        }}
+      />
       {!isAdmin && <FloatingSupport />}
       {showPublicChrome && <Footer />}
       {/* {showPublicChrome && <Footer />} */}
