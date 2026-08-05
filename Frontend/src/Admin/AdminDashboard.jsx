@@ -369,6 +369,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const TARGET_REVENUE = 500000;
+  const currentIncome = dashboard ? (dashboard.currentMonthIncome || 0) : 0;
+  const targetPercentage = Math.min(Math.round((currentIncome / TARGET_REVENUE) * 100), 100);
+
   const upcomingEvents = (dashboard?.upcomingEvents || []).map(e => {
     const dateObj = new Date(e.startDate);
     const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -487,11 +491,11 @@ const AdminDashboard = () => {
 
               <div className="rounded-[1.25rem] border border-white/5 bg-white/[0.02] p-4 flex flex-col justify-center mt-1">
                 <div className="flex items-center justify-between text-[11px] text-white/50 mb-2 font-medium">
-                  <span className="uppercase tracking-[0.15em]">Q3 Revenue Target</span>
-                  <span className="text-emerald-400">75% Achieved</span>
+                  <span className="uppercase tracking-[0.15em]">Monthly Revenue Target (₹{(TARGET_REVENUE/100000).toFixed(1)}L)</span>
+                  <span className="text-emerald-400">{targetPercentage}% Achieved</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-emerald-500/50 to-emerald-400 rounded-full" style={{ width: '75%' }} />
+                  <div className="h-full bg-gradient-to-r from-emerald-500/50 to-emerald-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${targetPercentage}%` }} />
                 </div>
               </div>
             </div>
