@@ -641,9 +641,13 @@ export default function AssignTaskPage() {
                             {mod.title || "—"}
                           </span>
                         </td>
-                        {/* Duration */}
+                        {/* Duration (show in hours) */}
                         <td className="px-4 py-3 text-white/70 whitespace-nowrap">
-                          {mod.duration ? `${mod.duration} days` : "—"}
+                          {(() => {
+                            // prefer explicit hours field, else convert days→hours (8h/day)
+                            const hrs = mod.duration_hours ?? (mod.duration ? Number(mod.duration) * 8 : null);
+                            return hrs ? `${hrs} hours` : "—";
+                          })()}
                         </td>
                         {/* Created At */}
                         <td className="px-4 py-3">
@@ -779,7 +783,7 @@ export default function AssignTaskPage() {
               className={inputCls}
             >
               <option value="" disabled>Select status</option>
-              {["Pending","In Progress","Review","Testing","Completed","On Hold","Cancelled"].map((v) => (
+              {["Pending","In Progress","Review","Testing","Completed"].map((v) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>

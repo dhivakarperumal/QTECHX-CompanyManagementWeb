@@ -165,6 +165,7 @@ const createEmptyForm = () => ({
   newTech: '',
   newModuleTitle: '',
   newModuleDuration: '',
+  newModuleDurationType: 'Days',
   newModuleDescription: '',
   newModuleDocumentName: '',
   salesNotes: '',
@@ -514,7 +515,7 @@ function ProjectPlansPage() {
 
   const addModule = () => {
     const title = formData.newModuleTitle.trim();
-    const duration = formData.newModuleDuration.trim();
+    const duration = formData.newModuleDuration.trim() ? `${formData.newModuleDuration.trim()} ${formData.newModuleDurationType}` : '';
     const description = formData.newModuleDescription.trim();
     const documentName = formData.newModuleDocumentName.trim();
     if (!title || !duration) {
@@ -538,6 +539,7 @@ function ProjectPlansPage() {
         ),
         newModuleTitle: '',
         newModuleDuration: '',
+        newModuleDurationType: 'Days',
         newModuleDescription: '',
         newModuleDocumentName: '',
       }));
@@ -561,6 +563,7 @@ function ProjectPlansPage() {
         ],
         newModuleTitle: '',
         newModuleDuration: '',
+        newModuleDurationType: 'Days',
         newModuleDescription: '',
         newModuleDocumentName: '',
       }));
@@ -573,10 +576,16 @@ function ProjectPlansPage() {
     if (!module) return;
     setEditingModuleIndex(index);
     setShowAddModuleForm(true);
+
+    const durationParts = (module.duration || '').split(' ');
+    const durationValue = durationParts[0] || '';
+    const durationType = durationParts[1] || 'Days';
+
     setFormData((prev) => ({
       ...prev,
       newModuleTitle: module.title || '',
-      newModuleDuration: module.duration || '',
+      newModuleDuration: durationValue,
+      newModuleDurationType: durationType,
       newModuleDescription: module.description || '',
       newModuleDocumentName: module.documentName || '',
     }));
@@ -588,6 +597,7 @@ function ProjectPlansPage() {
       ...prev,
       newModuleTitle: '',
       newModuleDuration: '',
+      newModuleDurationType: 'Days',
       newModuleDescription: '',
       newModuleDocumentName: '',
     }));
@@ -653,6 +663,7 @@ function ProjectPlansPage() {
     const sanitizedPayload = { ...planPayload };
     delete sanitizedPayload.newModuleTitle;
     delete sanitizedPayload.newModuleDuration;
+    delete sanitizedPayload.newModuleDurationType;
     delete sanitizedPayload.newModuleDescription;
     delete sanitizedPayload.newTech;
     delete sanitizedPayload.planDocumentName;
@@ -1240,13 +1251,31 @@ function ProjectPlansPage() {
                           placeholder="Module name"
                           className={fieldClasses}
                         />
-                        <input
-                          type="text"
-                          value={formData.newModuleDuration}
-                          onChange={(event) => setFormData((prev) => ({ ...prev, newModuleDuration: event.target.value }))}
-                          placeholder="Duration"
-                          className={fieldClasses}
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.newModuleDuration}
+                            onChange={(event) => setFormData((prev) => ({ ...prev, newModuleDuration: event.target.value }))}
+                            placeholder="Duration"
+                            className={`${fieldClasses} w-1/2`}
+                          />
+                          <div className="w-1/2">
+                            <Select
+                              value={{ value: formData.newModuleDurationType || 'Days', label: formData.newModuleDurationType || 'Days' }}
+                              onChange={(option) => setFormData((prev) => ({ ...prev, newModuleDurationType: option.value }))}
+                              options={[
+                                { value: 'Hours', label: 'Hours' },
+                                { value: 'Days', label: 'Days' },
+                                { value: 'Weeks', label: 'Weeks' },
+                                { value: 'Months', label: 'Months' },
+                                { value: 'Years', label: 'Years' }
+                              ]}
+                              styles={customSelectStyles}
+                              isSearchable={false}
+                            />
+                          </div>
+                        </div>
                       </div>
                       <textarea
                         value={formData.newModuleDescription}
