@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../../api';
 import toast from 'react-hot-toast';
-
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 const AdminProfile = () => {
   const { user, profileName, role, email, phone } = useAuth();
   
@@ -197,8 +197,9 @@ const AdminProfile = () => {
 
       {/* ── PASSWORD CHANGE MODAL ── */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#12131a] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl shadow-black/50 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-[#12131a] border border-white/10 rounded-3xl w-full max-w-md shadow-2xl shadow-black/50 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Key size={20} className="text-primary" /> Change Password
@@ -310,8 +311,9 @@ const AdminProfile = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
     </div>
