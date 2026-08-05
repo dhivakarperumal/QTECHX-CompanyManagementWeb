@@ -725,7 +725,6 @@ export default function AddProject() {
             {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
           </button>
         </div>
-      </div>
     </div>
   );
 }
