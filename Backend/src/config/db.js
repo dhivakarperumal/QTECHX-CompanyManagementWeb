@@ -411,6 +411,7 @@ async function ensureProjectPlanSchema(pool) {
         project_type VARCHAR(100) NULL,
         category VARCHAR(100) NULL,
         status ENUM('Draft','Active','Inactive') NOT NULL DEFAULT 'Draft',
+        taskmodule JSON NULL,
         plan_data JSON NULL,
         plan_document VARCHAR(500) NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -435,6 +436,9 @@ async function ensureProjectPlanSchema(pool) {
   }
   if (!columnNames.has('plan_document')) {
     addColumnStatements.push('ADD COLUMN plan_document VARCHAR(500) NULL AFTER plan_data');
+  }
+  if (!columnNames.has('taskmodule')) {
+    addColumnStatements.push('ADD COLUMN taskmodule JSON NULL AFTER status');
   }
   if (addColumnStatements.length) {
     await pool.execute(`ALTER TABLE project_plan ${addColumnStatements.join(', ')}`);

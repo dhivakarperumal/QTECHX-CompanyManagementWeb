@@ -35,8 +35,8 @@ async function createProjectPlan(plan = {}) {
   const [result] = await db.execute(
     `INSERT INTO project_plan (
       plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status,
-      plan_data, plan_document, created_by, updated_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+      taskmodule, plan_data, plan_document, created_by, updated_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
     [
       normalizedPlan.planId || null,
       normalizedPlan.planCode || null,
@@ -46,6 +46,7 @@ async function createProjectPlan(plan = {}) {
       normalizedPlan.projectType || null,
       normalizedPlan.category || null,
       normalizedPlan.status || 'Draft',
+      JSON.stringify(normalizedPlan.modules || []),
       JSON.stringify(normalizedPlan),
       normalizedPlan.plan_document || null,
       normalizedPlan.createdBy || null,
@@ -58,7 +59,7 @@ async function createProjectPlan(plan = {}) {
 async function listProjectPlans() {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, plan_data, plan_document, created_at, updated_at FROM project_plan ORDER BY updated_at DESC`
+    `SELECT id, plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, taskmodule, plan_data, plan_document, created_at, updated_at FROM project_plan ORDER BY updated_at DESC`
   );
   return rows.map((row) => {
     const parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
@@ -73,6 +74,7 @@ async function listProjectPlans() {
       projectType: row.project_type || parsedData.projectType,
       category: row.category || parsedData.category,
       status: row.status || parsedData.status,
+      taskmodule: row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [],
       planDocument: row.plan_document || parsedData.planDocument || null,
       createdAt: row.created_at ? row.created_at.toISOString() : parsedData.createdAt,
       updatedAt: row.updated_at ? row.updated_at.toISOString() : parsedData.updatedAt,
@@ -83,7 +85,7 @@ async function listProjectPlans() {
 async function findProjectPlanById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, plan_data, plan_document, created_at, updated_at FROM project_plan WHERE id = ? LIMIT 1`,
+    `SELECT id, plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, taskmodule, plan_data, plan_document, created_at, updated_at FROM project_plan WHERE id = ? LIMIT 1`,
     [id]
   );
   const row = rows[0];
@@ -100,6 +102,7 @@ async function findProjectPlanById(id) {
     projectType: row.project_type || parsedData.projectType,
     category: row.category || parsedData.category,
     status: row.status || parsedData.status,
+    taskmodule: row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [],
     createdAt: row.created_at ? row.created_at.toISOString() : parsedData.createdAt,
     updatedAt: row.updated_at ? row.updated_at.toISOString() : parsedData.updatedAt,
   };
@@ -108,10 +111,10 @@ async function findProjectPlanById(id) {
 async function updateProjectPlan(id, plan = {}) {
   const db = getDB();
   const normalizedPlan = normalizePlanPayload(plan);
-  const [existingRows] = await db.execute(`SELECT plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, plan_document FROM project_plan WHERE id = ? LIMIT 1`, [id]);
+  const [existingRows] = await db.execute(`SELECT plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, taskmodule, plan_document FROM project_plan WHERE id = ? LIMIT 1`, [id]);
   if (!existingRows.length) return null;
   await db.execute(
-    `UPDATE project_plan SET plan_id = ?, plan_code = ?, plan_name = ?, project_id = ?, project_code = ?, project_type = ?, category = ?, status = ?, plan_data = ?, plan_document = ?, updated_by = ? WHERE id = ?`,
+    `UPDATE project_plan SET plan_id = ?, plan_code = ?, plan_name = ?, project_id = ?, project_code = ?, project_type = ?, category = ?, status = ?, taskmodule = ?, plan_data = ?, plan_document = ?, updated_by = ? WHERE id = ?`,
     [
       normalizedPlan.planId || existingRows[0].plan_id,
       normalizedPlan.planCode || existingRows[0].plan_code,
@@ -121,6 +124,7 @@ async function updateProjectPlan(id, plan = {}) {
       normalizedPlan.projectType || existingRows[0].project_type,
       normalizedPlan.category || existingRows[0].category,
       normalizedPlan.status || existingRows[0].status,
+      JSON.stringify(normalizedPlan.modules || []),
       JSON.stringify(normalizedPlan),
       normalizedPlan.plan_document !== undefined ? normalizedPlan.plan_document : existingRows[0].plan_document,
       normalizedPlan.updatedBy || null,
