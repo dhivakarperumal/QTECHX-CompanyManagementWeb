@@ -176,6 +176,9 @@ async function ensureEventsSchema(pool) {
         color VARCHAR(50) NULL,
         attachments JSON NULL,
         notes TEXT NULL,
+        reason TEXT NULL,
+        meetingPurpose TEXT NULL,
+        interviewPerson VARCHAR(255) NULL,
         comments JSON NULL,
         activity JSON NULL,
         createdBy VARCHAR(100) NULL,
@@ -230,6 +233,9 @@ async function ensureEventsSchema(pool) {
   addColumn('color', 'VARCHAR(50) NULL');
   addColumn('attachments', 'JSON NULL');
   addColumn('notes', 'TEXT NULL');
+  addColumn('reason', 'TEXT NULL');
+  addColumn('meetingPurpose', 'TEXT NULL');
+  addColumn('interviewPerson', 'VARCHAR(255) NULL');
   addColumn('comments', 'JSON NULL');
   addColumn('activity', 'JSON NULL');
   addColumn('createdBy', 'VARCHAR(100) NULL');
