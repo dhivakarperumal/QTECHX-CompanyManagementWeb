@@ -65,6 +65,7 @@ import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
 import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
 import AssignmentView from './Admin/Projects/AssignmentView.jsx'
 import TasksPage from './Admin/Tasks/TasksPage.jsx'
+import AssignTaskPage from './Admin/Tasks/AssignTaskPage.jsx'
 import AdminTodayTasksPage from './Admin/Tasks/AdminTodayTasksPage.jsx'
 import AdminNewTasksPage from './Admin/Tasks/AdminNewTasksPage.jsx'
 import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
@@ -166,7 +167,7 @@ const router = createHashRouter([
           },
           {
             path: 'tasks/assign',
-            element: <TasksPage />,
+            element: <AssignTaskPage />,
           },
           {
             path: 'tasks/update',

@@ -661,12 +661,7 @@ export default function TasksPage({ initialPageKey = null }) {
           <button
             type="button"
             id="btn-assign-task"
-            onClick={() => {
-              setAssignError('');
-              setAssignSuccess('');
-              setAssignForm(projects.length > 0 ? { ...EMPTY_ASSIGN_FORM, project_id: projects[0].uuid } : EMPTY_ASSIGN_FORM);
-              setShowAssignModal(true);
-            }}
+            onClick={() => navigate('/admin/tasks/assign')}
             className="inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20"
           >
             <UserPlus size={15} /> Task Assign

@@ -74,7 +74,7 @@ async function assignTaskHandler(req, res) {
     if (!project) return fail(res, 'Project not found', 404);
 
     const {
-      employee_id, task_id, assigned_by, assigned_date, status,
+      employee_id, task_id, assigned_by, assigned_date, start_date, due_date, status,
       attachmentBase64, attachmentName, attachmentType,
     } = req.body;
 
@@ -90,6 +90,8 @@ async function assignTaskHandler(req, res) {
       task_id,
       assigned_by: assigned_by || actor,
       assigned_date: assigned_date || null,
+      start_date: start_date || null,
+      due_date: due_date || null,
       created_by: actor,
       updated_by: actor,
       status: status || null,

@@ -202,7 +202,7 @@ async function findEmployeeTaskAssignment(project_id, employee_id) {
   };
 }
 
-async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, created_by = null, updated_by = null, status = null, attachments = null }) {
+async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, start_date = null, due_date = null, created_by = null, updated_by = null, status = null, attachments = null }) {
   const db = getDB();
 
   if (!project_id) throw new Error('project_id is required');
@@ -222,6 +222,8 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   const employeeDetails = buildEmployeeDetails(employee);
   const taskDetailsEntry = buildTaskDetails(task);
   const finalAssignedDate = assigned_date || task.assignment_date || getCurrentDateTimeString();
+  const finalStartDate = start_date || task.start_date || null;
+  const finalDueDate = due_date || task.due_date || null;
   const [existingRows] = await db.execute(
     'SELECT id, task_details, task_count, status, assigned_date FROM employee_task_assignments WHERE project_id = ? AND employee_id = ? LIMIT 1',
     [project_id, employee.employee_id]
@@ -246,8 +248,8 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
     );
 
     await db.execute(
-      'UPDATE tasks SET assigned_to = ?, assignment_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-      [employee.employee_id, finalAssignedDate, updated_by, task.id]
+      'UPDATE tasks SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
+      [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate, updated_by, task.id]
     );
 
     return {
@@ -273,8 +275,8 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   );
 
   await db.execute(
-    'UPDATE tasks SET assigned_to = ?, assignment_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-    [employee.employee_id, finalAssignedDate, updated_by, task.id]
+    'UPDATE tasks SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
+    [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate, updated_by, task.id]
   );
 
   return {

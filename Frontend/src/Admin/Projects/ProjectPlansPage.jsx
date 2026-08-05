@@ -13,6 +13,8 @@ import {
   Eye,
   FileText,
   Filter,
+  List,
+  LayoutGrid,
   Layers,
   RefreshCw,
   Plus,
@@ -795,188 +797,142 @@ function ProjectPlansPage() {
 
   return (
     <div className="space-y-6 text-white pb-10 min-h-screen">
-      <div className="rounded-3xl border bg-black/70 bg-gradient-to-br from-[#11141d] via-[#0f131b] to-[#111827] p-5 shadow-2xl shadow-black/30">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-400">
-              <ClipboardList size={14} />
-              Project plan management
-            </div>
-            <h2 className="text-2xl font-semibold text-white">Create and manage reusable project plans</h2>
-            <p className="mt-2 max-w-2xl text-sm text-white/60">
-              Build plan packages for websites, apps, SaaS, ERP, and CRM deliveries with flexible pricing, modules, hosting, and support options.
-            </p>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#1e130c] border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-inner">
+            <ClipboardList size={22} />
           </div>
-          <button onClick={openCreateDrawer} className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400">
-            <Plus size={16} />
-            Add New Plan
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">All Plans</h2>
+            <p className="text-sm font-medium text-white/50">{plans.length} plans total</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={openCreateDrawer} className="h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff6b00] px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-[#e66000] active:scale-95">
+            <Plus size={16} /> Add Plan
           </button>
         </div>
       </div>
 
       {toast ? (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-300">
           {toast}
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Total Plans', value: stats.total, icon: Layers },
-          { label: 'Active Plans', value: stats.active, icon: CheckCircle2 },
-          { label: 'Draft Plans', value: stats.drafts, icon: FileText },
-          { label: 'Featured Plans', value: stats.featured, icon: Sparkles },
+          { label: 'Total', value: stats.total, icon: Layers, bg: 'bg-[#151b2c]', color: 'text-blue-500', border: 'border-blue-500/20' },
+          { label: 'Active', value: stats.active, icon: CheckCircle2, bg: 'bg-[#0a271d]', color: 'text-emerald-500', border: 'border-emerald-500/20' },
+          { label: 'Drafts', value: stats.drafts, icon: FileText, bg: 'bg-[#221c35]', color: 'text-purple-500', border: 'border-purple-500/20' },
+          { label: 'Featured', value: stats.featured, icon: Sparkles, bg: 'bg-[#2e1d12]', color: 'text-orange-500', border: 'border-orange-500/20' },
         ].map((card) => (
-          <div key={card.label} className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">{card.label}</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{card.value}</p>
-              </div>
-              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-2 text-orange-400">
-                <card.icon size={18} />
-              </div>
+          <div key={card.label} className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#14151a] p-5 shadow-sm transition hover:border-white/10">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${card.bg} ${card.border} border ${card.color}`}>
+              <card.icon size={22} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-white">{card.value}</h3>
+              <p className="text-sm font-medium text-white/50">{card.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
-          <p className="text-sm text-white/60">Most Popular Plan</p>
-          <p className="mt-1 text-lg font-semibold text-white">{stats.popular}</p>
+      {/* Filters Bar */}
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
+        <div className="relative w-full lg:w-[400px]">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+          <input 
+            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+            placeholder="Search by plan, code, category..." 
+            className="w-full h-11 bg-[#14151a] border border-white/5 rounded-xl pl-12 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/10 transition" 
+          />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-[#0f141d] p-4">
-          <p className="text-sm text-white/60">Active Projects Using Plans</p>
-          <p className="mt-1 text-lg font-semibold text-white">{stats.activeProjects}</p>
+        <div className="flex w-full lg:w-auto items-center gap-3 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
+          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="h-11 bg-[#14151a] border border-white/5 rounded-xl px-4 pr-8 text-sm font-medium text-white focus:outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20stroke%3D%22%239CA3AF%22%20stroke-width%3D%222%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] shrink-0">
+            <option value="All">All Statuses</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="h-11 bg-[#14151a] border border-white/5 rounded-xl px-4 pr-8 text-sm font-medium text-white focus:outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20stroke%3D%22%239CA3AF%22%20stroke-width%3D%222%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_12px_center] shrink-0">
+            <option value="updatedAtDesc">Newest First</option>
+            <option value="createdAtDesc">Oldest First</option>
+            <option value="nameAsc">Name A-Z</option>
+            <option value="nameDesc">Name Z-A</option>
+          </select>
+          <div className="flex items-center bg-[#14151a] border border-white/5 rounded-xl p-1 h-11 shrink-0">
+            <button className="h-full px-2.5 rounded-lg bg-[#ff6b00] text-white flex items-center justify-center shadow-sm"><List size={16} /></button>
+            <button className="h-full px-2.5 rounded-lg text-white/40 hover:text-white flex items-center justify-center transition"><LayoutGrid size={16} /></button>
+          </div>
         </div>
       </div>
 
-      <div className="sticky top-4 z-20 rounded-3xl border border-white/10 bg-[#0f141d]/95 p-4 shadow-xl shadow-black/20 backdrop-blur">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="flex flex-1 flex-col gap-2 md:flex-row">
-            <label className="flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-2">
-              <Search size={16} className="text-white/50" />
-              <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search plan name, ID or code" className="w-full bg-transparent text-sm text-white outline-none" />
-            </label>
-            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white/70">
-              <Filter size={16} />
-              <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} className="bg-transparent outline-none">
-                <option value="All">All Categories</option>
-                {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white/70">
-              <Filter size={16} />
-              <select value={selectedStatus} onChange={(event) => setSelectedStatus(event.target.value)} className="bg-transparent outline-none">
-                <option value="All">All Status</option>
-                {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <select value={selectedFeatured} onChange={(event) => setSelectedFeatured(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
-              <option value="All">Featured</option>
-              {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-1">
-          <label className="text-sm text-white/70">
-            <span className="mb-1 block">Sort By</span>
-            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className={fieldClasses}>
-              <option value="updatedAtDesc">Updated Date</option>
-              <option value="createdAtDesc">Created Date</option>
-              <option value="nameAsc">Name A-Z</option>
-              <option value="nameDesc">Name Z-A</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-white/10 bg-[#0f141d] p-3">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button onClick={() => handleBulkAction('activate')} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-            <CheckCircle2 size={16} />
-            Activate
-          </button>
-          <button onClick={() => handleBulkAction('deactivate')} className="inline-flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
-            <RefreshCw size={16} />
-            Deactivate
-          </button>
-          <button onClick={() => handleBulkAction('clone')} className="inline-flex items-center gap-2 rounded-2xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-sm text-sky-300">
-            <Copy size={16} />
-            Clone
-          </button>
-          <button onClick={() => handleBulkAction('csv')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
-            <Upload size={16} />
-            Export CSV
-          </button>
-          <button onClick={() => handleBulkAction('excel')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
-            <FileText size={16} />
-            Export Excel
-          </button>
-          <button onClick={() => handleBulkAction('print')} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
-            <ClipboardList size={16} />
-            Print
-          </button>
-          <button onClick={() => setSelectedIds([])} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
-            <X size={16} />
-            Clear Selection
-          </button>
+      <div className="bg-[#14151a] border border-white/5 rounded-3xl overflow-hidden mt-6 shadow-md">
+        <div className="p-4 border-b border-white/5 flex flex-wrap items-center gap-2">
+          <button onClick={() => handleBulkAction('activate')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 transition hover:bg-emerald-500/20">Activate</button>
+          <button onClick={() => handleBulkAction('deactivate')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-300 transition hover:bg-amber-500/20">Deactivate</button>
+          <button onClick={() => handleBulkAction('clone')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-sky-500/20 bg-sky-500/10 text-sky-300 transition hover:bg-sky-500/20">Clone</button>
+          <button onClick={() => handleBulkAction('csv')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white/60 transition hover:bg-white/10">Export CSV</button>
+          <button onClick={() => handleBulkAction('excel')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white/60 transition hover:bg-white/10">Export Excel</button>
+          <button onClick={() => handleBulkAction('print')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white/60 transition hover:bg-white/10">Print</button>
+          <button onClick={() => setSelectedIds([])} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300 transition hover:bg-rose-500/20">Clear Selection</button>
         </div>
 
         {filteredPlans.length ? (
           <div className="overflow-x-auto">
-            <table className="min-w-[1300px] w-full text-left text-sm">
-              <thead className="bg-white/5 text-white/60">
+            <table className="min-w-[1000px] w-full text-left text-sm text-white/60">
+              <thead className="text-[11px] font-bold uppercase tracking-wider text-white/40 border-b border-white/5 bg-[#14151a]">
                 <tr>
-                  <th className="px-3 py-3">
-                    <input type="checkbox" checked={selectedIds.length === filteredPlans.length && filteredPlans.length > 0} onChange={() => setSelectedIds(selectedIds.length === filteredPlans.length ? [] : filteredPlans.map((plan) => plan.id))} />
+                  <th className="px-6 py-4 w-12">
+                    <input type="checkbox" checked={selectedIds.length === filteredPlans.length && filteredPlans.length > 0} onChange={() => setSelectedIds(selectedIds.length === filteredPlans.length ? [] : filteredPlans.map((plan) => plan.id))} className="accent-[#ff6b00]" />
                   </th>
-                  
-                  <th className="px-3 py-3">Plan Code</th>
-                  <th className="px-3 py-3">Plan Name</th>
-                  <th className="px-3 py-3">Status</th>
-                  
-               
-                  <th className="px-3 py-3">Updated</th>
-                  <th className="px-3 py-3">Actions</th>
+                  <th className="px-6 py-4">PLAN</th>
+                  <th className="px-6 py-4">PROJECT</th>
+                  <th className="px-6 py-4">STATUS</th>
+                  <th className="px-6 py-4">UPDATED</th>
+                  <th className="px-6 py-4 text-right">ACTIONS</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                 {pagedPlans.map((plan) => (
-                  <tr key={plan.id} className="border-t border-white/10 bg-[#101723] text-white/80">
-                    <td className="px-3 py-3">
-                      <input type="checkbox" checked={selectedIds.includes(plan.id)} onChange={() => toggleSelect(plan.id)} />
+                  <tr key={plan.id} className="group hover:bg-white/[0.02] transition-colors bg-[#14151a]">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input type="checkbox" checked={selectedIds.includes(plan.id)} onChange={() => toggleSelect(plan.id)} className="accent-[#ff6b00]" />
                     </td>
-                    
-                    <td className="px-3 py-3">{plan.planCode}</td>
-                    <td className="px-3 py-3">
-                      <div>
-                        <div className="font-semibold text-white">{plan.planName}</div>
-                        
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#221c35] text-[#9373ee] font-bold flex items-center justify-center shrink-0">
+                          {plan.planName ? plan.planName.charAt(0).toUpperCase() : 'P'}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-white">{plan.planName}</div>
+                          <div className="text-xs text-white/40">{plan.planCode}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3">
-                      <span className={`rounded-full border px-2.5 py-1 text-xs ${statusStyles[plan.status] || 'border-white/10 bg-white/5 text-white/70'}`}>{plan.status}</span>
+                    <td className="px-6 py-4 whitespace-nowrap font-medium">
+                      {plan.projectName || projectsList.find(p => String(p.uuid) === String(plan.projectId))?.project_name || projectsList.find(p => String(p.uuid) === String(plan.projectId))?.title || '—'}
                     </td>
-                    
-                    
-                    <td className="px-3 py-3">{formatDate(plan.updatedAt)}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <button aria-label="View" onClick={() => openViewDrawer(plan)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button aria-label="Edit" onClick={() => openEditDrawer(plan)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80">
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        {/* <button onClick={() => handleDuplicate(plan)} className="rounded-full border border-sky-500/20 bg-sky-500/10 p-2 text-sky-300"><Copy className="w-4 h-4" /></button>
-                        <button onClick={() => toggleStatus(plan)} className="rounded-full border border-amber-500/20 bg-amber-500/10 p-2 text-amber-300"><RefreshCw className="w-4 h-4" /></button> */}
-                        <button aria-label="Delete" onClick={() => handleDelete(plan)} className="rounded-full border border-rose-500/20 bg-rose-500/10 p-2 text-rose-300">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                        plan.status === 'Active' ? 'bg-[#0a271d] text-[#1fd38a]' : 
+                        plan.status === 'Draft' ? 'bg-[#152336] text-[#3b82f6]' : 
+                        'bg-[#2d1b19] text-[#ef4444]'
+                      }`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
+                        {plan.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {formatDate(plan.updatedAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex justify-end gap-2">
+                        <button aria-label="View" onClick={() => openViewDrawer(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 transition"><Eye size={16} /></button>
+                        <button aria-label="Edit" onClick={() => openEditDrawer(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-orange-400 transition"><Edit3 size={16} /></button>
+                        <button aria-label="Delete" onClick={() => handleDelete(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 transition"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -985,10 +941,10 @@ function ProjectPlansPage() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-[#101723] p-8 text-center text-white/70">
-            <Box size={36} className="mb-3 text-orange-400" />
+          <div className="flex flex-col items-center justify-center p-12 text-center text-white/70">
+            <Box size={36} className="mb-3 text-white/20" />
             <h3 className="text-lg font-semibold text-white">No plans found</h3>
-            <p className="mt-2 max-w-md text-sm">Try adjusting the search or create your first plan from the button above.</p>
+            <p className="mt-2 max-w-md text-sm">Try adjusting the search or create your first plan.</p>
           </div>
         )}
 
