@@ -1,6 +1,93 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const FIELDS = [
   { name: 'planTitle', label: 'Plan Title', type: 'text', required: true },
@@ -103,16 +190,14 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
                     className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                 ) : field.type === 'select' ? (
-                  <select
-                    value={formData[field.name] || ''}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                  >
-                    <option value="">Select {field.label}</option>
-                    {field.options.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
+                  <Select
+                    styles={customSelectStyles}
+                    value={formData[field.name] ? { value: formData[field.name], label: formData[field.name] } : null}
+                    onChange={(option) => handleChange(field.name, option ? option.value : '')}
+                    options={field.options.map((opt) => ({ value: opt, label: opt }))}
+                    placeholder={`Select ${field.label}`}
+                    isClearable
+                  />
                 ) : (
                   <input
                     type={field.type}

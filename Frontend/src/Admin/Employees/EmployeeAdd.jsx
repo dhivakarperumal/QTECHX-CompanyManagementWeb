@@ -2,6 +2,94 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiArrowLeft, FiSave, FiEye, FiEyeOff } from "react-icons/fi";
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
+
 const countries = [
   "Afghanistan",
   "Albania",
@@ -677,12 +765,18 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Gender</label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="" className="bg-black text-white">Select Gender</option>
-                <option value="Male" className="bg-black text-white">Male</option>
-                <option value="Female" className="bg-black text-white">Female</option>
-                <option value="Other" className="bg-black text-white">Other</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'Male', label: 'Male' },
+                  { value: 'Female', label: 'Female' },
+                  { value: 'Other', label: 'Other' },
+                ]}
+                value={formData.gender ? { value: formData.gender, label: formData.gender } : null}
+                onChange={(opt) => handleChange({ target: { name: 'gender', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Gender"
+                isSearchable={false}
+              />
             </div>
             <div>
               <label className={labelClass}>Date of Birth <span className="text-red-500">*</span></label>
@@ -690,47 +784,50 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Blood Group</label>
-              <select name="blood_group" value={formData.blood_group} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="" className="bg-black text-white">Select Blood Group</option>
-                <option value="A+" className="bg-black text-white">A+</option>
-                <option value="A-" className="bg-black text-white">A-</option>
-                <option value="B+" className="bg-black text-white">B+</option>
-                <option value="B-" className="bg-black text-white">B-</option>
-                <option value="O+" className="bg-black text-white">O+</option>
-                <option value="O-" className="bg-black text-white">O-</option>
-                <option value="AB+" className="bg-black text-white">AB+</option>
-                <option value="AB-" className="bg-black text-white">AB-</option>
-                <option value="Unknown" className="bg-black text-white">Unknown</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'A+', label: 'A+' },
+                  { value: 'A-', label: 'A-' },
+                  { value: 'B+', label: 'B+' },
+                  { value: 'B-', label: 'B-' },
+                  { value: 'O+', label: 'O+' },
+                  { value: 'O-', label: 'O-' },
+                  { value: 'AB+', label: 'AB+' },
+                  { value: 'AB-', label: 'AB-' },
+                  { value: 'Unknown', label: 'Unknown' },
+                ]}
+                value={formData.blood_group ? { value: formData.blood_group, label: formData.blood_group } : null}
+                onChange={(opt) => handleChange({ target: { name: 'blood_group', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Blood Group"
+                isSearchable={false}
+              />
             </div>
             <div>
               <label className={labelClass}>Marital Status</label>
-              <select name="marital_status" value={formData.marital_status} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="" className="bg-black text-white">Select Status</option>
-                <option value="Single" className="bg-black text-white">Single</option>
-                <option value="Married" className="bg-black text-white">Married</option>
-                <option value="Divorced" className="bg-black text-white">Divorced</option>
-                <option value="Widowed" className="bg-black text-white">Widowed</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'Single', label: 'Single' },
+                  { value: 'Married', label: 'Married' },
+                  { value: 'Divorced', label: 'Divorced' },
+                  { value: 'Widowed', label: 'Widowed' },
+                ]}
+                value={formData.marital_status ? { value: formData.marital_status, label: formData.marital_status } : null}
+                onChange={(opt) => handleChange({ target: { name: 'marital_status', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Status"
+                isSearchable={false}
+              />
             </div>
             <div>
               <label className={labelClass}>Nationality</label>
-              <select
-                name="nationality"
-                value={formData.nationality}
-                onChange={handleChange}
-                className={`${inputClass} bg-[#111827] text-white border border-white/20`}
-              >
-                {countries.map((country) => (
-                  <option
-                    key={country}
-                    value={country}
-                    className="bg-[#111827] text-white"
-                  >
-                    {country}
-                  </option>
-                ))}
-              </select>
+              <Select
+                options={countries.map(c => ({ value: c, label: c }))}
+                value={formData.nationality ? { value: formData.nationality, label: formData.nationality } : null}
+                onChange={(opt) => handleChange({ target: { name: 'nationality', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Nationality"
+              />
             </div>
             <div>
               <label className={labelClass}>Aadhaar Number</label>
@@ -796,12 +893,13 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Department</label>
-              <select name="department" value={formData.department} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="" className="bg-black text-white">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d} value={d} className="bg-black text-white">{d}</option>
-                ))}
-              </select>
+              <Select
+                options={departments.map(d => ({ value: d, label: d }))}
+                value={formData.department ? { value: formData.department, label: formData.department } : null}
+                onChange={(opt) => handleChange({ target: { name: 'department', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Department"
+              />
             </div>
             <div>
               <label className={labelClass}>Team Lead</label>
@@ -817,21 +915,35 @@ const EmployeeAdd = () => {
             </div>
             <div>
               <label className={labelClass}>Employment Status <span className="text-red-500">*</span></label>
-              <select name="employment_status" required value={formData.employment_status} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="Active" className="bg-black text-white">Active</option>
-                <option value="Inactive" className="bg-black text-white">Inactive</option>
-                <option value="Terminated" className="bg-black text-white">Terminated</option>
-                <option value="Resigned" className="bg-black text-white">Resigned</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'Active', label: 'Active' },
+                  { value: 'Inactive', label: 'Inactive' },
+                  { value: 'Terminated', label: 'Terminated' },
+                  { value: 'Resigned', label: 'Resigned' },
+                ]}
+                value={formData.employment_status ? { value: formData.employment_status, label: formData.employment_status } : null}
+                onChange={(opt) => handleChange({ target: { name: 'employment_status', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Status"
+                isSearchable={false}
+              />
             </div>
             <div>
               <label className={labelClass}>Role <span className="text-red-500">*</span></label>
-              <select name="role" required value={formData.role} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="Employee" className="bg-black text-white">Employee</option>
-                <option value="Manager" className="bg-black text-white">Manager</option>
-                <option value="HR" className="bg-black text-white">HR</option>
-                <option value="Admin" className="bg-black text-white">Admin</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'Employee', label: 'Employee' },
+                  { value: 'Manager', label: 'Manager' },
+                  { value: 'HR', label: 'HR' },
+                  { value: 'Admin', label: 'Admin' },
+                ]}
+                value={formData.role ? { value: formData.role, label: formData.role } : null}
+                onChange={(opt) => handleChange({ target: { name: 'role', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Role"
+                isSearchable={false}
+              />
             </div>
           </div>
         </div>
@@ -845,12 +957,18 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className={labelClass}>Salary Type <span className="text-red-500">*</span></label>
-              <select name="salary_type" required value={formData.salary_type} onChange={handleChange} className={`${inputClass} bg-black text-white`}>
-                <option value="" className="bg-black text-white">Select Salary Type</option>
-                <option value="Daily" className="bg-black text-white">Daily</option>
-                <option value="Weekly" className="bg-black text-white">Weekly</option>
-                <option value="Monthly" className="bg-black text-white">Monthly</option>
-              </select>
+              <Select
+                options={[
+                  { value: 'Daily', label: 'Daily' },
+                  { value: 'Weekly', label: 'Weekly' },
+                  { value: 'Monthly', label: 'Monthly' },
+                ]}
+                value={formData.salary_type ? { value: formData.salary_type, label: formData.salary_type } : null}
+                onChange={(opt) => handleChange({ target: { name: 'salary_type', value: opt ? opt.value : '', type: 'select' } })}
+                styles={customSelectStyles}
+                placeholder="Select Salary Type"
+                isSearchable={false}
+              />
               {fieldErrors.salary_type && <p className="mt-1 text-xs text-red-400">{fieldErrors.salary_type}</p>}
             </div>
             <div>

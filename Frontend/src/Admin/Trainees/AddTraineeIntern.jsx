@@ -2,6 +2,93 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Save, Loader2, CheckCircle, AlertCircle, UserCircle2, RefreshCw, KeyRound, Eye, EyeOff } from 'lucide-react';
 import api from '../../api';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
@@ -182,9 +269,13 @@ export default function AddTraineeIntern() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Type</span>
-              <select className={fieldClass} name="type" value={formData.type} onChange={handleChange}>
-                {TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
+              <Select
+                value={formData.type ? { value: formData.type, label: formData.type } : null}
+                onChange={option => handleChange({ target: { name: 'type', value: option ? option.value : '' } })}
+                options={TYPE_OPTIONS.map(v => ({ value: v, label: v }))}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Department</span>
@@ -208,9 +299,13 @@ export default function AddTraineeIntern() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Status</span>
-              <select className={fieldClass} name="status" value={formData.status} onChange={handleChange}>
-                {STATUS_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
+              <Select
+                value={formData.status ? { value: formData.status, label: formData.status } : null}
+                onChange={option => handleChange({ target: { name: 'status', value: option ? option.value : '' } })}
+                options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
             </label>
           </div>
         </section>

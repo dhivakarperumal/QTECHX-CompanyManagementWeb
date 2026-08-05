@@ -1,4 +1,91 @@
 import React, { useState, useEffect } from "react";
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import { Receipt, DollarSign, PlusCircle, CheckCircle2, AlertCircle, Loader2, X, Download } from "lucide-react";
@@ -399,21 +486,22 @@ const ExpensesPage = () => {
         <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
-            <select required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-              value={expenseData.expense_type}
-              onChange={(e) => {
-                const value = e.target.value;
+            <Select
+              options={[
+                ...expenseTypeOptions.map(option => ({ value: option, label: option }))
+              ]}
+              value={expenseData.expense_type ? { value: expenseData.expense_type, label: expenseData.expense_type } : null}
+              onChange={(option) => {
+                const value = option ? option.value : "";
                 setExpenseData((prev) => ({ ...prev, expense_type: value, paid_to: value === "Salary" ? prev.paid_to : "" }));
                 if (value !== "Other") {
                   setCustomExpenseType("");
                 }
-              }}>
-              <option value="" className="bg-[#111318]">Select Expense Type</option>
-              {expenseTypeOptions.map((option) => (
-                <option key={option} value={option} className="bg-[#111318]">{option}</option>
-              ))}
-            </select>
+              }}
+              styles={customSelectStyles}
+              placeholder="Select Expense Type"
+              isSearchable={true}
+            />
             {isOtherExpenseType && (
               <div className="mt-2">
                 <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Custom Expense Type</label>
@@ -431,20 +519,20 @@ const ExpensesPage = () => {
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
             {isSalaryExpense ? (
-              <select required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-                value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})}>
-                <option value="" className="bg-[#111318]">Select Employee</option>
-                {employees.map((employee) => {
-                  const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
-                  const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
-                  return (
-                    <option key={employee.employee_id} value={displayValue} className="bg-[#111318]">
-                      {displayValue}
-                    </option>
-                  );
-                })}
-              </select>
+              <Select
+                options={[
+                  ...employees.map(employee => {
+                    const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
+                    const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
+                    return { value: displayValue, label: displayValue };
+                  })
+                ]}
+                value={expenseData.paid_to ? { value: expenseData.paid_to, label: expenseData.paid_to } : null}
+                onChange={(option) => setExpenseData({...expenseData, paid_to: option ? option.value : ""})}
+                styles={customSelectStyles}
+                placeholder="Select Employee"
+                isSearchable={true}
+              />
             ) : (
               <input type="text" required 
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
@@ -467,16 +555,20 @@ const ExpensesPage = () => {
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
-            <select required 
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition appearance-none"
-              value={expenseData.payment_type} onChange={(e) => setExpenseData({...expenseData, payment_type: e.target.value})}>
-              <option value="" className="bg-[#111318]">Select Payment Type</option>
-              <option value="Cash" className="bg-[#111318]">Cash</option>
-              <option value="Bank Transfer" className="bg-[#111318]">Bank Transfer</option>
-              <option value="Credit Card" className="bg-[#111318]">Credit Card</option>
-              <option value="UPI" className="bg-[#111318]">UPI</option>
-              <option value="Cheque" className="bg-[#111318]">Cheque</option>
-            </select>
+            <Select
+              options={[
+                { value: 'Cash', label: 'Cash' },
+                { value: 'Bank Transfer', label: 'Bank Transfer' },
+                { value: 'Credit Card', label: 'Credit Card' },
+                { value: 'UPI', label: 'UPI' },
+                { value: 'Cheque', label: 'Cheque' }
+              ]}
+              value={expenseData.payment_type ? { value: expenseData.payment_type, label: expenseData.payment_type } : null}
+              onChange={(option) => setExpenseData({...expenseData, payment_type: option ? option.value : ""})}
+              styles={customSelectStyles}
+              placeholder="Select Payment Type"
+              isSearchable={false}
+            />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Invoice Number</label>
@@ -517,29 +609,31 @@ const ExpensesPage = () => {
           <div className="flex flex-wrap gap-3">
             <div>
               <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
-              <select
-                className="w-40 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
-                value={filters.expenseType}
-                onChange={(e) => setFilters((prev) => ({ ...prev, expenseType: e.target.value }))}
-              >
-                <option value="" className="bg-[#111318]">All Types</option>
-                {expenseTypeOptions.map((option) => (
-                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
-                ))}
-              </select>
+              <Select
+                options={[
+                  { value: '', label: 'All Types' },
+                  ...expenseTypeOptions.map(option => ({ value: option, label: option }))
+                ]}
+                value={{ value: filters.expenseType, label: filters.expenseType || 'All Types' }}
+                onChange={(option) => setFilters((prev) => ({ ...prev, expenseType: option ? option.value : "" }))}
+                styles={customSelectStyles}
+                className="w-48"
+                isSearchable={true}
+              />
             </div>
             <div>
               <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Payment Method</label>
-              <select
-                className="w-40 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
-                value={filters.paymentMethod}
-                onChange={(e) => setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))}
-              >
-                <option value="" className="bg-[#111318]">All Methods</option>
-                {paymentMethodOptions.map((option) => (
-                  <option key={option} value={option} className="bg-[#111318]">{option}</option>
-                ))}
-              </select>
+              <Select
+                options={[
+                  { value: '', label: 'All Methods' },
+                  ...paymentMethodOptions.map(option => ({ value: option, label: option }))
+                ]}
+                value={{ value: filters.paymentMethod, label: filters.paymentMethod || 'All Methods' }}
+                onChange={(option) => setFilters((prev) => ({ ...prev, paymentMethod: option ? option.value : "" }))}
+                styles={customSelectStyles}
+                className="w-48"
+                isSearchable={false}
+              />
             </div>
             <div>
               <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Date Range</label>

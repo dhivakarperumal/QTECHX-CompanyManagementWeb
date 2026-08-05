@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 import api from '../api';
+import Select from 'react-select';
 import OfficeCalendarViewModal from './OfficeCalendarViewModal.jsx';
 import {
   CalendarDays,
@@ -101,6 +102,92 @@ const defaultForm = {
   externalGuests: false, guestEmailAddresses: [], attendanceRequired: true,
   organizerName: '', organizerDepartment: '', createdBy: '',
   organizerContactNumber: '', organizerEmail: '', attachments: [], notes: '',
+};
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
 };
 
 const getEventColor = (eventType, customColor) =>
@@ -855,10 +942,16 @@ const OfficeCalendar = () => {
               ].map(({ key, label, opts }) => (
                 <div key={key} className="oc-filter-group">
                   <div className="oc-filter-lbl">{label}</div>
-                  <select className="oc-filter-sel" value={filters[key]} onChange={e => setFilters({...filters,[key]:e.target.value})}>
-                    <option value="all">All</option>
-                    {opts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
+                  <Select
+                    styles={{
+                      ...customSelectStyles,
+                      control: (provided, state) => ({ ...provided, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: state.isFocused ? '#F8740E' : 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', minHeight: '32px', boxShadow: 'none' })
+                    }}
+                    value={{ value: filters[key], label: filters[key] === 'all' ? 'All' : (opts.find(o => o.v === filters[key])?.l || filters[key]) }}
+                    onChange={option => setFilters({...filters,[key]:option ? option.value : 'all'})}
+                    options={[{ value: 'all', label: 'All' }, ...opts.map(o => ({ value: o.v, label: o.l }))]}
+                    isSearchable={false}
+                  />
                 </div>
               ))}
             </div>
@@ -1118,15 +1211,28 @@ const OfficeCalendar = () => {
               </div>
               <div>
                 <label className="oc-flbl">Event Type *</label>
-                <select required name="eventType" value={formData.eventType} onChange={handleFieldChange} className="oc-fsel">
-                  {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="eventType"
+                  value={formData.eventType ? { value: formData.eventType, label: formData.eventType } : null}
+                  onChange={option => handleFieldChange({ target: { name: 'eventType', value: option ? option.value : '' } })}
+                  options={EVENT_TYPES.map(t => ({ value: t, label: t }))}
+                  placeholder="Select Type"
+                  isClearable
+                  required
+                />
               </div>
               <div>
                 <label className="oc-flbl">Priority</label>
-                <select name="priority" value={formData.priority} onChange={handleFieldChange} className="oc-fsel">
-                  {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="priority"
+                  value={formData.priority ? { value: formData.priority, label: formData.priority } : null}
+                  onChange={option => handleFieldChange({ target: { name: 'priority', value: option ? option.value : '' } })}
+                  options={PRIORITIES.map(p => ({ value: p, label: p }))}
+                  placeholder="Select Priority"
+                  isClearable
+                />
               </div>
               <div className="oc-full">
                 <label className="oc-flbl">Description</label>
@@ -1244,15 +1350,27 @@ const OfficeCalendar = () => {
               <div className="oc-section-ttl">Event Details</div>
               <div>
                 <label className="oc-flbl">Status</label>
-                <select name="status" value={formData.status} onChange={handleFieldChange} className="oc-fsel">
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="status"
+                  value={formData.status ? { value: formData.status, label: formData.status } : null}
+                  onChange={option => handleFieldChange({ target: { name: 'status', value: option ? option.value : '' } })}
+                  options={STATUSES.map(s => ({ value: s, label: s }))}
+                  placeholder="Select Status"
+                  isClearable
+                />
               </div>
               <div>
                 <label className="oc-flbl">Reminder</label>
-                <select name="reminder" value={formData.reminder} onChange={handleFieldChange} className="oc-fsel">
-                  {REMINDERS.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
+                <Select
+                  styles={customSelectStyles}
+                  name="reminder"
+                  value={formData.reminder ? { value: formData.reminder, label: formData.reminder } : null}
+                  onChange={option => handleFieldChange({ target: { name: 'reminder', value: option ? option.value : '' } })}
+                  options={REMINDERS.map(r => ({ value: r, label: r }))}
+                  placeholder="Select Reminder"
+                  isClearable
+                />
               </div>
               <div>
                 <label className="oc-flbl">Location</label>

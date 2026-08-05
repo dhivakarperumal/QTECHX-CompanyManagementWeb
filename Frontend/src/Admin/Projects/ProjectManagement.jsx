@@ -12,6 +12,91 @@ import {
   Server,
   Users,
 } from 'lucide-react';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#0e1118',
+    border: `1px solid ${state.isFocused ? 'rgba(249,115,22,0.7)' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid rgba(249,115,22,0.7)',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '14px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '14px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '14px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '14px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#0e1118',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '14px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '14px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#0e1118',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const initialForm = {
   projectCode: '',
@@ -216,13 +301,13 @@ function ProjectManagement() {
               </label>
               <label className="text-sm text-white/70">
                 <span className="mb-1 block">Current Status</span>
-                <select className={fieldClass} name="currentStatus" value={formData.currentStatus} onChange={handleChange}>
-                  <option>Planning</option>
-                  <option>In Progress</option>
-                  <option>Testing</option>
-                  <option>Live</option>
-                  <option>Completed</option>
-                </select>
+                <Select
+                  value={{ value: formData.currentStatus, label: formData.currentStatus }}
+                  onChange={option => handleChange({ target: { name: 'currentStatus', value: option ? option.value : 'Planning' } })}
+                  options={['Planning', 'In Progress', 'Testing', 'Live', 'Completed'].map(s => ({ value: s, label: s }))}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </label>
               <label className="text-sm text-white/70 md:col-span-2">
                 <span className="mb-1 block">Description</span>
@@ -258,17 +343,23 @@ function ProjectManagement() {
               </label>
               <label className="text-sm text-white/70">
                 <span className="mb-1 block">NDA Signed</span>
-                <select className={fieldClass} name="ndaSigned" value={formData.ndaSigned} onChange={handleChange}>
-                  <option>Yes</option>
-                  <option>No</option>
-                </select>
+                <Select
+                  value={{ value: formData.ndaSigned, label: formData.ndaSigned }}
+                  onChange={option => handleChange({ target: { name: 'ndaSigned', value: option ? option.value : 'Yes' } })}
+                  options={['Yes', 'No'].map(s => ({ value: s, label: s }))}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </label>
               <label className="text-sm text-white/70">
                 <span className="mb-1 block">Agreement Uploaded</span>
-                <select className={fieldClass} name="agreementUploaded" value={formData.agreementUploaded} onChange={handleChange}>
-                  <option>Yes</option>
-                  <option>No</option>
-                </select>
+                <Select
+                  value={{ value: formData.agreementUploaded, label: formData.agreementUploaded }}
+                  onChange={option => handleChange({ target: { name: 'agreementUploaded', value: option ? option.value : 'Yes' } })}
+                  options={['Yes', 'No'].map(s => ({ value: s, label: s }))}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
               </label>
               <label className="text-sm text-white/70">
                 <span className="mb-1 block">Total Project Cost</span>

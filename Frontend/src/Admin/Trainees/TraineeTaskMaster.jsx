@@ -1,4 +1,91 @@
 import { useState, useEffect, useMemo } from 'react';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud, LayoutGrid, List } from 'lucide-react';
@@ -214,15 +301,18 @@ const TraineeTaskMaster = () => {
 
 
             </div>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-            >
-              <option value="All" className="text-black">All Types</option>
-              <option value="Trainee" className="text-black">Trainee</option>
-              <option value="Intern" className="text-black">Intern</option>
-            </select>
+            <Select
+              options={[
+                { value: 'All', label: 'All Types' },
+                { value: 'Trainee', label: 'Trainee' },
+                { value: 'Intern', label: 'Intern' }
+              ]}
+              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
+              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
+              styles={customSelectStyles}
+              isSearchable={false}
+              className="w-40"
+            />
             <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
               <button onClick={() => setViewMode('table')} className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={14} /></button>
               <button onClick={() => setViewMode('card')} className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={14} /></button>
