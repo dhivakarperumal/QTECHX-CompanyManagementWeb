@@ -1,10 +1,86 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
+
 
 const defaultLeaveTypes = [
   "Casual Leave",
@@ -38,7 +114,11 @@ const ApplyLeave = () => {
   const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
   const enrichedLeaveSettings = leaveSettings.map((setting) => {
     const taken = employeeLeaves
-      .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+      .filter((leave) => {
+        if (leave.leave_type !== setting.leave_type) return false;
+        const status = String(leave.status || '').trim().toLowerCase();
+        return status !== 'reject' && status !== 'rejected' && status !== 'cancel' && status !== 'cancelled';
+      })
       .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
 
     return {
@@ -129,10 +209,59 @@ const ApplyLeave = () => {
     }));
   };
 
+  const toDateOnly = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
+
+  const hasDuplicateLeave = () => {
+    if (!formData.from_date) return false;
+    const selectedFrom = toDateOnly(formData.from_date);
+    const selectedTo = toDateOnly(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+    if (!selectedFrom || !selectedTo) return false;
+
+    return employeeLeaves.some((leave) => {
+      if (!leave.from_date) return false;
+      const leaveFrom = toDateOnly(leave.from_date);
+      const leaveTo = toDateOnly(leave.to_date || leave.from_date);
+      if (!leaveFrom || !leaveTo) return false;
+      const status = String(leave.status || '').toLowerCase();
+      if (status.includes('reject')) return false;
+      if (status.includes('cancel')) return false;
+      return leaveFrom.getTime() <= selectedTo.getTime() && leaveTo.getTime() >= selectedFrom.getTime();
+    });
+  };
+
+  const hasSundayInRange = () => {
+    if (!formData.from_date) return false;
+    const start = toDateOnly(formData.from_date);
+    const end = toDateOnly(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+    if (!start || !end) return false;
+
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d.setDate(d.getDate() + 1)) {
+      if (d.getDay() === 0) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.no_of_days <= 0) {
       toast.error('Invalid date range');
+      return;
+    }
+
+    if (hasDuplicateLeave()) {
+      toast.error('Leave has already been applied for the selected date. Duplicate same-day leave requests are not allowed.');
+      return;
+    }
+
+    if (hasSundayInRange()) {
+      toast.error('Leave cannot be applied for Sunday. Please choose another date.');
       return;
     }
 
@@ -142,21 +271,17 @@ const ApplyLeave = () => {
       return;
     }
 
-    if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
-      toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
+    const requestedDays = Number(formData.no_of_days || 0);
+    const remainingDays = selectedSetting ? Number(selectedSetting.remaining || 0) : 0;
+    if (selectedSetting && Number(selectedSetting.is_active) === 1 && requestedDays > remainingDays) {
+      toast.error(`${formData.leave_type} limit exceeded. Remaining available days: ${remainingDays}`);
       return;
     }
     setLoading(true);
     try {
       await api.post('/employee-leaves/apply', formData);
       toast.success('Leave applied successfully');
-      setFormData({
-        ...formData,
-        from_date: '',
-        to_date: '',
-        no_of_days: 0,
-        reason: ''
-      });
+      navigate('/employee/leaves/history');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to apply leave');
     } finally {
@@ -168,6 +293,7 @@ const ApplyLeave = () => {
 
   return (
     <ModalPortal>
+      <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
       <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm"
         onClick={(event) => event.target === event.currentTarget && navigate('/employee/leaves/history')}
       >
@@ -246,17 +372,13 @@ const ApplyLeave = () => {
                   {/* Leave Fields */}
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-white/70">Leave Type</label>
-                    <select 
-                      name="leave_type" 
-                      value={formData.leave_type} 
-                      onChange={handleChange} 
-                      required
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition"
-                    >
-                      {availableLeaveTypes.map(type => (
-                        <option key={type} value={type} className="bg-[#111318] text-white">{type}</option>
-                      ))}
-                    </select>
+                    <Select
+                      styles={customSelectStyles}
+                      value={{ value: formData.leave_type, label: formData.leave_type }}
+                      onChange={(option) => handleChange({ target: { name: 'leave_type', value: option ? option.value : '' } })}
+                      options={availableLeaveTypes.map(type => ({ value: type, label: type }))}
+                      isSearchable={false}
+                    />
                     {!settingsLoading && (
                       <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-white/70">
                         <p className="font-semibold text-white">Leave balance</p>

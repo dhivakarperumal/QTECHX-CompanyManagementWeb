@@ -39,10 +39,7 @@ import {
 } from 'lucide-react';
 
 const EVENT_TYPES = [
-  'Meeting', 'Holiday', 'Leave', 'Birthday', 'Anniversary',
-  'Client Meeting', 'Training', 'Office Event', 'Project Deadline',
-  'Reminder', 'Interview', 'Other',
-];
+  'Meeting', 'Holiday', 'Office Event', 'Project Deadline', 'Interview'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
 const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
@@ -102,6 +99,7 @@ const defaultForm = {
   externalGuests: false, guestEmailAddresses: [], attendanceRequired: true,
   organizerName: '', organizerDepartment: '', createdBy: '',
   organizerContactNumber: '', organizerEmail: '', attachments: [], notes: '',
+  reason: '', meetingPurpose: '', interviewPerson: '',
 };
 
 const customSelectStyles = {
@@ -1222,168 +1220,160 @@ const OfficeCalendar = () => {
                   required
                 />
               </div>
-              <div>
-                <label className="oc-flbl">Priority</label>
-                <Select
-                  styles={customSelectStyles}
-                  name="priority"
-                  value={formData.priority ? { value: formData.priority, label: formData.priority } : null}
-                  onChange={option => handleFieldChange({ target: { name: 'priority', value: option ? option.value : '' } })}
-                  options={PRIORITIES.map(p => ({ value: p, label: p }))}
-                  placeholder="Select Priority"
-                  isClearable
-                />
-              </div>
-              <div className="oc-full">
-                <label className="oc-flbl">Description</label>
-                <textarea name="description" value={formData.description} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Short context…" />
-              </div>
-              <div>
-                <label className="oc-flbl">Start Date *</label>
-                <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
-              </div>
-              <div>
-                <label className="oc-flbl">End Date *</label>
-                <input required type="date" name="endDate" value={formData.endDate} onChange={handleFieldChange} className="oc-finput" />
-              </div>
-              <div>
-                <label className="oc-flbl">Start Time</label>
-                <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
-              </div>
-              <div>
-                <label className="oc-flbl">End Time</label>
-                <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
-              </div>
-              <div className="oc-full">
-                <label className="oc-chk-lbl">
-                  <input type="checkbox" name="allDay" checked={formData.allDay} onChange={handleFieldChange} style={{ accentColor:'#F8740E' }} />
-                  All Day Event
-                </label>
-              </div>
 
-              <div className="oc-section-ttl">Participants & Departments</div>
-              <div className="oc-full" style={{ position: 'relative' }}>
-                <label className="oc-flbl">Participants</label>
-                
-                <div className="oc-chips" style={{ marginBottom: 12 }}>
-                  {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => {
-                    const displayName = typeof p === 'object' ? p.name : p;
-                    return (
-                    <span key={typeof p === 'object' ? p.user_id : `${p}-${i}`} className="oc-c-chip">
-                      {displayName}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
-                    </span>
-                    );
-                  })}
-                  <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(248,116,14,0.15)', color:'#F8740E', border:'1px dashed rgba(248,116,14,0.4)', borderRadius:20, padding:'4px 10px', fontSize:11.5, fontWeight:600, cursor:'pointer' }}>
-                    <Plus size={12} /> Add Employee
-                  </button>
-                </div>
-
-                {showEmpSelector && (
-                  <div style={{ position:'absolute', zIndex:999, top:'100%', left:0, right:0, background:'#1e1e24', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:12, boxShadow:'0 10px 30px rgba(0,0,0,0.5)', maxHeight:220, overflowY:'auto' }}>
-                    <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Select Employees</div>
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                      {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
-                        const name = getEmployeeFullName(emp);
-                        if (!name) return null;
-                        const isSel = (formData.participants||[]).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
-                        return (
-                          <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(emp)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
-                            <div style={{ width:12, height:12, borderRadius:3, border:`1px solid ${isSel?'#F8740E':'rgba(255,255,255,0.3)'}`, background:isSel?'#F8740E':'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:'bold', color:'#fff' }}>
-                              {isSel && '✓'}
-                            </div>
-                            <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</span>
-                          </div>
-                        );
-                      }) : null}
-                    </div>
+              {formData.eventType === 'Meeting' && (
+                <>
+                  <div>
+                    <label className="oc-flbl">Date *</label>
+                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
-                )}
-              </div>
-              <div>
-                <label className="oc-flbl">Departments</label>
-                <input value={(formData.departments||[]).join(', ')} onChange={e => handleArrayInput(e,'departments')} className="oc-finput" placeholder="Sales, Marketing" />
-              </div>
-              <div>
-                <label className="oc-flbl">Teams</label>
-                <input value={(formData.teams||[]).join(', ')} onChange={e => handleArrayInput(e,'teams')} className="oc-finput" placeholder="Alpha, Beta" />
-              </div>
-              <div className="oc-full">
-                <label className="oc-chk-lbl">
-                  <input type="checkbox" name="externalGuests" checked={formData.externalGuests} onChange={handleFieldChange} style={{ accentColor:'#F8740E' }} />
-                  External Guests Allowed
-                </label>
-              </div>
-              <div className="oc-full">
-                <label className="oc-flbl">Guest Emails</label>
-                <input value={(formData.guestEmailAddresses||[]).join(', ')} onChange={e => handleArrayInput(e,'guestEmailAddresses')} className="oc-finput" placeholder="email@example.com, …" />
-              </div>
-              <div className="oc-full">
-                <label className="oc-chk-lbl">
-                  <input type="checkbox" name="attendanceRequired" checked={formData.attendanceRequired} onChange={handleFieldChange} style={{ accentColor:'#F8740E' }} />
-                  Attendance Required
-                </label>
-              </div>
+                  <div>
+                    <label className="oc-flbl">Meeting Link</label>
+                    <input name="meetingLink" value={formData.meetingLink} onChange={handleFieldChange} className="oc-finput" placeholder="https://" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">Start Time</label>
+                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">End Time</label>
+                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Meeting Purpose</label>
+                    <textarea name="meetingPurpose" value={formData.meetingPurpose} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Meeting purpose…" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Notes</label>
+                    <textarea name="notes" value={formData.notes} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Notes…" />
+                  </div>
+                  
+                  <div className="oc-section-ttl">Participants</div>
+                  <div className="oc-full" style={{ position: 'relative' }}>
+                    <label className="oc-flbl">Add Employees</label>
+                    
+                    <div className="oc-chips" style={{ marginBottom: 12 }}>
+                      {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => {
+                        const displayName = typeof p === 'object' ? p.name : p;
+                        return (
+                        <span key={typeof p === 'object' ? p.user_id : `${p}-${i}`} className="oc-c-chip">
+                          {displayName}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
+                        </span>
+                        );
+                      })}
+                      <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(248,116,14,0.15)', color:'#F8740E', border:'1px dashed rgba(248,116,14,0.4)', borderRadius:20, padding:'4px 10px', fontSize:11.5, fontWeight:600, cursor:'pointer' }}>
+                        <Plus size={12} /> Add Employee
+                      </button>
+                    </div>
 
-              <div className="oc-section-ttl">Organizer Details</div>
-              <div>
-                <label className="oc-flbl">Organizer Name</label>
-                <input name="organizerName" value={formData.organizerName||''} onChange={handleFieldChange} className="oc-finput" placeholder="Name" />
-              </div>
-              <div>
-                <label className="oc-flbl">Department</label>
-                <input name="organizerDepartment" value={formData.organizerDepartment||''} onChange={handleFieldChange} className="oc-finput" placeholder="Department" />
-              </div>
-              <div>
-                <label className="oc-flbl">Created By</label>
-                <input name="createdBy" value={formData.createdBy||''} onChange={handleFieldChange} className="oc-finput" placeholder="Name" />
-              </div>
-              <div>
-                <label className="oc-flbl">Contact Number</label>
-                <input name="organizerContactNumber" value={formData.organizerContactNumber||''} onChange={handleFieldChange} className="oc-finput" placeholder="Phone" />
-              </div>
-              <div className="oc-full">
-                <label className="oc-flbl">Email</label>
-                <input name="organizerEmail" value={formData.organizerEmail||''} onChange={handleFieldChange} className="oc-finput" placeholder="email@example.com" />
-              </div>
+                    {showEmpSelector && (
+                      <div style={{ position:'absolute', zIndex:999, top:'100%', left:0, right:0, background:'#1e1e24', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:12, boxShadow:'0 10px 30px rgba(0,0,0,0.5)', maxHeight:220, overflowY:'auto' }}>
+                        <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Select Employees</div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
+                          {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
+                            const name = getEmployeeFullName(emp);
+                            if (!name) return null;
+                            const isSel = (formData.participants||[]).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
+                            return (
+                              <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(emp)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
+                                <div style={{ width:12, height:12, borderRadius:3, border:`1px solid ${isSel?'#F8740E':'rgba(255,255,255,0.3)'}`, background:isSel?'#F8740E':'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:'bold', color:'#fff' }}>
+                                  {isSel && '✓'}
+                                </div>
+                                <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</span>
+                              </div>
+                            );
+                          }) : null}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
-              <div className="oc-section-ttl">Event Details</div>
-              <div>
-                <label className="oc-flbl">Status</label>
-                <Select
-                  styles={customSelectStyles}
-                  name="status"
-                  value={formData.status ? { value: formData.status, label: formData.status } : null}
-                  onChange={option => handleFieldChange({ target: { name: 'status', value: option ? option.value : '' } })}
-                  options={STATUSES.map(s => ({ value: s, label: s }))}
-                  placeholder="Select Status"
-                  isClearable
-                />
-              </div>
-              <div>
-                <label className="oc-flbl">Reminder</label>
-                <Select
-                  styles={customSelectStyles}
-                  name="reminder"
-                  value={formData.reminder ? { value: formData.reminder, label: formData.reminder } : null}
-                  onChange={option => handleFieldChange({ target: { name: 'reminder', value: option ? option.value : '' } })}
-                  options={REMINDERS.map(r => ({ value: r, label: r }))}
-                  placeholder="Select Reminder"
-                  isClearable
-                />
-              </div>
-              <div>
-                <label className="oc-flbl">Location</label>
-                <input name="location" value={formData.location} onChange={handleFieldChange} className="oc-finput" placeholder="Room, Zoom, HQ" />
-              </div>
-              <div>
-                <label className="oc-flbl">Meeting Link</label>
-                <input name="meetingLink" value={formData.meetingLink} onChange={handleFieldChange} className="oc-finput" placeholder="https://" />
-              </div>
-              <div>
-                <label className="oc-flbl">Project</label>
-                <input name="project" value={formData.project} onChange={handleFieldChange} className="oc-finput" placeholder="Project name" />
-              </div>
+              {formData.eventType === 'Holiday' && (
+                <>
+                  <div>
+                    <label className="oc-flbl">Start Date *</label>
+                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">End Date *</label>
+                    <input required type="date" name="endDate" value={formData.endDate} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Reason</label>
+                    <input name="reason" value={formData.reason} onChange={handleFieldChange} className="oc-finput" placeholder="Holiday reason" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Description…" />
+                  </div>
+                </>
+              )}
+
+              {formData.eventType === 'Office Event' && (
+                <>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Date *</label>
+                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">Start Time</label>
+                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">End Time</label>
+                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Description…" />
+                  </div>
+                </>
+              )}
+
+              {formData.eventType === 'Interview' && (
+                <>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Person Name</label>
+                    <input name="interviewPerson" value={formData.interviewPerson} onChange={handleFieldChange} className="oc-finput" placeholder="Name of interviewee" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Date *</label>
+                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">Start Time</label>
+                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">End Time</label>
+                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                </>
+              )}
+
+              {formData.eventType === 'Project Deadline' && (
+                <>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Project</label>
+                    <input name="project" value={formData.project} onChange={handleFieldChange} className="oc-finput" placeholder="Select project or enter name" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">Date *</label>
+                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div>
+                    <label className="oc-flbl">Deadline Time</label>
+                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                  </div>
+                  <div className="oc-full">
+                    <label className="oc-flbl">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Description…" />
+                  </div>
+                </>
+              )}
+
               <div>
                 <label className="oc-flbl">Color</label>
                 <input type="color" name="color" value={formData.color||'#F8740E'} onChange={handleFieldChange} className="oc-finput" style={{ height:42, padding:'4px 8px', cursor:'pointer' }} />
@@ -1391,11 +1381,7 @@ const OfficeCalendar = () => {
               <div className="oc-full">
                 <label className="oc-flbl">Attachments</label>
                 <input type="file" multiple onChange={handleAttachmentChange} className="oc-finput" style={{ cursor:'pointer' }} />
-                {formData.attachments.length>0 && <div style={{ fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:4 }}>{formData.attachments.join(', ')}</div>}
-              </div>
-              <div className="oc-full">
-                <label className="oc-flbl">Notes</label>
-                <textarea name="notes" value={formData.notes} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Optional notes…" />
+                {formData.attachments && formData.attachments.length>0 && <div style={{ fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:4 }}>{formData.attachments.join(', ')}</div>}
               </div>
 
               <div className="oc-form-actions">

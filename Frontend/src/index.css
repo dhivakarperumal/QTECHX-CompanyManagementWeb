@@ -421,6 +421,12 @@ html, body, #root {
   pointer-events: auto;
 }
 
+#react-hot-toast-container,
+.react-hot-toast,
+.react-hot-toast .toast {
+  z-index: 20000 !important;
+}
+
 /* Global Admin Select */
 .admin-select {
   background: #1b1d24;

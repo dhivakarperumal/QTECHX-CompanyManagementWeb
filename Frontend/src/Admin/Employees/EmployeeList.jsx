@@ -280,10 +280,7 @@ const EmployeeList = () => {
                   <th className="px-4 py-3 text-left">Photo</th>
                   <th className="px-4 py-3 text-left">Employee Code</th>
                   <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Mobile</th>
-                  <th className="px-4 py-3 text-left">Role</th>
-                  <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -306,10 +303,7 @@ const EmployeeList = () => {
                     </td>
                     <td className="px-4 py-3 font-medium text-white">{emp.employee_code || "N/A"}</td>
                     <td className="px-4 py-3"><div className="font-semibold text-white">{`${emp.first_name} ${emp.last_name || ""}`}</div><div className="text-white/40 text-xs">{emp.designation || "—"}</div></td>
-                    <td className="px-4 py-3 text-white/70">{emp.personal_email || "N/A"}</td>
                     <td className="px-4 py-3 text-white/70">{emp.mobile_number}</td>
-                    <td className="px-4 py-3"><span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-300">{emp.role}</span></td>
-                    <td className="px-4 py-3"><span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${emp.employment_status === "Active" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" : emp.employment_status === "Inactive" ? "bg-rose-500/15 text-rose-400 border-rose-500/25" : "bg-white/10 text-white/60 border-white/15"}`}>{emp.employment_status}</span></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Link to={`/admin/employees/view/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10"><Eye size={14} /></Link>

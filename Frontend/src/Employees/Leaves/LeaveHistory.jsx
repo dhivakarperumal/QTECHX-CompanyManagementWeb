@@ -14,6 +14,93 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import Select from 'react-select';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const LeaveHistory = () => {
   const [leaves, setLeaves] = useState([]);
@@ -268,90 +355,62 @@ const LeaveHistory = () => {
             </div>
 
             {/* Status */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-            >
-              <option className="bg-[#1a1d24] text-white" value="All">
-                All Status
-              </option>
-              <option className="bg-[#1a1d24] text-white" value="Pending">
-                Pending
-              </option>
-              <option className="bg-[#1a1d24] text-white" value="Approved">
-                Approved
-              </option>
-              <option className="bg-[#1a1d24] text-white" value="Rejected">
-                Rejected
-              </option>
-            </select>
+            <div className="w-full z-[49]">
+              <Select
+                value={{ value: statusFilter, label: statusFilter === 'All' ? 'All Status' : statusFilter }}
+                onChange={(option) => setStatusFilter(option ? option.value : 'All')}
+                options={[
+                  { value: 'All', label: 'All Status' },
+                  { value: 'Pending', label: 'Pending' },
+                  { value: 'Approved', label: 'Approved' },
+                  { value: 'Rejected', label: 'Rejected' },
+                ]}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
+            </div>
 
             {/* Leave Type */}
-            <select
-              value={leaveTypeFilter}
-              onChange={(e) => setLeaveTypeFilter(e.target.value)}
-              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-            >
-              {leaveTypes.map((type) => (
-                <option
-                  key={type}
-                  value={type}
-                  className="bg-[#1a1d24] text-white"
-                >
-                  {type}
-                </option>
-              ))}
-            </select>
+            <div className="w-full z-[48]">
+              <Select
+                value={{ value: leaveTypeFilter, label: leaveTypeFilter }}
+                onChange={(option) => setLeaveTypeFilter(option ? option.value : 'All')}
+                options={leaveTypes.map((type) => ({ value: type, label: type }))}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
+            </div>
+            
+            <div className="w-full z-[47]">
+              <Select
+                value={{ value: sortBy, label: sortBy === 'Newest' ? 'Newest First' : 'Oldest First' }}
+                onChange={(option) => setSortBy(option ? option.value : 'Newest')}
+                options={[
+                  { value: 'Newest', label: 'Newest First' },
+                  { value: 'Oldest', label: 'Oldest First' },
+                ]}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
+            </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="h-10 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-            >
-              <option
-                value="Newest"
-                className="bg-[#1a1d24] text-white"
-              >
-                Newest First
-              </option>
-
-              <option
-                value="Oldest"
-                className="bg-[#1a1d24] text-white"
-              >
-                Oldest First
-              </option>
-            </select>
-
-
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="h-11 rounded-xl bg-[#1a1d24] border border-white/10 px-3 text-sm text-white outline-none focus:border-orange-500"
-            >
-              <option value="All" className="bg-[#1a1d24] text-white">
-                All Dates
-              </option>
-              <option value="Today" className="bg-[#1a1d24] text-white">
-                Today
-              </option>
-              <option value="Yesterday" className="bg-[#1a1d24] text-white">
-                Yesterday
-              </option>
-              <option value="This Week" className="bg-[#1a1d24] text-white">
-                This Week
-              </option>
-              <option value="This Month" className="bg-[#1a1d24] text-white">
-                This Month
-              </option>
-              <option value="This Year" className="bg-[#1a1d24] text-white">
-                This Year
-              </option>
-              <option value="Custom" className="bg-[#1a1d24] text-white">
-                Custom Range
-              </option>
-            </select>
+            <div className="w-full z-[46]">
+              <Select
+                value={{ value: dateFilter, label: dateFilter === 'All' ? 'All Dates' : dateFilter === 'Custom' ? 'Custom Range' : dateFilter }}
+                onChange={(option) => setDateFilter(option ? option.value : 'All')}
+                options={[
+                  { value: 'All', label: 'All Dates' },
+                  { value: 'Today', label: 'Today' },
+                  { value: 'Yesterday', label: 'Yesterday' },
+                  { value: 'This Week', label: 'This Week' },
+                  { value: 'This Month', label: 'This Month' },
+                  { value: 'This Year', label: 'This Year' },
+                  { value: 'Custom', label: 'Custom Range' },
+                ]}
+                styles={customSelectStyles}
+                isSearchable={false}
+              />
+            </div>
             {dateFilter === "Custom" && (
               <>
                 <input

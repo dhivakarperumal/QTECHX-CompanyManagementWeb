@@ -90,8 +90,8 @@ const customSelectStyles = {
   }),
 };
 
-const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
-const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
+const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6';
+const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
 const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
 const TYPE_OPTIONS = ['Trainee', 'Intern'];
 
@@ -101,7 +101,7 @@ const BLANK = {
   emergency_contact_name: '', emergency_contact_number: '', college_university: '', course: '',
   academic_department: '', year_semester: '', college_id_number: '', guide_name: '',
   profile_photo: '', resume: '', college_id_doc: '', offer_letter: '', internship_letter: '',
-  username: '', official_email: '', password: '', confirm_password: ''
+  username: '', official_email: '', password: ''
 };
 
 const toForm = (item) => ({
@@ -110,7 +110,7 @@ const toForm = (item) => ({
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
-  username: item.username || '', official_email: item.official_email || item.email_address || '', password: '', confirm_password: ''
+  username: item.username || '', official_email: item.official_email || item.email_address || '', password: ''
 });
 
 function buildUploadUrl(filePath) {
@@ -134,7 +134,6 @@ export default function AddTraineeIntern() {
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -181,6 +180,9 @@ export default function AddTraineeIntern() {
         if (name === 'email_address') {
           newData.official_email = value;
         }
+        if (name === 'mobile_number') {
+          newData.password = value;
+        }
       }
       return newData;
     });
@@ -195,14 +197,6 @@ export default function AddTraineeIntern() {
     e.preventDefault();
     if (!formData.full_name?.trim()) {
       setError('Full name is required.');
-      return;
-    }
-    if (!isEdit && formData.password !== formData.confirm_password) {
-      setError('Passwords do not match.');
-      return;
-    }
-    if (isEdit && formData.password && formData.password !== formData.confirm_password) {
-      setError('Passwords do not match.');
       return;
     }
     setLoading(true); setError(''); setSuccess('');
@@ -257,7 +251,7 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Person ID</span>
               <div className="flex gap-2">
-                <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly />
+                <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly placeholder="Auto-generated person ID" />
                 <button type="button" onClick={async () => { setPersonIdLoading(true); try { const { data } = await api.get('/trainee-intern/next-person-id'); if (data.success) setFormData((prev) => ({ ...prev, person_id: data.code || '' })); } catch (err) { console.warn(err); } finally { setPersonIdLoading(false); } }} className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
                   {personIdLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
@@ -274,6 +268,7 @@ export default function AddTraineeIntern() {
                 onChange={option => handleChange({ target: { name: 'type', value: option ? option.value : '' } })}
                 options={TYPE_OPTIONS.map(v => ({ value: v, label: v }))}
                 styles={customSelectStyles}
+                placeholder="Select type"
                 isSearchable={false}
               />
             </label>
@@ -291,11 +286,11 @@ export default function AddTraineeIntern() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Joining Date</span>
-              <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} />
+              <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} placeholder="Select joining date" />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">End Date (Optional)</span>
-              <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
+              <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} placeholder="Select end date" />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Status</span>
@@ -304,6 +299,7 @@ export default function AddTraineeIntern() {
                 onChange={option => handleChange({ target: { name: 'status', value: option ? option.value : '' } })}
                 options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
                 styles={customSelectStyles}
+                placeholder="Select status"
                 isSearchable={false}
               />
             </label>
@@ -319,8 +315,8 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number {isEdit ? "" : <span className="text-red-500">*</span>}</span><input className={fieldClass} name="mobile_number" required={!isEdit} value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Email Address</span><input className={fieldClass} type="email" name="email_address" value={formData.email_address} onChange={handleChange} placeholder="name@email.com" /></label>
             <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Emergency contact name" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} placeholder="9876543210" /></label>
           </div>
         </section>
 
@@ -329,7 +325,7 @@ export default function AddTraineeIntern() {
             <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><KeyRound size={15} className="text-orange-400" /></div>
             <h2 className="text-base font-bold text-white">Login Credentials</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Username {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <input className={fieldClass} name="username" required={!isEdit} value={formData.username} onChange={handleChange} placeholder="Enter username for login" />
@@ -338,23 +334,12 @@ export default function AddTraineeIntern() {
               <span className="mb-1.5 block font-medium">Official Email {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <input className={fieldClass} type="email" name="official_email" required={!isEdit} value={formData.official_email} onChange={handleChange} placeholder="Enter official email" />
             </label>
-            
             <label className="text-sm text-white/60 relative">
               <span className="mb-1.5 block font-medium">Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <div className="relative">
-                <input className={fieldClass} type={showPassword ? "text" : "password"} name="password" required={!isEdit} value={formData.password} onChange={handleChange} placeholder={isEdit ? "Leave blank to keep unchanged" : "Enter password"} />
+                <input className={fieldClass} type={showPassword ? "text" : "password"} name="password" required={!isEdit} value={formData.password} onChange={handleChange} placeholder={isEdit ? "Leave blank to keep unchanged" : "Auto-filled from mobile"} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </label>
-            
-            <label className="text-sm text-white/60 relative">
-              <span className="mb-1.5 block font-medium">Confirm Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
-              <div className="relative">
-                <input className={fieldClass} type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEdit && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} placeholder="Confirm password" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </label>
@@ -391,12 +376,12 @@ export default function AddTraineeIntern() {
             <h2 className="text-base font-bold text-white">Academic Information</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} name="college_university" value={formData.college_university} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} name="course" value={formData.course} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} name="academic_department" value={formData.academic_department} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} name="year_semester" value={formData.year_semester} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} name="college_id_number" value={formData.college_id_number} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} name="guide_name" value={formData.guide_name} onChange={handleChange} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} name="college_university" value={formData.college_university} onChange={handleChange} placeholder="College or university name" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} name="course" value={formData.course} onChange={handleChange} placeholder="Course or program" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} name="academic_department" value={formData.academic_department} onChange={handleChange} placeholder="Academic department" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} name="year_semester" value={formData.year_semester} onChange={handleChange} placeholder="Year / semester" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} name="college_id_number" value={formData.college_id_number} onChange={handleChange} placeholder="College ID number" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} name="guide_name" value={formData.guide_name} onChange={handleChange} placeholder="Guide or faculty name" /></label>
           </div>
         </section>
 
