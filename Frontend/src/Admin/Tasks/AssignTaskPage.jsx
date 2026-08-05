@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserPlus, AlertCircle, CheckCircle, Loader2,
-  Paperclip, ClipboardList, CheckSquare, Square, BadgeCheck
+  Paperclip, ClipboardList, CheckSquare, Square, BadgeCheck,
+  FileText, Clock, Download
 } from "lucide-react";
-import api from "../../api";
+import api, { API_URL } from "../../api";
 
 const inputCls =
   "w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500 transition placeholder:text-slate-600";
@@ -18,6 +19,25 @@ function FieldBox({ label, children }) {
   );
 }
 
+/** Format ISO date string → "05 Aug 2026, 11:45 AM" */
+function fmtDate(iso) {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  } catch { return null; }
+}
+
+/** Parse JSON attachments array safely */
+function parseAttachments(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
+  catch { return []; }
+}
+
 const EMPTY_ASSIGN_FORM = {
   project_id: "",
   assigned_to: "",
@@ -28,6 +48,7 @@ const EMPTY_ASSIGN_FORM = {
   status: "",
 };
 
+
 export default function AssignTaskPage() {
   const navigate = useNavigate();
 
@@ -36,8 +57,10 @@ export default function AssignTaskPage() {
   const [planInfo, setPlanInfo]                 = useState(null);
   const [selectedModules, setSelectedModules]   = useState([]);
 
-  // Set of already-assigned module title keys (lowercase) for this project + employee combo
+  // Set of already-assigned module title keys (lowercase)
   const [assignedTitles, setAssignedTitles]     = useState(new Set());
+  // Map: lowercased title → full task row (for created_at, attachments)
+  const [assignedTaskMap, setAssignedTaskMap]   = useState(new Map());
   const [assignedTitlesLoading, setAssignedTitlesLoading] = useState(false);
 
   const [assignedEmployees, setAssignedEmployees] = useState([]);
@@ -62,28 +85,43 @@ export default function AssignTaskPage() {
       .catch(() => {});
   }, []);
 
-  // ─── Fetch already-assigned titles for project + employee ──────────────────
+  // ─── Fetch already-assigned titles + full task data ────────────────────────
   const fetchAssignedTitles = useCallback(async (project_id, employee_id) => {
-    if (!project_id) { setAssignedTitles(new Set()); return; }
+    if (!project_id) {
+      setAssignedTitles(new Set());
+      setAssignedTaskMap(new Map());
+      return;
+    }
     setAssignedTitlesLoading(true);
     try {
       const params = { project_id, limit: 500, page: 1 };
       if (employee_id) params.assigned_to = employee_id;
       const { data } = await api.get("/tasks", { params });
       const rows = data.data || [];
+      const filtered = rows.filter((t) =>
+        employee_id ? t.assigned_to === employee_id : !!t.assigned_to
+      );
       const names = new Set(
-        rows
-          .filter((t) => employee_id ? t.assigned_to === employee_id : !!t.assigned_to)
+        filtered
           .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
           .filter(Boolean)
       );
+      // Build map: title key → task row (for created_at, attachments)
+      const taskMap = new Map();
+      filtered.forEach((t) => {
+        const key = (t.task_name || t.module_name || "").trim().toLowerCase();
+        if (key) taskMap.set(key, t);
+      });
       setAssignedTitles(names);
+      setAssignedTaskMap(taskMap);
     } catch {
       setAssignedTitles(new Set());
+      setAssignedTaskMap(new Map());
     } finally {
       setAssignedTitlesLoading(false);
     }
   }, []);
+
 
   // ─── When project changes → load employees + plan modules ─────────────────
   useEffect(() => {
@@ -206,8 +244,8 @@ export default function AssignTaskPage() {
         attachmentType = assignFile.type;
       }
 
-      const results = [];
-      const newlyAssigned = []; // track titles assigned this session
+      const results      = [];
+      const newlyAssigned = []; // { key, taskRow } pairs for live map update
 
       for (const mod of chosenModules) {
         // Calculate duration-based due_date if not provided
@@ -238,7 +276,8 @@ export default function AssignTaskPage() {
         if (createRes.data?.success === false) {
           throw new Error(createRes.data?.message || `Failed to create task for module "${mod.title}"`);
         }
-        const taskUuid = createRes.data?.data?.uuid || createRes.data?.uuid || createRes.data?.data?.id;
+        const createdTask = createRes.data?.data || {};
+        const taskUuid    = createdTask.uuid || createRes.data?.uuid;
         if (!taskUuid) throw new Error(`Could not get task ID for module "${mod.title}"`);
 
         // Step 2: Assign task
@@ -260,13 +299,29 @@ export default function AssignTaskPage() {
         }
 
         results.push(mod.title);
-        newlyAssigned.push((mod.title || "").trim().toLowerCase());
+        newlyAssigned.push({
+          key:     (mod.title || "").trim().toLowerCase(),
+          taskRow: createdTask,
+        });
       }
 
-      // ── Live-update assignedTitles so newly assigned modules go grey immediately ──
+      // ── Live-update assignedTitles + assignedTaskMap immediately ──────────
       setAssignedTitles((prev) => {
         const updated = new Set(prev);
-        newlyAssigned.forEach((t) => updated.add(t));
+        newlyAssigned.forEach(({ key }) => updated.add(key));
+        return updated;
+      });
+      setAssignedTaskMap((prev) => {
+        const updated = new Map(prev);
+        newlyAssigned.forEach(({ key, taskRow }) => {
+          if (key) updated.set(key, {
+            ...taskRow,
+            // patch in the attachment from this upload session if present
+            attachments: attachmentBase64
+              ? JSON.stringify([{ original_name: attachmentName, filename: attachmentName, path: `uploads/tasks/${attachmentName}`, mimetype: attachmentType }])
+              : (taskRow.attachments || null),
+          });
+        });
         return updated;
       });
 
@@ -275,10 +330,10 @@ export default function AssignTaskPage() {
       setSelectedModules([]);
       setAssignFile(null);
 
-      // Refresh the assigned titles from server after 1 s
+      // Full server re-fetch after 1.5 s to get real attachment paths
       setTimeout(() => {
         fetchAssignedTitles(assignForm.project_id, assignForm.assigned_to || null);
-      }, 1000);
+      }, 1500);
 
     } catch (err) {
       setAssignError(err?.response?.data?.message || err.message || "Failed to assign task.");
@@ -439,23 +494,27 @@ export default function AssignTaskPage() {
                     <th className="px-4 py-3">#</th>
                     <th className="px-4 py-3">Module / Task Title</th>
                     <th className="px-4 py-3">Duration</th>
-                    <th className="px-4 py-3">Description</th>
-                    <th className="px-4 py-3">Technology</th>
+                    <th className="px-4 py-3"><span className="flex items-center gap-1"><Clock size={11}/>Created At</span></th>
+                    <th className="px-4 py-3"><span className="flex items-center gap-1"><FileText size={11}/>Documents</span></th>
                     <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {planModules.map((mod, idx) => {
-                    const assigned = isModuleAssigned(mod);
-                    const checked  = !assigned && selectedModules.includes(idx);
+                    const assigned  = isModuleAssigned(mod);
+                    const checked   = !assigned && selectedModules.includes(idx);
+                    const titleKey  = (mod.title || "").trim().toLowerCase();
+                    const taskRow   = assigned ? assignedTaskMap.get(titleKey) : null;
+                    const createdAt = taskRow ? fmtDate(taskRow.created_at) : null;
+                    const docs      = taskRow ? parseAttachments(taskRow.attachments) : [];
                     return (
                       <tr
                         key={idx}
                         onClick={() => !assigned && toggleModule(idx)}
                         className={[
-                          "transition-colors",
+                          "transition-colors align-top",
                           assigned
-                            ? "opacity-50 cursor-not-allowed bg-white/[0.01]"
+                            ? "cursor-not-allowed bg-white/[0.01]"
                             : checked
                               ? "cursor-pointer bg-orange-500/10"
                               : "cursor-pointer hover:bg-white/[0.03]",
@@ -475,23 +534,53 @@ export default function AssignTaskPage() {
                         <td className="px-4 py-3 text-white/40">{idx + 1}</td>
                         {/* Title */}
                         <td className="px-4 py-3">
-                          <span className={`font-semibold ${assigned ? "text-white/40 line-through decoration-white/20" : "text-white"}`}>
+                          <span className={`font-semibold ${assigned ? "text-white/50" : "text-white"}`}>
                             {mod.title || "—"}
                           </span>
                         </td>
                         {/* Duration */}
-                        <td className="px-4 py-3 text-white/70">
+                        <td className="px-4 py-3 text-white/70 whitespace-nowrap">
                           {mod.duration ? `${mod.duration} days` : "—"}
                         </td>
-                        {/* Description */}
-                        <td className="px-4 py-3 text-white/50 max-w-xs truncate">
-                          {mod.description || "—"}
+                        {/* Created At */}
+                        <td className="px-4 py-3">
+                          {createdAt ? (
+                            <span className="flex items-center gap-1 text-[12px] text-sky-400 whitespace-nowrap">
+                              <Clock size={11} className="shrink-0" />
+                              {createdAt}
+                            </span>
+                          ) : (
+                            <span className="text-white/20 text-xs">—</span>
+                          )}
                         </td>
-                        {/* Technology */}
-                        <td className="px-4 py-3 text-white/50">
-                          {mod.technology || mod.tech || "—"}
+                        {/* Documents */}
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          {docs.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {docs.map((doc, di) => {
+                                const fileUrl = `${API_URL.replace('/api','')}/${doc.path || doc.filename}`;
+                                const label = doc.original_name || doc.filename || `File ${di + 1}`;
+                                return (
+                                  <a
+                                    key={di}
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download={doc.original_name || true}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-1 text-[11px] text-orange-400 hover:bg-orange-500/20 transition max-w-[160px] truncate"
+                                    title={label}
+                                  >
+                                    <Download size={10} className="shrink-0" />
+                                    <span className="truncate">{label}</span>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="text-white/20 text-xs">—</span>
+                          )}
                         </td>
-                        {/* Assigned badge */}
+                        {/* Status badge */}
                         <td className="px-4 py-3">
                           {assigned ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
