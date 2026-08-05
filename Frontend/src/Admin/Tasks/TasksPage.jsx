@@ -745,16 +745,17 @@ export default function TasksPage({ initialPageKey = null }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            id="btn-assign-task"
-            onClick={() => navigate('/admin/tasks/assign')}
-             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-          >
-            <UserPlus size={15} /> Task Assign
-          </button>
-         
+          {pageKey !== 'completed' && pageKey !== 'cancelled' && (
+            <button
+              type="button"
+              id="btn-assign-task"
+              onClick={() => navigate('/admin/tasks/assign')}
+               className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+            >
+              <UserPlus size={15} /> Task Assign
+            </button>
+          )}
         </div>
       </div>
 
