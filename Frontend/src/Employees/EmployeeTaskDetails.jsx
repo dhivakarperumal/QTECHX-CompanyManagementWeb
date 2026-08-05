@@ -203,12 +203,21 @@ export default function EmployeeTaskDetails() {
                 </div>
               </div>
 
-              {/* due date chip */}
-              <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm self-start">
-                <CalendarDays size={15} className="text-orange-400/80" />
-                <div>
-                  <p className="text-[10px] text-white/35 uppercase tracking-wider">Due Date</p>
-                  <p className="text-white font-semibold mt-0.5">{formatDate(task.due_date)}</p>
+              {/* date chips */}
+              <div className="flex flex-col gap-2 self-start">
+                <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm">
+                  <CalendarDays size={15} className="text-sky-400/80" />
+                  <div>
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider">Start Date</p>
+                    <p className="text-white font-semibold mt-0.5">{formatDate(task.start_date)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-4 py-3 text-sm">
+                  <CalendarDays size={15} className="text-orange-400/80" />
+                  <div>
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider">End Date</p>
+                    <p className="text-white font-semibold mt-0.5">{formatDate(task.due_date)}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -258,6 +267,8 @@ export default function EmployeeTaskDetails() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Assigned', value: formatDate(task.assignment_date), icon: <CalendarDays size={13} className="text-blue-400/70" /> },
+                  { label: 'Start', value: formatDate(task.start_date), icon: <CalendarDays size={13} className="text-sky-400/70" /> },
+                  { label: 'End', value: formatDate(task.due_date), icon: <CalendarDays size={13} className="text-orange-400/70" /> },
                   { label: 'Completed', value: formatDate(task.completion_date), icon: <CheckCircle2 size={13} className="text-emerald-400/70" /> },
                 ].map(item => (
                   <div key={item.label} className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
@@ -329,8 +340,13 @@ export default function EmployeeTaskDetails() {
               <div className="space-y-2">
                 {[
                   {
+                    icon: <CalendarDays size={13} className="text-sky-400/80" />,
+                    label: 'Start',
+                    value: formatDate(task.start_date),
+                  },
+                  {
                     icon: <Clock size={13} className="text-orange-400/80" />,
-                    label: 'Due',
+                    label: 'End',
                     value: formatDate(task.due_date),
                   },
                   {

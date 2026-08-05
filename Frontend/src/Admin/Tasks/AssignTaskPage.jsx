@@ -44,6 +44,7 @@ export default function AssignTaskPage() {
   const [planModules, setPlanModules] = useState([]);     // taskmodule array from project_plan
   const [planInfo, setPlanInfo]     = useState(null);     // the matched plan row
   const [selectedModules, setSelectedModules] = useState([]);
+  const [existingTaskNames, setExistingTaskNames] = useState(new Set()); // already-assigned module titles
   const [assignedEmployees, setAssignedEmployees] = useState([]);
   const [assignFile, setAssignFile] = useState(null);
   const [assignForm, setAssignForm] = useState(EMPTY_ASSIGN_FORM);
@@ -88,16 +89,17 @@ export default function AssignTaskPage() {
       .catch(() => setAssignedEmployees([]))
       .finally(() => setProjectEmployeesLoading(false));
 
-    // project plan → taskmodule
+    // project plan → taskmodule + already-assigned task names
     setPlanLoading(true);
     setPlanModules([]);
     setPlanInfo(null);
     setSelectedModules([]);
-    api
+    setExistingTaskNames(new Set());
+
+    const planPromise = api
       .get("/project-plans")
       .then(({ data }) => {
         const allPlans = data.data || data.plans || data || [];
-        // find plan(s) matching this project uuid
         const matched = allPlans.find(
           (plan) =>
             String(plan.project_id) === String(assignForm.project_id) ||
@@ -114,8 +116,24 @@ export default function AssignTaskPage() {
           setPlanModules(modules);
         }
       })
-      .catch(() => {})
-      .finally(() => setPlanLoading(false));
+      .catch(() => {});
+
+    // Fetch existing tasks for this project to know which modules are already assigned
+    const tasksPromise = api
+      .get("/tasks", { params: { project_id: assignForm.project_id, limit: 500, page: 1 } })
+      .then(({ data }) => {
+        const rows = data.data || [];
+        const names = new Set(
+          rows
+            .filter((t) => t.assigned_to)   // only already-assigned tasks
+            .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
+            .filter(Boolean)
+        );
+        setExistingTaskNames(names);
+      })
+      .catch(() => {});
+
+    Promise.all([planPromise, tasksPromise]).finally(() => setPlanLoading(false));
   }, [assignForm.project_id]);
 
   const toggleModule = (idx) => {

@@ -453,7 +453,7 @@ export default function EmployeeTasks() {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-white/6">
-                  {['S No', 'TASK', 'PROJECT', 'DUE DATE', 'PRIORITY', 'STATUS', 'ATTACHMENTS', 'ACTIONS'].map((col) => (
+                  {['S No', 'TASK', 'PROJECT', 'START DATE', 'END DATE', 'PRIORITY', 'STATUS', 'ATTACHMENTS', 'ACTIONS'].map((col) => (
                     <th key={col} className="px-5 py-3.5 text-[10px] font-bold tracking-widest text-white/40 uppercase whitespace-nowrap">
                       {col}
                     </th>
@@ -506,7 +506,17 @@ export default function EmployeeTasks() {
                         ) : '—'}
                       </td>
 
-                      {/* due date */}
+                      {/* start date */}
+                      <td className="px-5 py-4 text-white/55 text-[13px] whitespace-nowrap">
+                        {task.start_date ? (
+                          <span className="flex items-center gap-1.5">
+                            <CalendarDays size={13} className="text-sky-400/60 shrink-0" />
+                            {formatDate(task.start_date)}
+                          </span>
+                        ) : '—'}
+                      </td>
+
+                      {/* end date */}
                       <td className="px-5 py-4 text-white/55 text-[13px] whitespace-nowrap">
                         {task.due_date ? (
                           <span className="flex items-center gap-1.5">
@@ -676,8 +686,12 @@ export default function EmployeeTasks() {
                 {/* meta */}
                 <div className="space-y-1.5 text-[12px] text-white/50">
                   <div className="flex items-center gap-2">
+                    <CalendarDays size={12} className="text-sky-400/70 shrink-0" />
+                    <span>Start: {formatDate(task.start_date)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <CalendarDays size={12} className="text-orange-400/70 shrink-0" />
-                    {formatDate(task.due_date)}
+                    <span>End: {formatDate(task.due_date)}</span>
                   </div>
                   {task.description && (
                     <div className="flex items-start gap-2">
