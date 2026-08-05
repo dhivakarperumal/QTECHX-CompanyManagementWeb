@@ -328,8 +328,31 @@ export default function AssignTaskPage() {
         let computedDueDate = assignForm.due_date || "";
         if (!computedDueDate && assignForm.start_date && mod.duration) {
           const d = new Date(assignForm.start_date);
-          d.setDate(d.getDate() + Number(mod.duration));
+          // Parse numeric part only (e.g. "5 Days" -> 5)
+          const numDays = parseInt(mod.duration, 10);
+          if (!isNaN(numDays)) d.setDate(d.getDate() + numDays);
           computedDueDate = d.toISOString().slice(0, 10);
+        }
+
+        // Build combined attachments: plan document + user-uploaded file
+        const combinedAttachments = [];
+        if (mod.documentName) {
+          combinedAttachments.push({
+            original_name: mod.documentName,
+            filename:      mod.documentName,
+            path:          `uploads/plan_documents/${mod.documentName}`,
+            mimetype:      "application/octet-stream",
+            source:        "plan",
+          });
+        }
+        if (attachmentName) {
+          combinedAttachments.push({
+            original_name: attachmentName,
+            filename:      attachmentName,
+            path:          `uploads/task_attachments/${attachmentName}`,
+            mimetype:      attachmentType || "application/octet-stream",
+            source:        "uploaded",
+          });
         }
 
         // Step 1: Create task
@@ -341,18 +364,14 @@ export default function AssignTaskPage() {
           category:        mod.category    || mod.type || "",
           priority:        mod.priority    || "Medium",
           status:          assignForm.status || "Pending",
-          estimated_hours: mod.duration ? String(Number(mod.duration) * 8) : "",
+          estimated_hours: mod.duration ? (() => { const n = parseInt(mod.duration, 10); return isNaN(n) ? mod.duration : String(n * 8); })() : "",
           assignment_date: assignForm.assignment_date || "",
           start_date:      assignForm.start_date || "",
           due_date:        computedDueDate,
           assigned_to:     assignForm.assigned_to,
           team:            assignForm.team || "",
-          attachments:     mod.documentName ? JSON.stringify([{
-            original_name: mod.documentName,
-            filename: mod.documentName,
-            path: `uploads/projects/project_plans/${mod.documentName}`,
-            mimetype: "application/octet-stream"
-          }]) : null,
+          attachments:     combinedAttachments.length > 0 ? JSON.stringify(combinedAttachments) : null,
+          ...(attachmentBase64 && { attachmentBase64, attachmentName, attachmentType }),
         };
         const createRes = await api.post("/tasks", taskPayload);
         if (createRes.data?.success === false) {
@@ -371,9 +390,8 @@ export default function AssignTaskPage() {
           start_date:    assignForm.start_date || null,
           due_date:      computedDueDate || null,
           status:        assignForm.status || "Pending",
-          duration:      mod.duration ? Number(mod.duration) : null,
+          duration:      mod.duration || null,
           team:          assignForm.team || null,
-          ...(attachmentBase64 && { attachmentBase64, attachmentName, attachmentType }),
         };
         const assignRes = await api.post("/tasks/assign", assignPayload);
         if (assignRes.data?.success === false) {
@@ -382,10 +400,19 @@ export default function AssignTaskPage() {
 
         const assignedTask = assignRes.data?.data?.task || createdTask;
 
+        // Merge combinedAttachments into the returned task row so the
+        // document column reflects them immediately without a page reload
+        const enrichedTaskRow = {
+          ...assignedTask,
+          attachments: assignedTask.attachments
+            ? assignedTask.attachments
+            : (combinedAttachments.length > 0 ? JSON.stringify(combinedAttachments) : null),
+        };
+
         results.push(mod.title);
         newlyAssigned.push({
           key:     (mod.title || "").trim().toLowerCase(),
-          taskRow: assignedTask,
+          taskRow: enrichedTaskRow,
           mod:     mod,
         });
       }

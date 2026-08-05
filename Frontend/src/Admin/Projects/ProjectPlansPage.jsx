@@ -1090,7 +1090,7 @@ function ProjectPlansPage() {
                     {projectsList
                       .filter((project) => {
                         const isAssigned = plans.some((p) => String(p.projectId) === String(project.uuid) && p.id !== currentPlan?.id);
-                        return !isAssigned;
+                        return isAssigned;
                       })
                       .map((project) => (
                       <option key={project.uuid} value={project.uuid}>
