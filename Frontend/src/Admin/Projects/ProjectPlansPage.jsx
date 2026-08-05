@@ -177,6 +177,7 @@ function ProjectPlansPage() {
   const [formData, setFormData] = useState(createEmptyForm());
   const [projectsList, setProjectsList] = useState([]);
   const [editingModuleIndex, setEditingModuleIndex] = useState(null);
+  const [showAddModuleForm, setShowAddModuleForm] = useState(false);
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -307,6 +308,7 @@ function ProjectPlansPage() {
     setCurrentPlan(null);
     setMode('create');
     setEditingModuleIndex(null);
+    setShowAddModuleForm(false);
   };
 
   const openCreateDrawer = () => {
@@ -322,6 +324,7 @@ function ProjectPlansPage() {
     setMode('edit');
     setCurrentPlan(plan);
     setEditingModuleIndex(null);
+    setShowAddModuleForm(false);
     setFormData({
       ...createEmptyForm(),
       ...plan,
@@ -368,6 +371,7 @@ function ProjectPlansPage() {
     setMode('create');
     setFormData(createEmptyForm());
     setEditingModuleIndex(null);
+    setShowAddModuleForm(false);
   };
 
   const handleFieldChange = (event) => {
@@ -453,6 +457,7 @@ function ProjectPlansPage() {
         newModuleDocumentName: '',
       }));
       setEditingModuleIndex(null);
+      setShowAddModuleForm(false);
     } else {
       if (formData.modules.some((module) => module.title?.trim().toLowerCase() === title.toLowerCase())) {
         setToast('Module title already exists.');
@@ -474,6 +479,7 @@ function ProjectPlansPage() {
         newModuleDescription: '',
         newModuleDocumentName: '',
       }));
+      setShowAddModuleForm(false);
     }
   };
 
@@ -481,6 +487,7 @@ function ProjectPlansPage() {
     const module = formData.modules[index];
     if (!module) return;
     setEditingModuleIndex(index);
+    setShowAddModuleForm(true);
     setFormData((prev) => ({
       ...prev,
       newModuleTitle: module.title || '',
@@ -499,6 +506,7 @@ function ProjectPlansPage() {
       newModuleDescription: '',
       newModuleDocumentName: '',
     }));
+    setShowAddModuleForm(false);
   };
 
   const removeModule = (index) => {
@@ -1100,9 +1108,20 @@ function ProjectPlansPage() {
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-[#101723] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <Code2 size={16} className="text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">Modules & Technology</h4>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Code2 size={16} className="text-orange-400" />
+                  <h4 className="text-lg font-semibold text-white">Modules & Technology</h4>
+                </div>
+                {!mode.includes('view') && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModuleForm(!showAddModuleForm)}
+                    className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                  >
+                    <Plus size={14} /> Add New Module
+                  </button>
+                )}
               </div>
               <div className="space-y-4">
                 <div>
@@ -1137,9 +1156,9 @@ function ProjectPlansPage() {
                       </div>
                     )}
                   </div>
-                  {!mode.includes('view') ? (
+                  {!mode.includes('view') && showAddModuleForm ? (
                     <div className="mt-4 grid gap-3">
-                      <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr_auto]">
+                      <div className="grid gap-3 sm:grid-cols-2">
                         <input
                           type="text"
                           value={formData.newModuleTitle}
@@ -1154,25 +1173,6 @@ function ProjectPlansPage() {
                           placeholder="Duration"
                           className={fieldClasses}
                         />
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={addModule}
-                            disabled={!formData.newModuleTitle.trim() || !formData.newModuleDuration.trim()}
-                            className="h-[46px] rounded-2xl border border-white/10 bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-white/10 flex-1"
-                          >
-                            {editingModuleIndex !== null ? 'Update' : 'Add'}
-                          </button>
-                          {editingModuleIndex !== null && (
-                            <button
-                              type="button"
-                              onClick={cancelEditModule}
-                              className="h-[46px] rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
                       </div>
                       <textarea
                         value={formData.newModuleDescription}
@@ -1203,6 +1203,25 @@ function ProjectPlansPage() {
                           <p className="mt-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{formData.newModuleDocumentName}</p>
                         ) : null}
                       </label>
+                      <div className="mt-2 flex justify-end gap-2">
+                        {editingModuleIndex !== null && (
+                          <button
+                            type="button"
+                            onClick={cancelEditModule}
+                            className="h-[46px] rounded-2xl border border-white/10 bg-white/10 px-6 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={addModule}
+                          disabled={!formData.newModuleTitle.trim() || !formData.newModuleDuration.trim()}
+                          className="h-[46px] rounded-2xl border border-white/10 bg-orange-500 px-6 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-white/10"
+                        >
+                          {editingModuleIndex !== null ? 'Update' : 'Save'}
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </div>
