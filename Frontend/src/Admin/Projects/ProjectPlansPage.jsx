@@ -712,8 +712,8 @@ function ProjectPlansPage() {
   };
 
   return (
-    <div className="space-y-6 text-white">
-      <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#11141d] via-[#0f131b] to-[#111827] p-5 shadow-2xl shadow-black/30">
+    <div className="space-y-6 text-white pb-10 min-h-screen">
+      <div className="rounded-3xl border bg-black/70 bg-gradient-to-br from-[#11141d] via-[#0f131b] to-[#111827] p-5 shadow-2xl shadow-black/30">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-400">

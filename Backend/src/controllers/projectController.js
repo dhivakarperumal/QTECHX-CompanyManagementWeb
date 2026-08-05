@@ -167,6 +167,7 @@ async function updateProjectHandler(req, res) {
       'nda_signed','agreement_uploaded','total_project_cost','current_status','overall_progress',
       'proposal_date','approval_date','project_start_date','estimated_completion_date',
       'project_end_date','go_live_date','support_period',
+      'is_extended_project','extended_project_amount',
       'frontend_tech','mobile_tech','backend_tech','database_tech',
       'github_link','domain_name','sub_domain_name',
       'project_manager','ui_ux_designer','frontend_developers','backend_developers',

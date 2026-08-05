@@ -208,14 +208,11 @@ export default function AddProject() {
     setLoading(true); setError(''); setSuccess('');
     try {
       const form = new FormData();
-      const totalProjectCost = calculateProjectTotal({
-        baseAmount: formData.total_project_cost,
-        extensionAmount: formData.extended_project_amount,
-        isExtended: Boolean(formData.is_extended_project),
-      });
       const payload = {
         ...formData,
-        total_project_cost: totalProjectCost || (formData.total_project_cost ? Number(formData.total_project_cost) : null),
+        total_project_cost: formData.total_project_cost ? Number(formData.total_project_cost) : null,
+        is_extended_project: formData.is_extended_project ? 1 : 0,
+        extended_project_amount: formData.extended_project_amount ? Number(formData.extended_project_amount) : null,
         overall_progress:    Number(formData.overall_progress)    || 0,
         ui_progress:         Number(formData.ui_progress)         || 0,
         frontend_progress:   Number(formData.frontend_progress)   || 0,
@@ -229,7 +226,7 @@ export default function AddProject() {
         if (value === '' || value === null || value === undefined) return;
         form.append(k, value);
       });
-      const documentFieldsToSend = [...DOCUMENT_FIELDS, 'nda_doc'];
+      const documentFieldsToSend = [...DOCUMENT_FIELDS, 'nda_doc', 'agreement_doc'];
       documentFieldsToSend.forEach((field) => {
         if (documentFiles[field]) {
           form.append(field, documentFiles[field]);
@@ -395,21 +392,12 @@ export default function AddProject() {
                 )}
               </div>
               <p className="mt-2 text-xs text-white/40">
-                Total cost will be {formData.total_project_cost ? `${Number(formData.total_project_cost).toLocaleString('en-IN')} + extension` : 'base amount + extension'} when enabled.
-              </p>
-            </label>
-            <label className="text-sm text-white/60 md:col-span-2">
-              <span className="mb-1.5 block font-medium">Calculated Total Cost (₹)</span>
-              <input
-                className={`${fieldClass} bg-white/5 text-orange-300`}
-                type="text"
-                readOnly
-                value={calculateProjectTotal({
+                Total will be {calculateProjectTotal({
                   baseAmount: formData.total_project_cost,
                   extensionAmount: formData.extended_project_amount,
                   isExtended: Boolean(formData.is_extended_project),
-                }).toLocaleString('en-IN')}
-              />
+                }).toLocaleString('en-IN')} when enabled.
+              </p>
             </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Description</span>
