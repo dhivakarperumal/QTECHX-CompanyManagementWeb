@@ -142,7 +142,7 @@ export default function Incomes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const [formData, setFormData] = useState({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' });
+  const [formData, setFormData] = useState({ ...BLANK, paid_to: 'Q-Techx Solutions' });
   const [interns, setInterns] = useState([]);
   const [history, setHistory] = useState([]);
   
@@ -268,7 +268,8 @@ export default function Incomes() {
       amount: record.amount || '',
       payment_type: record.payment_type || '',
       date_of_payment: record.date_of_payment ? new Date(record.date_of_payment).toISOString().split('T')[0] : '',
-      paid_to: record.paid_to || ''
+      paid_to: record.paid_to || 'Q-Techx Solutions',
+      invoice_number: record.invoice_number || ''
     });
   };
 
@@ -291,7 +292,7 @@ export default function Incomes() {
   const resetForm = () => {
     setEditId(null);
     setShowForm(false);
-    setFormData({ ...BLANK, paid_to: user?.username || user?.name || 'Admin' });
+    setFormData({ ...BLANK, paid_to: 'Q-Techx Solutions' });
     setError('');
   };
 
@@ -454,6 +455,13 @@ export default function Incomes() {
               <span className="mb-1.5 block font-medium">Received By *</span>
               <input type="text" className={fieldClass} name="paid_to" value={formData.paid_to} onChange={handleChange} required />
             </label>
+            
+            {editId && (
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Invoice Number</span>
+                <input type="text" className={`${fieldClass} opacity-50 cursor-not-allowed`} value={formData.invoice_number || 'Auto-generated'} disabled />
+              </label>
+            )}
           </div>
 
           <div className="mt-5 flex justify-end gap-3 pt-5 border-t border-white/10">
@@ -539,7 +547,7 @@ export default function Incomes() {
               <div key={record.income_id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-white">{record.income_type}</p>
+                    <p className="font-semibold text-white">{record.income_type} <span className="text-xs font-mono text-white/40 ml-2">{record.invoice_number}</span></p>
                     <p className="text-xs text-white/40">{record.intern_name || record.income_reason || '—'}</p>
                   </div>
                   <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">₹{parseFloat(record.amount || 0).toLocaleString('en-IN')}</span>
@@ -565,7 +573,8 @@ export default function Incomes() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-[#0e1118] text-white/40">
                 <tr>
-                  <th className="px-4 py-3 font-medium rounded-l-xl">Date</th>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Invoice No</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 font-medium">Details (Intern/Reason)</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
@@ -589,6 +598,7 @@ export default function Incomes() {
                 filteredHistory.map((h, i) => (
                   <tr key={h.id || i} className="hover:bg-white/2 transition">
                     <td className="px-4 py-3">{new Date(h.date_of_payment).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{h.invoice_number || '—'}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-white/5 border border-white/10">
                         {h.income_type}
@@ -668,7 +678,7 @@ export default function Incomes() {
                     Date: {new Date(selectedReceipt.date_of_payment).toLocaleDateString()}
                   </p>
                   <p className="text-sm font-medium text-gray-600 mt-1">
-                    Receipt ID: {selectedReceipt.income_id.split('-')[0].toUpperCase()}
+                    Invoice No: {selectedReceipt.invoice_number || selectedReceipt.income_id.split('-')[0].toUpperCase()}
                   </p>
                 </div>
               </div>

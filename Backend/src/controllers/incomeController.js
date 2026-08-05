@@ -38,12 +38,25 @@ exports.createIncome = async (req, res) => {
 
     const income_id = uuidv4();
 
+    // Generate Invoice Number
+    const [invoiceRows] = await connection.query("SELECT invoice_number FROM incomes WHERE invoice_number LIKE 'QS%' ORDER BY id DESC LIMIT 1");
+    let nextInvoiceNumber = 'QS0001';
+    if (invoiceRows.length > 0 && invoiceRows[0].invoice_number) {
+      const lastInvoice = invoiceRows[0].invoice_number;
+      const numMatch = lastInvoice.match(/\d+$/);
+      if (numMatch) {
+        const nextNum = parseInt(numMatch[0], 10) + 1;
+        nextInvoiceNumber = 'QS' + String(nextNum).padStart(4, '0');
+      }
+    }
+
     await connection.query(
       `INSERT INTO incomes 
-       (income_id, income_type, intern_id, intern_name, income_reason, amount, payment_type, date_of_payment, paid_to, created_by, updated_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (income_id, invoice_number, income_type, intern_id, intern_name, income_reason, amount, payment_type, date_of_payment, paid_to, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         income_id,
+        nextInvoiceNumber,
         income_type || '',
         intern_id || null,
         intern_name || null,

@@ -1433,6 +1433,7 @@ async function ensureIncomesSchema(pool) {
       `CREATE TABLE IF NOT EXISTS incomes (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT,
         income_id VARCHAR(36) NOT NULL,
+        invoice_number VARCHAR(50) NULL,
         income_type VARCHAR(100) NOT NULL,
         intern_id VARCHAR(36) NULL,
         intern_name VARCHAR(255) NULL,
@@ -1459,6 +1460,9 @@ async function ensureIncomesSchema(pool) {
     }
     if (!columnNames.has('updated_by')) {
       addColumnStatements.push('ADD COLUMN updated_by VARCHAR(36) NULL AFTER created_by');
+    }
+    if (!columnNames.has('invoice_number')) {
+      addColumnStatements.push('ADD COLUMN invoice_number VARCHAR(50) NULL AFTER income_id');
     }
 
     if (addColumnStatements.length) {
