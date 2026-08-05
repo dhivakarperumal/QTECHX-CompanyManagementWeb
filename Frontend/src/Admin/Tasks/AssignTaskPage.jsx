@@ -75,6 +75,14 @@ export default function AssignTaskPage() {
   const [assignForm, setAssignForm]             = useState(EMPTY_ASSIGN_FORM);
 
   const [projectEmployeesLoading, setProjectEmployeesLoading] = useState(false);
+
+  const getEmployeeDesignation = (employeeId) => {
+    const employee = assignedEmployees.find((emp) => {
+      const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
+      return String(id) === String(employeeId);
+    });
+    return employee?.designation || employee?.role || "";
+  };
   const [planLoading, setPlanLoading]           = useState(false);
   const [assigningTask, setAssigningTask]       = useState(false);
   const [assignError, setAssignError]           = useState("");
@@ -461,7 +469,12 @@ export default function AssignTaskPage() {
       });
 
       setAssignSuccess(`${results.length} module${results.length > 1 ? "s" : ""} assigned successfully!`);
-      setAssignForm((p) => ({ ...EMPTY_ASSIGN_FORM, project_id: p.project_id, assigned_to: p.assigned_to }));
+      setAssignForm((p) => ({
+        ...EMPTY_ASSIGN_FORM,
+        project_id: p.project_id,
+        assigned_to: p.assigned_to,
+        assignment_date: getTodayIso(),
+      }));
       setSelectedModules([]);
       setAssignFile(null);
 
@@ -507,7 +520,7 @@ export default function AssignTaskPage() {
       </div>
 
       {/* Form Card */}
-      <div className="rounded-3xl border border-white/10 bg-[#0f141d] p-6 space-y-4">
+      <div className="w-full max-w-full rounded-3xl border border-white/10 bg-[#0f141d] p-6 space-y-4">
 
         {/* Row 1: Project + Employee */}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -540,7 +553,14 @@ export default function AssignTaskPage() {
             ) : (
               <select
                 value={assignForm.assigned_to}
-                onChange={(e) => setAssignForm((p) => ({ ...p, assigned_to: e.target.value }))}
+                onChange={(e) => {
+                  const employeeId = e.target.value;
+                  setAssignForm((p) => ({
+                    ...p,
+                    assigned_to: employeeId,
+                    team: getEmployeeDesignation(employeeId),
+                  }));
+                }}
                 className={inputCls}
                 disabled={!assignForm.project_id}
               >
@@ -738,7 +758,7 @@ export default function AssignTaskPage() {
                     <thead className="bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
                       <tr>
                         <th className="px-4 py-3 w-10"><BadgeCheck size={14} className="text-emerald-500" /></th>
-                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">S No</th>
                         <th className="px-4 py-3">Module / Task Title</th>
                         <th className="px-4 py-3">Duration</th>
                         <th className="px-4 py-3"><span className="flex items-center gap-1"><Clock size={11}/>Assigned At</span></th>
@@ -846,8 +866,8 @@ export default function AssignTaskPage() {
           </div>
         </div>
 
-        {/* Row 3: Team + Assignment + Start + End + Status */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {/* Row 3: Team + Start + End + Status (Assignment Date is stored hidden) */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <FieldBox label="Team / Department">
             <input
               value={assignForm.team}
@@ -857,14 +877,8 @@ export default function AssignTaskPage() {
             />
           </FieldBox>
 
-          <FieldBox label="Assignment Date">
-            <input
-              type="date"
-              value={assignForm.assignment_date}
-              onChange={(e) => setAssignForm((p) => ({ ...p, assignment_date: e.target.value }))}
-              className={inputCls}
-            />
-          </FieldBox>
+          {/* Keep assignment_date in state and payload, but do not show the field */}
+          <input type="hidden" name="assignment_date" value={assignForm.assignment_date} />
 
           <FieldBox label="Start Date">
             <input
