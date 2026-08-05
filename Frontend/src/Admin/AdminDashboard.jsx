@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  PieChart, Pie, Cell, AreaChart, Area, BarChart, Bar, RadarChart,
+  Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 
 /* ─── Helpers ─── */
@@ -105,6 +106,124 @@ const TrendGraph = ({ data }) => {
     </div>
   );
 };
+
+const CARD_COLORS = {
+  Pending: '#f59e0b',
+  'In Progress': '#3b82f6',
+  Completed: '#10b981',
+  'On Hold': '#facc15',
+  Cancelled: '#ef4444',
+  Review: '#8b5cf6',
+  Testing: '#a855f7',
+};
+
+const FOLLOW_UP_COLORS = {
+  Pending: '#f59e0b',
+  'Follow Up': '#3b82f6',
+  Completed: '#10b981',
+  Rescheduled: '#8b5cf6',
+  Cancelled: '#ef4444',
+};
+
+const StatusCard = ({ title, subtitle, actionLabel, actionOnClick, children }) => (
+  <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur-xl">
+    <div className="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/40">{subtitle}</p>
+        <h3 className="text-white font-bold text-lg mt-1">{title}</h3>
+      </div>
+      {actionLabel && (
+        <button onClick={actionOnClick} className="text-xs uppercase tracking-[0.24em] text-primary hover:text-white transition">
+          {actionLabel}
+        </button>
+      )}
+    </div>
+    {children}
+  </div>
+);
+
+const TaskStatusCard = ({ data, onViewAll }) => (
+  <StatusCard title="Task Status" subtitle="Live task breakdown" actionLabel="View Tasks" actionOnClick={onViewAll}>
+    <div className="h-52">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+          <XAxis dataKey="status" stroke="rgba(255,255,255,0.45)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis stroke="rgba(255,255,255,0.45)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 }} itemStyle={{ color: '#fff' }} />
+          <Bar dataKey="count" radius={[12, 12, 0, 0]}>
+            {data.map((entry) => (
+              <Cell key={entry.status} fill={CARD_COLORS[entry.status] || '#7c3aed'} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="grid grid-cols-2 gap-3 mt-5">
+      {data.map((item) => (
+        <div key={item.status} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10">
+          <p className="text-xs text-white/50">{item.status}</p>
+          <p className="text-2xl font-semibold text-white">{item.count}</p>
+        </div>
+      ))}
+    </div>
+  </StatusCard>
+);
+
+const ProjectStatusCard = ({ data, onViewAll }) => (
+  <StatusCard title="Project Health" subtitle="Current project stages" actionLabel="View Projects" actionOnClick={onViewAll}>
+    <div className="h-52">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={data} outerRadius="80%">
+          <PolarGrid stroke="rgba(255,255,255,0.08)" />
+          <PolarAngleAxis dataKey="current_status" stroke="rgba(255,255,255,0.7)" tick={{ fontSize: 11 }} />
+          <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
+          <Radar name="Projects" dataKey="count" stroke="#f97316" fill="#f97316" fillOpacity={0.22} />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="grid grid-cols-2 gap-2 mt-4">
+      {data.slice(0, 4).map((item) => (
+        <div key={item.current_status} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10 text-sm">
+          <p className="text-white/50">{item.current_status}</p>
+          <p className="text-white font-semibold">{item.count}</p>
+        </div>
+      ))}
+    </div>
+  </StatusCard>
+);
+
+const ClientFollowupCard = ({ data, onViewAll }) => (
+  <StatusCard title="Client Follow-ups" subtitle="Follow-up activity status" actionLabel="View Follow-ups" actionOnClick={onViewAll}>
+    <div className="flex gap-4 flex-col xl:flex-row items-center">
+      <div className="min-w-[160px] h-48 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="count" nameKey="follow_up_status" innerRadius={40} outerRadius={70} paddingAngle={3} stroke="none">
+              {data.map((entry) => (
+                <Cell key={entry.follow_up_status} fill={FOLLOW_UP_COLORS[entry.follow_up_status] || '#6366f1'} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 }} itemStyle={{ color: '#fff' }} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex-1 w-full">
+        <div className="space-y-3">
+          {data.map((item) => (
+            <div key={item.follow_up_status} className="flex items-center justify-between gap-2 rounded-2xl bg-slate-950/80 p-3 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: FOLLOW_UP_COLORS[item.follow_up_status] || '#6366f1' }} />
+                <span className="text-sm text-white/70">{item.follow_up_status}</span>
+              </div>
+              <span className="text-white font-semibold">{item.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </StatusCard>
+);
 
 /* ─── Mock Data for Charts ─── */
 const overviewData = [
@@ -213,18 +332,18 @@ const AdminDashboard = () => {
   const stats = [
     { icon: Users, label: 'Total Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', change: '+3 this month', changeType: 'up', color: 'bg-blue-500/20 text-blue-400', bgColor: 'bg-blue-500' },
     { icon: FolderKanban, label: 'Active Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', change: '+2 new', changeType: 'up', color: 'bg-primary/20 text-primary', bgColor: 'bg-primary' },
-    { icon: CheckSquare, label: 'Tasks In Progress', value: dashboard ? String(dashboard.tasksInProgress || 0) : '—', change: '12 overdue', changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
-    { icon: CalendarOff, label: 'Pending Leave Requests', value: dashboard ? String(dashboard.pendingLeaveRequests || 0) : '—', change: '3 urgent', changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: ClipboardCheck, label: 'Total Tasks', value: dashboard ? String(dashboard.totalTasks || 0) : '—', change: '7 new', changeType: 'up', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
     { icon: GraduationCap, label: 'Active Trainees', value: dashboard ? String(dashboard.activeTrainees || 0) : '—', change: '+5 this week', changeType: 'up', color: 'bg-teal-500/20 text-teal-400', bgColor: 'bg-teal-500' },
     { icon: BookOpen, label: 'Internship Students', value: dashboard ? String(dashboard.internshipStudents || 0) : '—', change: 'Batch Jul 2026', changeType: 'up', color: 'bg-pink-500/20 text-pink-400', bgColor: 'bg-pink-500' },
     { icon: DollarSign, label: 'Monthly Payroll', value: dashboard ? formatPayroll(dashboard.monthlyPayroll) : '—', change: 'Jul 31 due', changeType: 'up', color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
-    { icon: ClipboardCheck, label: 'Attendance Today', value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—', changeType: 'down', color: 'bg-sky-500/20 text-sky-400', bgColor: 'bg-sky-500' },
+    { icon: FolderKanban, label: 'Pending Follow-ups', value: dashboard ? String(dashboard.clientStats?.pendingFollowUps || 0) : '—', change: '2 due today', changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: CalendarOff, label: 'Attendance Today', value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—', changeType: 'down', color: 'bg-sky-500/20 text-sky-400', bgColor: 'bg-sky-500' },
   ];
 
   const heroMetrics = [
-    { icon: Users, label: 'Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
+    { icon: Users, label: 'Total Clients', value: dashboard ? String(dashboard.clientStats?.total || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
     { icon: FolderKanban, label: 'Live Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', accent: 'bg-primary/10 text-primary' },
-    { icon: ClipboardCheck, label: 'Present Today', value: dashboard ? String(dashboard.attendanceToday?.present || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
+    { icon: CalendarOff, label: 'Pending Follow-ups', value: dashboard ? String(dashboard.clientStats?.pendingFollowUps || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
     { icon: Clock, label: 'Payroll Due', value: 'End of Month', accent: 'bg-yellow-500/10 text-yellow-300' },
   ];
 
@@ -250,6 +369,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const TARGET_REVENUE = 500000;
+  const currentIncome = dashboard ? (dashboard.currentMonthIncome || 0) : 0;
+  const targetPercentage = Math.min(Math.round((currentIncome / TARGET_REVENUE) * 100), 100);
+
   const upcomingEvents = (dashboard?.upcomingEvents || []).map(e => {
     const dateObj = new Date(e.startDate);
     const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -269,14 +392,10 @@ const AdminDashboard = () => {
     };
   });
 
-  const taskOverview = [
-    { label: 'Completed', value: 89, color: 'text-green-400', bg: 'bg-green-500' },
-    { label: 'In Progress', value: 67, color: 'text-blue-400', bg: 'bg-blue-500' },
-    { label: 'Pending', value: 34, color: 'text-yellow-400', bg: 'bg-yellow-500' },
-    { label: 'Overdue', value: 12, color: 'text-red-400', bg: 'bg-red-500' },
-  ];
+  const taskStatusData = dashboard?.taskStats || tasksStatusData;
+  const projectStatusData = dashboard?.projectStats || [];
+  const clientFollowupData = dashboard?.clientFollowUps || [];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
-  const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
 
   return (
     <div className="space-y-6 pb-6 text-white min-h-screen">
@@ -310,71 +429,73 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,_rgba(248,116,20,0.18),transparent_35%)]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),transparent_40%)]" />
+          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl flex flex-col">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),transparent_40%)]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),transparent_45%)]" />
+            
             <div className="relative z-10 flex items-start justify-between gap-3 mb-6">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/40">Today’s highlights</p>
-                <h2 className="text-white font-bold text-lg mt-2">Key metrics</h2>
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-400/80">Financial Overview</p>
+                <h2 className="text-white font-bold text-xl mt-2">Revenue Insights</h2>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-white/70">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-emerald-300 font-semibold shadow-lg shadow-emerald-500/10">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Data
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-5 shadow-sm shadow-black/10">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
-                    <div className="flex items-center gap-3">
-                      <p className="text-3xl font-semibold text-white">₹{dashboard ? (dashboard.currentMonthIncome / 100000).toFixed(1) : 0}L</p>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 rounded-full px-2 py-1">+12%</span>
-                    </div>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-500/20 to-orange-400/10 text-orange-300">
-                    <DollarSign size={20} />
+            <div className="relative z-10 grid grid-cols-1 gap-4 flex-1">
+              <div className="rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 to-transparent pt-6 px-6 pb-4 shadow-md shadow-black/20 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/30 transition-colors" />
+                
+                <div className="absolute bottom-0 left-0 right-0 h-24 opacity-60 pointer-events-none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="relative z-10 flex items-start justify-between gap-3 mb-3">
+                  <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Current Month Income</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 shadow-inner">
+                    <DollarSign size={18} />
                   </div>
                 </div>
-                <div className="mt-6 overflow-hidden rounded-full bg-white/10 h-2">
-                  <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '72%' }} />
+                <div className="relative z-10 flex items-end gap-3">
+                  <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? (dashboard.currentMonthIncome || 0).toLocaleString('en-IN') : 0}</p>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-white/50">
-                  <span>Monthly target</span>
-                  <span>72% achieved</span>
+                <div className="relative z-10 mt-4 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
+                    <TrendingUp size={12} /> +12%
+                  </span>
+                  <span className="text-[11px] text-white/40">vs last month</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10 flex flex-col justify-between">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Total Clients</p>
-                      <p className="text-white font-semibold text-2xl mt-2">{dashboard?.clientStats?.total || 0}</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-300">
-                      <Users size={18} />
-                    </div>
-                  </div>
-                  <p className="mt-3 text-[11px] text-white/50">Across all service categories</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-[1.25rem] border border-rose-500/10 bg-rose-500/[0.03] p-4 shadow-sm hover:bg-rose-500/[0.05] transition-colors">
+                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Monthly Payroll</p>
+                   <p className="text-xl font-bold text-rose-300">₹{dashboard ? (dashboard.monthlyPayroll || 0).toLocaleString('en-IN') : 0}</p>
                 </div>
+                <div className="rounded-[1.25rem] border border-blue-500/10 bg-blue-500/[0.03] p-4 shadow-sm hover:bg-blue-500/[0.05] transition-colors">
+                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Net Est. Profit</p>
+                   <p className="text-xl font-bold text-blue-300">₹{dashboard ? ((dashboard.currentMonthIncome || 0) - (dashboard.monthlyPayroll || 0)).toLocaleString('en-IN') : 0}</p>
+                </div>
+              </div>
 
-                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Client Status</p>
-                      <p className="text-white font-semibold text-sm mt-2">Active vs Leads</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-                    {(dashboard?.clientStats?.breakdown || []).slice(0, 2).map((item, idx) => (
-                      <div key={idx} className="rounded-2xl bg-white/5 p-2">
-                        <p className="text-[10px] text-white/40 uppercase tracking-[0.18em] truncate">{item.client_status}</p>
-                        <p className="text-sm font-semibold text-white mt-1">{item.count}</p>
-                      </div>
-                    ))}
-                  </div>
+              <div className="rounded-[1.25rem] border border-white/5 bg-white/[0.02] p-4 flex flex-col justify-center mt-1">
+                <div className="flex items-center justify-between text-[11px] text-white/50 mb-2 font-medium">
+                  <span className="uppercase tracking-[0.15em]">Monthly Revenue Target (₹{(TARGET_REVENUE/100000).toFixed(1)}L)</span>
+                  <span className="text-emerald-400">{targetPercentage}% Achieved</span>
+                </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-emerald-500/50 to-emerald-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${targetPercentage}%` }} />
                 </div>
               </div>
             </div>
@@ -481,6 +602,13 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+      </div>
+
+      {/* ── STATUS CARDS ROW ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <TaskStatusCard data={taskStatusData} onViewAll={() => navigate('/admin/tasks')} />
+        <ProjectStatusCard data={projectStatusData} onViewAll={() => navigate('/admin/projects')} />
+        <ClientFollowupCard data={clientFollowupData} onViewAll={() => navigate('/admin/clients/followups')} />
       </div>
 
       {/* ── BOTTOM ROW ── */}
