@@ -100,9 +100,16 @@ async function getDashboardMetrics(req, res) {
     const [pendingFollowUpRows] = await db.execute("SELECT COUNT(*) as total FROM clients WHERE follow_up_status = 'Pending'");
     const pendingFollowUps = pendingFollowUpRows[0]?.total || 0;
 
+    const [clientFollowUpRows] = await db.execute("SELECT follow_up_status, COUNT(*) as count FROM clients GROUP BY follow_up_status");
+
     const [traineeTypeRows] = await db.execute("SELECT type, COUNT(*) as count FROM trainee_intern GROUP BY type");
     
     const [projectStatusRows] = await db.execute("SELECT current_status, COUNT(*) as count FROM projects GROUP BY current_status");
+
+    const [totalTaskRows] = await db.execute("SELECT COUNT(*) as total FROM tasks WHERE deleted = 0");
+    const totalTasks = totalTaskRows[0]?.total || 0;
+
+    const [taskStatusRows] = await db.execute("SELECT status, COUNT(*) as count FROM tasks WHERE deleted = 0 GROUP BY status");
 
     const [upcomingEventRows] = await db.execute("SELECT title, startDate, startTime, eventType FROM events WHERE startDate >= CURDATE() ORDER BY startDate ASC, startTime ASC LIMIT 4");
 
@@ -110,6 +117,7 @@ async function getDashboardMetrics(req, res) {
       totalEmployees,
       activeProjects,
       tasksInProgress,
+      totalTasks,
       pendingLeaveRequests,
       activeTrainees,
       internshipStudents,
@@ -121,7 +129,9 @@ async function getDashboardMetrics(req, res) {
       clientStats: { total: totalClients, breakdown: clientRows },
       traineeStats: traineeTypeRows,
       projectStats: projectStatusRows,
-      upcomingEvents: upcomingEventRows
+      taskStats: taskStatusRows,
+      clientFollowUps: clientFollowUpRows,
+      upcomingEvents: upcomingEventRows,
     });
   } catch (err) {
     console.error('getDashboardMetrics error:', err);

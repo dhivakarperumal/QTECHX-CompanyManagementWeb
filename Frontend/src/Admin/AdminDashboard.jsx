@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  PieChart, Pie, Cell, AreaChart, Area, BarChart, Bar, RadarChart,
+  Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 
 /* ─── Helpers ─── */
@@ -105,6 +106,124 @@ const TrendGraph = ({ data }) => {
     </div>
   );
 };
+
+const CARD_COLORS = {
+  Pending: '#f59e0b',
+  'In Progress': '#3b82f6',
+  Completed: '#10b981',
+  'On Hold': '#facc15',
+  Cancelled: '#ef4444',
+  Review: '#8b5cf6',
+  Testing: '#a855f7',
+};
+
+const FOLLOW_UP_COLORS = {
+  Pending: '#f59e0b',
+  'Follow Up': '#3b82f6',
+  Completed: '#10b981',
+  Rescheduled: '#8b5cf6',
+  Cancelled: '#ef4444',
+};
+
+const StatusCard = ({ title, subtitle, actionLabel, actionOnClick, children }) => (
+  <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/20 backdrop-blur-xl">
+    <div className="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/40">{subtitle}</p>
+        <h3 className="text-white font-bold text-lg mt-1">{title}</h3>
+      </div>
+      {actionLabel && (
+        <button onClick={actionOnClick} className="text-xs uppercase tracking-[0.24em] text-primary hover:text-white transition">
+          {actionLabel}
+        </button>
+      )}
+    </div>
+    {children}
+  </div>
+);
+
+const TaskStatusCard = ({ data, onViewAll }) => (
+  <StatusCard title="Task Status" subtitle="Live task breakdown" actionLabel="View Tasks" actionOnClick={onViewAll}>
+    <div className="h-52">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 0, left: -10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+          <XAxis dataKey="status" stroke="rgba(255,255,255,0.45)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis stroke="rgba(255,255,255,0.45)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 }} itemStyle={{ color: '#fff' }} />
+          <Bar dataKey="count" radius={[12, 12, 0, 0]}>
+            {data.map((entry) => (
+              <Cell key={entry.status} fill={CARD_COLORS[entry.status] || '#7c3aed'} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="grid grid-cols-2 gap-3 mt-5">
+      {data.map((item) => (
+        <div key={item.status} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10">
+          <p className="text-xs text-white/50">{item.status}</p>
+          <p className="text-2xl font-semibold text-white">{item.count}</p>
+        </div>
+      ))}
+    </div>
+  </StatusCard>
+);
+
+const ProjectStatusCard = ({ data, onViewAll }) => (
+  <StatusCard title="Project Health" subtitle="Current project stages" actionLabel="View Projects" actionOnClick={onViewAll}>
+    <div className="h-52">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={data} outerRadius="80%">
+          <PolarGrid stroke="rgba(255,255,255,0.08)" />
+          <PolarAngleAxis dataKey="current_status" stroke="rgba(255,255,255,0.7)" tick={{ fontSize: 11 }} />
+          <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
+          <Radar name="Projects" dataKey="count" stroke="#f97316" fill="#f97316" fillOpacity={0.22} />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+    <div className="grid grid-cols-2 gap-2 mt-4">
+      {data.slice(0, 4).map((item) => (
+        <div key={item.current_status} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10 text-sm">
+          <p className="text-white/50">{item.current_status}</p>
+          <p className="text-white font-semibold">{item.count}</p>
+        </div>
+      ))}
+    </div>
+  </StatusCard>
+);
+
+const ClientFollowupCard = ({ data, onViewAll }) => (
+  <StatusCard title="Client Follow-ups" subtitle="Follow-up activity status" actionLabel="View Follow-ups" actionOnClick={onViewAll}>
+    <div className="flex gap-4 flex-col xl:flex-row items-center">
+      <div className="min-w-[160px] h-48 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="count" nameKey="follow_up_status" innerRadius={40} outerRadius={70} paddingAngle={3} stroke="none">
+              {data.map((entry) => (
+                <Cell key={entry.follow_up_status} fill={FOLLOW_UP_COLORS[entry.follow_up_status] || '#6366f1'} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 }} itemStyle={{ color: '#fff' }} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex-1 w-full">
+        <div className="space-y-3">
+          {data.map((item) => (
+            <div key={item.follow_up_status} className="flex items-center justify-between gap-2 rounded-2xl bg-slate-950/80 p-3 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: FOLLOW_UP_COLORS[item.follow_up_status] || '#6366f1' }} />
+                <span className="text-sm text-white/70">{item.follow_up_status}</span>
+              </div>
+              <span className="text-white font-semibold">{item.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </StatusCard>
+);
 
 /* ─── Mock Data for Charts ─── */
 const overviewData = [
@@ -213,12 +332,12 @@ const AdminDashboard = () => {
   const stats = [
     { icon: Users, label: 'Total Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', change: '+3 this month', changeType: 'up', color: 'bg-blue-500/20 text-blue-400', bgColor: 'bg-blue-500' },
     { icon: FolderKanban, label: 'Active Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', change: '+2 new', changeType: 'up', color: 'bg-primary/20 text-primary', bgColor: 'bg-primary' },
-    { icon: CheckSquare, label: 'Tasks In Progress', value: dashboard ? String(dashboard.tasksInProgress || 0) : '—', change: '12 overdue', changeType: 'down', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
-    { icon: CalendarOff, label: 'Pending Leave Requests', value: dashboard ? String(dashboard.pendingLeaveRequests || 0) : '—', change: '3 urgent', changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: ClipboardCheck, label: 'Total Tasks', value: dashboard ? String(dashboard.totalTasks || 0) : '—', change: '7 new', changeType: 'up', color: 'bg-purple-500/20 text-purple-400', bgColor: 'bg-purple-500' },
     { icon: GraduationCap, label: 'Active Trainees', value: dashboard ? String(dashboard.activeTrainees || 0) : '—', change: '+5 this week', changeType: 'up', color: 'bg-teal-500/20 text-teal-400', bgColor: 'bg-teal-500' },
     { icon: BookOpen, label: 'Internship Students', value: dashboard ? String(dashboard.internshipStudents || 0) : '—', change: 'Batch Jul 2026', changeType: 'up', color: 'bg-pink-500/20 text-pink-400', bgColor: 'bg-pink-500' },
     { icon: DollarSign, label: 'Monthly Payroll', value: dashboard ? formatPayroll(dashboard.monthlyPayroll) : '—', change: 'Jul 31 due', changeType: 'up', color: 'bg-emerald-500/20 text-emerald-400', bgColor: 'bg-emerald-500' },
-    { icon: ClipboardCheck, label: 'Attendance Today', value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—', changeType: 'down', color: 'bg-sky-500/20 text-sky-400', bgColor: 'bg-sky-500' },
+    { icon: FolderKanban, label: 'Pending Follow-ups', value: dashboard ? String(dashboard.clientStats?.pendingFollowUps || 0) : '—', change: '2 due today', changeType: 'down', color: 'bg-yellow-500/20 text-yellow-400', bgColor: 'bg-yellow-500' },
+    { icon: CalendarOff, label: 'Attendance Today', value: dashboard ? `${dashboard.attendanceToday?.present || 0}/${dashboard.attendanceToday?.total || 0}` : '—', change: dashboard ? `${(dashboard.attendanceToday?.total || 0) - (dashboard.attendanceToday?.present || 0)} absent` : '—', changeType: 'down', color: 'bg-sky-500/20 text-sky-400', bgColor: 'bg-sky-500' },
   ];
 
   const heroMetrics = [
@@ -269,14 +388,10 @@ const AdminDashboard = () => {
     };
   });
 
-  const taskOverview = [
-    { label: 'Completed', value: 89, color: 'text-green-400', bg: 'bg-green-500' },
-    { label: 'In Progress', value: 67, color: 'text-blue-400', bg: 'bg-blue-500' },
-    { label: 'Pending', value: 34, color: 'text-yellow-400', bg: 'bg-yellow-500' },
-    { label: 'Overdue', value: 12, color: 'text-red-400', bg: 'bg-red-500' },
-  ];
+  const taskStatusData = dashboard?.taskStats || tasksStatusData;
+  const projectStatusData = dashboard?.projectStats || [];
+  const clientFollowupData = dashboard?.clientFollowUps || [];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
-  const totalTasks = taskOverview.reduce((a, t) => a + t.value, 0);
 
   return (
     <div className="space-y-6 pb-6 text-white min-h-screen">
@@ -473,6 +588,13 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+      </div>
+
+      {/* ── STATUS CARDS ROW ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <TaskStatusCard data={taskStatusData} onViewAll={() => navigate('/admin/tasks')} />
+        <ProjectStatusCard data={projectStatusData} onViewAll={() => navigate('/admin/projects')} />
+        <ClientFollowupCard data={clientFollowupData} onViewAll={() => navigate('/admin/clients/followups')} />
       </div>
 
       {/* ── BOTTOM ROW ── */}
