@@ -356,49 +356,51 @@ export default function AddProject() {
               <span className="mb-1.5 block font-medium">Overall Progress (%)</span>
               <input className={fieldClass} type="number" name="overall_progress" value={formData.overall_progress} onChange={handleChange} placeholder="0" min="0" max="100" />
             </label>
-            <label className="text-sm text-white/60 md:col-span-2">
-              <span className="mb-1.5 block font-medium">Extended Project</span>
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-[#0e1118] px-3 py-3">
-                <label className="flex items-center gap-2 text-sm text-white/70">
-                  <input
-                    type="radio"
-                    name="is_extended_project"
-                    checked={Boolean(formData.is_extended_project)}
-                    onChange={() => handleExtendedProjectToggle(true)}
-                  />
-                  <span>Yes</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm text-white/70">
-                  <input
-                    type="radio"
-                    name="is_extended_project"
-                    checked={!Boolean(formData.is_extended_project)}
-                    onChange={() => handleExtendedProjectToggle(false)}
-                  />
-                  <span>No</span>
-                </label>
-                {Boolean(formData.is_extended_project) && (
-                  <div className="flex-1 min-w-[220px]">
+            {isEdit && (
+              <label className="text-sm text-white/60 md:col-span-2">
+                <span className="mb-1.5 block font-medium">Extended Project</span>
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-[#0e1118] px-3 py-3">
+                  <label className="flex items-center gap-2 text-sm text-white/70">
                     <input
-                      className={fieldClass}
-                      type="number"
-                      name="extended_project_amount"
-                      value={formData.extended_project_amount}
-                      onChange={handleChange}
-                      placeholder="Enter extension amount"
-                      min="0"
+                      type="radio"
+                      name="is_extended_project"
+                      checked={Boolean(formData.is_extended_project)}
+                      onChange={() => handleExtendedProjectToggle(true)}
                     />
-                  </div>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-white/40">
-                Total will be {calculateProjectTotal({
-                  baseAmount: formData.total_project_cost,
-                  extensionAmount: formData.extended_project_amount,
-                  isExtended: Boolean(formData.is_extended_project),
-                }).toLocaleString('en-IN')} when enabled.
-              </p>
-            </label>
+                    <span>Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="radio"
+                      name="is_extended_project"
+                      checked={!Boolean(formData.is_extended_project)}
+                      onChange={() => handleExtendedProjectToggle(false)}
+                    />
+                    <span>No</span>
+                  </label>
+                  {Boolean(formData.is_extended_project) && (
+                    <div className="flex-1 min-w-[220px]">
+                      <input
+                        className={fieldClass}
+                        type="number"
+                        name="extended_project_amount"
+                        value={formData.extended_project_amount}
+                        onChange={handleChange}
+                        placeholder="Enter extension amount"
+                        min="0"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-white/40">
+                  Total will be {calculateProjectTotal({
+                    baseAmount: formData.total_project_cost,
+                    extensionAmount: formData.extended_project_amount,
+                    isExtended: Boolean(formData.is_extended_project),
+                  }).toLocaleString('en-IN')} when enabled.
+                </p>
+              </label>
+            )}
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Description</span>
               <textarea className={`${fieldClass} min-h-20 resize-y`} name="description" value={formData.description} onChange={handleChange} placeholder="Describe the project scope…" />
