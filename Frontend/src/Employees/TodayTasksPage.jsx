@@ -155,7 +155,13 @@ export default function TodayTasksPage() {
         attachments: parseAttachments(task.attachments),
       }));
 
-      setTasks(all.filter(task => isSameDay(task.due_date) || isSameDay(task.assignment_date)));
+      // Show tasks that have any date (due, start, assigned, or created) matching today
+      setTasks(all.filter(task =>
+        isSameDay(task.due_date) ||
+        isSameDay(task.assignment_date) ||
+        isSameDay(task.start_date) ||
+        isSameDay(task.created_at)
+      ));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load today tasks.');
       setTasks([]);
