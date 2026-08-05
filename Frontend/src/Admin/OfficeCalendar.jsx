@@ -1148,30 +1148,97 @@ const OfficeCalendar = () => {
 
           {/* Today's Events */}
           <div>
-            <div className="oc-sec-title">Today's Events</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <div className="oc-sec-title" style={{ marginBottom: 0 }}>Today's Events</div>
+              {todayEvents.length > 0 && (
+                <span style={{
+                  fontSize: '10px', fontWeight: 700, background: 'rgba(248,116,14,0.15)',
+                  color: '#f97316', border: '1px solid rgba(248,116,14,0.25)',
+                  borderRadius: '20px', padding: '2px 8px'
+                }}>{todayEvents.length}</span>
+              )}
+            </div>
             <div className="oc-sec-sub">{dayjs().format('dddd, MMMM D, YYYY')}</div>
-            {todayEvents.length === 0
-              ? <div style={{ fontSize:'12.5px', color:'rgba(255,255,255,0.4)', textAlign:'center', padding:'12px 0' }}>No events today.</div>
-              : todayEvents.map(ev => {
-                const color = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
-                return (
-                  <div key={ev._id} className="oc-te-item" onClick={() => { setSelectedEvent(ev); setShowDrawer(true); }}>
-                    <span className="oc-te-dot" style={{ background:color, boxShadow: `0 0 5px ${color}` }} />
-                    <div className="oc-te-body">
-                      <div className="oc-te-title">{ev.title}</div>
-                      {!ev.allDay && ev.startTime && (
-                        <div className="oc-te-time">{ev.startTime} – {ev.endTime||'—'}</div>
-                      )}
-                      {ev.location && (
-                        <div className="oc-te-loc"><MapPin size={9} />{ev.location}</div>
-                      )}
+
+            {todayEvents.length === 0 ? (
+              <div style={{
+                textAlign: 'center', padding: '20px 12px',
+                background: 'rgba(255,255,255,0.02)', borderRadius: '12px',
+                border: '1px dashed rgba(255,255,255,0.08)', marginTop: '6px',
+              }}>
+                <CalendarDays size={22} style={{ color: 'rgba(255,255,255,0.2)', margin: '0 auto 6px' }} />
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>No events today</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                {todayEvents.map(ev => {
+                  const color   = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
+                  const TypeIcon = EVENT_TYPE_ICON[ev.eventType] || CalendarRange;
+                  return (
+                    <div
+                      key={ev._id}
+                      onClick={() => { setSelectedEvent(ev); setShowDrawer(true); }}
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: `1px solid rgba(255,255,255,0.08)`,
+                        borderLeft: `3px solid ${color}`,
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                        transition: 'all .15s',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = color; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderLeftColor = color; }}
+                    >
+                      {/* Icon */}
+                      <div style={{
+                        width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                        background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <TypeIcon size={14} style={{ color }} />
+                      </div>
+
+                      {/* Content */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '12.5px', fontWeight: 700, color: '#fff',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{ev.title}</div>
+
+                        {!ev.allDay && ev.startTime && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                            <Clock3 size={9} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
+                            <span style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.5)' }}>
+                              {ev.startTime} – {ev.endTime || '—'}
+                            </span>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em',
+                            background: `${color}18`, color, border: `1px solid ${color}30`,
+                            borderRadius: '20px', padding: '1px 7px',
+                          }}>{ev.eventType}</span>
+
+                          {ev.location && (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+                              <MapPin size={9} />{ev.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
-            }
-            <button className="oc-view-all" onClick={() => setViewMode('agenda')}>
-              View All Events <ChevronDown size={12} style={{ transform:'rotate(-90deg)' }} />
+                  );
+                })}
+              </div>
+            )}
+
+            <button className="oc-view-all" style={{ marginTop: '10px' }} onClick={() => setViewMode('agenda')}>
+              View All Events <ChevronDown size={12} style={{ transform: 'rotate(-90deg)' }} />
             </button>
           </div>
 

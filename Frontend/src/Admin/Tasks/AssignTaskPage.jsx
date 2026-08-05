@@ -38,11 +38,15 @@ function parseAttachments(raw) {
   catch { return []; }
 }
 
+function getTodayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 const EMPTY_ASSIGN_FORM = {
   project_id: "",
   assigned_to: "",
   team: "",
-  assignment_date: "",
+  assignment_date: getTodayIso(),
   start_date: "",
   due_date: "",
   status: "",
@@ -659,7 +663,7 @@ export default function AssignTaskPage() {
                               : <Square size={16} className="text-white/30" />}
                           </button>
                         </th>
-                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">S No</th>
                         <th className="px-4 py-3">Module / Task Title</th>
                         <th className="px-4 py-3">Duration</th>
                         <th className="px-4 py-3"><span className="flex items-center gap-1"><FileText size={11}/>Documents</span></th>
