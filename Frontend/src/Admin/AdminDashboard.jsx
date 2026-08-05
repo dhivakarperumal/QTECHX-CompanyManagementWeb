@@ -484,6 +484,16 @@ const AdminDashboard = () => {
                    <p className="text-xl font-bold text-blue-300">₹{dashboard ? ((dashboard.currentMonthIncome || 0) - (dashboard.monthlyPayroll || 0)).toLocaleString('en-IN') : 0}</p>
                 </div>
               </div>
+
+              <div className="rounded-[1.25rem] border border-white/5 bg-white/[0.02] p-4 flex flex-col justify-center mt-1">
+                <div className="flex items-center justify-between text-[11px] text-white/50 mb-2 font-medium">
+                  <span className="uppercase tracking-[0.15em]">Q3 Revenue Target</span>
+                  <span className="text-emerald-400">75% Achieved</span>
+                </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-emerald-500/50 to-emerald-400 rounded-full" style={{ width: '75%' }} />
+                </div>
+              </div>
             </div>
           </div>
         </div>

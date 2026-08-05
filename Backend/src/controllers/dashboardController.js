@@ -126,7 +126,7 @@ async function getDashboardMetrics(req, res) {
       recentActivity: recentRows,
       overviewData: overviewRows,
       currentMonthIncome,
-      clientStats: { total: totalClients, breakdown: clientRows },
+      clientStats: { total: totalClients, breakdown: clientRows, pendingFollowUps },
       traineeStats: traineeTypeRows,
       projectStats: projectStatusRows,
       taskStats: taskStatusRows,
