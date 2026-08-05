@@ -70,7 +70,7 @@ const navItems = [
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
       { path: "/admin/projects/assignments", label: "Assigned Projects", icon: UserCheck },
-      
+
     ],
   },
 
@@ -105,14 +105,14 @@ const navItems = [
     icon: FolderKanban,
     children: [
       { path: "/admin/myprojects", label: "Projects Completed", icon: List },
-     
+
       { path: "/admin/myprojects/plans", label: "Project Plans", icon: ClipboardList },
       { path: "/admin/myprojects/quotations", label: "Project Quotations", icon: FileText },
 
-      
+
       { path: "/admin/myprojects/images", label: "Project Images", icon: Image },
 
-     
+
 
       { path: "/admin/myprojects/expiry", label: "Hosting & Domain Expiry", icon: CalendarClock },
     ],
@@ -125,11 +125,9 @@ const navItems = [
     icon: GraduationCap,
     children: [
       { path: "/admin/trainees", label: "All Trainees & Interns", icon: GraduationCap },
-      { path: "/admin/trainees/add", label: "Add Trainee / Intern", icon: UserCog },
       { path: "/admin/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
       { path: "/admin/trainees/tasks", label: "Tasks", icon: CheckSquare },
       { path: "/admin/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },
-
     ],
   },
 
@@ -285,7 +283,37 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = isRouteActive(sub.path, true);
+                        const isActive =
+                          location.pathname === sub.path ||
+
+                          // All Projects
+                          (sub.path === "/admin/projects" &&
+                            (
+                              location.pathname === "/admin/projects/add" ||
+                              location.pathname.startsWith("/admin/projects/view/") ||
+                              location.pathname.startsWith("/admin/projects/edit/")
+                            )
+                          ) ||
+
+                            // All Employees
+                            (sub.path === "/admin/employees" &&
+                              (
+                                location.pathname === "/admin/employees/add" ||
+                                location.pathname.startsWith("/admin/employees/view/") ||
+                                location.pathname.startsWith("/admin/employees/edit/")
+                              )) ||
+
+                            // Leave Management
+                            (sub.path === "/admin/employees/leave" &&
+                              location.pathname.startsWith("/admin/leave-history/")) ||
+
+                            // All Trainees
+                            (sub.path === "/admin/trainees" &&
+                              (
+                                location.pathname === "/admin/trainees/add" ||
+                                location.pathname.startsWith("/admin/trainees/view/") ||
+                                location.pathname.startsWith("/admin/trainees/edit/")
+                              ));
                         return (
                           <NavLink
                             key={sub.path}

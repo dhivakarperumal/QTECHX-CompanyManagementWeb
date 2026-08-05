@@ -110,7 +110,7 @@ const EmployeeAttendanceSummary = () => {
     } finally {
       setLoading(false);
     }
-  });
+  }, [user, selectedMonth, selectedYear]);
 
   useEffect(() => {
     fetchMyAttendance();
