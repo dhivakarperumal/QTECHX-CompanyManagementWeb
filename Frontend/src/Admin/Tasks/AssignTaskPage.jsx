@@ -75,6 +75,7 @@ export default function AssignTaskPage() {
   const [assigningTask, setAssigningTask]       = useState(false);
   const [assignError, setAssignError]           = useState("");
   const [assignSuccess, setAssignSuccess]       = useState("");
+  const [moduleTab, setModuleTab]               = useState('not_assigned'); // 'not_assigned' | 'assigned'
 
   // ─── Load all projects once ────────────────────────────────────────────────
   useEffect(() => {
@@ -605,155 +606,223 @@ export default function AssignTaskPage() {
           ) : planModules.length === 0 ? (
             <p className="text-sm text-white/30 py-3">No task modules found for this project plan.</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-white/5">
-              <table className="min-w-full text-sm text-left">
-                <thead className="bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
-                  <tr>
-                    <th className="px-4 py-3 w-10">
-                      <button
-                        type="button"
-                        onClick={toggleAll}
-                        disabled={selectableIndices.length === 0}
-                        className="disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        {allSelectableChosen
-                          ? <CheckSquare size={16} className="text-orange-500" />
-                          : <Square size={16} className="text-white/30" />}
-                      </button>
-                    </th>
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Module / Task Title</th>
-                    <th className="px-4 py-3">Duration</th>
-                    <th className="px-4 py-3"><span className="flex items-center gap-1"><Clock size={11}/>Created At</span></th>
-                    <th className="px-4 py-3"><span className="flex items-center gap-1"><FileText size={11}/>Documents</span></th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {planModules.map((mod, idx) => {
-                    const assigned  = isModuleAssigned(mod);
-                    const checked   = !assigned && selectedModules.includes(idx);
-                    const titleKey  = (mod.title || "").trim().toLowerCase();
-                    const taskRow   = assigned ? assignedTaskMapAll.get(titleKey) : null;
-                    const createdAt = taskRow ? fmtDate(taskRow.created_at) : null;
-                    const docs      = taskRow ? parseAttachments(taskRow.attachments) : [];
-                    return (
-                      <tr
-                        key={idx}
-                        onClick={() => !assigned && toggleModule(idx)}
-                        className={[
-                          "transition-colors align-top",
-                          assigned
-                            ? "cursor-not-allowed bg-white/[0.01]"
-                            : checked
-                              ? "cursor-pointer bg-orange-500/10"
-                              : "cursor-pointer hover:bg-white/[0.03]",
-                        ].join(" ")}
-                      >
-                        {/* Checkbox */}
-                        <td className="px-4 py-3">
-                          {assigned ? (
-                            <BadgeCheck size={16} className="text-emerald-500" />
-                          ) : checked ? (
-                            <CheckSquare size={16} className="text-orange-500" />
-                          ) : (
-                            <Square size={16} className="text-white/30" />
-                          )}
-                        </td>
-                        {/* # */}
-                        <td className="px-4 py-3 text-white/40">{idx + 1}</td>
-                        {/* Title */}
-                        <td className="px-4 py-3">
-                          <span className={`font-semibold ${assigned ? "text-white/50" : "text-white"}`}>
-                            {mod.title || "—"}
-                          </span>
-                        </td>
-                        {/* Duration */}
-                        <td className="px-4 py-3 text-white/70 whitespace-nowrap">
-                          {(() => {
-                            if (mod.duration_hours) return `${mod.duration_hours} hours`;
-                            if (!mod.duration) return "—";
-                            
-                            // If it already contains text/units, show as is
-                            if (/[a-zA-Z]/.test(mod.duration)) {
-                              return mod.duration;
-                            }
-                            
-                            // Fallback for old numeric-only data
-                            const num = Number(mod.duration);
-                            return !isNaN(num) ? `${num * 8} hours` : mod.duration;
-                          })()}
-                        </td>
-                        {/* Created At */}
-                        <td className="px-4 py-3">
-                          {createdAt ? (
-                            <span className="flex items-center gap-1 text-[12px] text-sky-400 whitespace-nowrap">
-                              <Clock size={11} className="shrink-0" />
-                              {createdAt}
-                            </span>
-                          ) : (
-                            <span className="text-white/20 text-xs">—</span>
-                          )}
-                        </td>
-                        {/* Documents */}
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {(docs.length > 0 || mod.documentName) ? (
-                            <div className="flex flex-col gap-1">
-                              {/* Show assigned docs */}
-                              {docs.map((doc, di) => {
-                                const fileUrl = `${API_URL.replace('/api','')}/${doc.path || doc.filename}`;
-                                const label = doc.original_name || doc.filename || `File ${di + 1}`;
-                                return (
+            <div>
+              {/* ── Tabs ── */}
+              <div className="flex items-center gap-1 mb-3 border-b border-white/5 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setModuleTab('not_assigned')}
+                  className={[
+                    "px-4 py-1.5 rounded-lg text-[12px] font-medium transition",
+                    moduleTab === 'not_assigned'
+                      ? "bg-orange-500/20 border border-orange-500/30 text-orange-400"
+                      : "bg-white/5 border border-white/10 text-white/40 hover:text-white/60 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Not Assigned
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-orange-500/20 text-[10px] text-orange-400">
+                    {availableCount}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModuleTab('assigned')}
+                  className={[
+                    "px-4 py-1.5 rounded-lg text-[12px] font-medium transition",
+                    moduleTab === 'assigned'
+                      ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
+                      : "bg-white/5 border border-white/10 text-white/40 hover:text-white/60 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Assigned
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-[10px] text-emerald-400">
+                    {assignedCount}
+                  </span>
+                </button>
+              </div>
+
+              {/* ── Not Assigned Tab ── */}
+              {moduleTab === 'not_assigned' && (
+                <div className="overflow-x-auto rounded-xl border border-white/5">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3 w-10">
+                          <button
+                            type="button"
+                            onClick={toggleAll}
+                            disabled={selectableIndices.length === 0}
+                            className="disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            {allSelectableChosen
+                              ? <CheckSquare size={16} className="text-orange-500" />
+                              : <Square size={16} className="text-white/30" />}
+                          </button>
+                        </th>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">Module / Task Title</th>
+                        <th className="px-4 py-3">Duration</th>
+                        <th className="px-4 py-3"><span className="flex items-center gap-1"><FileText size={11}/>Documents</span></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {planModules.filter((mod) => !isModuleAssigned(mod)).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-6 text-center text-white/30 text-sm">
+                            All modules have been assigned.
+                          </td>
+                        </tr>
+                      ) : (
+                        planModules.map((mod, idx) => {
+                          const assigned = isModuleAssigned(mod);
+                          if (assigned) return null;
+                          const checked = selectedModules.includes(idx);
+                          return (
+                            <tr
+                              key={idx}
+                              onClick={() => toggleModule(idx)}
+                              className={[
+                                "transition-colors align-top cursor-pointer",
+                                checked ? "bg-orange-500/10" : "hover:bg-white/[0.03]",
+                              ].join(" ")}
+                            >
+                              <td className="px-4 py-3">
+                                {checked
+                                  ? <CheckSquare size={16} className="text-orange-500" />
+                                  : <Square size={16} className="text-white/30" />}
+                              </td>
+                              <td className="px-4 py-3 text-white/40">{idx + 1}</td>
+                              <td className="px-4 py-3 font-semibold text-white">{mod.title || "—"}</td>
+                              <td className="px-4 py-3 text-white/70 whitespace-nowrap">
+                                {(() => {
+                                  if (mod.duration_hours) return `${mod.duration_hours} hours`;
+                                  if (!mod.duration) return "—";
+                                  if (/[a-zA-Z]/.test(mod.duration)) return mod.duration;
+                                  const num = Number(mod.duration);
+                                  return !isNaN(num) ? `${num * 8} hours` : mod.duration;
+                                })()}
+                              </td>
+                              <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                {mod.documentName ? (
                                   <a
-                                    key={di}
-                                    href={fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download={doc.original_name || true}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-1 text-[11px] text-orange-400 hover:bg-orange-500/20 transition max-w-[160px] truncate"
-                                    title={label}
+                                    href={`${API_URL.replace('/api','')}/uploads/plan_documents/${mod.documentName}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    download={mod.documentName}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-2 py-1 text-[11px] text-sky-400 hover:bg-sky-500/20 transition max-w-[160px] truncate"
+                                    title={mod.documentName}
                                   >
                                     <Download size={10} className="shrink-0" />
-                                    <span className="truncate">{label}</span>
+                                    <span className="truncate">{mod.documentName}</span>
                                   </a>
-                                );
-                              })}
-                              {/* Show available mod.documentName if no docs are explicitly mapped */}
-                              {docs.length === 0 && mod.documentName && (
-                                <a
-                                  href={`${API_URL.replace('/api','')}/uploads/projects/project_plans/${mod.documentName}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  download={mod.documentName}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-2 py-1 text-[11px] text-sky-400 hover:bg-sky-500/20 transition max-w-[160px] truncate"
-                                  title={mod.documentName}
-                                >
-                                  <Download size={10} className="shrink-0" />
-                                  <span className="truncate">{mod.documentName}</span>
-                                </a>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-white/20 text-xs">—</span>
-                          )}
-                        </td>
-                        {/* Status badge */}
-                        <td className="px-4 py-3">
-                          {assigned ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
-                              <BadgeCheck size={10} /> Assigned
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-white/25">
-                              Available
-                            </span>
-                          )}
-                        </td>
+                                ) : (
+                                  <span className="text-white/20 text-xs">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ── Assigned Tab ── */}
+              {moduleTab === 'assigned' && (
+                <div className="overflow-x-auto rounded-xl border border-white/5">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3 w-10"><BadgeCheck size={14} className="text-emerald-500" /></th>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">Module / Task Title</th>
+                        <th className="px-4 py-3">Duration</th>
+                        <th className="px-4 py-3"><span className="flex items-center gap-1"><Clock size={11}/>Assigned At</span></th>
+                        <th className="px-4 py-3"><span className="flex items-center gap-1"><FileText size={11}/>Documents</span></th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {planModules.filter((mod) => isModuleAssigned(mod)).length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-6 text-center text-white/30 text-sm">
+                            No modules have been assigned yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        planModules.map((mod, idx) => {
+                          const assigned = isModuleAssigned(mod);
+                          if (!assigned) return null;
+                          const titleKey = (mod.title || "").trim().toLowerCase();
+                          const taskRow  = assignedTaskMapAll.get(titleKey);
+                          const createdAt = taskRow ? fmtDate(taskRow.created_at) : null;
+                          const docs = taskRow ? parseAttachments(taskRow.attachments) : [];
+                          return (
+                            <tr key={idx} className="bg-white/[0.01] align-top">
+                              <td className="px-4 py-3">
+                                <BadgeCheck size={16} className="text-emerald-500" />
+                              </td>
+                              <td className="px-4 py-3 text-white/40">{idx + 1}</td>
+                              <td className="px-4 py-3 font-semibold text-white/60">{mod.title || "—"}</td>
+                              <td className="px-4 py-3 text-white/50 whitespace-nowrap">
+                                {(() => {
+                                  if (mod.duration_hours) return `${mod.duration_hours} hours`;
+                                  if (!mod.duration) return "—";
+                                  if (/[a-zA-Z]/.test(mod.duration)) return mod.duration;
+                                  const num = Number(mod.duration);
+                                  return !isNaN(num) ? `${num * 8} hours` : mod.duration;
+                                })()}
+                              </td>
+                              <td className="px-4 py-3">
+                                {createdAt ? (
+                                  <span className="flex items-center gap-1 text-[12px] text-sky-400 whitespace-nowrap">
+                                    <Clock size={11} className="shrink-0" />{createdAt}
+                                  </span>
+                                ) : (
+                                  <span className="text-white/20 text-xs">—</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                {(docs.length > 0 || mod.documentName) ? (
+                                  <div className="flex flex-col gap-1">
+                                    {docs.map((doc, di) => {
+                                      const fileUrl = `${API_URL.replace('/api','')}/${doc.path || doc.filename}`;
+                                      const label = doc.original_name || doc.filename || `File ${di + 1}`;
+                                      return (
+                                        <a key={di} href={fileUrl} target="_blank" rel="noopener noreferrer"
+                                          download={doc.original_name || true}
+                                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 px-2 py-1 text-[11px] text-orange-400 hover:bg-orange-500/20 transition max-w-[160px] truncate"
+                                          title={label}
+                                        >
+                                          <Download size={10} className="shrink-0" />
+                                          <span className="truncate">{label}</span>
+                                        </a>
+                                      );
+                                    })}
+                                    {docs.length === 0 && mod.documentName && (
+                                      <a
+                                        href={`${API_URL.replace('/api','')}/uploads/plan_documents/${mod.documentName}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        download={mod.documentName}
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-2 py-1 text-[11px] text-sky-400 hover:bg-sky-500/20 transition max-w-[160px] truncate"
+                                        title={mod.documentName}
+                                      >
+                                        <Download size={10} className="shrink-0" />
+                                        <span className="truncate">{mod.documentName}</span>
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-white/20 text-xs">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
