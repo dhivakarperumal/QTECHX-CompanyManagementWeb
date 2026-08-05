@@ -758,19 +758,24 @@ const AdminLeaveManagement = () => {
                 </p>
               </div>
 
-              <div className="mb-6 space-y-2">
-                <label className="text-sm font-semibold text-white/70">
-                  Reason / Remarks {actionModal.action === 'Rejected' && <span className="text-rose-500">*</span>}
-                </label>
-                <textarea
-                  value={actionModal.reason}
-                  onChange={(e) => setActionModal({ ...actionModal, reason: e.target.value })}
-                  placeholder="Enter any remarks or reasons..."
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 resize-none transition"
-                  rows="3"
-                  required={actionModal.action === 'Rejected'}
-                ></textarea>
-              </div>
+              {actionModal.action === 'Rejected' && (
+                <div className="mb-6 space-y-2">
+                  <label className="text-sm font-semibold text-white/70">
+                    Reason <span className="text-rose-500">*</span>
+                  </label>
+
+                  <textarea
+                    value={actionModal.reason}
+                    onChange={(e) =>
+                      setActionModal({ ...actionModal, reason: e.target.value })
+                    }
+                    placeholder="Enter rejection reason..."
+                    className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white outline-none focus:border-orange-500/50 resize-none transition"
+                    rows={3}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <button
@@ -784,8 +789,8 @@ const AdminLeaveManagement = () => {
                   onClick={submitAction}
                   disabled={submitting}
                   className={`inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90 ${actionModal.action === 'Approved'
-                      ? 'bg-emerald-600'
-                      : 'bg-rose-600'
+                    ? 'bg-emerald-600'
+                    : 'bg-rose-600'
                     }`}
                 >
                   {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
