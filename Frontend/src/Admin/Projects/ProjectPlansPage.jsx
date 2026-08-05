@@ -1128,27 +1128,46 @@ function ProjectPlansPage() {
                   <p className="mb-2 text-sm text-white/70">Included Modules</p>
                   <div className="grid gap-4">
                     {formData.modules.length ? (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        {formData.modules.map((module, index) => (
-                          <div key={`${module.title || 'module'}-${index}`} className={`rounded-3xl border ${editingModuleIndex === index ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 bg-white/5'} p-4`}>
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-white">{module.title || 'Untitled module'}</p>
-                                <p className="mt-1 text-xs text-white/60">Duration: {module.duration || '—'}</p>
-                                <p className="mt-2 text-sm text-white/70">{module.description || 'No description provided.'}</p>
-                                {module.documentName ? (
-                                  <p className="mt-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-xs text-sky-300">Document: {module.documentName}</p>
-                                ) : null}
-                              </div>
-                              {!mode.includes('view') ? (
-                                <div className="flex gap-2">
-                                  <button type="button" onClick={() => startEditModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Edit3 size={14} /></button>
-                                  <button type="button" onClick={() => removeModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Trash2 size={14} /></button>
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))}
+                      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+                        <table className="w-full text-left text-sm text-white/70">
+                          <thead className="border-b border-white/10 bg-white/5 text-white">
+                            <tr>
+                              <th className="px-4 py-3 font-semibold">No</th>
+                              <th className="px-4 py-3 font-semibold">Module Title</th>
+                              <th className="px-4 py-3 font-semibold">Duration</th>
+                              <th className="px-4 py-3 font-semibold">Description</th>
+                              <th className="px-4 py-3 font-semibold">Document</th>
+                              {!mode.includes('view') && <th className="px-4 py-3 font-semibold text-right">Action</th>}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/10">
+                            {formData.modules.map((module, index) => (
+                              <tr key={`${module.title || 'module'}-${index}`} className={`transition ${editingModuleIndex === index ? 'bg-orange-500/10' : 'hover:bg-white/5'}`}>
+                                <td className="px-4 py-3">{index + 1}</td>
+                                <td className="px-4 py-3 font-medium text-white">{module.title || 'Untitled module'}</td>
+                                <td className="px-4 py-3">{module.duration || '—'}</td>
+                                <td className="max-w-[200px] truncate px-4 py-3" title={module.description}>{module.description || 'No description provided.'}</td>
+                                <td className="px-4 py-3">
+                                  {module.documentName ? (
+                                    <span className="inline-flex max-w-[150px] truncate rounded-xl border border-sky-500/20 bg-sky-500/10 px-2 py-1 text-xs text-sky-300" title={module.documentName}>
+                                      {module.documentName}
+                                    </span>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+                                {!mode.includes('view') && (
+                                  <td className="px-4 py-3">
+                                    <div className="flex justify-end gap-2">
+                                      <button type="button" onClick={() => startEditModule(index)} className="rounded-full border border-white/10 bg-white/5 p-1.5 text-white/80 transition hover:bg-white/10"><Edit3 size={14} /></button>
+                                      <button type="button" onClick={() => removeModule(index)} className="rounded-full border border-white/10 bg-white/5 p-1.5 text-white/80 transition hover:bg-white/10"><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     ) : (
                       <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-white/60">
