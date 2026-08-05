@@ -49,6 +49,7 @@ const EMPTY_ASSIGN_FORM = {
   assignment_date: getTodayIso(),
   start_date: "",
   due_date: "",
+  duration: "",
   status: "",
 };
 
@@ -303,6 +304,32 @@ export default function AssignTaskPage() {
     selectableIndices.length > 0 &&
     selectableIndices.every((i) => selectedModules.includes(i));
 
+  const parseModuleDuration = (duration) => {
+    if (duration == null) return "";
+    const value = String(duration).trim();
+    if (value === "") return "";
+    const numericMatch = value.match(/^-?\d+(?:\.\d+)?/);
+    if (numericMatch) {
+      return String(Number(numericMatch[0]));
+    }
+    return "";
+  };
+
+  useEffect(() => {
+    if (selectedModules.length === 0) {
+      setAssignForm((p) => ({ ...p, duration: "" }));
+      return;
+    }
+    if (assignForm.duration) return;
+    const firstModule = planModules[selectedModules[0]];
+    if (!firstModule) return;
+    const inferredDuration = parseModuleDuration(firstModule.duration);
+    if (inferredDuration) {
+      setAssignForm((p) => ({ ...p, duration: inferredDuration }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedModules, planModules]);
+
   // ─── Submit handler ────────────────────────────────────────────────────────
   const handleAssignTask = async () => {
     setAssignError("");
@@ -377,7 +404,8 @@ export default function AssignTaskPage() {
           category:        mod.category    || mod.type || "",
           priority:        mod.priority    || "Medium",
           status:          assignForm.status || "Pending",
-          estimated_hours: mod.duration ? (() => { const n = parseInt(mod.duration, 10); return isNaN(n) ? mod.duration : String(n * 8); })() : "",
+          estimated_hours: assignForm.duration ? String(Number(assignForm.duration) || 0) : (mod.duration ? (() => { const n = parseInt(mod.duration, 10); return isNaN(n) ? mod.duration : String(n * 8); })() : ""),
+          duration:        assignForm.duration || mod.duration || null,
           assignment_date: assignForm.assignment_date || "",
           start_date:      assignForm.start_date || "",
           due_date:        computedDueDate,
@@ -867,7 +895,7 @@ export default function AssignTaskPage() {
         </div>
 
         {/* Row 3: Team + Start + End + Status (Assignment Date is stored hidden) */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <FieldBox label="Team / Department">
             <input
               value={assignForm.team}
@@ -888,6 +916,19 @@ export default function AssignTaskPage() {
               className={inputCls}
             />
           </FieldBox>
+
+          {selectedModules.length > 0 && (
+            <FieldBox label="Duration (hours)">
+              <input
+                type="number"
+                min="1"
+                value={assignForm.duration}
+                onChange={(e) => setAssignForm((p) => ({ ...p, duration: e.target.value }))}
+                className={inputCls}
+                placeholder="Enter duration in hours"
+              />
+            </FieldBox>
+          )}
 
           <FieldBox label="End Date">
             <input
