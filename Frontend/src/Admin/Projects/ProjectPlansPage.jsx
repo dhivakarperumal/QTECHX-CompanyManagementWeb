@@ -91,6 +91,7 @@ const createEmptyForm = () => ({
   completedProjectsUsingPlan: 0,
   createdBy: 'Admin',
   projectId: '',
+  projectCode: '',
 });
 
 const selectClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
@@ -371,6 +372,15 @@ function ProjectPlansPage() {
 
   const handleFieldChange = (event) => {
     const { name, value } = event.target;
+    if (name === 'projectId') {
+      const selectedProject = projectsList.find((project) => String(project.uuid) === String(value));
+      setFormData((prev) => ({
+        ...prev,
+        projectId: value,
+        projectCode: selectedProject?.project_code || selectedProject?.projectCode || '',
+      }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -1019,8 +1029,16 @@ function ProjectPlansPage() {
                   <span className="mb-1 block">Link Project</span>
                   <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
                     <option value="">None</option>
-                    {projectsList.map((project) => <option key={project.uuid} value={project.uuid}>{project.project_name}</option>)}
+                    {projectsList.map((project) => (
+                      <option key={project.uuid} value={project.uuid}>
+                        {project.project_code || 'PRJ'} - {project.project_name}
+                      </option>
+                    ))}
                   </select>
+                </label>
+                <label className="text-sm text-white/70">
+                  <span className="mb-1 block">Project Code</span>
+                  <input name="projectCode" value={formData.projectCode || ''} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} readOnly />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Category</span>
@@ -1032,12 +1050,6 @@ function ProjectPlansPage() {
                   <span className="mb-1 block">Status</span>
                   <select name="status" value={formData.status} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
                     {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-                  </select>
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Featured Badge</span>
-                  <select name="featuredBadge" value={formData.featuredBadge} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
                   </select>
                 </label>
                 <label className="text-sm text-white/70 md:col-span-2">
@@ -1079,7 +1091,7 @@ function ProjectPlansPage() {
                     <p className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">{typeof formData.planDocument === 'string' ? formData.planDocument : 'Selected file'}</p>
                   ) : null}
                 </label>
-                <label className="text-sm text-white/70 md:col-span-2">
+                <label className="text-sm text-white/70">
                   <span className="mb-1 block">Cover Image</span>
                   <input type="file" accept="image/*" onChange={(event) => handleFileChange(event, 'coverImage')} className={fieldClasses} disabled={mode === 'view'} />
                   {formData.coverImage ? <img src={formData.coverImage} alt="Cover preview" className="mt-2 h-28 w-full rounded-2xl object-cover" /> : null}
@@ -1097,27 +1109,47 @@ function ProjectPlansPage() {
                   <p className="mb-2 text-sm text-white/70">Included Modules</p>
                   <div className="grid gap-4">
                     {formData.modules.length ? (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        {formData.modules.map((module, index) => (
-                          <div key={`${module.title || 'module'}-${index}`} className={`rounded-3xl border ${editingModuleIndex === index ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 bg-white/5'} p-4`}>
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-white">{module.title || 'Untitled module'}</p>
-                                <p className="mt-1 text-xs text-white/60">Duration: {module.duration || '—'}</p>
-                                <p className="mt-2 text-sm text-white/70">{module.description || 'No description provided.'}</p>
-                                {module.documentName ? (
-                                  <p className="mt-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-xs text-sky-300">Document: {module.documentName}</p>
+                      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0f141d]">
+                        <table className="w-full text-left text-sm text-white/70">
+                          <thead className="border-b border-white/10 bg-white/5 text-white/80">
+                            <tr>
+                              <th className="p-4 font-semibold whitespace-nowrap">Module Name</th>
+                              <th className="p-4 font-semibold whitespace-nowrap">Duration</th>
+                              <th className="p-4 font-semibold">Description</th>
+                              <th className="p-4 font-semibold whitespace-nowrap">Document</th>
+                              {!mode.includes('view') && <th className="p-4 font-semibold text-right whitespace-nowrap">Actions</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {formData.modules.map((module, index) => (
+                              <tr
+                                key={`${module.title || 'module'}-${index}`}
+                                className={`border-b border-white/5 last:border-0 ${editingModuleIndex === index ? 'bg-orange-500/10' : 'hover:bg-white/5'}`}
+                              >
+                                <td className="p-4 font-medium text-white align-top">{module.title || 'Untitled module'}</td>
+                                <td className="p-4 align-top whitespace-nowrap">{module.duration || '—'}</td>
+                                <td className="p-4 align-top min-w-[200px]">{module.description || 'No description provided.'}</td>
+                                <td className="p-4 align-top">
+                                  {module.documentName ? (
+                                    <span className="inline-flex items-center rounded-xl border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-xs text-sky-300 break-all">
+                                      {module.documentName}
+                                    </span>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+                                {!mode.includes('view') ? (
+                                  <td className="p-4 text-right align-top">
+                                    <div className="flex justify-end gap-2">
+                                      <button type="button" onClick={() => startEditModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80 hover:bg-white/10 transition"><Edit3 size={14} /></button>
+                                      <button type="button" onClick={() => removeModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80 hover:bg-rose-500/20 hover:text-rose-400 transition"><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
                                 ) : null}
-                              </div>
-                              {!mode.includes('view') ? (
-                                <div className="flex gap-2">
-                                  <button type="button" onClick={() => startEditModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Edit3 size={14} /></button>
-                                  <button type="button" onClick={() => removeModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Trash2 size={14} /></button>
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     ) : (
                       <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-white/60">

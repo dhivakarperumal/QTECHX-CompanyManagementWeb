@@ -406,6 +406,8 @@ async function ensureProjectPlanSchema(pool) {
         plan_id VARCHAR(50) NOT NULL,
         plan_code VARCHAR(100) NOT NULL,
         plan_name VARCHAR(255) NOT NULL,
+        project_id VARCHAR(100) NULL,
+        project_code VARCHAR(100) NULL,
         project_type VARCHAR(100) NULL,
         category VARCHAR(100) NULL,
         status ENUM('Draft','Active','Inactive') NOT NULL DEFAULT 'Draft',
@@ -425,6 +427,12 @@ async function ensureProjectPlanSchema(pool) {
   const [columns] = await pool.execute('SHOW COLUMNS FROM project_plan');
   const columnNames = new Set(columns.map((column) => column.Field));
   const addColumnStatements = [];
+  if (!columnNames.has('project_id')) {
+    addColumnStatements.push('ADD COLUMN project_id VARCHAR(100) NULL AFTER plan_name');
+  }
+  if (!columnNames.has('project_code')) {
+    addColumnStatements.push('ADD COLUMN project_code VARCHAR(100) NULL AFTER project_id');
+  }
   if (!columnNames.has('plan_document')) {
     addColumnStatements.push('ADD COLUMN plan_document VARCHAR(500) NULL AFTER plan_data');
   }
