@@ -222,9 +222,9 @@ const AdminDashboard = () => {
   ];
 
   const heroMetrics = [
-    { icon: Users, label: 'Employees', value: dashboard ? String(dashboard.totalEmployees || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
+    { icon: Users, label: 'Total Clients', value: dashboard ? String(dashboard.clientStats?.total || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
     { icon: FolderKanban, label: 'Live Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', accent: 'bg-primary/10 text-primary' },
-    { icon: ClipboardCheck, label: 'Present Today', value: dashboard ? String(dashboard.attendanceToday?.present || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
+    { icon: CalendarOff, label: 'Client Follow Up', value: dashboard ? String(dashboard.clientStats?.followUp || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
     { icon: Clock, label: 'Payroll Due', value: 'End of Month', accent: 'bg-yellow-500/10 text-yellow-300' },
   ];
 
@@ -310,71 +310,48 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,_rgba(248,116,20,0.18),transparent_35%)]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),transparent_40%)]" />
+          <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0f1422]/90 border border-white/10 p-6 shadow-xl shadow-black/25 backdrop-blur-xl flex flex-col">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),transparent_40%)]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-[radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),transparent_45%)]" />
+            
             <div className="relative z-10 flex items-start justify-between gap-3 mb-6">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/40">Today’s highlights</p>
-                <h2 className="text-white font-bold text-lg mt-2">Key metrics</h2>
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-400/80">Financial Overview</p>
+                <h2 className="text-white font-bold text-xl mt-2">Revenue Insights</h2>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-white/70">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-emerald-300 font-semibold shadow-lg shadow-emerald-500/10">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Data
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-5 shadow-sm shadow-black/10">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-white/40 uppercase tracking-[0.24em] mb-2">Revenue pulse</p>
-                    <div className="flex items-center gap-3">
-                      <p className="text-3xl font-semibold text-white">₹{dashboard ? (dashboard.currentMonthIncome / 100000).toFixed(1) : 0}L</p>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 rounded-full px-2 py-1">+12%</span>
-                    </div>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-500/20 to-orange-400/10 text-orange-300">
-                    <DollarSign size={20} />
+            <div className="relative z-10 grid grid-cols-1 gap-4 flex-1">
+              <div className="rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 to-transparent p-6 shadow-md shadow-black/20 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/30 transition-colors" />
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Current Month Income</p>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 shadow-inner">
+                    <DollarSign size={18} />
                   </div>
                 </div>
-                <div className="mt-6 overflow-hidden rounded-full bg-white/10 h-2">
-                  <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '72%' }} />
+                <div className="flex items-end gap-3">
+                  <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? (dashboard.currentMonthIncome || 0).toLocaleString('en-IN') : 0}</p>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-white/50">
-                  <span>Monthly target</span>
-                  <span>72% achieved</span>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
+                    <TrendingUp size={12} /> +12%
+                  </span>
+                  <span className="text-[11px] text-white/40">vs last month</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10 flex flex-col justify-between">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Total Clients</p>
-                      <p className="text-white font-semibold text-2xl mt-2">{dashboard?.clientStats?.total || 0}</p>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-300">
-                      <Users size={18} />
-                    </div>
-                  </div>
-                  <p className="mt-3 text-[11px] text-white/50">Across all service categories</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-[1.25rem] border border-rose-500/10 bg-rose-500/[0.03] p-4 shadow-sm hover:bg-rose-500/[0.05] transition-colors">
+                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Monthly Payroll</p>
+                   <p className="text-xl font-bold text-rose-300">₹{dashboard ? (dashboard.monthlyPayroll || 0).toLocaleString('en-IN') : 0}</p>
                 </div>
-
-                <div className="rounded-[1.5rem] border border-white/8 bg-white/5 p-4 shadow-sm shadow-black/10">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-white/40">Client Status</p>
-                      <p className="text-white font-semibold text-sm mt-2">Active vs Leads</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-                    {(dashboard?.clientStats?.breakdown || []).slice(0, 2).map((item, idx) => (
-                      <div key={idx} className="rounded-2xl bg-white/5 p-2">
-                        <p className="text-[10px] text-white/40 uppercase tracking-[0.18em] truncate">{item.client_status}</p>
-                        <p className="text-sm font-semibold text-white mt-1">{item.count}</p>
-                      </div>
-                    ))}
-                  </div>
+                <div className="rounded-[1.25rem] border border-blue-500/10 bg-blue-500/[0.03] p-4 shadow-sm hover:bg-blue-500/[0.05] transition-colors">
+                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Net Est. Profit</p>
+                   <p className="text-xl font-bold text-blue-300">₹{dashboard ? ((dashboard.currentMonthIncome || 0) - (dashboard.monthlyPayroll || 0)).toLocaleString('en-IN') : 0}</p>
                 </div>
               </div>
             </div>
