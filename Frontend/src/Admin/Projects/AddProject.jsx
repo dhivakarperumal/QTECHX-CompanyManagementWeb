@@ -707,24 +707,24 @@ export default function AddProject() {
     </div>
 
     {/* Footer */}
-        <div className="flex justify-end gap-3">
-          {!isEdit && (
-            <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
-              Reset
-            </button>
-          )}
-          <button type="button" onClick={() => navigate('/admin/projects')} disabled={loading}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
-            Cancel
-          </button>
-          <button type="submit" form="project-form" disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
-            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
-          </button>
-        </div>
+    <div className="flex justify-end gap-3">
+      {!isEdit && (
+        <button type="button" onClick={() => { setFormData(BLANK); setError(''); setSuccess(''); }} disabled={loading}
+          className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
+          Reset
+        </button>
+      )}
+      <button type="button" onClick={() => navigate('/admin/projects')} disabled={loading}
+        className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40">
+        Cancel
+      </button>
+      <button type="submit" form="project-form" disabled={loading}
+        className="inline-flex items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
+        style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+        {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+        {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Project'}
+      </button>
     </div>
-  );
+  </div>
+);
 }
