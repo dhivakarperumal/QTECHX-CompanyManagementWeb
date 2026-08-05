@@ -278,7 +278,6 @@ const ExpensesPage = () => {
   };
 
   const expenseTypeOptions = [
-    "Salary",
     "Office Rent",
     "Electricity Bill",
     "Water Bill",
@@ -314,7 +313,6 @@ const ExpensesPage = () => {
     { value: "this_month", label: "This Month" },
     { value: "custom", label: "Custom Range" },
   ];
-  const isSalaryExpense = expenseData.expense_type === "Salary";
   const isOtherExpenseType = expenseData.expense_type === "Other";
 
   const isCreditEntry = (entry) => {
@@ -517,28 +515,11 @@ const ExpensesPage = () => {
             )}
           </div>
           <div>
-            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">{isSalaryExpense ? "Pay Salary To" : "Paid To"}</label>
-            {isSalaryExpense ? (
-              <Select
-                options={[
-                  ...employees.map(employee => {
-                    const employeeLabel = `${employee.first_name || ""} ${employee.last_name || ""}`.trim();
-                    const displayValue = employeeLabel ? `${employeeLabel} (${employee.employee_code || "N/A"})` : employee.employee_code || "Unknown Employee";
-                    return { value: displayValue, label: displayValue };
-                  })
-                ]}
-                value={expenseData.paid_to ? { value: expenseData.paid_to, label: expenseData.paid_to } : null}
-                onChange={(option) => setExpenseData({...expenseData, paid_to: option ? option.value : ""})}
-                styles={customSelectStyles}
-                placeholder="Select Employee"
-                isSearchable={true}
-              />
-            ) : (
-              <input type="text" required 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
-                placeholder="e.g. Amazon Web Services"
-                value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
-            )}
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Paid To</label>
+            <input type="text" required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="e.g. Amazon Web Services"
+              value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
