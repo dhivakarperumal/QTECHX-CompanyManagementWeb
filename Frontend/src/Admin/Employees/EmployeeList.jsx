@@ -1,6 +1,94 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Plus, Search, RefreshCw, Eye, Edit2, Trash2, Loader2, UserCheck, UserX, Briefcase, List, LayoutGrid, Phone, Mail } from "lucide-react";
+import Select from "react-select";
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const EmployeeList = () => {
   const [viewMode, setViewMode] = useState("table");
@@ -132,29 +220,37 @@ const EmployeeList = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, code or email" className="w-full rounded-xl border border-white/10 bg-white/4 pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50" />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
-          >
-            <option value="" className="bg-black text-white">All Status</option>
-            <option value="Active" className="bg-black text-white">Active</option>
-            <option value="Inactive" className="bg-black text-white">Inactive</option>
-            <option value="Terminated" className="bg-black text-white">Terminated</option>
-            <option value="Resigned" className="bg-black text-white">Resigned</option>
-          </select>
+          <div className="w-40 shrink-0">
+            <Select
+              value={statusFilter ? { value: statusFilter, label: statusFilter } : { value: "", label: "All Status" }}
+              onChange={(option) => setStatusFilter(option ? option.value : "")}
+              options={[
+                { value: "", label: "All Status" },
+                { value: "Active", label: "Active" },
+                { value: "Inactive", label: "Inactive" },
+                { value: "Terminated", label: "Terminated" },
+                { value: "Resigned", label: "Resigned" },
+              ]}
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
+          </div>
 
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
-          >
-            <option value="" className="bg-black text-white">All Roles</option>
-            <option value="Employee" className="bg-black text-white">Employee</option>
-            <option value="Manager" className="bg-black text-white">Manager</option>
-            <option value="HR" className="bg-black text-white">HR</option>
-            <option value="Admin" className="bg-black text-white">Admin</option>
-          </select>
+          <div className="w-40 shrink-0">
+            <Select
+              value={roleFilter ? { value: roleFilter, label: roleFilter } : { value: "", label: "All Roles" }}
+              onChange={(option) => setRoleFilter(option ? option.value : "")}
+              options={[
+                { value: "", label: "All Roles" },
+                { value: "Employee", label: "Employee" },
+                { value: "Manager", label: "Manager" },
+                { value: "HR", label: "HR" },
+                { value: "Admin", label: "Admin" },
+              ]}
+              styles={customSelectStyles}
+              isSearchable={false}
+            />
+          </div>
           <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 gap-1 ml-auto md:ml-0">
             <button
               onClick={() => setViewMode('table')}

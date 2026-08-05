@@ -1,8 +1,95 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Select from 'react-select';
 import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search, LayoutGrid, List, X } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    // '&:hover': {
+    //   border: '1px solid #f97316',
+    // },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    // border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const today = new Date();
 const defaultMonth = today.getMonth() + 1;
@@ -151,21 +238,27 @@ export default function TraineeInternAttendancePage() {
         </div>
         <div className="flex flex-wrap gap-3">
 
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedMonth} onChange={(event) => setSelectedMonth(Number(event.target.value))} className="bg-transparent outline-none">
-              {Array.from({ length: 12 }, (_, index) => (
-                <option key={index + 1} value={index + 1} className="bg-slate-900">{new Date(2024, index).toLocaleString('en', { month: 'long' })}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
+            <CalendarDays size={16} className="text-orange-400 ml-2" />
+            <Select
+              value={{ value: selectedMonth, label: new Date(2024, selectedMonth - 1).toLocaleString('en', { month: 'long' }) }}
+              onChange={(option) => setSelectedMonth(Number(option.value))}
+              options={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index).toLocaleString('en', { month: 'long' }) }))}
+              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+              isSearchable={false}
+              className="flex-1"
+            />
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm">
-            <CalendarDays size={16} className="text-orange-400" />
-            <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))} className="bg-transparent outline-none">
-              {[selectedYear - 1, selectedYear, selectedYear + 1].map((year) => (
-                <option key={year} value={year} className="bg-slate-900">{year}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[120px]">
+            <CalendarDays size={16} className="text-orange-400 ml-2" />
+            <Select
+              value={{ value: selectedYear, label: selectedYear.toString() }}
+              onChange={(option) => setSelectedYear(Number(option.value))}
+              options={[selectedYear - 1, selectedYear, selectedYear + 1].map(year => ({ value: year, label: year.toString() }))}
+              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+              isSearchable={false}
+              className="flex-1"
+            />
           </div>
           <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
             <PlusCircle size={16} /> Add Attendance
@@ -280,12 +373,14 @@ export default function TraineeInternAttendancePage() {
               <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm text-white/70">Trainee / Intern</label>
-                  <select name="trainee_intern_id" value={form.trainee_intern_id} onChange={handleFormChange} required className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                    <option value="" disabled>Select member</option>
-                    {members.map((member) => (
-                      <option key={member.uuid} value={member.uuid} className="bg-slate-900">{member.full_name} ({member.person_id || member.uuid})</option>
-                    ))}
-                  </select>
+                  <Select
+                    value={form.trainee_intern_id ? { value: form.trainee_intern_id, label: members.find(m => m.uuid === form.trainee_intern_id) ? `${members.find(m => m.uuid === form.trainee_intern_id).full_name} (${members.find(m => m.uuid === form.trainee_intern_id).person_id || form.trainee_intern_id})` : 'Select member' } : null}
+                    onChange={(option) => handleFormChange({ target: { name: 'trainee_intern_id', value: option ? option.value : '' } })}
+                    options={members.map((member) => ({ value: member.uuid, label: `${member.full_name} (${member.person_id || member.uuid})` }))}
+                    styles={customSelectStyles}
+                    placeholder="Select member"
+                    isSearchable={true}
+                  />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-white/70">Date</label>
@@ -293,10 +388,16 @@ export default function TraineeInternAttendancePage() {
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-white/70">Attendance Status</label>
-                  <select name="attendance_status" value={form.attendance_status} onChange={handleFormChange} className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none">
-                    <option value="Present" className="bg-slate-900">Present</option>
-                    <option value="Absent" className="bg-slate-900">Absent</option>
-                  </select>
+                  <Select
+                    value={form.attendance_status ? { value: form.attendance_status, label: form.attendance_status } : null}
+                    onChange={(option) => handleFormChange({ target: { name: 'attendance_status', value: option ? option.value : '' } })}
+                    options={[
+                      { value: 'Present', label: 'Present' },
+                      { value: 'Absent', label: 'Absent' }
+                    ]}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                  />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-white/70">Check-in Time</label>

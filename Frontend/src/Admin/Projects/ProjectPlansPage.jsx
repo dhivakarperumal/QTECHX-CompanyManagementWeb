@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Select from 'react-select';
 import api from '../../api';
 import dayjs from 'dayjs';
 import {
@@ -26,6 +27,92 @@ import {
 } from 'lucide-react';
 
 const pageSize = 8;
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    // '&:hover': {
+    //   border: '1px solid #f97316',
+    // },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const createEmptyForm = () => ({
   planName: '',
@@ -777,37 +864,84 @@ function ProjectPlansPage() {
               <Search size={16} className="text-white/50" />
               <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search plan name, ID or code" className="w-full bg-transparent text-sm text-white outline-none" />
             </label>
-            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white/70">
+            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-1 text-sm text-white/70 min-w-[200px]">
               <Filter size={16} />
-              <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} className="bg-transparent outline-none">
-                <option value="All">All Categories</option>
-                {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
+              <div className="flex-1">
+                <Select
+                  value={{ value: selectedCategory, label: selectedCategory === 'All' ? 'All Categories' : selectedCategory }}
+                  onChange={(option) => setSelectedCategory(option ? option.value : 'All')}
+                  options={[
+                    { value: 'All', label: 'All Categories' },
+                    ...categories.map(c => ({ value: c, label: c }))
+                  ]}
+                  styles={{
+                    ...customSelectStyles,
+                    control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '36px', border: 'none' })
+                  }}
+                  isSearchable={false}
+                />
+              </div>
             </label>
-            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white/70">
+            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#111827] px-3 py-1 text-sm text-white/70 min-w-[200px]">
               <Filter size={16} />
-              <select value={selectedStatus} onChange={(event) => setSelectedStatus(event.target.value)} className="bg-transparent outline-none">
-                <option value="All">All Status</option>
-                {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-              </select>
+              <div className="flex-1">
+                <Select
+                  value={{ value: selectedStatus, label: selectedStatus === 'All' ? 'All Status' : selectedStatus }}
+                  onChange={(option) => setSelectedStatus(option ? option.value : 'All')}
+                  options={[
+                    { value: 'All', label: 'All Status' },
+                    ...statuses.map(s => ({ value: s, label: s }))
+                  ]}
+                  styles={{
+                    ...customSelectStyles,
+                    control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '36px', border: 'none' })
+                  }}
+                  isSearchable={false}
+                />
+              </div>
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={selectedFeatured} onChange={(event) => setSelectedFeatured(event.target.value)} className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-white outline-none">
-              <option value="All">Featured</option>
-              {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
-            </select>
+            <div className="min-w-[160px]">
+              <Select
+                value={{ value: selectedFeatured, label: selectedFeatured === 'All' ? 'Featured' : selectedFeatured }}
+                onChange={(option) => setSelectedFeatured(option ? option.value : 'All')}
+                options={[
+                  { value: 'All', label: 'Featured' },
+                  ...featuredBadges.map(b => ({ value: b, label: b }))
+                ]}
+                styles={{
+                  ...customSelectStyles,
+                  control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: '#111827' })
+                }}
+                isSearchable={false}
+              />
+            </div>
           </div>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-1">
           <label className="text-sm text-white/70">
             <span className="mb-1 block">Sort By</span>
-            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className={fieldClasses}>
-              <option value="updatedAtDesc">Updated Date</option>
-              <option value="createdAtDesc">Created Date</option>
-              <option value="nameAsc">Name A-Z</option>
-              <option value="nameDesc">Name Z-A</option>
-            </select>
+            <Select
+              value={[
+                { value: 'updatedAtDesc', label: 'Updated Date' },
+                { value: 'createdAtDesc', label: 'Created Date' },
+                { value: 'nameAsc', label: 'Name A-Z' },
+                { value: 'nameDesc', label: 'Name Z-A' }
+              ].find(opt => opt.value === sortBy)}
+              onChange={(option) => setSortBy(option ? option.value : 'updatedAtDesc')}
+              options={[
+                { value: 'updatedAtDesc', label: 'Updated Date' },
+                { value: 'createdAtDesc', label: 'Created Date' },
+                { value: 'nameAsc', label: 'Name A-Z' },
+                { value: 'nameDesc', label: 'Name Z-A' }
+              ]}
+              styles={{
+                ...customSelectStyles,
+                control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+              }}
+              isSearchable={false}
+            />
           </label>
         </div>
       </div>
@@ -953,28 +1087,62 @@ function ProjectPlansPage() {
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Link Project</span>
-                  <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="">None</option>
-                    {projectsList.map((project) => <option key={project.uuid} value={project.uuid}>{project.project_name}</option>)}
-                  </select>
+                  <Select
+                    name="projectId"
+                    value={formData.projectId ? { value: formData.projectId, label: projectsList.find(p => p.uuid === formData.projectId)?.project_name || formData.projectId } : { value: '', label: 'None' }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'projectId', value: option ? option.value : '' } })}
+                    options={[
+                      { value: '', label: 'None' },
+                      ...projectsList.map((project) => ({ value: project.uuid, label: project.project_name }))
+                    ]}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Category</span>
-                  <select name="category" value={formData.category} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-                  </select>
+                  <Select
+                    name="category"
+                    value={{ value: formData.category, label: formData.category }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'category', value: option ? option.value : '' } })}
+                    options={categories.map((category) => ({ value: category, label: category }))}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Status</span>
-                  <select name="status" value={formData.status} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-                  </select>
+                  <Select
+                    name="status"
+                    value={{ value: formData.status, label: formData.status }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'status', value: option ? option.value : '' } })}
+                    options={statuses.map((status) => ({ value: status, label: status }))}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Featured Badge</span>
-                  <select name="featuredBadge" value={formData.featuredBadge} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    {featuredBadges.map((badge) => <option key={badge} value={badge}>{badge}</option>)}
-                  </select>
+                  <Select
+                    name="featuredBadge"
+                    value={{ value: formData.featuredBadge, label: formData.featuredBadge }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'featuredBadge', value: option ? option.value : '' } })}
+                    options={featuredBadges.map((badge) => ({ value: badge, label: badge }))}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70 md:col-span-2">
                   <span className="mb-1 block">Short Description</span>
@@ -1205,10 +1373,20 @@ function ProjectPlansPage() {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Hosting Included</span>
-                  <select name="hostingIncluded" value={formData.hostingIncluded} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
+                  <Select
+                    name="hostingIncluded"
+                    value={{ value: formData.hostingIncluded, label: formData.hostingIncluded }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'hostingIncluded', value: option ? option.value : '' } })}
+                    options={[
+                      { value: 'Yes', label: 'Yes' },
+                      { value: 'No', label: 'No' }
+                    ]}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Hosting Type</span>
@@ -1224,10 +1402,20 @@ function ProjectPlansPage() {
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Domain Included</span>
-                  <select name="domainIncluded" value={formData.domainIncluded} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
+                  <Select
+                    name="domainIncluded"
+                    value={{ value: formData.domainIncluded, label: formData.domainIncluded }}
+                    onChange={(option) => handleFieldChange({ target: { name: 'domainIncluded', value: option ? option.value : '' } })}
+                    options={[
+                      { value: 'Yes', label: 'Yes' },
+                      { value: 'No', label: 'No' }
+                    ]}
+                    styles={{
+                      ...customSelectStyles,
+                      control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0f141d' })
+                    }}
+                    isDisabled={mode === 'view'}
+                  />
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Domain Extension</span>
