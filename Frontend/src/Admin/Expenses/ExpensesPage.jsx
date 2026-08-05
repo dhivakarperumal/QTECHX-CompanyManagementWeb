@@ -6,8 +6,8 @@ const customSelectStyles = {
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -199,9 +199,9 @@ const ExpensesPage = () => {
   const handleUpdateFund = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("http://localhost:5000/api/fund", 
+      const { data } = await axios.post("http://localhost:5000/api/fund",
         { available_fund: parseFloat(fundAmount) },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }}
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       if (data.success) {
         toast.success("Fund updated successfully", {
@@ -277,7 +277,34 @@ const ExpensesPage = () => {
     }
   };
 
-  const expenseTypeOptions = [
+  const expenseFormTypeOptions = [
+    "Office Rent",
+    "Electricity Bill",
+    "Water Bill",
+    "Internet Bill",
+    "Phone Bill",
+    "Office Maintenance",
+    "Office Supplies",
+    "Stationery",
+    "Snacks & Tea",
+    "Travel Expense",
+    "Fuel Expense",
+    "Software Subscription",
+    "Cloud Hosting",
+    "Domain & SSL",
+    "Marketing",
+    "Advertising",
+    "Courier & Shipping",
+    "Furniture",
+    "Computer & Accessories",
+    "Employee Welfare",
+    "Training",
+    "Taxes",
+    "Insurance",
+    "Miscellaneous",
+    "Other",
+  ];
+  const expenseFilterTypeOptions = [
     "Salary",
     "Project Payment",
     "Income",
@@ -384,9 +411,9 @@ const ExpensesPage = () => {
 
   const pieSegments = categoryBreakdown.length > 0
     ? categoryBreakdown.map((item, index) => {
-        const colors = ["#f97316", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
-        return `${colors[index % colors.length]} ${index === 0 ? 0 : categoryBreakdown.slice(0, index).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}% ${index === categoryBreakdown.length - 1 ? 100 : categoryBreakdown.slice(0, index + 1).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}%`;
-      })
+      const colors = ["#f97316", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+      return `${colors[index % colors.length]} ${index === 0 ? 0 : categoryBreakdown.slice(0, index).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}% ${index === categoryBreakdown.length - 1 ? 100 : categoryBreakdown.slice(0, index + 1).reduce((sum, entry) => sum + (entry.value / totalSpent) * 100, 0)}%`;
+    })
     : ["#f97316 0% 100%"];
 
   const monthlyTrend = Array.from({ length: 12 }, (_, index) => {
@@ -446,7 +473,7 @@ const ExpensesPage = () => {
           </div>
           <div className="mt-4 relative z-10">
             {!showFundForm ? (
-              <button 
+              <button
                 onClick={() => setShowFundForm(true)}
                 className="text-xs font-semibold px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition"
               >
@@ -454,8 +481,8 @@ const ExpensesPage = () => {
               </button>
             ) : (
               <form onSubmit={handleUpdateFund} className="flex gap-2">
-                <input 
-                  type="number" step="0.01" 
+                <input
+                  type="number" step="0.01"
                   value={fundAmount} onChange={(e) => setFundAmount(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-emerald-500/50"
                   placeholder="New amount" required
@@ -489,7 +516,7 @@ const ExpensesPage = () => {
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
             <Select
               options={[
-                ...expenseTypeOptions.map(option => ({ value: option, label: option }))
+                ...expenseFormTypeOptions.map(option => ({ value: option, label: option }))
               ]}
               value={expenseData.expense_type ? { value: expenseData.expense_type, label: expenseData.expense_type } : null}
               onChange={(option) => {
@@ -522,20 +549,20 @@ const ExpensesPage = () => {
             <input type="text" required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
               placeholder="e.g. Amazon Web Services"
-              value={expenseData.paid_to} onChange={(e) => setExpenseData({...expenseData, paid_to: e.target.value})} />
+              value={expenseData.paid_to} onChange={(e) => setExpenseData({ ...expenseData, paid_to: e.target.value })} />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
-            <input type="date" required 
+            <input type="date" required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition scheme-dark"
-              value={expenseData.date_of_payment} onChange={(e) => setExpenseData({...expenseData, date_of_payment: e.target.value})} />
+              value={expenseData.date_of_payment} onChange={(e) => setExpenseData({ ...expenseData, date_of_payment: e.target.value })} />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Amount (₹)</label>
-            <input type="number" step="0.01" required 
+            <input type="number" step="0.01" required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
               placeholder="0.00"
-              value={expenseData.amount} onChange={(e) => setExpenseData({...expenseData, amount: e.target.value})} />
+              value={expenseData.amount} onChange={(e) => setExpenseData({ ...expenseData, amount: e.target.value })} />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
@@ -548,7 +575,7 @@ const ExpensesPage = () => {
                 { value: 'Cheque', label: 'Cheque' }
               ]}
               value={expenseData.payment_type ? { value: expenseData.payment_type, label: expenseData.payment_type } : null}
-              onChange={(option) => setExpenseData({...expenseData, payment_type: option ? option.value : ""})}
+              onChange={(option) => setExpenseData({ ...expenseData, payment_type: option ? option.value : "" })}
               styles={customSelectStyles}
               placeholder="Select Payment Type"
               isSearchable={false}
@@ -556,17 +583,17 @@ const ExpensesPage = () => {
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Invoice Number</label>
-            <input type="text" 
+            <input type="text"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
               placeholder="Optional"
-              value={expenseData.invoice_number} onChange={(e) => setExpenseData({...expenseData, invoice_number: e.target.value})} />
+              value={expenseData.invoice_number} onChange={(e) => setExpenseData({ ...expenseData, invoice_number: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Description</label>
             <textarea rows="2"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
               placeholder="Additional notes about this expense..."
-              value={expenseData.description} onChange={(e) => setExpenseData({...expenseData, description: e.target.value})}></textarea>
+              value={expenseData.description} onChange={(e) => setExpenseData({ ...expenseData, description: e.target.value })}></textarea>
           </div>
           <div className="sm:col-span-2">
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Upload Bill (Optional)</label>
@@ -579,7 +606,7 @@ const ExpensesPage = () => {
               className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition">
               Cancel
             </button>
-            <button type="submit" 
+            <button type="submit"
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-90 transition"
               style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
               Submit Expense
@@ -596,7 +623,7 @@ const ExpensesPage = () => {
               <Select
                 options={[
                   { value: '', label: 'All Types' },
-                  ...expenseTypeOptions.map(option => ({ value: option, label: option }))
+                  ...expenseFilterTypeOptions.map(option => ({ value: option, label: option }))
                 ]}
                 value={{ value: filters.expenseType, label: filters.expenseType || 'All Types' }}
                 onChange={(option) => setFilters((prev) => ({ ...prev, expenseType: option ? option.value : "" }))}
