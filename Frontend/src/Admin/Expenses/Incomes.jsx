@@ -155,6 +155,7 @@ export default function Incomes() {
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [nextInvoiceNumber, setNextInvoiceNumber] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [modeFilter, setModeFilter] = useState('All');
@@ -183,7 +184,25 @@ export default function Incomes() {
     }
   };
 
-  // Fetch interns on mount
+  const fetchNextInvoiceNumber = async () => {
+    try {
+      const { data } = await api.get('/incomes/next-invoice');
+      if (data.success) {
+        setNextInvoiceNumber(data.nextInvoiceNumber || '');
+      }
+    } catch (err) {
+      console.warn('Failed to fetch next invoice number', err);
+      setNextInvoiceNumber('');
+    }
+  };
+
+  const openNewIncomeForm = () => {
+    resetForm();
+    setShowForm(true);
+    fetchNextInvoiceNumber();
+  };
+
+  // Fetch interns and invoice number on mount
   useEffect(() => {
     (async () => {
       setInternsLoading(true);
@@ -199,6 +218,7 @@ export default function Incomes() {
       }
     })();
     fetchHistory();
+    fetchNextInvoiceNumber();
   }, []);
 
   const handleChange = (e) => {
@@ -339,7 +359,7 @@ export default function Incomes() {
         </div>
         <button
           type="button"
-          onClick={() => setShowForm((prev) => !prev)}
+          onClick={() => showForm ? resetForm() : openNewIncomeForm()}
           className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 self-start"
           style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
         >
@@ -458,7 +478,12 @@ export default function Incomes() {
             
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Invoice Number</span>
-              <input type="text" className={`${fieldClass} opacity-50 cursor-not-allowed`} value={formData.invoice_number || 'Auto-generated on Save'} disabled />
+              <input
+                type="text"
+                className={`${fieldClass} opacity-50 cursor-not-allowed`}
+                value={formData.invoice_number || nextInvoiceNumber || 'Auto-generated on Save'}
+                disabled
+              />
             </label>
           </div>
 

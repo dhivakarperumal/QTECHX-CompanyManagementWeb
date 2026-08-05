@@ -118,6 +118,31 @@ exports.getIncomes = async (req, res) => {
   }
 };
 
+exports.getNextInvoiceNumber = async (req, res) => {
+  const pool = getDB();
+  const connection = await pool.getConnection();
+  try {
+    const [invoiceRows] = await connection.query(
+      "SELECT invoice_number FROM incomes WHERE invoice_number LIKE 'QS%' ORDER BY id DESC LIMIT 1"
+    );
+    let nextInvoiceNumber = 'QS0001';
+    if (invoiceRows.length > 0 && invoiceRows[0].invoice_number) {
+      const lastInvoice = invoiceRows[0].invoice_number;
+      const numMatch = lastInvoice.match(/\d+$/);
+      if (numMatch) {
+        const nextNum = parseInt(numMatch[0], 10) + 1;
+        nextInvoiceNumber = 'QS' + String(nextNum).padStart(4, '0');
+      }
+    }
+    res.status(200).json({ success: true, nextInvoiceNumber });
+  } catch (error) {
+    console.error('Error fetching next income invoice number:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  } finally {
+    connection.release();
+  }
+};
+
 exports.updateIncome = async (req, res) => {
   const pool = getDB();
   const connection = await pool.getConnection();
