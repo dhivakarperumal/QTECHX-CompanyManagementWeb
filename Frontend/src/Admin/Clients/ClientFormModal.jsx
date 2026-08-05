@@ -5,25 +5,26 @@ import {
   FileText, Calendar, Clock, MessageSquare, Bell, BellOff,
   CheckCircle2, AlertCircle, Loader2, X, ShieldCheck, Upload, Paperclip, Download
 } from 'lucide-react';
+import Select from 'react-select';
 import api from '../../api';
 
-const CLIENT_STATUSES    = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
-const SERVICE_TYPES      = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
+const CLIENT_STATUSES = ['Lead', 'Prospect', 'Active', 'Inactive', 'Converted', 'Closed'];
+const SERVICE_TYPES = ['Website', 'Mobile App', 'Web App', 'Software', 'Other'];
 const FOLLOW_UP_STATUSES = ['Pending', 'Follow Up', 'Completed', 'Rescheduled', 'Cancelled'];
 
 const statusColour = {
-  Lead:      'bg-sky-500/15 text-sky-400',
-  Prospect:  'bg-violet-500/15 text-violet-400',
-  Active:    'bg-emerald-500/15 text-emerald-400',
-  Inactive:  'bg-rose-500/15 text-rose-400',
+  Lead: 'bg-sky-500/15 text-sky-400',
+  Prospect: 'bg-violet-500/15 text-violet-400',
+  Active: 'bg-emerald-500/15 text-emerald-400',
+  Inactive: 'bg-rose-500/15 text-rose-400',
   Converted: 'bg-amber-500/15 text-amber-400',
-  Closed:    'bg-white/10 text-white/50',
+  Closed: 'bg-white/10 text-white/50',
 };
 const followupColour = {
-  Pending:     'bg-amber-500/15 text-amber-400',
-  Completed:   'bg-emerald-500/15 text-emerald-400',
+  Pending: 'bg-amber-500/15 text-amber-400',
+  Completed: 'bg-emerald-500/15 text-emerald-400',
   Rescheduled: 'bg-sky-500/15 text-sky-400',
-  Cancelled:   'bg-rose-500/15 text-rose-400',
+  Cancelled: 'bg-rose-500/15 text-rose-400',
 };
 
 const inp = `
@@ -37,6 +38,92 @@ const selectCls = `
   text-sm text-white focus:outline-none focus:border-primary/60
   transition-all duration-200 cursor-pointer admin-select
 `;
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused
+        ? '#f97316'
+        : 'rgba(255,255,255,0.1)'
+      }`,
+    boxShadow: 'none',
+    outline: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+    margin: 0,
+    padding: 0,
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',      // dropdown font size
+    padding: '8px 14px',   // reduce option height
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 function buildDocumentUrl(filePath) {
   if (!filePath) return null;
@@ -146,25 +233,25 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
       if (editClient) {
         refreshExistingDocuments(editClient.uuid);
         setForm({
-          company_name:        editClient.company_name        || '',
-          client_name:         editClient.client_name         || '',
-          email:               editClient.email               || '',
-          phone_number:        editClient.phone_number        || '',
-          contact_person:      editClient.contact_person      || '',
-          client_status:       editClient.client_status       || 'Lead',
-          service_type:        SERVICE_TYPES.includes(editClient.service_type) ? editClient.service_type : 'Other',
+          company_name: editClient.company_name || '',
+          client_name: editClient.client_name || '',
+          email: editClient.email || '',
+          phone_number: editClient.phone_number || '',
+          contact_person: editClient.contact_person || '',
+          client_status: editClient.client_status || 'Lead',
+          service_type: SERVICE_TYPES.includes(editClient.service_type) ? editClient.service_type : 'Other',
           custom_service_type: SERVICE_TYPES.includes(editClient.service_type) ? '' : (editClient.service_type || ''),
-          business_name:       editClient.business_name       || '',
-          business_type:       editClient.business_type       || '',
-          requirement:         editClient.requirement         || '',
-          notes_summary:       editClient.notes_summary       || '',
-          follow_up_date:      editClient.follow_up_date      ? editClient.follow_up_date.split('T')[0] : '',
-          follow_up_time:      editClient.follow_up_time      || '',
+          business_name: editClient.business_name || '',
+          business_type: editClient.business_type || '',
+          requirement: editClient.requirement || '',
+          notes_summary: editClient.notes_summary || '',
+          follow_up_date: editClient.follow_up_date ? editClient.follow_up_date.split('T')[0] : '',
+          follow_up_time: editClient.follow_up_time || '',
           next_follow_up_date: editClient.next_follow_up_date ? editClient.next_follow_up_date.split('T')[0] : '',
           next_follow_up_time: editClient.next_follow_up_time || '',
-          discussion_summary:  editClient.discussion_summary  || '',
-          follow_up_status:    editClient.follow_up_status    || 'Pending',
-          reminder:            !!editClient.reminder,
+          discussion_summary: editClient.discussion_summary || '',
+          follow_up_status: editClient.follow_up_status || 'Pending',
+          reminder: !!editClient.reminder,
         });
       } else {
         setForm(DEFAULT_FORM);
@@ -251,9 +338,9 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
     <div className="fixed inset-0 z-[9999] flex justify-end">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
-      
+
       {/* Drawer */}
-      <div 
+      <div
         className="relative w-full max-w-2xl bg-[#0d0f14] border-l border-white/10 h-full overflow-hidden flex flex-col shadow-2xl"
         style={{ animation: 'slideInRight 0.3s cubic-bezier(0.16,1,0.3,1)' }}
       >
@@ -279,7 +366,7 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
 
         {/* Scrollable Form Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
-          
+
           {success && (
             <div className="mb-5 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm font-medium px-5 py-3 rounded-2xl">
               <CheckCircle2 size={17} className="shrink-0" /> {success}
@@ -318,26 +405,46 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                 <div>
                   <FieldLabel icon={ShieldCheck} text="Client Status" />
                   <div className="space-y-1.5">
-                    <select className={selectCls} value={form.client_status} onChange={set('client_status')}>
-                      {CLIENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Select
+                      options={CLIENT_STATUSES.map(s => ({ value: s, label: s }))}
+                      value={{ value: form.client_status, label: form.client_status }}
+                      onChange={(option) => setForm(f => ({ ...f, client_status: option.value }))}
+                      styles={customSelectStyles}
+                      theme={(theme) => ({
+                        ...theme,
+                        borderRadius: 12,
+                        colors: {
+                          ...theme.colors,
+                          primary: '#c2410c',      // Removes blue
+                          primary25: '#fb923c',    // Hover
+                          primary50: '#ea580c',
+                          primary75: '#c2410c',
+                        },
+                      })}
+                      isSearchable={false}
+                    />
                     <StatusPill value={form.client_status} colourMap={statusColour} />
                   </div>
                 </div>
                 <div>
                   <FieldLabel icon={Briefcase} text="Service Type" required />
-                  <select className={selectCls} value={form.service_type} onChange={(e) => {
-                    const value = e.target.value;
-                    setError('');
-                    setForm(f => ({
-                      ...f,
-                      service_type: value,
-                      custom_service_type: value === 'Other' ? f.custom_service_type : '',
-                    }));
-                  }}>
-                    <option value="">— Select service —</option>
-                    {SERVICE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <Select
+                    options={SERVICE_TYPES.map(s => ({ value: s, label: s }))}
+                    value={form.service_type ? { value: form.service_type, label: form.service_type } : null}
+                    placeholder="— Select service —"
+                    onChange={(option) => {
+                      const value = option ? option.value : '';
+                      setError('');
+                      setForm(f => ({
+                        ...f,
+                        service_type: value,
+                        custom_service_type: value === 'Other' ? f.custom_service_type : '',
+                      }));
+                    }}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                    isClearable
+                  />
                 </div>
                 <div>
                   <FieldLabel icon={Building2} text="Business Name" />
@@ -391,9 +498,13 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                 <div>
                   <FieldLabel icon={ShieldCheck} text="Follow-up Status" />
                   <div className="space-y-1.5">
-                    <select className={selectCls} value={form.follow_up_status} onChange={set('follow_up_status')}>
-                      {FOLLOW_UP_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Select
+                      options={FOLLOW_UP_STATUSES.map(s => ({ value: s, label: s }))}
+                      value={{ value: form.follow_up_status, label: form.follow_up_status }}
+                      onChange={(option) => setForm(f => ({ ...f, follow_up_status: option.value }))}
+                      styles={customSelectStyles}
+                      isSearchable={false}
+                    />
                     <StatusPill value={form.follow_up_status} colourMap={followupColour} />
                   </div>
                 </div>
@@ -456,7 +567,7 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
               )} */}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                
+
                 {/* Requirement Document */}
                 <div className="space-y-4">
                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Requirement Document</p>
@@ -470,11 +581,11 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       View Current Requirement Document
                     </a>
                   )}
-                  <div 
+                  <div
                     onClick={() => reqInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-white/[0.02] transition h-36"
                   >
-                    <input 
+                    <input
                       type="file" ref={reqInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
@@ -527,11 +638,11 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                       View Current Project Quotation
                     </a>
                   )}
-                  <div 
+                  <div
                     onClick={() => quotInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-white/10 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/[0.02] transition h-36"
                   >
-                    <input 
+                    <input
                       type="file" ref={quotInputRef} className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx"
                       onChange={e => {
                         const file = e.target.files[0];
