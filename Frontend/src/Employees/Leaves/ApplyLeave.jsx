@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { FileText, Loader2, Send, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
@@ -230,6 +230,20 @@ const ApplyLeave = () => {
     });
   };
 
+  const hasSundayInRange = () => {
+    if (!formData.from_date) return false;
+    const start = toDateOnly(formData.from_date);
+    const end = toDateOnly(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+    if (!start || !end) return false;
+
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d.setDate(d.getDate() + 1)) {
+      if (d.getDay() === 0) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.no_of_days <= 0) {
@@ -239,6 +253,11 @@ const ApplyLeave = () => {
 
     if (hasDuplicateLeave()) {
       toast.error('Leave has already been applied for the selected date. Duplicate same-day leave requests are not allowed.');
+      return;
+    }
+
+    if (hasSundayInRange()) {
+      toast.error('Leave cannot be applied for Sunday. Please choose another date.');
       return;
     }
 
@@ -268,6 +287,7 @@ const ApplyLeave = () => {
 
   return (
     <ModalPortal>
+      <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
       <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 backdrop-blur-sm"
         onClick={(event) => event.target === event.currentTarget && navigate('/employee/leaves/history')}
       >
