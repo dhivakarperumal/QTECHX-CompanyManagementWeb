@@ -1091,7 +1091,7 @@ function ProjectPlansPage() {
                     <p className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">{typeof formData.planDocument === 'string' ? formData.planDocument : 'Selected file'}</p>
                   ) : null}
                 </label>
-                <label className="text-sm text-white/70 md:col-span-2">
+                <label className="text-sm text-white/70">
                   <span className="mb-1 block">Cover Image</span>
                   <input type="file" accept="image/*" onChange={(event) => handleFileChange(event, 'coverImage')} className={fieldClasses} disabled={mode === 'view'} />
                   {formData.coverImage ? <img src={formData.coverImage} alt="Cover preview" className="mt-2 h-28 w-full rounded-2xl object-cover" /> : null}
