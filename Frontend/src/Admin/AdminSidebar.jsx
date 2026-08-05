@@ -287,10 +287,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           location.pathname === sub.path ||
 
                           // All Projects
-                          (sub.path === "/admin/projects" && (
-                            location.pathname === "/admin/projects/add") ||
-                            location.pathname.startsWith("/admin/projects/view/") ||
-                            location.pathname.startsWith("/admin/projects/edit/")
+                          (sub.path === "/admin/projects" &&
+                            (
+                              location.pathname === "/admin/projects/add" ||
+                              location.pathname.startsWith("/admin/projects/view/") ||
+                              location.pathname.startsWith("/admin/projects/edit/")
+                            )
                           ) ||
 
                             // All Employees
@@ -301,17 +303,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                                 location.pathname.startsWith("/admin/employees/edit/")
                               )) ||
 
-                          // Leave Management
-                          (sub.path === "/admin/employees/leave" &&
-                            location.pathname.startsWith("/admin/leave-history/")) ||
+                            // Leave Management
+                            (sub.path === "/admin/employees/leave" &&
+                              location.pathname.startsWith("/admin/leave-history/")) ||
 
-                          // All Trainees
-                          (sub.path === "/admin/trainees" &&
-                            (
-                              location.pathname === "/admin/trainees/add" ||
-                              location.pathname.startsWith("/admin/trainees/view/") ||
-                              location.pathname.startsWith("/admin/trainees/edit/")
-                            ));
+                            // All Trainees
+                            (sub.path === "/admin/trainees" &&
+                              (
+                                location.pathname === "/admin/trainees/add" ||
+                                location.pathname.startsWith("/admin/trainees/view/") ||
+                                location.pathname.startsWith("/admin/trainees/edit/")
+                              ));
                         return (
                           <NavLink
                             key={sub.path}
