@@ -114,7 +114,11 @@ const ApplyLeave = () => {
   const availableLeaveTypes = [...new Set([...(leaveSettings || []).map((item) => item.leave_type), ...defaultLeaveTypes])].filter(Boolean);
   const enrichedLeaveSettings = leaveSettings.map((setting) => {
     const taken = employeeLeaves
-      .filter((leave) => leave.leave_type === setting.leave_type && leave.status === 'Approved')
+      .filter((leave) => {
+        if (leave.leave_type !== setting.leave_type) return false;
+        const status = String(leave.status || '').trim().toLowerCase();
+        return status !== 'reject' && status !== 'rejected' && status !== 'cancel' && status !== 'cancelled';
+      })
       .reduce((sum, leave) => sum + Number(leave.no_of_days || 0), 0);
 
     return {
@@ -267,8 +271,10 @@ const ApplyLeave = () => {
       return;
     }
 
-    if (selectedSetting && Number(selectedSetting.is_active) === 1 && Number(formData.no_of_days) > Number(selectedSetting.max_days || 0)) {
-      toast.error(`${formData.leave_type} limit exceeded. Maximum allowed days: ${selectedSetting.max_days}`);
+    const requestedDays = Number(formData.no_of_days || 0);
+    const remainingDays = selectedSetting ? Number(selectedSetting.remaining || 0) : 0;
+    if (selectedSetting && Number(selectedSetting.is_active) === 1 && requestedDays > remainingDays) {
+      toast.error(`${formData.leave_type} limit exceeded. Remaining available days: ${remainingDays}`);
       return;
     }
     setLoading(true);
