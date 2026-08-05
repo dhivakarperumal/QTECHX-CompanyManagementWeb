@@ -205,19 +205,28 @@ const ApplyLeave = () => {
     }));
   };
 
+  const toDateOnly = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
+
   const hasDuplicateLeave = () => {
     if (!formData.from_date) return false;
-    const selectedFrom = new Date(formData.from_date);
-    const selectedTo = new Date(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+    const selectedFrom = toDateOnly(formData.from_date);
+    const selectedTo = toDateOnly(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+    if (!selectedFrom || !selectedTo) return false;
 
     return employeeLeaves.some((leave) => {
       if (!leave.from_date) return false;
-      const leaveFrom = new Date(leave.from_date);
-      const leaveTo = new Date(leave.to_date || leave.from_date);
+      const leaveFrom = toDateOnly(leave.from_date);
+      const leaveTo = toDateOnly(leave.to_date || leave.from_date);
+      if (!leaveFrom || !leaveTo) return false;
       const status = String(leave.status || '').toLowerCase();
       if (status.includes('reject')) return false;
       if (status.includes('cancel')) return false;
-      return leaveFrom <= selectedTo && leaveTo >= selectedFrom;
+      return leaveFrom.getTime() <= selectedTo.getTime() && leaveTo.getTime() >= selectedFrom.getTime();
     });
   };
 
