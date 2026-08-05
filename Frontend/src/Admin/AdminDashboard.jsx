@@ -224,7 +224,7 @@ const AdminDashboard = () => {
   const heroMetrics = [
     { icon: Users, label: 'Total Clients', value: dashboard ? String(dashboard.clientStats?.total || 0) : '—', accent: 'bg-blue-500/10 text-blue-300' },
     { icon: FolderKanban, label: 'Live Projects', value: dashboard ? String(dashboard.activeProjects || 0) : '—', accent: 'bg-primary/10 text-primary' },
-    { icon: CalendarOff, label: 'Client Follow Up', value: dashboard ? String(dashboard.clientStats?.followUp || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
+    { icon: CalendarOff, label: 'Pending Follow-ups', value: dashboard ? String(dashboard.clientStats?.pendingFollowUps || 0) : '—', accent: 'bg-emerald-500/10 text-emerald-300' },
     { icon: Clock, label: 'Payroll Due', value: 'End of Month', accent: 'bg-yellow-500/10 text-yellow-300' },
   ];
 
@@ -325,18 +325,33 @@ const AdminDashboard = () => {
             </div>
 
             <div className="relative z-10 grid grid-cols-1 gap-4 flex-1">
-              <div className="rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 to-transparent p-6 shadow-md shadow-black/20 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+              <div className="rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 to-transparent pt-6 px-6 pb-4 shadow-md shadow-black/20 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
                 <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/30 transition-colors" />
-                <div className="flex items-start justify-between gap-3 mb-3">
+                
+                <div className="absolute bottom-0 left-0 right-0 h-24 opacity-60 pointer-events-none">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="relative z-10 flex items-start justify-between gap-3 mb-3">
                   <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Current Month Income</p>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 shadow-inner">
                     <DollarSign size={18} />
                   </div>
                 </div>
-                <div className="flex items-end gap-3">
+                <div className="relative z-10 flex items-end gap-3">
                   <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? (dashboard.currentMonthIncome || 0).toLocaleString('en-IN') : 0}</p>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="relative z-10 mt-4 flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
                     <TrendingUp size={12} /> +12%
                   </span>

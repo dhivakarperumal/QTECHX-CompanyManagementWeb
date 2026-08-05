@@ -96,6 +96,9 @@ async function getDashboardMetrics(req, res) {
     const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");
     const [totalClientRows] = await db.execute("SELECT COUNT(*) as total FROM clients");
     const totalClients = totalClientRows[0]?.total || 0;
+    
+    const [pendingFollowUpRows] = await db.execute("SELECT COUNT(*) as total FROM clients WHERE follow_up_status = 'Pending'");
+    const pendingFollowUps = pendingFollowUpRows[0]?.total || 0;
 
     const [traineeTypeRows] = await db.execute("SELECT type, COUNT(*) as count FROM trainee_intern GROUP BY type");
     
