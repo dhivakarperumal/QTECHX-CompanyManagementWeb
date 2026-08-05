@@ -101,7 +101,7 @@ const BLANK = {
   emergency_contact_name: '', emergency_contact_number: '', college_university: '', course: '',
   academic_department: '', year_semester: '', college_id_number: '', guide_name: '',
   profile_photo: '', resume: '', college_id_doc: '', offer_letter: '', internship_letter: '',
-  username: '', official_email: '', password: '', confirm_password: ''
+  username: '', official_email: '', password: ''
 };
 
 const toForm = (item) => ({
@@ -110,7 +110,7 @@ const toForm = (item) => ({
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
-  username: item.username || '', official_email: item.official_email || item.email_address || '', password: '', confirm_password: ''
+  username: item.username || '', official_email: item.official_email || item.email_address || '', password: ''
 });
 
 function buildUploadUrl(filePath) {
@@ -134,7 +134,6 @@ export default function AddTraineeIntern() {
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -181,6 +180,9 @@ export default function AddTraineeIntern() {
         if (name === 'email_address') {
           newData.official_email = value;
         }
+        if (name === 'mobile_number') {
+          newData.password = value;
+        }
       }
       return newData;
     });
@@ -195,14 +197,6 @@ export default function AddTraineeIntern() {
     e.preventDefault();
     if (!formData.full_name?.trim()) {
       setError('Full name is required.');
-      return;
-    }
-    if (!isEdit && formData.password !== formData.confirm_password) {
-      setError('Passwords do not match.');
-      return;
-    }
-    if (isEdit && formData.password && formData.password !== formData.confirm_password) {
-      setError('Passwords do not match.');
       return;
     }
     setLoading(true); setError(''); setSuccess('');
@@ -329,7 +323,7 @@ export default function AddTraineeIntern() {
             <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><KeyRound size={15} className="text-orange-400" /></div>
             <h2 className="text-base font-bold text-white">Login Credentials</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Username {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <input className={fieldClass} name="username" required={!isEdit} value={formData.username} onChange={handleChange} placeholder="Enter username for login" />
@@ -338,23 +332,12 @@ export default function AddTraineeIntern() {
               <span className="mb-1.5 block font-medium">Official Email {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <input className={fieldClass} type="email" name="official_email" required={!isEdit} value={formData.official_email} onChange={handleChange} placeholder="Enter official email" />
             </label>
-            
             <label className="text-sm text-white/60 relative">
               <span className="mb-1.5 block font-medium">Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
               <div className="relative">
-                <input className={fieldClass} type={showPassword ? "text" : "password"} name="password" required={!isEdit} value={formData.password} onChange={handleChange} placeholder={isEdit ? "Leave blank to keep unchanged" : "Enter password"} />
+                <input className={fieldClass} type={showPassword ? "text" : "password"} name="password" required={!isEdit} value={formData.password} onChange={handleChange} placeholder={isEdit ? "Leave blank to keep unchanged" : "Auto-filled from mobile"} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </label>
-            
-            <label className="text-sm text-white/60 relative">
-              <span className="mb-1.5 block font-medium">Confirm Password {isEdit ? "" : <span className="text-red-500">*</span>}</span>
-              <div className="relative">
-                <input className={fieldClass} type={showConfirmPassword ? "text" : "password"} name="confirm_password" required={!isEdit && (formData.password?.length > 0)} value={formData.confirm_password} onChange={handleChange} placeholder="Confirm password" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </label>
