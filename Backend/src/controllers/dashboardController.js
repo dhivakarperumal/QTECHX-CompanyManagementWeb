@@ -204,9 +204,18 @@ async function getEmployeeDashboardData(req, res) {
       [employeeId]
     );
 
+    const getDateString = (value) => {
+      if (!value) return null;
+      if (typeof value === 'string') return value.slice(0, 10);
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      return date.toISOString().slice(0, 10);
+    };
+
     const todayTasks = tasksRows.filter((task) => {
       const taskDate = task.assignment_date || task.created_at;
-      return taskDate && taskDate.slice(0, 10) === todayStr;
+      const dateStr = getDateString(taskDate);
+      return dateStr === todayStr;
     }).slice(0, 5);
 
     const pendingLeaves = leaveRows.filter((leave) => leave.status === 'Pending').length;

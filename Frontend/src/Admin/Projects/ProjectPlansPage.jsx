@@ -167,10 +167,6 @@ const createEmptyForm = () => ({
   newModuleDuration: '',
   newModuleDescription: '',
   newModuleDocumentName: '',
-  metaTitle: '',
-  metaDescription: '',
-  keywords: '',
-  adminNotes: '',
   salesNotes: '',
   technicalNotes: '',
   includedModules: [],
@@ -1371,30 +1367,7 @@ function ProjectPlansPage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-[#101723] p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <FileText size={16} className="text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">Deliverables & SEO</h4>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Meta Title</span>
-                  <input name="metaTitle" value={formData.metaTitle} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70">
-                  <span className="mb-1 block">Keywords</span>
-                  <input name="keywords" value={formData.keywords} onChange={handleFieldChange} className={fieldClasses} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70 md:col-span-2">
-                  <span className="mb-1 block">Meta Description</span>
-                  <textarea name="metaDescription" value={formData.metaDescription} onChange={handleFieldChange} className={`${fieldClasses} min-h-[80px]`} disabled={mode === 'view'} />
-                </label>
-                <label className="text-sm text-white/70 md:col-span-2">
-                  <span className="mb-1 block">Admin Notes</span>
-                  <textarea name="adminNotes" value={formData.adminNotes} onChange={handleFieldChange} className={`${fieldClasses} min-h-[80px]`} disabled={mode === 'view'} />
-                </label>
-              </div>
-            </section>
+            {/* Deliverables & SEO removed as requested */}
 
             {mode !== 'view' ? (
               <div className="flex flex-wrap gap-3">

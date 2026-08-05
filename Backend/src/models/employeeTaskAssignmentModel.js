@@ -298,11 +298,27 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   const finalStatus       = status     || task.status     || 'Assigned';
 
   // Merge incoming attachments with any existing ones on the task row
-  let finalAttachments = attachments || null;
-  if (!finalAttachments && task.attachments) {
-    finalAttachments = typeof task.attachments === 'string'
-      ? task.attachments
-      : JSON.stringify(task.attachments);
+  let finalAttachments = null;
+  let existingArr = [];
+  let incomingArr = [];
+  
+  if (task.attachments) {
+    try {
+      const parsed = typeof task.attachments === 'string' ? JSON.parse(task.attachments) : task.attachments;
+      if (Array.isArray(parsed)) existingArr = parsed;
+    } catch(e) {}
+  }
+  
+  if (attachments) {
+    try {
+      const parsed = typeof attachments === 'string' ? JSON.parse(attachments) : attachments;
+      if (Array.isArray(parsed)) incomingArr = parsed;
+    } catch(e) {}
+  }
+
+  const combined = [...existingArr, ...incomingArr];
+  if (combined.length > 0) {
+    finalAttachments = JSON.stringify(combined);
   }
 
   // Build task details — include attachments so the JSON snapshot is complete
@@ -369,6 +385,7 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
       task_count: updatedTaskCount,
       employee_details: employeeDetails,
       task_details: existingTasks,
+      task: taskDetailsEntry,
       status: resolvedStatus,
       assigned_by,
       assigned_date: finalUpdatedAssignedDate,
@@ -391,7 +408,7 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
       JSON.stringify([taskDetailsEntry]),
       1, finalStatus, assigned_by, finalAssignedDate,
       finalStartDate, finalDueDate,
-      attachments || null, created_by, updated_by,
+      finalAttachments || null, created_by, updated_by,
     ]
   );
 
@@ -412,6 +429,7 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
     task_count: 1,
     employee_details: employeeDetails,
     task_details: [taskDetailsEntry],
+    task: taskDetailsEntry,
     status: finalStatus,
     assigned_by,
     assigned_date: finalAssignedDate,

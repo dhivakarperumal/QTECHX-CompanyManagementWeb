@@ -580,78 +580,81 @@ function ProjectAssetsPage() {
   };
   
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-linear-to-br from-[#11141d] via-[#0f131b] to-[#111827] p-5 shadow-2xl shadow-black/30">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-5 pb-10 text-white min-h-screen">
+      {statusMessage && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 border text-sm font-medium px-5 py-3 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-2 duration-300 ${statusMessage.includes('success') ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/15 border-rose-500/30 text-rose-400'}`}>
+          {statusMessage.includes('success') ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />} 
+          {statusMessage}
+        </div>
+      )}
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
+            <FolderKanban size={22} className="text-primary" />
+          </div>
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-400">
-              <FolderKanban size={14} />
-              Project Assets
-            </div>
-            <h2 className="text-2xl font-semibold text-white">Upload project images and ZIP documents</h2>
-            <p className="mt-2 max-w-2xl text-sm text-white/60">
-              Select a project, upload the relevant files, and keep the created/updated metadata visible for every asset.
+            <h1 className="text-2xl font-bold text-white tracking-tight">Project Assets</h1>
+            <p className="text-white/40 text-xs mt-0.5">
+              {assetEntries.length} asset{assetEntries.length !== 1 ? 's' : ''} total
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowPopup('upload')}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20"
-            >
-              <UploadCloud size={16} />
-              Upload Files
-            </button>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
-              <span className="text-white">{assetEntries.length}</span> saved assets
-            </div>
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPopup('upload')}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-primary/25 hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+          >
+            <UploadCloud size={15} /> Upload Files
+          </button>
         </div>
       </div>
 
-      {statusMessage ? (
-        <div className={`rounded-2xl border px-4 py-3 text-sm ${statusMessage.includes('success') ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-orange-500/20 bg-orange-500/10 text-orange-300'}`}>
-          {statusMessage}
-        </div>
-      ) : null}
-
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-[#11141d] p-4 rounded-2xl border border-white/10">
-        <div className="relative flex-1 w-full">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+      {/* ── Toolbar ── */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"
             placeholder="Search by file or project name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0e1118] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:border-orange-500/50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
           />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition">
+              <X size={13} />
+            </button>
+          )}
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-48 z-20">
-            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 z-10" />
-            <div className="pl-8">
-              <Select
-                value={[
-                  { value: 'all', label: 'All Types' },
-                  { value: 'image', label: 'Images' },
-                  { value: 'zip', label: 'ZIP Archives' }
-                ].find(opt => opt.value === filterType)}
-                onChange={(option) => setFilterType(option ? option.value : 'all')}
-                options={[
-                  { value: 'all', label: 'All Types' },
-                  { value: 'image', label: 'Images' },
-                  { value: 'zip', label: 'ZIP Archives' }
-                ]}
-                styles={{
-                  ...customSelectStyles,
-                  control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118', minHeight: '38px' })
-                }}
-                isSearchable={false}
-              />
-            </div>
+
+        {/* Filter toggle */}
+        <div className="flex items-center gap-3">
+          <div className="w-40 z-20">
+            <Select
+              value={[
+                { value: 'all', label: 'All Types' },
+                { value: 'image', label: 'Images' },
+                { value: 'zip', label: 'ZIP Archives' }
+              ].find(opt => opt.value === filterType)}
+              onChange={(option) => setFilterType(option ? option.value : 'all')}
+              options={[
+                { value: 'all', label: 'All Types' },
+                { value: 'image', label: 'Images' },
+                { value: 'zip', label: 'ZIP Archives' }
+              ]}
+              styles={{
+                ...customSelectStyles,
+                control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' })
+              }}
+              isSearchable={false}
+            />
           </div>
           
-          <div className="relative flex-1 md:w-48 z-10">
+          <div className="w-48 z-10">
             <Select
               value={
                 filterProject === 'all' 
@@ -665,74 +668,93 @@ function ProjectAssetsPage() {
               ]}
               styles={{
                 ...customSelectStyles,
-                control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118', minHeight: '38px' })
+                control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' })
               }}
             />
           </div>
+        </div>
 
-          <div className="flex bg-[#0e1118] border border-white/10 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'card' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80'}`}
-            >
-              <LayoutGrid size={18} />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80'}`}
-            >
-              <List size={18} />
-            </button>
-          </div>
+        {filteredAssets.length > 0 && (
+          <button
+            onClick={handleDeleteAll}
+            className="flex items-center gap-2 rounded-xl bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500 hover:text-white transition border border-rose-500/20"
+            title="Delete all displayed assets"
+          >
+            <Trash2 size={13} />
+            <span className="hidden md:inline">Delete All</span>
+          </button>
+        )}
 
-          {filteredAssets.length > 0 && (
-            <button
-              onClick={handleDeleteAll}
-              className="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"
-              title="Delete all displayed assets"
-            >
-              <Trash2 size={16} />
-              <span className="hidden md:inline">Delete All</span>
-            </button>
-          )}
+        {/* View toggle */}
+        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'table' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+            title="Table View"
+          >
+            <List size={15} />
+          </button>
+          <button
+            onClick={() => setViewMode('card')}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition ${
+              viewMode === 'card' ? 'bg-primary text-white shadow-md' : 'text-white/50 hover:text-white hover:bg-white/5'
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid size={15} />
+          </button>
         </div>
       </div>
 
+      {/* ── Empty State ── */}
       {filteredAssets.length === 0 ? (
-        <div className="py-20 text-center rounded-3xl border border-white/5 bg-white/5">
-          <FolderKanban size={48} className="mx-auto text-white/20 mb-4" />
-          <h3 className="text-lg font-medium text-white">No assets found</h3>
-          <p className="text-sm text-white/40 mt-1">Try adjusting your filters or upload some new files.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-white/30">
+          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+            <Archive size={30} className="opacity-40" />
+          </div>
+          <p className="text-base font-semibold text-white/40">No assets found</p>
+          <p className="text-xs mt-1">Try adjusting your filters or upload some new files.</p>
+          <button
+            onClick={() => setShowPopup('upload')}
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition"
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+            <UploadCloud size={14} /> Upload Files
+          </button>
         </div>
       ) : viewMode === 'card' ? (
+        /* ── Card Mode ── */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredAssets.map((asset) => (
-            <div key={asset.id} className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#11141d] hover:border-orange-500/30 transition-all duration-300 shadow-lg shadow-black/20">
-              <div className="h-40 bg-[#0e1118] relative flex items-center justify-center overflow-hidden">
+            <div key={asset.id} className="group flex flex-col overflow-hidden bg-white/[0.03] border border-white/8 rounded-2xl hover:bg-white/[0.06] transition cursor-pointer relative">
+              <div className="h-40 bg-black/20 relative flex items-center justify-center overflow-hidden">
                 {asset.assetType === 'image' && asset.uploadedPath ? (
                   <img src={asset.uploadedPath.startsWith('http') ? asset.uploadedPath : `http://localhost:5000${asset.uploadedPath}`} alt={asset.fileName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : asset.assetType === 'image' ? (
                   <ImageIcon size={48} className="text-white/10" />
                 ) : (
-                  <FileArchive size={48} className="text-orange-500/20" />
+                  <FileArchive size={48} className="text-primary/20" />
                 )}
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <span className="rounded-md border border-white/10 bg-black/60 backdrop-blur-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+                <div className="absolute top-2 right-2 flex gap-1.5">
+                  <button onClick={() => handleDownload(asset)} className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition shadow-lg" title="Download">
+                    <Download size={13} />
+                  </button>
+                  <button onClick={() => handleDelete(asset.id)} className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center text-rose-400 hover:bg-rose-500 hover:text-white transition shadow-lg" title="Delete">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <div className="absolute top-2 left-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${asset.assetType === 'image' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
                     {asset.assetType === 'image' ? 'Image' : 'ZIP'}
                   </span>
-                  <button onClick={() => handleDownload(asset)} className="rounded-md border border-white/10 bg-black/60 backdrop-blur-md p-1.5 text-white hover:bg-orange-500 hover:border-orange-500 transition-colors shadow-lg" title="Download">
-                    <Download size={14} />
-                  </button>
-                  <button onClick={() => handleDelete(asset.id)} className="rounded-md border border-white/10 bg-black/60 backdrop-blur-md p-1.5 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-colors shadow-lg" title="Delete">
-                    <Trash2 size={14} />
-                  </button>
                 </div>
               </div>
               <div className="flex flex-col p-4 flex-1">
-                <h4 className="text-sm font-medium text-white truncate" title={asset.fileName}>{asset.fileName}</h4>
-                <p className="text-xs text-orange-400/80 mt-1 truncate">{asset.projectName}</p>
-                <div className="mt-auto pt-4 flex items-center justify-between text-xs text-white/40">
-                  <span className="flex items-center gap-1"><Clock3 size={12} /> {formatDate(asset.createdAt).split('•')[0]}</span>
+                <h4 className="text-sm font-semibold text-white truncate" title={asset.fileName}>{asset.fileName}</h4>
+                <p className="text-xs text-white/40 mt-1 truncate flex items-center gap-1.5"><FolderKanban size={10} /> {asset.projectName}</p>
+                <div className="mt-auto pt-4 flex items-center justify-between text-[11px] text-white/30 font-semibold uppercase tracking-wider">
+                  <span className="flex items-center gap-1"><Clock3 size={11} /> {formatDate(asset.createdAt).split('•')[0]}</span>
                   <span>{(asset.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                 </div>
               </div>
@@ -740,262 +762,215 @@ function ProjectAssetsPage() {
           ))}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#11141d] shadow-2xl">
-          <table className="w-full text-left text-sm text-white/70">
-            <thead className="border-b border-white/10 bg-white/5 text-xs uppercase tracking-wider text-white/50">
-              <tr>
-                <th className="px-6 py-4 font-medium">Preview</th>
-                <th className="px-6 py-4 font-medium">File Name</th>
-                <th className="px-6 py-4 font-medium">Project</th>
-                <th className="px-6 py-4 font-medium">Type</th>
-                <th className="px-6 py-4 font-medium">Size</th>
-                <th className="px-6 py-4 font-medium">Upload Date</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredAssets.map((asset) => (
-                <tr key={asset.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="px-6 py-3">
-                    <div className="h-10 w-10 rounded-lg overflow-hidden bg-[#0e1118] flex items-center justify-center border border-white/10">
-                      {asset.assetType === 'image' && asset.uploadedPath ? (
-                        <img src={asset.uploadedPath.startsWith('http') ? asset.uploadedPath : `http://localhost:5000${asset.uploadedPath}`} alt={asset.fileName} className="h-full w-full object-cover" />
-                      ) : asset.assetType === 'image' ? (
-                        <ImageIcon size={20} className="text-white/20" />
-                      ) : (
-                        <FileArchive size={20} className="text-orange-500/40" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-white">
-                    <div className="max-w-[200px] truncate" title={asset.fileName}>{asset.fileName}</div>
-                  </td>
-                  <td className="px-6 py-4 text-orange-200/70">{asset.projectName}</td>
-                  <td className="px-6 py-4">
-                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider">
-                      {asset.assetType === 'image' ? 'Image' : 'ZIP'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{(asset.fileSize / 1024 / 1024).toFixed(2)} MB</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-white/40">{formatDate(asset.createdAt)}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => handleDownload(asset)} className="inline-flex items-center justify-center rounded-lg p-2 text-white/40 hover:bg-white/10 hover:text-white transition-colors" title="Download">
-                        <Download size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(asset.id)} className="inline-flex items-center justify-center rounded-lg p-2 text-red-400/70 hover:bg-red-500/20 hover:text-red-400 transition-colors" title="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+        /* ── Table Mode ── */
+        <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead>
+                <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Preview</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">File Name</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Project</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Type</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Size</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Upload Date</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredAssets.map((asset) => (
+                  <tr key={asset.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group">
+                    <td className="px-5 py-3">
+                      <div className="h-10 w-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                        {asset.assetType === 'image' && asset.uploadedPath ? (
+                          <img src={asset.uploadedPath.startsWith('http') ? asset.uploadedPath : `http://localhost:5000${asset.uploadedPath}`} alt={asset.fileName} className="h-full w-full object-cover" />
+                        ) : asset.assetType === 'image' ? (
+                          <ImageIcon size={18} className="text-white/20" />
+                        ) : (
+                          <FileArchive size={18} className="text-primary/40" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <p className="text-white font-semibold text-sm truncate max-w-[200px]" title={asset.fileName}>{asset.fileName}</p>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <p className="text-white/60 text-xs flex items-center gap-1.5"><FolderKanban size={11} /> {asset.projectName}</p>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${asset.assetType === 'image' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'}`}>
+                        {asset.assetType === 'image' ? 'Image' : 'ZIP'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-white/50">
+                      {(asset.fileSize / 1024 / 1024).toFixed(2)} MB
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-white/50">
+                      {formatDate(asset.createdAt)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => handleDownload(asset)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition" title="Download">
+                          <Download size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(asset.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-rose-400/70 hover:text-rose-400 transition" title="Delete">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-
-      {showPopup && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/20 bg-[#151923] p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-2xl font-semibold text-white">
-                Upload Project Assets
-              </h3>
-              <button onClick={() => setShowPopup(null)} className="text-white/50 hover:text-white transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            </div>
+      {/* ── Upload Modal ── */}
+      {showPopup === 'upload' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPopup(null)} />
+          <div className="relative bg-[#111318] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
             
-            <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Sparkles size={16} className="text-orange-400" />
-              <h3 className="text-lg font-semibold text-white">Project selection</h3>
-            </div>
-
-            <label className="block text-sm text-white/70">
-              <span className="mb-2 block">Select project</span>
-              <Select
-                value={
-                  selectedProjectId 
-                    ? { value: selectedProjectId, label: projects.find(p => (p.uuid || p.id) === selectedProjectId)?.project_name || projects.find(p => (p.uuid || p.id) === selectedProjectId)?.projectName || 'Project' }
-                    : null
-                }
-                onChange={(option) => setSelectedProjectId(option ? option.value : '')}
-                options={projects.map((p) => ({ value: p.uuid || p.id, label: p.project_name || p.projectName || `Project ${p.id}` }))}
-                styles={{
-                  ...customSelectStyles,
-                  control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: '#0e1118' })
-                }}
-              />
-            </label>
-
-            {selectedProject ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0e1118] p-4 text-sm text-white/70">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold text-white">{selectedProject.project_name || selectedProject.projectName}</p>
-                    <p className="mt-1 text-xs text-white/50">{selectedProject.client_name || selectedProject.clientName || 'No client assigned yet'}</p>
-                  </div>
-                  <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-                    {selectedProject.current_status || selectedProject.currentStatus || 'Planning'}
-                  </span>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-white/8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <UploadCloud size={18} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Upload Project Assets</h3>
+                  <p className="text-white/40 text-xs mt-0.5">Add images and documents to a project</p>
                 </div>
               </div>
-            ) : null}
-          </section>
-
-          <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <UploadCloud size={16} className="text-orange-400" />
-              <h3 className="text-lg font-semibold text-white">Upload files</h3>
+              <button onClick={() => setShowPopup(null)} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition">
+                <X size={16} />
+              </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="rounded-2xl border border-dashed border-white/15 bg-[#0e1118] p-4 text-sm text-white/70">
-                <div className="mb-3 flex items-center gap-2 text-white">
-                  <FileImage size={16} className="text-orange-400" />
-                  Project images
-                </div>
-                <div className="flex flex-col gap-3">
-                  <input
-                    id="project-images-input"
-                    type="file"
-                    accept=".zip,application/zip"
-                    multiple
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                  <label htmlFor="project-images-input" className="inline-flex cursor-pointer items-center justify-center rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600">
-                    Choose ZIP archive(s)
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+              
+              {/* Project Selection */}
+              <div>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">1. Select Project</p>
+                <Select
+                  value={
+                    selectedProjectId 
+                      ? { value: selectedProjectId, label: projects.find(p => (p.uuid || p.id) === selectedProjectId)?.project_name || projects.find(p => (p.uuid || p.id) === selectedProjectId)?.projectName || 'Project' }
+                      : null
+                  }
+                  onChange={(option) => setSelectedProjectId(option ? option.value : '')}
+                  options={projects.map((p) => ({ value: p.uuid || p.id, label: p.project_name || p.projectName || `Project ${p.id}` }))}
+                  styles={{
+                    ...customSelectStyles,
+                    control: (base, state) => ({ ...customSelectStyles.control(base, state), backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' })
+                  }}
+                  placeholder="Select a project..."
+                />
+                {selectedProject && (
+                  <div className="mt-3 flex items-center justify-between bg-white/5 border border-white/8 rounded-xl px-4 py-2.5">
+                    <div>
+                      <p className="text-xs font-semibold text-white">{selectedProject.project_name || selectedProject.projectName}</p>
+                      <p className="text-[10px] text-white/40">{selectedProject.client_name || selectedProject.clientName || 'No client assigned'}</p>
+                    </div>
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/60 border border-white/10">
+                      {selectedProject.current_status || selectedProject.currentStatus || 'Planning'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* File Uploads */}
+              <div>
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">2. Upload Files</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="flex flex-col bg-white/[0.02] border border-white/8 border-dashed rounded-xl p-4 hover:bg-white/[0.04] transition cursor-pointer group">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+                      <FileImage size={16} className="text-primary" /> Project Images (ZIP)
+                    </div>
+                    <input
+                      id="project-images-input"
+                      type="file"
+                      accept=".zip,application/zip"
+                      multiple
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                    <div className="mt-auto flex flex-col items-start gap-3">
+                      <div className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 group-hover:bg-primary/20 group-hover:text-primary transition font-semibold">
+                        Choose ZIP(s)
+                      </div>
+                      {imageZipFiles.length > 0 ? (
+                        <div className="w-full text-[11px] text-white/50 space-y-1 bg-black/20 p-2 rounded-lg">
+                          <p className="text-white/70 font-semibold mb-1">Selected:</p>
+                          {imageZipFiles.map((file) => (
+                            <div key={`${file.name}-${file.size}`} className="truncate">• {file.name}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-white/40 leading-relaxed">Select one or more ZIP archives containing project images.</p>
+                      )}
+                    </div>
                   </label>
-                  {imageZipFiles.length ? (
-                    <div className="rounded-2xl border border-white/10 bg-[#111827] px-3 py-3 text-xs text-white/60">
-                      <div className="font-semibold text-white">Selected images</div>
-                      <ul className="mt-2 max-h-36 overflow-auto space-y-1 text-xs text-white/50">
-                        {imageZipFiles.map((file) => (
-                          <li key={`${file.name}-${file.size}`}>{file.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-xs text-white/40">ZIP archives only. Select one or more ZIP files to upload project image bundles.</p>
-                  )}
-                </div>
-              </label>
 
-              <label className="rounded-2xl border border-dashed border-white/15 bg-[#0e1118] p-4 text-sm text-white/70">
-                <div className="mb-3 flex items-center gap-2 text-white">
-                  <FileArchive size={16} className="text-orange-400" />
-                  ZIP documents
+                  <label className="flex flex-col bg-white/[0.02] border border-white/8 border-dashed rounded-xl p-4 hover:bg-white/[0.04] transition cursor-pointer group">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+                      <FileArchive size={16} className="text-primary" /> Documents (ZIP)
+                    </div>
+                    <input type="file" accept=".zip,.rar,.7z,application/zip" className="hidden" onChange={handleZipChange} />
+                    <div className="mt-auto flex flex-col items-start gap-3">
+                      <div className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 group-hover:bg-primary/20 group-hover:text-primary transition font-semibold">
+                        Choose Document
+                      </div>
+                      {documentZipFile ? (
+                        <div className="w-full text-[11px] text-white/50 bg-black/20 p-2 rounded-lg truncate">
+                          <span className="text-white/70 font-semibold">Selected:</span><br/>{documentZipFile.name}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-white/40 leading-relaxed">Upload a single ZIP bundle containing source code or project docs.</p>
+                      )}
+                    </div>
+                  </label>
                 </div>
-                <input type="file" accept=".zip,.rar,.7z,application/zip" className="block w-full text-sm text-white/60 file:mr-4 file:rounded-full file:border-0 file:bg-orange-500/15 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-orange-400" onChange={handleZipChange} />
-                {documentZipFile ? <p className="mt-3 text-xs text-white/50">Selected: {documentZipFile.name}</p> : <p className="mt-3 text-xs text-white/40">Upload a ZIP bundle of project documents.</p>}
-              </label>
+              </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-white/8 bg-black/20 flex gap-3 rounded-b-2xl">
               <button
-                type="button"
-                onClick={saveAssets}
+                onClick={() => setShowPopup(null)}
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
               >
-                <UploadCloud size={16} />
-                {isSaving ? 'Saving...' : 'Save assets'}
+                Cancel
               </button>
-              <span className="text-sm text-white/50">The latest file replaces the previous version for the same project and file type.</span>
+              <button
+                onClick={saveAssets}
+                disabled={isSaving || (!imageZipFiles.length && !documentZipFile)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={15} /> Save Assets
+                  </>
+                )}
+              </button>
             </div>
-          </section>
-        </div>
-
-        <div className="space-y-6">
-          <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-orange-400" />
-              <h3 className="text-lg font-semibold text-white">Preview</h3>
-            </div>
-
-            {imageZipFiles.length ? (
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-[#0e1118] p-4 text-sm text-white/70">
-                  <p className="text-white font-semibold">Selected project image ZIPs</p>
-                  <ul className="mt-2 space-y-2 text-sm text-white/60">
-                    {imageZipFiles.map((file) => (
-                      <li key={`${file.name}-${file.size}`} className="truncate">• {file.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="flex h-56 items-center justify-center rounded-2xl border border-dashed border-white/15 bg-[#0e1118] text-center text-sm text-white/50">
-                Select one or more project image ZIP files to preview the upload list here.
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-3xl border border-white/10 bg-white/3 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Clock3 size={16} className="text-orange-400" />
-              <h3 className="text-lg font-semibold text-white">Asset metadata</h3>
-            </div>
-
-            {selectedProjectAssets.length ? (
-              <div className="space-y-3">
-                {selectedProjectAssets.map((entry) => (
-                  <div key={entry.id} className="rounded-2xl border border-white/10 bg-[#0e1118] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-white">{entry.kindLabel}</p>
-                        <p className="mt-1 text-sm text-white/60">{entry.fileName}</p>
-                      </div>
-                      <div className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
-                        {entry.assetType === 'image' ? 'Image' : 'Zip'}
-                      </div>
-                    </div>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">Created at</p>
-                        <p className="mt-1 text-sm text-white/80">{formatDate(entry.createdAt)}</p>
-                      </div>
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">Updated at</p>
-                        <p className="mt-1 text-sm text-white/80">{formatDate(entry.updatedAt)}</p>
-                      </div>
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">Created by</p>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                          <UserRound size={14} className="text-orange-400" />
-                          {entry.createdBy}
-                        </div>
-                      </div>
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/40">Updated by</p>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                          <UserRound size={14} className="text-orange-400" />
-                          {entry.updatedBy}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/15 bg-[#0e1118] p-6 text-center text-sm text-white/50">
-                No assets have been uploaded for this project yet.
-              </div>
-            )}
-          </section>
-        </div>
-      </div>
-            
           </div>
         </div>,
         document.body
       )}
+
     </div>
   );
 }

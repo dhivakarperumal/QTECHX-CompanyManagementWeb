@@ -132,6 +132,7 @@ app.use(["/uploads", "/api/uploads"], (req, res, next) => {
     path.join(__dirname, "uploads", "projects", "source_code_backup", fileName),
     path.join(__dirname, "uploads", "projects", "ProjectImageZip", fileName),
     path.join(__dirname, "uploads", "projects", "images", fileName),
+    path.join(__dirname, "uploads", "projects", "project_plans", fileName),
   ];
 
   const resolvedFile = fallbackCandidates.find((candidate) => fs.existsSync(candidate));

@@ -75,14 +75,45 @@ export default function AssignTaskPage() {
 
   // ─── Load all projects once ────────────────────────────────────────────────
   useEffect(() => {
-    api.get("/projects")
-      .then(({ data }) => {
-        const list = data.data || data.projects || [];
-        setProjects(list);
-        if (list.length > 0)
-          setAssignForm((p) => ({ ...p, project_id: list[0].uuid }));
-      })
-      .catch(() => {});
+    const fetchProjects = async () => {
+      try {
+        const [projectsResponse, assignmentsResponse] = await Promise.all([
+          api.get('/projects?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+          api.get('/projects/assignments/all').catch(() => ({ data: { data: [] } })),
+        ]);
+
+        const projectsFromApi = (projectsResponse?.data?.data || []).map((project) => ({
+          uuid: project.uuid,
+          project_name: project.project_name || project.short_name || project.project_code || project.name || project.uuid,
+        }));
+
+        const projectsFromAssignments = (assignmentsResponse?.data?.data || [])
+          .map((assignment) => {
+            if (!assignment?.project_uuid) return null;
+            return {
+              uuid: assignment.project_uuid,
+              project_name: assignment.project_name || assignment.project_uuid,
+            };
+          })
+          .filter(Boolean);
+
+        const uniqueAssignedProjects = Array.from(
+          new Map(projectsFromAssignments.map((project) => [project.uuid, project])).values()
+        );
+
+        const mergedProjects = Array.from(
+          new Map([...projectsFromAssignments, ...projectsFromApi].map((project) => [project.uuid, project])).values()
+        );
+
+        const finalList = uniqueAssignedProjects.length > 0 ? uniqueAssignedProjects : mergedProjects;
+        setProjects(finalList);
+        if (finalList.length > 0) setAssignForm((p) => ({ ...p, project_id: finalList[0].uuid }));
+      } catch (err) {
+        setProjects([]);
+      }
+    };
+
+    fetchProjects();
   }, []);
 
   // ─── Fetch already-assigned titles + full task data ────────────────────────
@@ -271,6 +302,12 @@ export default function AssignTaskPage() {
           due_date:        computedDueDate,
           assigned_to:     assignForm.assigned_to,
           team:            assignForm.team || "",
+          attachments:     mod.documentName ? JSON.stringify([{
+            original_name: mod.documentName,
+            filename: mod.documentName,
+            path: `uploads/projects/project_plans/${mod.documentName}`,
+            mimetype: "application/octet-stream"
+          }]) : null,
         };
         const createRes = await api.post("/tasks", taskPayload);
         if (createRes.data?.success === false) {
@@ -298,10 +335,13 @@ export default function AssignTaskPage() {
           throw new Error(assignRes.data?.message || `Failed to assign task "${mod.title}"`);
         }
 
+        const assignedTask = assignRes.data?.data?.task || createdTask;
+
         results.push(mod.title);
         newlyAssigned.push({
           key:     (mod.title || "").trim().toLowerCase(),
-          taskRow: createdTask,
+          taskRow: assignedTask,
+          mod:     mod,
         });
       }
 
@@ -314,13 +354,12 @@ export default function AssignTaskPage() {
       setAssignedTaskMap((prev) => {
         const updated = new Map(prev);
         newlyAssigned.forEach(({ key, taskRow }) => {
-          if (key) updated.set(key, {
-            ...taskRow,
-            // patch in the attachment from this upload session if present
-            attachments: attachmentBase64
-              ? JSON.stringify([{ original_name: attachmentName, filename: attachmentName, path: `uploads/tasks/${attachmentName}`, mimetype: attachmentType }])
-              : (taskRow.attachments || null),
-          });
+          if (key) {
+            updated.set(key, {
+              ...taskRow,
+              attachments: taskRow.attachments || null,
+            });
+          }
         });
         return updated;
       });
@@ -555,8 +594,9 @@ export default function AssignTaskPage() {
                         </td>
                         {/* Documents */}
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {docs.length > 0 ? (
+                          {(docs.length > 0 || mod.documentName) ? (
                             <div className="flex flex-col gap-1">
+                              {/* Show assigned docs */}
                               {docs.map((doc, di) => {
                                 const fileUrl = `${API_URL.replace('/api','')}/${doc.path || doc.filename}`;
                                 const label = doc.original_name || doc.filename || `File ${di + 1}`;
@@ -575,6 +615,20 @@ export default function AssignTaskPage() {
                                   </a>
                                 );
                               })}
+                              {/* Show available mod.documentName if no docs are explicitly mapped */}
+                              {docs.length === 0 && mod.documentName && (
+                                <a
+                                  href={`${API_URL.replace('/api','')}/uploads/projects/project_plans/${mod.documentName}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={mod.documentName}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 px-2 py-1 text-[11px] text-sky-400 hover:bg-sky-500/20 transition max-w-[160px] truncate"
+                                  title={mod.documentName}
+                                >
+                                  <Download size={10} className="shrink-0" />
+                                  <span className="truncate">{mod.documentName}</span>
+                                </a>
+                              )}
                             </div>
                           ) : (
                             <span className="text-white/20 text-xs">—</span>
@@ -661,7 +715,7 @@ export default function AssignTaskPage() {
               className={inputCls}
             >
               <option value="" disabled>Select status</option>
-              {["Pending","To Do","In Progress","Review","Testing","Completed","On Hold","Cancelled"].map((v) => (
+              {["Pending","In Progress","Review","Testing","Completed","On Hold","Cancelled"].map((v) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>
