@@ -39,10 +39,7 @@ import {
 } from 'lucide-react';
 
 const EVENT_TYPES = [
-  'Meeting', 'Holiday', 'Leave', 'Birthday', 'Anniversary',
-  'Client Meeting', 'Training', 'Office Event', 'Project Deadline',
-  'Reminder', 'Interview', 'Other',
-];
+  'Meeting', 'Holiday', 'Office Event', 'Project Deadline', 'Interview'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
 const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
