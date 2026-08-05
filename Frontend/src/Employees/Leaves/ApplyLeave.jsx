@@ -205,10 +205,31 @@ const ApplyLeave = () => {
     }));
   };
 
+  const hasDuplicateLeave = () => {
+    if (!formData.from_date) return false;
+    const selectedFrom = new Date(formData.from_date);
+    const selectedTo = new Date(formData.day_type === 'Half Day' ? formData.from_date : formData.to_date || formData.from_date);
+
+    return employeeLeaves.some((leave) => {
+      if (!leave.from_date) return false;
+      const leaveFrom = new Date(leave.from_date);
+      const leaveTo = new Date(leave.to_date || leave.from_date);
+      const status = String(leave.status || '').toLowerCase();
+      if (status.includes('reject')) return false;
+      if (status.includes('cancel')) return false;
+      return leaveFrom <= selectedTo && leaveTo >= selectedFrom;
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.no_of_days <= 0) {
       toast.error('Invalid date range');
+      return;
+    }
+
+    if (hasDuplicateLeave()) {
+      toast.error('Leave has already been applied for the selected date. Duplicate same-day leave requests are not allowed.');
       return;
     }
 
@@ -226,13 +247,7 @@ const ApplyLeave = () => {
     try {
       await api.post('/employee-leaves/apply', formData);
       toast.success('Leave applied successfully');
-      setFormData({
-        ...formData,
-        from_date: '',
-        to_date: '',
-        no_of_days: 0,
-        reason: ''
-      });
+      navigate('/employee/leaves/history');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to apply leave');
     } finally {
