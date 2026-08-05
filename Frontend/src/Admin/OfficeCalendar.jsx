@@ -254,9 +254,40 @@ const OfficeCalendar = () => {
   const isToday = (date) => dayjs(date).isSame(dayjs(), 'day');
 
   /* ── derived data ── */
+  const birthdayEvents = useMemo(() => {
+    const year = currentDate.year();
+    return allEmployees.filter(emp => emp.dob).map(emp => {
+      const dobDate = dayjs(emp.dob);
+      if (!dobDate.isValid()) return null;
+      const bdayThisYear = dobDate.year(year).format('YYYY-MM-DD');
+      return {
+        _id: `bday-${emp.employee_id || emp.id}`,
+        title: `${getEmployeeFullName(emp)}'s Birthday`,
+        eventType: 'Birthday',
+        startDate: bdayThisYear,
+        endDate: bdayThisYear,
+        allDay: true,
+        priority: 'Low',
+        status: 'Scheduled',
+        isVirtual: true,
+        description: `Wish ${getEmployeeFullName(emp)} a happy birthday!`,
+        participants: [
+          {
+            user_id: emp.employee_id || emp.id,
+            name: getEmployeeFullName(emp),
+            email: emp.personal_email || '',
+          }
+        ],
+      };
+    }).filter(Boolean);
+  }, [allEmployees, currentDate]);
+
+  const combinedEvents = useMemo(() => [...events, ...birthdayEvents], [events, birthdayEvents]);
+
+
   const filteredEvents = useMemo(() => {
     const search = searchText.trim().toLowerCase();
-    return events.filter(ev => {
+    return combinedEvents.filter(ev => {
       const parts = Array.isArray(ev.participants)
         ? ev.participants.map(p => typeof p === 'object' ? p.name : p).filter(Boolean)
         : typeof ev.participants === 'string' && ev.participants
@@ -276,7 +307,7 @@ const OfficeCalendar = () => {
         (filters.status     === 'all' || ev.status     === filters.status)
       );
     });
-  }, [events, filters, searchText]);
+  }, [combinedEvents, filters, searchText]);
 
   const visibleEvents = useMemo(() => {
     const cur = currentDate;
@@ -322,32 +353,32 @@ const OfficeCalendar = () => {
   }, [visibleEvents, currentDate]);
 
   const upcomingChronological = useMemo(() =>
-    [...events].sort((a, b) =>
+    [...combinedEvents].sort((a, b) =>
       dayjs(`${a.startDate} ${a.startTime || '00:00'}`).valueOf() -
       dayjs(`${b.startDate} ${b.startTime || '00:00'}`).valueOf()
     ).slice(0, 10),
-  [events]);
+  [combinedEvents]);
 
   const todayEvents = useMemo(() => {
     const today = dayjs().format('YYYY-MM-DD');
-    return events.filter(ev => {
+    return combinedEvents.filter(ev => {
       const s = dayjs(ev.startDate).format('YYYY-MM-DD');
       const e = dayjs(ev.endDate).format('YYYY-MM-DD');
       return s <= today && e >= today;
     }).slice(0, 5);
-  }, [events]);
+  }, [combinedEvents]);
 
-  const departments = useMemo(() => Array.from(new Set(events.flatMap(ev =>
+  const departments = useMemo(() => Array.from(new Set(combinedEvents.flatMap(ev =>
     Array.isArray(ev.departments) ? ev.departments.filter(Boolean)
     : typeof ev.departments === 'string' && ev.departments ? [ev.departments] : []
-  ))), [events]);
+  ))), [combinedEvents]);
 
-  const projects  = useMemo(() => Array.from(new Set(events.map(ev => ev.project).filter(Boolean))), [events]);
-  const employees = useMemo(() => Array.from(new Set(events.flatMap(ev => 
+  const projects  = useMemo(() => Array.from(new Set(combinedEvents.map(ev => ev.project).filter(Boolean))), [combinedEvents]);
+  const employees = useMemo(() => Array.from(new Set(combinedEvents.flatMap(ev => 
     Array.isArray(ev.participants) ? ev.participants.map(p => typeof p === 'object' ? p.name : p).filter(Boolean)
     : typeof ev.participants === 'string' && ev.participants
       ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : []
-  ))), [events]);
+  ))), [combinedEvents]);
 
   const miniCalDays = useMemo(() => {
     const start = miniCalDate.startOf('month').startOf('week');
