@@ -972,7 +972,7 @@ const EmployeeAdd = () => {
               {fieldErrors.salary_type && <p className="mt-1 text-xs text-red-400">{fieldErrors.salary_type}</p>}
             </div>
             <div>
-              <label className={labelClass}>Basic Salary</label>
+              <label className={labelClass}>Net Salary</label>
               <input type="number" step="0.01" name="basic_salary" value={formData.basic_salary} onChange={handleChange} className={inputClass} placeholder="Enter basic salary" />
             </div>
             <div>
