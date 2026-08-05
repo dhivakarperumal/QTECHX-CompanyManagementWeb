@@ -75,6 +75,7 @@ async function assignTaskHandler(req, res) {
 
     const {
       employee_id, task_id, assigned_by, assigned_date, start_date, due_date, status,
+      duration, team,
       attachmentBase64, attachmentName, attachmentType,
     } = req.body;
 
@@ -92,6 +93,8 @@ async function assignTaskHandler(req, res) {
       assigned_date: assigned_date || null,
       start_date: start_date || null,
       due_date: due_date || null,
+      duration: duration != null ? Number(duration) : null,
+      team: team || null,
       created_by: actor,
       updated_by: actor,
       status: status || null,

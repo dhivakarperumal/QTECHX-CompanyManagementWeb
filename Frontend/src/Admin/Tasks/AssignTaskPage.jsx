@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   UserPlus, AlertCircle, CheckCircle, Loader2,
-  Paperclip, ClipboardList, CheckSquare, Square
+  Paperclip, ClipboardList, CheckSquare, Square, BadgeCheck
 } from "lucide-react";
 import api from "../../api";
 
@@ -28,37 +28,31 @@ const EMPTY_ASSIGN_FORM = {
   status: "",
 };
 
-const normalizeTaskStatus = (s) => {
-  if (!s) return "Pending";
-  const v = s.toString().trim();
-  if (["Pending", "To Do"].includes(v)) return "Pending";
-  if (["In Progress", "Progress"].includes(v)) return "In Progress";
-  if (["Completed", "Done"].includes(v)) return "Completed";
-  return v;
-};
-
 export default function AssignTaskPage() {
   const navigate = useNavigate();
 
-  const [projects, setProjects] = useState([]);
-  const [planModules, setPlanModules] = useState([]);     // taskmodule array from project_plan
-  const [planInfo, setPlanInfo]     = useState(null);     // the matched plan row
-  const [selectedModules, setSelectedModules] = useState([]);
-  const [existingTaskNames, setExistingTaskNames] = useState(new Set()); // already-assigned module titles
+  const [projects, setProjects]                 = useState([]);
+  const [planModules, setPlanModules]           = useState([]);
+  const [planInfo, setPlanInfo]                 = useState(null);
+  const [selectedModules, setSelectedModules]   = useState([]);
+
+  // Set of already-assigned module title keys (lowercase) for this project + employee combo
+  const [assignedTitles, setAssignedTitles]     = useState(new Set());
+  const [assignedTitlesLoading, setAssignedTitlesLoading] = useState(false);
+
   const [assignedEmployees, setAssignedEmployees] = useState([]);
-  const [assignFile, setAssignFile] = useState(null);
-  const [assignForm, setAssignForm] = useState(EMPTY_ASSIGN_FORM);
+  const [assignFile, setAssignFile]             = useState(null);
+  const [assignForm, setAssignForm]             = useState(EMPTY_ASSIGN_FORM);
 
   const [projectEmployeesLoading, setProjectEmployeesLoading] = useState(false);
-  const [planLoading, setPlanLoading]   = useState(false);
-  const [assigningTask, setAssigningTask] = useState(false);
-  const [assignError, setAssignError]   = useState("");
-  const [assignSuccess, setAssignSuccess] = useState("");
+  const [planLoading, setPlanLoading]           = useState(false);
+  const [assigningTask, setAssigningTask]       = useState(false);
+  const [assignError, setAssignError]           = useState("");
+  const [assignSuccess, setAssignSuccess]       = useState("");
 
-  // Load all projects once
+  // ─── Load all projects once ────────────────────────────────────────────────
   useEffect(() => {
-    api
-      .get("/projects")
+    api.get("/projects")
       .then(({ data }) => {
         const list = data.data || data.projects || [];
         setProjects(list);
@@ -68,15 +62,36 @@ export default function AssignTaskPage() {
       .catch(() => {});
   }, []);
 
-  // When project changes → load employees + project plan modules
+  // ─── Fetch already-assigned titles for project + employee ──────────────────
+  const fetchAssignedTitles = useCallback(async (project_id, employee_id) => {
+    if (!project_id) { setAssignedTitles(new Set()); return; }
+    setAssignedTitlesLoading(true);
+    try {
+      const params = { project_id, limit: 500, page: 1 };
+      if (employee_id) params.assigned_to = employee_id;
+      const { data } = await api.get("/tasks", { params });
+      const rows = data.data || [];
+      const names = new Set(
+        rows
+          .filter((t) => employee_id ? t.assigned_to === employee_id : !!t.assigned_to)
+          .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
+          .filter(Boolean)
+      );
+      setAssignedTitles(names);
+    } catch {
+      setAssignedTitles(new Set());
+    } finally {
+      setAssignedTitlesLoading(false);
+    }
+  }, []);
+
+  // ─── When project changes → load employees + plan modules ─────────────────
   useEffect(() => {
     if (!assignForm.project_id) return;
 
-    // employees — use the assignments endpoint (same as AllProjects.jsx)
     setProjectEmployeesLoading(true);
     setAssignedEmployees([]);
-    api
-      .get(`/projects/${assignForm.project_id}/assignments`)
+    api.get(`/projects/${assignForm.project_id}/assignments`)
       .then(({ data }) => {
         const list =
           data.assignedEmployees ||
@@ -89,15 +104,13 @@ export default function AssignTaskPage() {
       .catch(() => setAssignedEmployees([]))
       .finally(() => setProjectEmployeesLoading(false));
 
-    // project plan → taskmodule + already-assigned task names
     setPlanLoading(true);
     setPlanModules([]);
     setPlanInfo(null);
     setSelectedModules([]);
-    setExistingTaskNames(new Set());
+    setAssignedTitles(new Set());
 
-    const planPromise = api
-      .get("/project-plans")
+    api.get("/project-plans")
       .then(({ data }) => {
         const allPlans = data.data || data.plans || data || [];
         const matched = allPlans.find(
@@ -116,40 +129,54 @@ export default function AssignTaskPage() {
           setPlanModules(modules);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setPlanLoading(false));
 
-    // Fetch existing tasks for this project to know which modules are already assigned
-    const tasksPromise = api
-      .get("/tasks", { params: { project_id: assignForm.project_id, limit: 500, page: 1 } })
-      .then(({ data }) => {
-        const rows = data.data || [];
-        const names = new Set(
-          rows
-            .filter((t) => t.assigned_to)   // only already-assigned tasks
-            .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
-            .filter(Boolean)
-        );
-        setExistingTaskNames(names);
-      })
-      .catch(() => {});
-
-    Promise.all([planPromise, tasksPromise]).finally(() => setPlanLoading(false));
+    // Fetch assigned titles for this project (no employee filter yet)
+    fetchAssignedTitles(assignForm.project_id, assignForm.assigned_to || null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignForm.project_id]);
 
+  // ─── When employee changes → re-fetch assigned titles ─────────────────────
+  useEffect(() => {
+    if (!assignForm.project_id) return;
+    setSelectedModules([]);
+    fetchAssignedTitles(assignForm.project_id, assignForm.assigned_to || null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignForm.assigned_to]);
+
+  // ─── Helpers: check if a module title is already assigned ─────────────────
+  const isModuleAssigned = (mod) =>
+    assignedTitles.has((mod.title || "").trim().toLowerCase());
+
+  // Indices of modules that are NOT yet assigned (selectable)
+  const selectableIndices = planModules
+    .map((mod, i) => ({ mod, i }))
+    .filter(({ mod }) => !isModuleAssigned(mod))
+    .map(({ i }) => i);
+
   const toggleModule = (idx) => {
+    if (isModuleAssigned(planModules[idx])) return; // block already-assigned
     setSelectedModules((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   };
 
   const toggleAll = () => {
-    if (selectedModules.length === planModules.length) {
+    if (selectableIndices.length === 0) return;
+    const allSelectableChosen = selectableIndices.every((i) => selectedModules.includes(i));
+    if (allSelectableChosen) {
       setSelectedModules([]);
     } else {
-      setSelectedModules(planModules.map((_, i) => i));
+      setSelectedModules(selectableIndices);
     }
   };
 
+  const allSelectableChosen =
+    selectableIndices.length > 0 &&
+    selectableIndices.every((i) => selectedModules.includes(i));
+
+  // ─── Submit handler ────────────────────────────────────────────────────────
   const handleAssignTask = async () => {
     setAssignError("");
     setAssignSuccess("");
@@ -179,22 +206,33 @@ export default function AssignTaskPage() {
         attachmentType = assignFile.type;
       }
 
-      // Step 1: Create a task in the tasks table for each selected module,
-      //         then Step 2: assign each task to the employee
       const results = [];
+      const newlyAssigned = []; // track titles assigned this session
+
       for (const mod of chosenModules) {
-        // Create task
+        // Calculate duration-based due_date if not provided
+        let computedDueDate = assignForm.due_date || "";
+        if (!computedDueDate && assignForm.start_date && mod.duration) {
+          const d = new Date(assignForm.start_date);
+          d.setDate(d.getDate() + Number(mod.duration));
+          computedDueDate = d.toISOString().slice(0, 10);
+        }
+
+        // Step 1: Create task
         const taskPayload = {
           project_id:      assignForm.project_id,
-          task_name:       mod.title || "Task",
-          module_name:     mod.title || "",
+          task_name:       mod.title       || "Task",
+          module_name:     mod.title       || "",
           description:     mod.description || "",
+          category:        mod.category    || mod.type || "",
+          priority:        mod.priority    || "Medium",
           status:          assignForm.status || "Pending",
-          priority:        "Medium",
           estimated_hours: mod.duration ? String(Number(mod.duration) * 8) : "",
-          start_date:      assignForm.assignment_date || "",
-          due_date:        "",
+          assignment_date: assignForm.assignment_date || "",
+          start_date:      assignForm.start_date || "",
+          due_date:        computedDueDate,
           assigned_to:     assignForm.assigned_to,
+          team:            assignForm.team || "",
         };
         const createRes = await api.post("/tasks", taskPayload);
         if (createRes.data?.success === false) {
@@ -203,33 +241,56 @@ export default function AssignTaskPage() {
         const taskUuid = createRes.data?.data?.uuid || createRes.data?.uuid || createRes.data?.data?.id;
         if (!taskUuid) throw new Error(`Could not get task ID for module "${mod.title}"`);
 
-        // Assign task
+        // Step 2: Assign task
         const assignPayload = {
           project_id:    assignForm.project_id,
           employee_id:   assignForm.assigned_to,
           task_id:       taskUuid,
           assigned_date: assignForm.assignment_date || null,
+          start_date:    assignForm.start_date || null,
+          due_date:      computedDueDate || null,
           status:        assignForm.status || "Pending",
+          duration:      mod.duration ? Number(mod.duration) : null,
+          team:          assignForm.team || null,
           ...(attachmentBase64 && { attachmentBase64, attachmentName, attachmentType }),
         };
         const assignRes = await api.post("/tasks/assign", assignPayload);
         if (assignRes.data?.success === false) {
           throw new Error(assignRes.data?.message || `Failed to assign task "${mod.title}"`);
         }
+
         results.push(mod.title);
+        newlyAssigned.push((mod.title || "").trim().toLowerCase());
       }
 
+      // ── Live-update assignedTitles so newly assigned modules go grey immediately ──
+      setAssignedTitles((prev) => {
+        const updated = new Set(prev);
+        newlyAssigned.forEach((t) => updated.add(t));
+        return updated;
+      });
+
       setAssignSuccess(`${results.length} module${results.length > 1 ? "s" : ""} assigned successfully!`);
-      setAssignForm((p) => ({ ...EMPTY_ASSIGN_FORM, project_id: p.project_id }));
+      setAssignForm((p) => ({ ...EMPTY_ASSIGN_FORM, project_id: p.project_id, assigned_to: p.assigned_to }));
       setSelectedModules([]);
       setAssignFile(null);
-      setTimeout(() => navigate("/admin/tasks"), 1800);
+
+      // Refresh the assigned titles from server after 1 s
+      setTimeout(() => {
+        fetchAssignedTitles(assignForm.project_id, assignForm.assigned_to || null);
+      }, 1000);
+
     } catch (err) {
       setAssignError(err?.response?.data?.message || err.message || "Failed to assign task.");
     } finally {
       setAssigningTask(false);
     }
   };
+
+  // ─── Count stats ──────────────────────────────────────────────────────────
+  const totalModules    = planModules.length;
+  const assignedCount   = planModules.filter((m) => isModuleAssigned(m)).length;
+  const availableCount  = totalModules - assignedCount;
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -293,9 +354,7 @@ export default function AssignTaskPage() {
                 className={inputCls}
                 disabled={!assignForm.project_id}
               >
-                <option value="" disabled>
-                  Select employee
-                </option>
+                <option value="" disabled>Select employee</option>
                 {assignedEmployees.map((emp) => {
                   const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
                   const name = emp.full_name || emp.employee_name ||
@@ -316,21 +375,38 @@ export default function AssignTaskPage() {
         {/* Task Modules Table */}
         <div className="rounded-2xl bg-slate-900/80 p-4">
           <div className="flex items-center justify-between mb-3">
-            <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">
-              Task Modules *
-              {planInfo && (
-                <span className="ml-2 text-orange-400 normal-case">
-                  — {planInfo.plan_name || planInfo.planName}
-                </span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="block text-xs uppercase tracking-[0.24em] text-slate-500">
+                Task Modules *
+                {planInfo && (
+                  <span className="ml-2 text-orange-400 normal-case">
+                    — {planInfo.plan_name || planInfo.planName}
+                  </span>
+                )}
+              </label>
+              {/* Stats badges */}
+              {totalModules > 0 && !planLoading && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/20 px-2 py-0.5 text-[11px] text-emerald-400">
+                    <BadgeCheck size={11} /> {assignedCount} Assigned
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 border border-orange-500/20 px-2 py-0.5 text-[11px] text-orange-400">
+                    {availableCount} Available
+                  </span>
+                  {assignedTitlesLoading && (
+                    <Loader2 size={12} className="animate-spin text-white/30" />
+                  )}
+                </div>
               )}
-            </label>
-            {planModules.length > 0 && (
+            </div>
+
+            {selectableIndices.length > 0 && (
               <button
                 type="button"
                 onClick={toggleAll}
-                className="text-xs text-orange-400 hover:text-orange-300 transition"
+                className="text-xs text-orange-400 hover:text-orange-300 transition whitespace-nowrap"
               >
-                {selectedModules.length === planModules.length ? "Deselect All" : "Select All"}
+                {allSelectableChosen ? "Deselect All" : `Select All (${availableCount})`}
               </button>
             )}
           </div>
@@ -349,8 +425,13 @@ export default function AssignTaskPage() {
                 <thead className="bg-white/5 text-white/40 text-[11px] uppercase tracking-wider">
                   <tr>
                     <th className="px-4 py-3 w-10">
-                      <button type="button" onClick={toggleAll}>
-                        {selectedModules.length === planModules.length
+                      <button
+                        type="button"
+                        onClick={toggleAll}
+                        disabled={selectableIndices.length === 0}
+                        className="disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        {allSelectableChosen
                           ? <CheckSquare size={16} className="text-orange-500" />
                           : <Square size={16} className="text-white/30" />}
                       </button>
@@ -360,27 +441,68 @@ export default function AssignTaskPage() {
                     <th className="px-4 py-3">Duration</th>
                     <th className="px-4 py-3">Description</th>
                     <th className="px-4 py-3">Technology</th>
+                    <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {planModules.map((mod, idx) => {
-                    const checked = selectedModules.includes(idx);
+                    const assigned = isModuleAssigned(mod);
+                    const checked  = !assigned && selectedModules.includes(idx);
                     return (
                       <tr
                         key={idx}
-                        onClick={() => toggleModule(idx)}
-                        className={`cursor-pointer transition-colors ${checked ? "bg-orange-500/10" : "hover:bg-white/[0.02]"}`}
+                        onClick={() => !assigned && toggleModule(idx)}
+                        className={[
+                          "transition-colors",
+                          assigned
+                            ? "opacity-50 cursor-not-allowed bg-white/[0.01]"
+                            : checked
+                              ? "cursor-pointer bg-orange-500/10"
+                              : "cursor-pointer hover:bg-white/[0.03]",
+                        ].join(" ")}
                       >
+                        {/* Checkbox */}
                         <td className="px-4 py-3">
-                          {checked
-                            ? <CheckSquare size={16} className="text-orange-500" />
-                            : <Square size={16} className="text-white/30" />}
+                          {assigned ? (
+                            <BadgeCheck size={16} className="text-emerald-500" />
+                          ) : checked ? (
+                            <CheckSquare size={16} className="text-orange-500" />
+                          ) : (
+                            <Square size={16} className="text-white/30" />
+                          )}
                         </td>
+                        {/* # */}
                         <td className="px-4 py-3 text-white/40">{idx + 1}</td>
-                        <td className="px-4 py-3 font-semibold text-white">{mod.title || "—"}</td>
-                        <td className="px-4 py-3 text-white/70">{mod.duration ? `${mod.duration} days` : "—"}</td>
-                        <td className="px-4 py-3 text-white/50 max-w-xs truncate">{mod.description || "—"}</td>
-                        <td className="px-4 py-3 text-white/50">{mod.technology || mod.tech || "—"}</td>
+                        {/* Title */}
+                        <td className="px-4 py-3">
+                          <span className={`font-semibold ${assigned ? "text-white/40 line-through decoration-white/20" : "text-white"}`}>
+                            {mod.title || "—"}
+                          </span>
+                        </td>
+                        {/* Duration */}
+                        <td className="px-4 py-3 text-white/70">
+                          {mod.duration ? `${mod.duration} days` : "—"}
+                        </td>
+                        {/* Description */}
+                        <td className="px-4 py-3 text-white/50 max-w-xs truncate">
+                          {mod.description || "—"}
+                        </td>
+                        {/* Technology */}
+                        <td className="px-4 py-3 text-white/50">
+                          {mod.technology || mod.tech || "—"}
+                        </td>
+                        {/* Assigned badge */}
+                        <td className="px-4 py-3">
+                          {assigned ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                              <BadgeCheck size={10} /> Assigned
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-white/25">
+                              Available
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -389,11 +511,20 @@ export default function AssignTaskPage() {
             </div>
           )}
 
-          {selectedModules.length > 0 && (
-            <p className="mt-2 text-xs text-orange-400">
-              {selectedModules.length} module{selectedModules.length > 1 ? "s" : ""} selected
-            </p>
-          )}
+          {/* Selection counter */}
+          <div className="mt-2 flex items-center gap-3">
+            {selectedModules.length > 0 && (
+              <p className="text-xs text-orange-400">
+                {selectedModules.length} module{selectedModules.length > 1 ? "s" : ""} selected
+              </p>
+            )}
+            {availableCount === 0 && totalModules > 0 && !planLoading && (
+              <p className="text-xs text-emerald-400 flex items-center gap-1">
+                <BadgeCheck size={12} /> All modules have been assigned
+                {assignForm.assigned_to ? " to this employee" : ""}.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Row 3: Team + Assignment + Start + End + Status */}
@@ -506,12 +637,12 @@ export default function AssignTaskPage() {
           <button
             type="button"
             onClick={handleAssignTask}
-            disabled={assigningTask}
+            disabled={assigningTask || selectedModules.length === 0}
             className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {assigningTask
               ? <><Loader2 size={14} className="animate-spin" /> Assigning...</>
-              : <><UserPlus size={14} /> Assign Task</>}
+              : <><UserPlus size={14} /> Assign {selectedModules.length > 0 ? `(${selectedModules.length})` : "Task"}</>}
           </button>
         </div>
       </div>

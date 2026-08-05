@@ -37,13 +37,28 @@ async function findEmployeeById(employeeId) {
 async function findTaskByIdOrUUID(taskId) {
   const db = getDB();
   if (!taskId) return null;
+
+  const richSelect = `
+    SELECT
+      t.*,
+      p.uuid      AS project_uuid,
+      p.project_name,
+      CONCAT_WS(' ', a.first_name, a.last_name) AS assigned_to_name,
+      a.employee_code                            AS assigned_to_code,
+      CONCAT_WS(' ', b.first_name, b.last_name) AS assigned_by_name
+    FROM tasks t
+    LEFT JOIN projects  p ON t.project_id  = p.id
+    LEFT JOIN employees a ON t.assigned_to = a.employee_id
+    LEFT JOIN employees b ON t.assigned_by = b.employee_id
+  `;
+
   if (typeof taskId === 'string' && taskId.length === 36) {
-    const [rows] = await db.execute('SELECT * FROM tasks WHERE uuid = ? AND deleted = 0 LIMIT 1', [taskId]);
+    const [rows] = await db.execute(`${richSelect} WHERE t.uuid = ? AND t.deleted = 0 LIMIT 1`, [taskId]);
     return rows[0] || null;
   }
   const numericId = Number(taskId);
   if (!Number.isInteger(numericId) || numericId <= 0) return null;
-  const [rows] = await db.execute('SELECT * FROM tasks WHERE id = ? AND deleted = 0 LIMIT 1', [numericId]);
+  const [rows] = await db.execute(`${richSelect} WHERE t.id = ? AND t.deleted = 0 LIMIT 1`, [numericId]);
   return rows[0] || null;
 }
 
@@ -62,18 +77,61 @@ function buildEmployeeDetails(employee) {
   };
 }
 
-function buildTaskDetails(task) {
+function buildTaskDetails(task, overrides = {}) {
   return {
-    task_id: task.id,
-    task_uuid: task.uuid,
-    task_code: task.task_code || `TASK-${task.id}`,
-    task_name: task.task_name || task.module_name || null,
-    priority: task.priority || 'Medium',
-    status: task.status || 'Pending',
-    start_date: task.start_date || null,
-    due_date: task.due_date || null,
-    estimated_hours: Number(task.estimated_hours || 0),
-    progress: Number(task.progress || 0),
+    // ── Identifiers ──────────────────────────────────────
+    task_id:          task.id,
+    task_uuid:        task.uuid,
+    task_code:        task.task_code || `TASK-${task.id}`,
+    // ── Names & Description ──────────────────────────────
+    task_name:        task.task_name        || task.module_name || null,
+    module_name:      task.module_name      || task.task_name   || null,
+    description:      task.description      || null,
+    category:         task.category         || null,
+    // ── Project Info (available via JOIN) ────────────────
+    project_id:       task.project_id       || null,
+    project_uuid:     task.project_uuid     || null,
+    project_name:     task.project_name     || null,
+    // ── People ───────────────────────────────────────────
+    team:             overrides.team !== undefined ? overrides.team : (task.team || null),
+    assigned_to:      task.assigned_to       || null,
+    assigned_to_name: task.assigned_to_name  || null,
+    assigned_to_code: task.assigned_to_code  || null,
+    assigned_by:      task.assigned_by       || null,
+    assigned_by_name: task.assigned_by_name  || null,
+    // ── Dates ────────────────────────────────────────────
+    assignment_date:  overrides.assigned_date !== undefined
+                        ? overrides.assigned_date
+                        : (task.assignment_date || null),
+    start_date:       overrides.start_date !== undefined
+                        ? overrides.start_date
+                        : (task.start_date || null),
+    due_date:         overrides.due_date !== undefined
+                        ? overrides.due_date
+                        : (task.due_date || null),
+    completion_date:  task.completion_date   || null,
+    // ── Duration & Hours ─────────────────────────────────
+    duration:         overrides.duration != null ? Number(overrides.duration) : null,
+    estimated_hours:  Number(task.estimated_hours  || 0),
+    actual_hours:     Number(task.actual_hours     || 0),
+    time_spent:       Number(task.time_spent       || 0),
+    remaining_hours:  Number(task.remaining_hours  || 0),
+    // ── Status & Progress ────────────────────────────────
+    priority:         task.priority  || 'Medium',
+    status:           overrides.status || task.status || 'Pending',
+    progress:         Number(task.progress   || 0),
+    is_overdue:       task.is_overdue ? 1 : 0,
+    active:           task.active !== undefined ? Number(task.active) : 1,
+    // ── Attachments & Notes ──────────────────────────────
+    attachments:      task.attachments    || null,
+    comments:         task.comments       || null,
+    internal_notes:   task.internal_notes || null,
+    client_notes:     task.client_notes   || null,
+    // ── Audit ────────────────────────────────────────────
+    created_at:       task.created_at || null,
+    updated_at:       task.updated_at || null,
+    created_by:       task.created_by || null,
+    updated_by:       task.updated_by || null,
   };
 }
 
@@ -92,6 +150,8 @@ async function ensureEmployeeTaskAssignmentsSchema(pool) {
         status ENUM('Pending','To Do','In Progress','Review','Testing','Completed','On Hold','Cancelled','Assigned','Active','Removed') NOT NULL DEFAULT 'Assigned',
         assigned_by VARCHAR(36) NULL,
         assigned_date DATETIME NULL,
+        start_date DATE NULL,
+        due_date DATE NULL,
         attachments TEXT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -133,11 +193,17 @@ async function ensureEmployeeTaskAssignmentsSchema(pool) {
   if (!columnNames.has('assigned_date')) {
     addColumnStatements.push('ADD COLUMN assigned_date DATETIME NULL AFTER assigned_by');
   }
+  if (!columnNames.has('start_date')) {
+    addColumnStatements.push('ADD COLUMN start_date DATE NULL AFTER assigned_date');
+  }
+  if (!columnNames.has('due_date')) {
+    addColumnStatements.push('ADD COLUMN due_date DATE NULL AFTER start_date');
+  }
   if (!columnNames.has('attachments')) {
-    addColumnStatements.push('ADD COLUMN attachments TEXT NULL AFTER assigned_date');
+    addColumnStatements.push('ADD COLUMN attachments TEXT NULL AFTER due_date');
   }
   if (!columnNames.has('created_at')) {
-    addColumnStatements.push('ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER assigned_date');
+    addColumnStatements.push('ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER attachments');
   }
   if (!columnNames.has('updated_at')) {
     addColumnStatements.push('ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at');
@@ -170,7 +236,9 @@ async function listEmployeeTaskAssignments({ project_id = null, employee_id = nu
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const [rows] = await db.execute(
-    `SELECT id, project_id, employee_id, employee_details, task_details, task_count, status, assigned_by, assigned_date, created_at, updated_at, created_by, updated_by
+    `SELECT id, project_id, employee_id, employee_details, task_details, task_count, status,
+            assigned_by, assigned_date, start_date, due_date,
+            created_at, updated_at, created_by, updated_by
      FROM employee_task_assignments
      ${where}
      ORDER BY updated_at DESC`,
@@ -187,7 +255,9 @@ async function listEmployeeTaskAssignments({ project_id = null, employee_id = nu
 async function findEmployeeTaskAssignment(project_id, employee_id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT id, project_id, employee_id, employee_details, task_details, task_count, status, assigned_by, assigned_date, created_at, updated_at, created_by, updated_by
+    `SELECT id, project_id, employee_id, employee_details, task_details, task_count, status,
+            assigned_by, assigned_date, start_date, due_date,
+            created_at, updated_at, created_by, updated_by
      FROM employee_task_assignments
      WHERE project_id = ? AND employee_id = ?
      LIMIT 1`,
@@ -202,7 +272,7 @@ async function findEmployeeTaskAssignment(project_id, employee_id) {
   };
 }
 
-async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, start_date = null, due_date = null, created_by = null, updated_by = null, status = null, attachments = null }) {
+async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned_by = null, assigned_date = null, start_date = null, due_date = null, duration = null, team = null, created_by = null, updated_by = null, status = null, attachments = null }) {
   const db = getDB();
 
   if (!project_id) throw new Error('project_id is required');
@@ -220,12 +290,22 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   }
 
   const employeeDetails = buildEmployeeDetails(employee);
-  const taskDetailsEntry = buildTaskDetails(task);
   const finalAssignedDate = assigned_date || task.assignment_date || getCurrentDateTimeString();
   const finalStartDate = start_date || task.start_date || null;
   const finalDueDate = due_date || task.due_date || null;
+  const finalStatus = status || task.status || 'Assigned';
+
+  // Build task details with overrides so dates/status/duration are captured correctly
+  const taskDetailsEntry = buildTaskDetails(task, {
+    start_date: finalStartDate,
+    due_date: finalDueDate,
+    duration,
+    status: finalStatus,
+    assigned_date: finalAssignedDate,
+  });
+
   const [existingRows] = await db.execute(
-    'SELECT id, task_details, task_count, status, assigned_date FROM employee_task_assignments WHERE project_id = ? AND employee_id = ? LIMIT 1',
+    'SELECT id, task_details, task_count, status, assigned_date, start_date, due_date FROM employee_task_assignments WHERE project_id = ? AND employee_id = ? LIMIT 1',
     [project_id, employee.employee_id]
   );
 
@@ -239,12 +319,25 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
 
     existingTasks.push(taskDetailsEntry);
     const updatedTaskCount = existingTasks.length;
-    const finalStatus = status || task.status || existing.status || 'Assigned';
+    const resolvedStatus = status || existing.status || 'Assigned';
     const finalUpdatedAssignedDate = existing.assigned_date || finalAssignedDate;
+    // Use earliest start_date and latest due_date across all tasks in this assignment
+    const resolvedStartDate = existing.start_date && finalStartDate
+      ? (existing.start_date < finalStartDate ? existing.start_date : finalStartDate)
+      : (existing.start_date || finalStartDate);
+    const resolvedDueDate = existing.due_date && finalDueDate
+      ? (existing.due_date > finalDueDate ? existing.due_date : finalDueDate)
+      : (existing.due_date || finalDueDate);
 
     await db.execute(
-      'UPDATE employee_task_assignments SET task_details = ?, task_count = ?, status = ?, assigned_by = ?, assigned_date = ?, attachments = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-      [JSON.stringify(existingTasks), updatedTaskCount, finalStatus, assigned_by, finalUpdatedAssignedDate, attachments || existing.attachments || null, updated_by, existing.id]
+      `UPDATE employee_task_assignments
+       SET task_details = ?, task_count = ?, status = ?, assigned_by = ?,
+           assigned_date = ?, start_date = ?, due_date = ?,
+           attachments = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+       WHERE id = ?`,
+      [JSON.stringify(existingTasks), updatedTaskCount, resolvedStatus, assigned_by,
+       finalUpdatedAssignedDate, resolvedStartDate, resolvedDueDate,
+       attachments || existing.attachments || null, updated_by, existing.id]
     );
 
     await db.execute(
@@ -258,20 +351,30 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
       task_count: updatedTaskCount,
       employee_details: employeeDetails,
       task_details: existingTasks,
-      status: finalStatus,
+      status: resolvedStatus,
       assigned_by,
       assigned_date: finalUpdatedAssignedDate,
+      start_date: resolvedStartDate,
+      due_date: resolvedDueDate,
       updated_at: getCurrentDateTimeString(),
       updated_by,
     };
   }
 
-  const initialStatus = status || task.status || 'Assigned';
   await db.execute(
     `INSERT INTO employee_task_assignments
-      (project_id, employee_id, employee_details, task_details, task_count, status, assigned_by, assigned_date, attachments, created_at, updated_at, created_by, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)`,
-    [project_id, employee.employee_id, JSON.stringify(employeeDetails), JSON.stringify([taskDetailsEntry]), 1, initialStatus, assigned_by, finalAssignedDate, attachments || null, created_by, updated_by]
+      (project_id, employee_id, employee_details, task_details, task_count, status,
+       assigned_by, assigned_date, start_date, due_date,
+       attachments, created_at, updated_at, created_by, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)`,
+    [
+      project_id, employee.employee_id,
+      JSON.stringify(employeeDetails),
+      JSON.stringify([taskDetailsEntry]),
+      1, finalStatus, assigned_by, finalAssignedDate,
+      finalStartDate, finalDueDate,
+      attachments || null, created_by, updated_by,
+    ]
   );
 
   await db.execute(
@@ -285,9 +388,11 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
     task_count: 1,
     employee_details: employeeDetails,
     task_details: [taskDetailsEntry],
-    status: initialStatus,
+    status: finalStatus,
     assigned_by,
     assigned_date: finalAssignedDate,
+    start_date: finalStartDate,
+    due_date: finalDueDate,
     created_at: getCurrentDateTimeString(),
     updated_at: getCurrentDateTimeString(),
     created_by,
