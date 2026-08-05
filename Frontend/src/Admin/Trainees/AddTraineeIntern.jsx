@@ -251,7 +251,7 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Person ID</span>
               <div className="flex gap-2">
-                <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly />
+                <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly placeholder="Auto-generated person ID" />
                 <button type="button" onClick={async () => { setPersonIdLoading(true); try { const { data } = await api.get('/trainee-intern/next-person-id'); if (data.success) setFormData((prev) => ({ ...prev, person_id: data.code || '' })); } catch (err) { console.warn(err); } finally { setPersonIdLoading(false); } }} className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
                   {personIdLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 </button>
@@ -268,6 +268,7 @@ export default function AddTraineeIntern() {
                 onChange={option => handleChange({ target: { name: 'type', value: option ? option.value : '' } })}
                 options={TYPE_OPTIONS.map(v => ({ value: v, label: v }))}
                 styles={customSelectStyles}
+                placeholder="Select type"
                 isSearchable={false}
               />
             </label>
@@ -285,11 +286,11 @@ export default function AddTraineeIntern() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Joining Date</span>
-              <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} />
+              <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} placeholder="Select joining date" />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">End Date (Optional)</span>
-              <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
+              <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} placeholder="Select end date" />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Status</span>
@@ -298,6 +299,7 @@ export default function AddTraineeIntern() {
                 onChange={option => handleChange({ target: { name: 'status', value: option ? option.value : '' } })}
                 options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
                 styles={customSelectStyles}
+                placeholder="Select status"
                 isSearchable={false}
               />
             </label>
@@ -313,8 +315,8 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number {isEdit ? "" : <span className="text-red-500">*</span>}</span><input className={fieldClass} name="mobile_number" required={!isEdit} value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Email Address</span><input className={fieldClass} type="email" name="email_address" value={formData.email_address} onChange={handleChange} placeholder="name@email.com" /></label>
             <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Emergency contact name" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} placeholder="9876543210" /></label>
           </div>
         </section>
 
@@ -374,12 +376,12 @@ export default function AddTraineeIntern() {
             <h2 className="text-base font-bold text-white">Academic Information</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} name="college_university" value={formData.college_university} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} name="course" value={formData.course} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} name="academic_department" value={formData.academic_department} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} name="year_semester" value={formData.year_semester} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} name="college_id_number" value={formData.college_id_number} onChange={handleChange} /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} name="guide_name" value={formData.guide_name} onChange={handleChange} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} name="college_university" value={formData.college_university} onChange={handleChange} placeholder="College or university name" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} name="course" value={formData.course} onChange={handleChange} placeholder="Course or program" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} name="academic_department" value={formData.academic_department} onChange={handleChange} placeholder="Academic department" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} name="year_semester" value={formData.year_semester} onChange={handleChange} placeholder="Year / semester" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} name="college_id_number" value={formData.college_id_number} onChange={handleChange} placeholder="College ID number" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} name="guide_name" value={formData.guide_name} onChange={handleChange} placeholder="Guide or faculty name" /></label>
           </div>
         </section>
 
