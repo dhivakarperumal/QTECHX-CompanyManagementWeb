@@ -123,7 +123,9 @@ function buildTaskDetails(task, overrides = {}) {
     is_overdue:       task.is_overdue ? 1 : 0,
     active:           task.active !== undefined ? Number(task.active) : 1,
     // ── Attachments & Notes ──────────────────────────────
-    attachments:      task.attachments    || null,
+    attachments:      overrides.attachments !== undefined
+                        ? overrides.attachments
+                        : (task.attachments || null),
     comments:         task.comments       || null,
     internal_notes:   task.internal_notes || null,
     client_notes:     task.client_notes   || null,
@@ -291,17 +293,27 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
 
   const employeeDetails = buildEmployeeDetails(employee);
   const finalAssignedDate = assigned_date || task.assignment_date || getCurrentDateTimeString();
-  const finalStartDate = start_date || task.start_date || null;
-  const finalDueDate = due_date || task.due_date || null;
-  const finalStatus = status || task.status || 'Assigned';
+  const finalStartDate    = start_date || task.start_date || null;
+  const finalDueDate      = due_date   || task.due_date   || null;
+  const finalStatus       = status     || task.status     || 'Assigned';
 
-  // Build task details with overrides so dates/status/duration are captured correctly
+  // Merge incoming attachments with any existing ones on the task row
+  let finalAttachments = attachments || null;
+  if (!finalAttachments && task.attachments) {
+    finalAttachments = typeof task.attachments === 'string'
+      ? task.attachments
+      : JSON.stringify(task.attachments);
+  }
+
+  // Build task details — include attachments so the JSON snapshot is complete
   const taskDetailsEntry = buildTaskDetails(task, {
-    start_date: finalStartDate,
-    due_date: finalDueDate,
+    start_date:    finalStartDate,
+    due_date:      finalDueDate,
     duration,
-    status: finalStatus,
+    status:        finalStatus,
     assigned_date: finalAssignedDate,
+    team,
+    attachments:   finalAttachments ? JSON.parse(finalAttachments) : null,
   });
 
   const [existingRows] = await db.execute(
@@ -341,8 +353,14 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
     );
 
     await db.execute(
-      'UPDATE tasks SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-      [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate, updated_by, task.id]
+      `UPDATE tasks
+         SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?,
+             team = ?, attachments = ?,
+             updated_at = CURRENT_TIMESTAMP, updated_by = ?
+         WHERE id = ?`,
+      [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate,
+       team || task.team || null, finalAttachments,
+       updated_by, task.id]
     );
 
     return {
@@ -378,8 +396,14 @@ async function assignTaskToEmployee({ project_id, employee_id, task_id, assigned
   );
 
   await db.execute(
-    'UPDATE tasks SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?',
-    [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate, updated_by, task.id]
+    `UPDATE tasks
+       SET assigned_to = ?, assignment_date = ?, start_date = ?, due_date = ?,
+           team = ?, attachments = ?,
+           updated_at = CURRENT_TIMESTAMP, updated_by = ?
+       WHERE id = ?`,
+    [employee.employee_id, finalAssignedDate, finalStartDate, finalDueDate,
+     team || task.team || null, finalAttachments,
+     updated_by, task.id]
   );
 
   return {
