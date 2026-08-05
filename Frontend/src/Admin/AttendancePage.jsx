@@ -4,6 +4,7 @@ import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useCallback } from "react";
 import Select from 'react-select';
+import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -383,8 +384,8 @@ const AttendancePage = () => {
 
       {/* Mark Attendance Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-9999 overflow-y-auto bg-black/70 p-4">
-          <div className="flex min-h-full items-start justify-center py-8">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
             <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
                 <div>
@@ -464,7 +465,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
+                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
                     </div>
                   </div>
                   <div>
@@ -477,7 +478,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
+                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
                   
@@ -491,7 +492,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
+                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
                     </div>
                   </div>
                   <div>
@@ -504,7 +505,7 @@ const AttendancePage = () => {
                         onChange={handleFormChange}
                         className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 outline-none text-white/80"
                       />
-                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
+                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
                   
@@ -518,7 +519,7 @@ const AttendancePage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
     </div>

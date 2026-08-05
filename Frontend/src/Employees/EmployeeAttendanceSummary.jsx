@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, Layo
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import Select from 'react-select';
+import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -681,13 +682,13 @@ const EmployeeAttendanceSummary = () => {
 
       {/* Mark Attendance Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70 p-4">
-          <div className="flex min-h-full items-start justify-center py-8">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
             <div className="w-full max-w-4xl rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/40 max-h-[90vh] overflow-hidden flex flex-col">
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0f172a] px-6 py-5 shrink-0">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Daily Record</p>
-                  <h3 className="text-xl font-semibold">Mark My Attendance</h3>
+                  <h3 className="text-xl text-white font-semibold">Mark My Attendance</h3>
                 </div>
                 <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
                   <X size={16} />
@@ -729,30 +730,30 @@ const EmployeeAttendanceSummary = () => {
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
+                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl text-white text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
+                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
+                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break End Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
-                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
+                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
 
@@ -760,20 +761,20 @@ const EmployeeAttendanceSummary = () => {
                     <label className="mb-2 block text-sm text-white/70">Working Hours</label>
                     <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
                       <Clock3 size={16} className="text-orange-400" />
-                      <span>{metrics.working_hours}</span>
+                      <span className="text-white">{metrics.working_hours}</span>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Late Entry</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
+                    <div className="rounded-2xl text-white border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.late_entry}</div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Early Exit</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
+                    <div className="rounded-2xl text-white border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.early_exit}</div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Overtime</label>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
+                    <div className="rounded-2xl text-white border border-white/10 bg-white/5 px-3 py-3 text-sm">{metrics.overtime}</div>
                   </div>
 
                   <div className="md:col-span-2">
@@ -808,7 +809,7 @@ const EmployeeAttendanceSummary = () => {
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
