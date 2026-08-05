@@ -20,7 +20,6 @@ import {
   Server,
   Sparkles,
   Trash2,
-  TrendingUp,
   Upload,
   X,
 } from 'lucide-react';
@@ -74,20 +73,20 @@ const createEmptyForm = () => ({
   coverImage: '',
   planDocument: null,
   planDocumentName: '',
-  newFeature: '',
-  newModule: '',
   newTech: '',
-  newDuration: '',
+  newModuleTitle: '',
+  newModuleDuration: '',
+  newModuleDescription: '',
+  newModuleDocumentName: '',
   metaTitle: '',
   metaDescription: '',
   keywords: '',
   adminNotes: '',
   salesNotes: '',
   technicalNotes: '',
-  features: [],
   includedModules: [],
   technologyStack: [],
-  durations: [],
+  modules: [],
   activeProjectsUsingPlan: 0,
   completedProjectsUsingPlan: 0,
   createdBy: 'Admin',
@@ -96,6 +95,38 @@ const createEmptyForm = () => ({
 
 const selectClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
 const fieldClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70';
+
+const parseJsonField = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+  }
+  return [];
+};
+
+const parseModulesField = (val, includedModules = []) => {
+  const parsed = parseJsonField(val);
+  if (Array.isArray(parsed) && parsed.every((item) => item && typeof item === 'object')) {
+    return parsed.map((item) => ({
+      title: item.title || '',
+      duration: item.duration || '',
+      description: item.description || '',
+      documentName: item.documentName || item.document || '',
+    }));
+  }
+  if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) {
+    return parsed.map((title) => ({ title, duration: '', description: '', documentName: '' }));
+  }
+  if (Array.isArray(includedModules) && includedModules.length) {
+    return includedModules.map((title) => ({ title, duration: '', description: '', documentName: '' }));
+  }
+  return [];
+};
 
 const generatePlanCode = (existingPlans = []) => {
   const existingCodes = new Set(existingPlans.map((plan) => String(plan.planCode || '').toUpperCase()));
@@ -123,82 +154,6 @@ const statusStyles = {
   Draft: 'border-amber-500/20 bg-amber-500/10 text-amber-300',
 };
 
-const featuredStyles = {
-  Popular: 'border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-300',
-  Recommended: 'border-sky-500/20 bg-sky-500/10 text-sky-300',
-  'Best Seller': 'border-violet-500/20 bg-violet-500/10 text-violet-300',
-  Premium: 'border-yellow-500/20 bg-yellow-500/10 text-yellow-300',
-  Enterprise: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-300',
-  'New Launch': 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
-};
-
-const featureOptions = [
-  'Responsive Design',
-  'SEO Friendly',
-  'Admin Dashboard',
-  'Mobile Friendly',
-  'SSL Certificate',
-  'Free Domain',
-  'Free Hosting',
-  'Email Accounts',
-  'Daily Backup',
-  'Cloud Deployment',
-  'Google Analytics',
-  'Live Chat',
-  'OTP Login',
-  'Payment Integration',
-  'AI Integration',
-];
-
-const moduleOptions = [
-  'Authentication',
-  'User Management',
-  'Role Management',
-  'Dashboard',
-  'Client Management',
-  'Employee Management',
-  'Project Management',
-  'Task Management',
-  'Reports',
-  'Analytics',
-  'Invoice Management',
-  'Payment Gateway',
-  'CRM',
-  'HRMS',
-  'Inventory',
-  'CMS',
-  'API Integration',
-  'Multi-language',
-  'File Manager',
-];
-
-const techOptions = [
-  'React',
-  'Next.js',
-  'Node.js',
-  'Express.js',
-  'Tailwind CSS',
-  'MongoDB',
-  'PostgreSQL',
-  'AWS',
-  'Vercel',
-  'React Native',
-  'Flutter',
-  'Docker',
-];
-
-const durationOptions = [
-  '1 Week',
-  '2 Weeks',
-  '1 Month',
-  '2 Months',
-  '3 Months',
-  '6 Months',
-  '1 Year',
-  '2 Years',
-  'Lifetime',
-];
-
 const categories = ['Website', 'Web Application', 'Mobile Application', 'ERP', 'CRM', 'SaaS', 'E-commerce'];
 const statuses = ['Draft', 'Active', 'Inactive'];
 const featuredBadges = ['Popular', 'Recommended', 'Best Seller', 'Premium', 'Enterprise', 'New Launch'];
@@ -220,6 +175,7 @@ function ProjectPlansPage() {
   const [toast, setToast] = useState('');
   const [formData, setFormData] = useState(createEmptyForm());
   const [projectsList, setProjectsList] = useState([]);
+  const [editingModuleIndex, setEditingModuleIndex] = useState(null);
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -243,13 +199,15 @@ function ProjectPlansPage() {
           return [];
         };
 
-        const normalized = fetchedPlans.map((plan) => ({
-          ...plan,
-          features: parseField(plan.features),
-          includedModules: parseField(plan.includedModules),
-          technologyStack: parseField(plan.technologyStack),
-          durations: parseField(plan.durations),
-        }));
+        const normalized = fetchedPlans.map((plan) => {
+          const parsedIncludedModules = parseField(plan.includedModules);
+          return {
+            ...plan,
+            includedModules: parsedIncludedModules,
+            technologyStack: parseField(plan.technologyStack),
+            modules: parseModulesField(plan.modules, parsedIncludedModules),
+          };
+        });
 
         setPlans(normalized);
         setBackendAvailable(true);
@@ -347,6 +305,7 @@ function ProjectPlansPage() {
     setFormData(createEmptyForm());
     setCurrentPlan(null);
     setMode('create');
+    setEditingModuleIndex(null);
   };
 
   const openCreateDrawer = () => {
@@ -361,13 +320,20 @@ function ProjectPlansPage() {
   const openEditDrawer = (plan) => {
     setMode('edit');
     setCurrentPlan(plan);
+    setEditingModuleIndex(null);
     setFormData({
       ...createEmptyForm(),
       ...plan,
-      features: [...(plan.features || [])],
       includedModules: [...(plan.includedModules || [])],
       technologyStack: [...(plan.technologyStack || [])],
-      durations: [...(plan.durations || [])],
+      modules: Array.isArray(plan.modules)
+        ? plan.modules.map((module) => ({
+            title: module.title || '',
+            duration: module.duration || '',
+            description: module.description || '',
+            documentName: module.documentName || module.document || '',
+          }))
+        : (plan.includedModules || []).map((title) => ({ title, duration: '', description: '', documentName: '' })),
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -376,13 +342,20 @@ function ProjectPlansPage() {
   const openViewDrawer = (plan) => {
     setMode('view');
     setCurrentPlan(plan);
+    setEditingModuleIndex(null);
     setFormData({
       ...createEmptyForm(),
       ...plan,
-      features: [...(plan.features || [])],
       includedModules: [...(plan.includedModules || [])],
       technologyStack: [...(plan.technologyStack || [])],
-      durations: [...(plan.durations || [])],
+      modules: Array.isArray(plan.modules)
+        ? plan.modules.map((module) => ({
+            title: module.title || '',
+            duration: module.duration || '',
+            description: module.description || '',
+            documentName: module.documentName || module.document || '',
+          }))
+        : (plan.includedModules || []).map((title) => ({ title, duration: '', description: '', documentName: '' })),
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -393,6 +366,7 @@ function ProjectPlansPage() {
     setCurrentPlan(null);
     setMode('create');
     setFormData(createEmptyForm());
+    setEditingModuleIndex(null);
   };
 
   const handleFieldChange = (event) => {
@@ -415,6 +389,16 @@ function ProjectPlansPage() {
     reader.readAsDataURL(file);
   };
 
+  const handleModuleDocumentSelection = (event, target = 'add') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (target === 'edit') {
+      setFormData((prev) => ({ ...prev, newModuleDocumentName: file.name }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, newModuleDocumentName: file.name }));
+  };
+
   const addChoice = (field, value) => {
     const trimmed = value.trim();
     if (!trimmed) return;
@@ -429,17 +413,98 @@ function ProjectPlansPage() {
     setFormData((prev) => ({ ...prev, [field]: prev[field].filter((item) => item !== value) }));
   };
 
+  const addModule = () => {
+    const title = formData.newModuleTitle.trim();
+    const duration = formData.newModuleDuration.trim();
+    const description = formData.newModuleDescription.trim();
+    const documentName = formData.newModuleDocumentName.trim();
+    if (!title || !duration) {
+      setToast('Module name and duration are required.');
+      return;
+    }
+
+    if (editingModuleIndex !== null) {
+      if (
+        formData.modules.some(
+          (module, index) => index !== editingModuleIndex && module.title?.trim().toLowerCase() === title.toLowerCase()
+        )
+      ) {
+        setToast('Another module with the same name already exists.');
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        modules: prev.modules.map((module, idx) =>
+          idx === editingModuleIndex ? { ...module, title, duration, description, documentName } : module
+        ),
+        newModuleTitle: '',
+        newModuleDuration: '',
+        newModuleDescription: '',
+        newModuleDocumentName: '',
+      }));
+      setEditingModuleIndex(null);
+    } else {
+      if (formData.modules.some((module) => module.title?.trim().toLowerCase() === title.toLowerCase())) {
+        setToast('Module title already exists.');
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        modules: [
+          ...prev.modules,
+          {
+            title,
+            duration,
+            description,
+            documentName,
+          },
+        ],
+        newModuleTitle: '',
+        newModuleDuration: '',
+        newModuleDescription: '',
+        newModuleDocumentName: '',
+      }));
+    }
+  };
+
+  const startEditModule = (index) => {
+    const module = formData.modules[index];
+    if (!module) return;
+    setEditingModuleIndex(index);
+    setFormData((prev) => ({
+      ...prev,
+      newModuleTitle: module.title || '',
+      newModuleDuration: module.duration || '',
+      newModuleDescription: module.description || '',
+      newModuleDocumentName: module.documentName || '',
+    }));
+  };
+
+  const cancelEditModule = () => {
+    setEditingModuleIndex(null);
+    setFormData((prev) => ({
+      ...prev,
+      newModuleTitle: '',
+      newModuleDuration: '',
+      newModuleDescription: '',
+      newModuleDocumentName: '',
+    }));
+  };
+
+  const removeModule = (index) => {
+    setFormData((prev) => ({ ...prev, modules: prev.modules.filter((_, idx) => idx !== index) }));
+  };
+
   const validateForm = () => {
     if (!formData.planName.trim()) {
       setToast('Plan name is required.');
       return false;
     }
-    const duplicateFeatures = new Set(formData.features).size !== formData.features.length;
-    const duplicateModules = new Set(formData.includedModules).size !== formData.includedModules.length;
+    const moduleTitles = formData.modules.map((module) => module.title?.trim()).filter(Boolean);
+    const duplicateModules = new Set(moduleTitles.map((title) => title.toLowerCase())).size !== moduleTitles.length;
     const duplicateStacks = new Set(formData.technologyStack).size !== formData.technologyStack.length;
-    const duplicateDurations = new Set(formData.durations).size !== formData.durations.length;
-    if (duplicateFeatures || duplicateModules || duplicateStacks || duplicateDurations) {
-      setToast('Duplicate features, modules, or technology stack entries are not allowed.');
+    if (duplicateModules || duplicateStacks) {
+      setToast('Duplicate modules or technology stack entries are not allowed.');
       return false;
     }
 
@@ -461,7 +526,9 @@ function ProjectPlansPage() {
     event.preventDefault();
     if (!validateForm()) return;
 
+    const isEditMode = mode === 'edit' && Boolean(currentPlan?.id);
     const normalizedCode = (formData.planCode.trim() || generatePlanCode(plans)).toUpperCase();
+    const moduleEntries = formData.modules.filter((module) => module.title?.trim());
     const planPayload = {
       ...formData,
       id: currentPlan?.id || Date.now(),
@@ -469,10 +536,9 @@ function ProjectPlansPage() {
       planCode: normalizedCode,
       planName: formData.planName.trim(),
       category: formData.category || 'Website',
-      features: formData.features.filter(Boolean),
-      includedModules: formData.includedModules.filter(Boolean),
+      modules: moduleEntries,
+      includedModules: moduleEntries.map((module) => module.title.trim()),
       technologyStack: formData.technologyStack.filter(Boolean),
-      durations: formData.durations.filter(Boolean),
       activeProjectsUsingPlan: currentPlan?.activeProjectsUsingPlan || 0,
       completedProjectsUsingPlan: currentPlan?.completedProjectsUsingPlan || 0,
       createdBy: currentPlan?.createdBy || formData.createdBy || 'Admin',
@@ -482,10 +548,10 @@ function ProjectPlansPage() {
     };
 
     const sanitizedPayload = { ...planPayload };
-    delete sanitizedPayload.newFeature;
-    delete sanitizedPayload.newModule;
+    delete sanitizedPayload.newModuleTitle;
+    delete sanitizedPayload.newModuleDuration;
+    delete sanitizedPayload.newModuleDescription;
     delete sanitizedPayload.newTech;
-    delete sanitizedPayload.newDuration;
     delete sanitizedPayload.planDocumentName;
 
     const useMultipart = formData.planDocument instanceof File;
@@ -511,7 +577,7 @@ function ProjectPlansPage() {
       return response.data.data;
     };
 
-    if (currentPlan) {
+    if (isEditMode) {
       if (backendAvailable) {
         try {
           // Debug: log payload being sent to API to diagnose update issues
@@ -530,10 +596,9 @@ function ProjectPlansPage() {
           const updatedPlanRaw = responsePayload(response);
           const normalizePlan = (plan) => ({
             ...plan,
-            features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            durations: Array.isArray(plan.durations) ? plan.durations : (() => { try { const p = JSON.parse(plan.durations); return Array.isArray(p) ? p : (plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules),
+            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : parseJsonField(plan.technologyStack),
+            modules: Array.isArray(plan.modules) ? plan.modules : parseModulesField(plan.modules, Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules)),
           });
           const updatedPlan = normalizePlan(updatedPlanRaw);
           setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
@@ -555,10 +620,9 @@ function ProjectPlansPage() {
           const createdPlanRaw = response?.data?.data || planPayload;
           const normalizePlanShort = (plan) => ({
             ...plan,
-            features: Array.isArray(plan.features) ? plan.features : (() => { try { const p = JSON.parse(plan.features); return Array.isArray(p) ? p : (plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.features ? String(plan.features).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : (() => { try { const p = JSON.parse(plan.includedModules); return Array.isArray(p) ? p : (plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.includedModules ? String(plan.includedModules).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : (() => { try { const p = JSON.parse(plan.technologyStack); return Array.isArray(p) ? p : (plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.technologyStack ? String(plan.technologyStack).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
-            durations: Array.isArray(plan.durations) ? plan.durations : (() => { try { const p = JSON.parse(plan.durations); return Array.isArray(p) ? p : (plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []); } catch { return plan.durations ? String(plan.durations).split(',').map(s=>s.trim()).filter(Boolean) : []; } })(),
+            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules),
+            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : parseJsonField(plan.technologyStack),
+            modules: Array.isArray(plan.modules) ? plan.modules : parseModulesField(plan.modules, Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules)),
           });
           const createdPlan = normalizePlanShort(createdPlanRaw);
           setPlans((prev) => [createdPlan, ...prev]);
@@ -986,11 +1050,33 @@ function ProjectPlansPage() {
                 </label>
                 <label className="text-sm text-white/70">
                   <span className="mb-1 block">Project Document</span>
-                  <input type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" onChange={(event) => handleFileChange(event, 'planDocument')} className={fieldClasses} disabled={mode === 'view'} />
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-[#0f141d] p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3 text-white/80">
+                        <div className="rounded-xl bg-orange-500/15 p-2 text-orange-400">
+                          <Upload size={16} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">Upload project document</p>
+                          <p className="text-xs text-white/50">PDF, DOC, XLS, TXT</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80">
+                        Choose File
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt,.xls,.xlsx"
+                      onChange={(event) => handleFileChange(event, 'planDocument')}
+                      className="sr-only"
+                      disabled={mode === 'view'}
+                    />
+                  </div>
                   {formData.planDocumentName ? (
-                    <p className="mt-2 text-sm text-white/70">{formData.planDocumentName}</p>
+                    <p className="mt-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{formData.planDocumentName}</p>
                   ) : formData.planDocument ? (
-                    <p className="mt-2 text-sm text-white/70">{typeof formData.planDocument === 'string' ? formData.planDocument : 'Selected file'}</p>
+                    <p className="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">{typeof formData.planDocument === 'string' ? formData.planDocument : 'Selected file'}</p>
                   ) : null}
                 </label>
                 <label className="text-sm text-white/70 md:col-span-2">
@@ -1004,196 +1090,112 @@ function ProjectPlansPage() {
             <section className="rounded-3xl border border-white/10 bg-[#101723] p-4">
               <div className="mb-4 flex items-center gap-2">
                 <Code2 size={16} className="text-orange-400" />
-                <h4 className="text-lg font-semibold text-white">Features, Modules & Technology</h4>
+                <h4 className="text-lg font-semibold text-white">Modules & Technology</h4>
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="mb-2 text-sm text-white/70">Features</p>
-                  <div className="flex flex-wrap gap-2">
-                    {featureOptions.map((option) => (
-                      <button type="button" key={option} onClick={() => addChoice('features', option)} disabled={mode === 'view'} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 disabled:cursor-not-allowed">
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <input
-                      type="text"
-                      value={formData.newFeature}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, newFeature: event.target.value }))}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          addChoice('features', formData.newFeature);
-                          setFormData((prev) => ({ ...prev, newFeature: '' }));
-                        }
-                      }}
-                      placeholder="Add a custom feature"
-                      className={fieldClasses}
-                      disabled={mode === 'view'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addChoice('features', formData.newFeature);
-                        setFormData((prev) => ({ ...prev, newFeature: '' }));
-                      }}
-                      disabled={mode === 'view' || !formData.newFeature.trim()}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {formData.features.map((item) => (
-                      <span key={item} className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-sm text-orange-300">
-                        {item}
-                        {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('features', item)}><X size={12} /></button> : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
                   <p className="mb-2 text-sm text-white/70">Included Modules</p>
-                  <div className="flex flex-wrap gap-2">
-                    {moduleOptions.map((option) => (
-                      <button type="button" key={option} onClick={() => addChoice('includedModules', option)} disabled={mode === 'view'} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 disabled:cursor-not-allowed">
-                        {option}
-                      </button>
-                    ))}
+                  <div className="grid gap-4">
+                    {formData.modules.length ? (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {formData.modules.map((module, index) => (
+                          <div key={`${module.title || 'module'}-${index}`} className={`rounded-3xl border ${editingModuleIndex === index ? 'border-orange-500 bg-orange-500/10' : 'border-white/10 bg-white/5'} p-4`}>
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-white">{module.title || 'Untitled module'}</p>
+                                <p className="mt-1 text-xs text-white/60">Duration: {module.duration || '—'}</p>
+                                <p className="mt-2 text-sm text-white/70">{module.description || 'No description provided.'}</p>
+                                {module.documentName ? (
+                                  <p className="mt-2 rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-xs text-sky-300">Document: {module.documentName}</p>
+                                ) : null}
+                              </div>
+                              {!mode.includes('view') ? (
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => startEditModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Edit3 size={14} /></button>
+                                  <button type="button" onClick={() => removeModule(index)} className="rounded-full border border-white/10 bg-white/5 p-2 text-white/80"><Trash2 size={14} /></button>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-white/60">
+                        No course modules added yet. Add module cards to define the learning path.
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <input
-                      type="text"
-                      value={formData.newModule}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, newModule: event.target.value }))}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          addChoice('includedModules', formData.newModule);
-                          setFormData((prev) => ({ ...prev, newModule: '' }));
-                        }
-                      }}
-                      placeholder="Add a custom module"
-                      className={fieldClasses}
-                      disabled={mode === 'view'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addChoice('includedModules', formData.newModule);
-                        setFormData((prev) => ({ ...prev, newModule: '' }));
-                      }}
-                      disabled={mode === 'view' || !formData.newModule.trim()}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {formData.includedModules.map((item) => (
-                      <span key={item} className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-300">
-                        {item}
-                        {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('includedModules', item)}><X size={12} /></button> : null}
-                      </span>
-                    ))}
-                  </div>
+                  {!mode.includes('view') ? (
+                    <div className="mt-4 grid gap-3">
+                      <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr_auto]">
+                        <input
+                          type="text"
+                          value={formData.newModuleTitle}
+                          onChange={(event) => setFormData((prev) => ({ ...prev, newModuleTitle: event.target.value }))}
+                          placeholder="Module name"
+                          className={fieldClasses}
+                        />
+                        <input
+                          type="text"
+                          value={formData.newModuleDuration}
+                          onChange={(event) => setFormData((prev) => ({ ...prev, newModuleDuration: event.target.value }))}
+                          placeholder="Duration"
+                          className={fieldClasses}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={addModule}
+                            disabled={!formData.newModuleTitle.trim() || !formData.newModuleDuration.trim()}
+                            className="h-[46px] rounded-2xl border border-white/10 bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-white/10 flex-1"
+                          >
+                            {editingModuleIndex !== null ? 'Update' : 'Add'}
+                          </button>
+                          {editingModuleIndex !== null && (
+                            <button
+                              type="button"
+                              onClick={cancelEditModule}
+                              className="h-[46px] rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <textarea
+                        value={formData.newModuleDescription}
+                        onChange={(event) => setFormData((prev) => ({ ...prev, newModuleDescription: event.target.value }))}
+                        placeholder="Description"
+                        className={`${fieldClasses} min-h-[80px]`}
+                      />
+                      <label className="text-sm text-white/70">
+                        <span className="mb-1 block">Document</span>
+                        <label htmlFor="module-doc-add" className="block cursor-pointer rounded-2xl border border-dashed border-white/10 bg-[#0f141d] p-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-3 text-white/80">
+                              <div className="rounded-xl bg-orange-500/15 p-2 text-orange-400">
+                                <Upload size={16} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-white">Upload module document</p>
+                                <p className="text-xs text-white/50">PDF, DOC, XLS, TXT</p>
+                              </div>
+                            </div>
+                            <span className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80">
+                              Choose File
+                            </span>
+                          </div>
+                          <input id="module-doc-add" type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" onChange={(event) => handleModuleDocumentSelection(event, 'add')} className="sr-only" />
+                        </label>
+                        {formData.newModuleDocumentName ? (
+                          <p className="mt-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{formData.newModuleDocumentName}</p>
+                        ) : null}
+                      </label>
+                    </div>
+                  ) : null}
                 </div>
 
-                <div>
-                  <p className="mb-2 text-sm text-white/70">Technology Stack</p>
-                  <div className="flex flex-wrap gap-2">
-                    {techOptions.map((option) => (
-                      <button type="button" key={option} onClick={() => addChoice('technologyStack', option)} disabled={mode === 'view'} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 disabled:cursor-not-allowed">
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <input
-                      type="text"
-                      value={formData.newTech}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, newTech: event.target.value }))}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          addChoice('technologyStack', formData.newTech);
-                          setFormData((prev) => ({ ...prev, newTech: '' }));
-                        }
-                      }}
-                      placeholder="Add a custom technology"
-                      className={fieldClasses}
-                      disabled={mode === 'view'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addChoice('technologyStack', formData.newTech);
-                        setFormData((prev) => ({ ...prev, newTech: '' }));
-                      }}
-                      disabled={mode === 'view' || !formData.newTech.trim()}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {formData.technologyStack.map((item) => (
-                      <span key={item} className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-sm text-sky-300">
-                        {item}
-                        {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('technologyStack', item)}><X size={12} /></button> : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
 
-                <div>
-                  <p className="mb-2 text-sm text-white/70">Durations</p>
-                  <div className="flex flex-wrap gap-2">
-                    {durationOptions.map((option) => (
-                      <button type="button" key={option} onClick={() => addChoice('durations', option)} disabled={mode === 'view'} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 disabled:cursor-not-allowed">
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <input
-                      type="text"
-                      value={formData.newDuration}
-                      onChange={(event) => setFormData((prev) => ({ ...prev, newDuration: event.target.value }))}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          addChoice('durations', formData.newDuration);
-                          setFormData((prev) => ({ ...prev, newDuration: '' }));
-                        }
-                      }}
-                      placeholder="Add a custom duration"
-                      className={fieldClasses}
-                      disabled={mode === 'view'}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        addChoice('durations', formData.newDuration);
-                        setFormData((prev) => ({ ...prev, newDuration: '' }));
-                      }}
-                      disabled={mode === 'view' || !formData.newDuration.trim()}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {formData.durations.map((item) => (
-                      <span key={item} className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-sm text-violet-300">
-                        {item}
-                        {!mode.includes('view') ? <button type="button" onClick={() => removeChoice('durations', item)}><X size={12} /></button> : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
             </section>
 
@@ -1267,7 +1269,9 @@ function ProjectPlansPage() {
 
             {mode !== 'view' ? (
               <div className="flex flex-wrap gap-3">
-                <button type="submit" className="rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white">Save Plan</button>
+                <button type="submit" className="rounded-2xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white">
+                  {mode === 'edit' ? 'Update Plan' : 'Save Plan'}
+                </button>
                 <button type="button" onClick={closeDrawer} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/80">Cancel</button>
               </div>
             ) : null}
