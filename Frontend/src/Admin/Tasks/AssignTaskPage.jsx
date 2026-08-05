@@ -57,10 +57,13 @@ export default function AssignTaskPage() {
   const [planInfo, setPlanInfo]                 = useState(null);
   const [selectedModules, setSelectedModules]   = useState([]);
 
-  // Set of already-assigned module title keys (lowercase)
-  const [assignedTitles, setAssignedTitles]     = useState(new Set());
-  // Map: lowercased title → full task row (for created_at, attachments)
-  const [assignedTaskMap, setAssignedTaskMap]   = useState(new Map());
+  // Set of already-assigned module title keys (lowercase) across the project
+  const [assignedTitlesAll, setAssignedTitlesAll]     = useState(new Set());
+  // Map: lowercased title → full task row (for created_at, attachments) for the project
+  const [assignedTaskMapAll, setAssignedTaskMapAll]   = useState(new Map());
+  // Per-selected-employee subset (assigned to the currently selected employee)
+  const [assignedTitlesForEmployee, setAssignedTitlesForEmployee] = useState(new Set());
+  const [assignedTaskMapForEmployee, setAssignedTaskMapForEmployee] = useState(new Map());
   const [assignedTitlesLoading, setAssignedTitlesLoading] = useState(false);
 
   const [assignedEmployees, setAssignedEmployees] = useState([]);
@@ -119,35 +122,54 @@ export default function AssignTaskPage() {
   // ─── Fetch already-assigned titles + full task data ────────────────────────
   const fetchAssignedTitles = useCallback(async (project_id, employee_id) => {
     if (!project_id) {
-      setAssignedTitles(new Set());
-      setAssignedTaskMap(new Map());
+      setAssignedTitlesAll(new Set());
+      setAssignedTaskMapAll(new Map());
+      setAssignedTitlesForEmployee(new Set());
+      setAssignedTaskMapForEmployee(new Map());
       return;
     }
     setAssignedTitlesLoading(true);
     try {
       const params = { project_id, limit: 500, page: 1 };
-      if (employee_id) params.assigned_to = employee_id;
+      // Fetch all tasks for the project, then split client-side
       const { data } = await api.get("/tasks", { params });
       const rows = data.data || [];
-      const filtered = rows.filter((t) =>
-        employee_id ? t.assigned_to === employee_id : !!t.assigned_to
-      );
-      const names = new Set(
-        filtered
+
+      // All assigned tasks in project
+      const allAssigned = rows.filter((t) => !!t.assigned_to);
+      const namesAll = new Set(
+        allAssigned
           .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
           .filter(Boolean)
       );
-      // Build map: title key → task row (for created_at, attachments)
-      const taskMap = new Map();
-      filtered.forEach((t) => {
+      const taskMapAll = new Map();
+      allAssigned.forEach((t) => {
         const key = (t.task_name || t.module_name || "").trim().toLowerCase();
-        if (key) taskMap.set(key, t);
+        if (key && !taskMapAll.has(key)) taskMapAll.set(key, t);
       });
-      setAssignedTitles(names);
-      setAssignedTaskMap(taskMap);
-    } catch {
-      setAssignedTitles(new Set());
-      setAssignedTaskMap(new Map());
+
+      // Subset assigned to the selected employee
+      const empAssigned = employee_id ? rows.filter((t) => t.assigned_to === employee_id) : [];
+      const namesEmp = new Set(
+        empAssigned
+          .map((t) => (t.task_name || t.module_name || "").trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const taskMapEmp = new Map();
+      empAssigned.forEach((t) => {
+        const key = (t.task_name || t.module_name || "").trim().toLowerCase();
+        if (key && !taskMapEmp.has(key)) taskMapEmp.set(key, t);
+      });
+
+      setAssignedTitlesAll(namesAll);
+      setAssignedTaskMapAll(taskMapAll);
+      setAssignedTitlesForEmployee(namesEmp);
+      setAssignedTaskMapForEmployee(taskMapEmp);
+    } catch (e) {
+      setAssignedTitlesAll(new Set());
+      setAssignedTaskMapAll(new Map());
+      setAssignedTitlesForEmployee(new Set());
+      setAssignedTaskMapForEmployee(new Map());
     } finally {
       setAssignedTitlesLoading(false);
     }
@@ -177,7 +199,11 @@ export default function AssignTaskPage() {
     setPlanModules([]);
     setPlanInfo(null);
     setSelectedModules([]);
-    setAssignedTitles(new Set());
+    // reset both global and per-employee assigned sets/maps
+    setAssignedTitlesAll(new Set());
+    setAssignedTitlesForEmployee(new Set());
+    setAssignedTaskMapAll(new Map());
+    setAssignedTaskMapForEmployee(new Map());
 
     api.get("/project-plans")
       .then(({ data }) => {
@@ -215,8 +241,27 @@ export default function AssignTaskPage() {
   }, [assignForm.assigned_to]);
 
   // ─── Helpers: check if a module title is already assigned ─────────────────
-  const isModuleAssigned = (mod) =>
-    assignedTitles.has((mod.title || "").trim().toLowerCase());
+  const getAssignedTaskRowForTitle = (titleKey) => {
+    if (!titleKey) return null;
+    // exact match
+    const exact = assignedTaskMapAll.get(titleKey);
+    if (exact) return exact;
+    // fallback: find any assigned task whose task_name/module_name includes the titleKey or vice-versa
+    const lower = titleKey.toLowerCase();
+    for (const t of assignedTaskMapAll.values()) {
+      const name = (t.task_name || t.module_name || "").toLowerCase();
+      if (!name) continue;
+      if (name.includes(lower) || lower.includes(name)) return t;
+    }
+    return null;
+  };
+
+  const isModuleAssigned = (mod) => {
+    const key = (mod.title || "").trim().toLowerCase();
+    if (!key) return false;
+    if (assignedTitlesAll.has(key)) return true;
+    return !!getAssignedTaskRowForTitle(key);
+  };
 
   // Indices of modules that are NOT yet assigned (selectable)
   const selectableIndices = planModules
@@ -346,12 +391,31 @@ export default function AssignTaskPage() {
       }
 
       // ── Live-update assignedTitles + assignedTaskMap immediately ──────────
-      setAssignedTitles((prev) => {
+      // Update global/project-level assigned sets/maps
+      setAssignedTitlesAll((prev) => {
         const updated = new Set(prev);
         newlyAssigned.forEach(({ key }) => updated.add(key));
         return updated;
       });
-      setAssignedTaskMap((prev) => {
+      setAssignedTaskMapAll((prev) => {
+        const updated = new Map(prev);
+        newlyAssigned.forEach(({ key, taskRow }) => {
+          if (key) {
+            updated.set(key, {
+              ...taskRow,
+              attachments: taskRow.attachments || null,
+            });
+          }
+        });
+        return updated;
+      });
+      // Update per-employee maps (we just assigned to the selected employee)
+      setAssignedTitlesForEmployee((prev) => {
+        const updated = new Set(prev);
+        newlyAssigned.forEach(({ key }) => updated.add(key));
+        return updated;
+      });
+      setAssignedTaskMapForEmployee((prev) => {
         const updated = new Map(prev);
         newlyAssigned.forEach(({ key, taskRow }) => {
           if (key) {
@@ -543,7 +607,7 @@ export default function AssignTaskPage() {
                     const assigned  = isModuleAssigned(mod);
                     const checked   = !assigned && selectedModules.includes(idx);
                     const titleKey  = (mod.title || "").trim().toLowerCase();
-                    const taskRow   = assigned ? assignedTaskMap.get(titleKey) : null;
+                    const taskRow   = assigned ? assignedTaskMapAll.get(titleKey) : null;
                     const createdAt = taskRow ? fmtDate(taskRow.created_at) : null;
                     const docs      = taskRow ? parseAttachments(taskRow.attachments) : [];
                     return (
