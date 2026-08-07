@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2,
@@ -552,28 +552,7 @@ export default function EmployeeProjectDetails() {
                         {assignments.map((emp, i) => {
                           const fullName = emp.full_name || [emp.first_name, emp.last_name].filter(Boolean).join(' ') || 'Unknown';
                           return (
-                            <tr key={emp.employee_id || i} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
-                              <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{i + 1}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <Avatar name={fullName} size={11} index={i} />
-                                  <div>
-                                    <p className="text-white text-sm font-semibold truncate">{fullName}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-white/60 text-xs whitespace-nowrap">
-                                {emp.designation || emp.role || 'Team Member'}
-                              </td>
-                              <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">
-                                {emp.email || '—'}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-widest shrink-0 inline-flex">
-                                  {emp.status || 'Assigned'}
-                                </div>
-                              </td>
-                            </tr>
+                            <tr key={emp.employee_id || i} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"><td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{i + 1}</td><td className="px-4 py-3"><div className="flex items-center gap-3"><Avatar name={fullName} size={11} index={i} /><div><p className="text-white text-sm font-semibold truncate">{fullName}</p></div></div></td><td className="px-4 py-3 text-white/60 text-xs whitespace-nowrap">{emp.designation || emp.role || 'Team Member'}</td><td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{emp.email || '—'}</td><td className="px-4 py-3 whitespace-nowrap"><div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-white/50 uppercase tracking-widest shrink-0 inline-flex">{emp.status || 'Assigned'}</div></td></tr>
                           );
                         })}
                       </tbody>
@@ -604,31 +583,7 @@ export default function EmployeeProjectDetails() {
                       </thead>
                       <tbody>
                         {tasks.map((task, index) => (
-                          <tr key={task.id || task.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors">
-                            <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{index + 1}</td>
-                            <td className="px-4 py-3 text-white text-sm font-semibold whitespace-nowrap">
-                              {task.task_name}
-                            </td>
-                            <td className="px-4 py-3 text-white/60 text-xs max-w-[260px]">
-                              {task.description || 'No description provided.'}
-                            </td>
-                            <td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">
-                              {fmtDate(task.due_date)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {task.priority && (
-                                <span className={`text-[10px] uppercase tracking-widest font-bold ${
-                                  task.priority.toLowerCase() === 'high' ? 'text-rose-400' : 
-                                  task.priority.toLowerCase() === 'medium' ? 'text-orange-400' : 'text-emerald-400'
-                                }`}>
-                                  {task.priority}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <StatusBadge status={task.status} />
-                            </td>
-                          </tr>
+                          <tr key={task.id || task.uuid} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"><td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{index + 1}</td><td className="px-4 py-3 text-white text-sm font-semibold whitespace-nowrap">{task.task_name}</td><td className="px-4 py-3 text-white/60 text-xs max-w-[260px]">{task.description || 'No description provided.'}</td><td className="px-4 py-3 text-white/55 text-xs whitespace-nowrap">{fmtDate(task.due_date)}</td><td className="px-4 py-3 whitespace-nowrap">{task.priority && (<span className={`text-[10px] uppercase tracking-widest font-bold ${task.priority.toLowerCase() === 'high' ? 'text-rose-400' : task.priority.toLowerCase() === 'medium' ? 'text-orange-400' : 'text-emerald-400'}`}>{task.priority}</span>)}</td><td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={task.status} /></td></tr>
                         ))}
                       </tbody>
                     </table>

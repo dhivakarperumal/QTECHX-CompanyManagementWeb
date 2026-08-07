@@ -1189,14 +1189,16 @@ export default function TasksPage({ initialPageKey = null }) {
               <div className="flex flex-col justify-center p-4 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800/60 transition-colors">
                 <div className="flex justify-between items-end mb-2">
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Progress</p>
-                  <span className="text-xs font-bold text-emerald-400">{selectedTaskDetails.progress}%</span>
+                  <span className={`text-xs font-bold ${selectedTaskDetails.status === 'Completed' ? 'text-emerald-400' : 'text-orange-400'}`}>{getEffectiveProgress(selectedTaskDetails)}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-900 overflow-hidden">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 relative"
-                    style={{ width: `${selectedTaskDetails.progress}%` }}
+                    className={`h-full rounded-full transition-all duration-700 ${getProgressColor(selectedTaskDetails.status, getEffectiveProgress(selectedTaskDetails))}`}
+                    style={{ width: `${getEffectiveProgress(selectedTaskDetails)}%` }}
                   >
-                    <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
+                    {selectedTaskDetails.status !== 'Completed' && selectedTaskDetails.status !== 'Cancelled' && (
+                      <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
+                    )}
                   </div>
                 </div>
               </div>
