@@ -94,6 +94,8 @@ const customSelectStyles = {
 const expiryTypeOptions = ['Hosting', 'Domain', 'SSL', 'Maintenance', 'License', 'Subscription', 'Support Plan'];
 const renewalStatusOptions = ['Active', 'Expiring Soon', 'Expired', 'Renewed'];
 const statusOptions = ['Active', 'Inactive'];
+const planNameOptions = ['Basic Plan', '6 Month Plan', 'Yearly Plan', 'Business Pro', 'Enterprise', 'Standard', 'Premium', 'Custom Plan'];
+const providerOptions = ['GoDaddy', 'AWS', 'Namecheap', 'HostGator', 'Bluehost', 'SiteGround', 'Cloudflare', 'Linode', 'DigitalOcean', 'Hostinger', 'DomainComme', 'Other'];
 
 function getBadgeClass(status) {
   if (!status) return 'bg-slate-700 text-slate-100';
@@ -819,11 +821,27 @@ export default function ProjectExpiryPage() {
                   Provider / Plan
                   {form.provider_name && <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 rounded-sm">auto-filled</span>}
                 </label>
-                <input value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} placeholder="e.g. GoDaddy, AWS" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
+                <Select
+                  value={form.provider_name ? { value: form.provider_name, label: form.provider_name } : null}
+                  onChange={(option) => setForm({ ...form, provider_name: option ? option.value : '' })}
+                  options={providerOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  placeholder="Select provider"
+                  isSearchable={true}
+                  isClearable={true}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-xs font-medium text-white/60">Plan Name</label>
-                <input value={form.plan_name} onChange={(e) => setForm({ ...form, plan_name: e.target.value })} placeholder="e.g. Business Pro" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
+                <Select
+                  value={form.plan_name ? { value: form.plan_name, label: form.plan_name } : null}
+                  onChange={(option) => setForm({ ...form, plan_name: option ? option.value : '' })}
+                  options={planNameOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  placeholder="Select plan"
+                  isSearchable={true}
+                  isClearable={true}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-xs font-medium text-white/60">Price / Month (₹)</label>
