@@ -515,6 +515,7 @@ export default function AllProjects() {
                   <input value={assignmentSearch} onChange={e => handleEmployeeSearch(e.target.value)} placeholder="Search employees…"
                     className="w-full bg-[#0e1118] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-orange-500/50 placeholder:text-white/20" />
                 </div>
+                <p className="text-[10px] text-white/40 mb-2">Search results exclude employees already assigned to 3 active projects.</p>
                 {selectedEmployeeIds.length > 0 && (
                   <p className="text-xs text-white/50 mb-2">{selectedEmployeeIds.length} employee{selectedEmployeeIds.length !== 1 ? 's' : ''} selected</p>
                 )}

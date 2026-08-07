@@ -71,7 +71,7 @@ const navItems = [
       icon: GraduationCap,
       children: [
         { path: "/employee/trainees", label: "All Trainees & Interns", icon: GraduationCap },
-        { path: "/employee/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
+        
         { path: "/employee/trainees/tasks", label: "Tasks", icon: CheckSquare },
         { path: "/employee/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },
       ],

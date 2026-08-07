@@ -1545,6 +1545,96 @@ async function ensureEmployeeLeavesSchema(pool) {
   }
 }
 
+async function ensureTraineeEmployeeAssignmentsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'trainee_employee_assignments'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS trainee_employee_assignments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        trainee_id VARCHAR(36) NOT NULL,
+        employee_id VARCHAR(36) NOT NULL,
+        trainee_name VARCHAR(255) NULL,
+        trainee_code VARCHAR(100) NULL,
+        trainee_email VARCHAR(255) NULL,
+        trainee_phone VARCHAR(50) NULL,
+        trainee_department VARCHAR(255) NULL,
+        trainee_designation VARCHAR(255) NULL,
+        trainee_course VARCHAR(255) NULL,
+        trainee_batch VARCHAR(255) NULL,
+        trainee_joining_date DATE NULL,
+        person_type VARCHAR(50) NULL,
+        person_name VARCHAR(255) NULL,
+        person_id VARCHAR(100) NULL,
+        person_email VARCHAR(255) NULL,
+        person_phone VARCHAR(50) NULL,
+        department VARCHAR(255) NULL,
+        designation VARCHAR(255) NULL,
+        course VARCHAR(255) NULL,
+        batch VARCHAR(255) NULL,
+        joining_date DATE NULL,
+        employee_name VARCHAR(255) NULL,
+        employee_code VARCHAR(100) NULL,
+        employee_email VARCHAR(255) NULL,
+        employee_phone VARCHAR(50) NULL,
+        employee_department VARCHAR(255) NULL,
+        employee_designation VARCHAR(255) NULL,
+        assigned_date DATE NULL,
+        expected_completion_date DATE NULL,
+        priority VARCHAR(50) NULL,
+        notes TEXT NULL,
+        status ENUM('Active', 'Completed', 'Cancelled') DEFAULT 'Active',
+        assigned_by VARCHAR(36) NULL,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_trainee_employee_assignments_trainee (trainee_id),
+        INDEX idx_trainee_employee_assignments_employee (employee_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  } else {
+    const [columns] = await pool.execute("SHOW COLUMNS FROM trainee_employee_assignments");
+    const columnNames = new Set(columns.map((column) => column.Field));
+    const addColumnStatements = [];
+
+    if (!columnNames.has('person_type')) {
+      addColumnStatements.push("ADD COLUMN person_type VARCHAR(50) NULL");
+    }
+    if (!columnNames.has('person_name')) {
+      addColumnStatements.push("ADD COLUMN person_name VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('person_id')) {
+      addColumnStatements.push("ADD COLUMN person_id VARCHAR(100) NULL");
+    }
+    if (!columnNames.has('person_email')) {
+      addColumnStatements.push("ADD COLUMN person_email VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('person_phone')) {
+      addColumnStatements.push("ADD COLUMN person_phone VARCHAR(50) NULL");
+    }
+    if (!columnNames.has('department')) {
+      addColumnStatements.push("ADD COLUMN department VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('designation')) {
+      addColumnStatements.push("ADD COLUMN designation VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('course')) {
+      addColumnStatements.push("ADD COLUMN course VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('batch')) {
+      addColumnStatements.push("ADD COLUMN batch VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('joining_date')) {
+      addColumnStatements.push("ADD COLUMN joining_date DATE NULL");
+    }
+
+    if (addColumnStatements.length) {
+      await pool.execute(`ALTER TABLE trainee_employee_assignments ${addColumnStatements.join(', ')}`);
+    }
+  }
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -1565,6 +1655,7 @@ async function initDB() {
     await ensureSalarySchema(pool);
     await ensureProjectPaymentSchema(pool);
     await ensureIncomesSchema(pool);
+    await ensureTraineeEmployeeAssignmentsSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;

@@ -6,7 +6,17 @@ const { v4: uuidv4 } = require("uuid");
 exports.getTraineeTasks = async (req, res) => {
   try {
     const db = getDB();
-    const [rows] = await db.execute("SELECT * FROM trainee_tasks ORDER BY created_at DESC");
+    const { created_by } = req.query;
+    let query = "SELECT * FROM trainee_tasks";
+    const params = [];
+
+    if (created_by) {
+      query += " WHERE created_by = ?";
+      params.push(created_by);
+    }
+
+    query += " ORDER BY created_at DESC";
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching trainee tasks:", error);
@@ -19,12 +29,14 @@ exports.createTraineeTask = async (req, res) => {
     const { task_name, description } = req.body;
     const db = getDB();
     const uuid = uuidv4();
-    const created_by = req.user ? req.user.user_id : null; // Assuming req.user is set by auth middleware
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
     const documentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
 
     await db.execute(
-      `INSERT INTO trainee_tasks (uuid, task_name, description, document_path, created_by) VALUES (?, ?, ?, ?, ?)`,
-      [uuid, task_name, description, documentPath, created_by]
+      `INSERT INTO trainee_tasks (uuid, task_name, description, document_path, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?)`,
+      [uuid, task_name, description, documentPath, actor, actor]
     );
 
     res.status(201).json({ message: "Task created successfully", uuid });
@@ -39,7 +51,9 @@ exports.updateTraineeTask = async (req, res) => {
     const { uuid } = req.params;
     const { task_name, description } = req.body;
     const db = getDB();
-    const updated_by = req.user ? req.user.user_id : null;
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
     const updates = [];
     const values = [];
 
@@ -58,7 +72,7 @@ exports.updateTraineeTask = async (req, res) => {
 
     if (updates.length) {
       updates.push("updated_by = ?");
-      values.push(updated_by);
+      values.push(actor);
       values.push(uuid);
       await db.execute(`UPDATE trainee_tasks SET ${updates.join(", ")} WHERE uuid = ?`, values);
     }
@@ -87,24 +101,45 @@ exports.deleteTraineeTask = async (req, res) => {
 
 exports.getAssignments = async (req, res) => {
   try {
-    const { trainee_id } = req.query;
+    const { trainee_id, employee_id, created_by } = req.query;
     const db = getDB();
-    
+
     let query = `
       SELECT tta.*, tt.task_name, tt.description, tt.document_path AS task_document_path, ti.full_name as trainee_name, ti.type as trainee_type
       FROM trainee_task_assignments tta
       JOIN trainee_tasks tt ON tta.trainee_task_id = tt.id
       JOIN trainee_intern ti ON tta.trainee_intern_id = ti.uuid
     `;
-    
+
     const params = [];
+    const conditions = [];
+
+    if (employee_id) {
+      query += `
+        JOIN trainee_employee_assignments tea
+          ON tea.trainee_id = tta.trainee_intern_id
+          AND tea.status = 'Active'
+      `;
+      conditions.push(`tea.employee_id = ?`);
+      params.push(employee_id);
+    }
+
     if (trainee_id) {
-      query += ` WHERE tta.trainee_intern_id = ? `;
+      conditions.push(`tta.trainee_intern_id = ?`);
       params.push(trainee_id);
     }
-    
+
+    if (created_by) {
+      conditions.push(`tta.created_by = ?`);
+      params.push(created_by);
+    }
+
+    if (conditions.length) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
     query += ` ORDER BY tta.created_at DESC `;
-    
+
     const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
@@ -119,7 +154,9 @@ exports.assignTask = async (req, res) => {
     const assignmentDocumentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
     const db = getDB();
     const uuid = uuidv4();
-    const created_by = req.user ? req.user.user_id : null;
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
 
     // Get trainee_task_id from uuid
     const [taskRows] = await db.execute("SELECT id FROM trainee_tasks WHERE uuid = ?", [trainee_task_uuid]);
@@ -130,9 +167,9 @@ exports.assignTask = async (req, res) => {
 
     await db.execute(
       `INSERT INTO trainee_task_assignments 
-        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, created_by]
+        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by, updated_by) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, actor, actor]
     );
 
     res.status(201).json({ message: "Task assigned successfully", uuid });

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import Select from 'react-select';
 
 const customSelectStyles = {
@@ -95,32 +95,35 @@ const FIELDS = [
   { name: 'planDate', label: 'Plan Date', type: 'date', required: true },
   { name: 'startTime', label: 'Start Time', type: 'time', required: true },
   { name: 'endTime', label: 'End Time', type: 'time', required: true },
-  { name: 'estimatedDuration', label: 'Estimated Duration', type: 'text' },
   { name: 'category', label: 'Category', type: 'text' },
   { name: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
   { name: 'status', label: 'Status', type: 'select', options: ['Pending', 'In Progress', 'Completed'] },
-  { name: 'project', label: 'Project', type: 'text' },
-  { name: 'module', label: 'Module', type: 'text' },
-  { name: 'task', label: 'Task', type: 'text' },
-  { name: 'dailyGoal', label: 'Daily Goal', type: 'textarea' },
-  { name: 'expectedOutcome', label: 'Expected Outcome', type: 'textarea' },
-  { name: 'checklistItems', label: 'Checklist Items', type: 'textarea' },
-  { name: 'reminderDate', label: 'Reminder Date', type: 'date' },
-  { name: 'reminderTime', label: 'Reminder Time', type: 'time' },
-  { name: 'location', label: 'Location', type: 'text' },
-  { name: 'meetingLink', label: 'Meeting Link', type: 'text' },
-  { name: 'notes', label: 'Notes', type: 'textarea' },
-  { name: 'tags', label: 'Tags', type: 'text' },
-  { name: 'progress', label: 'Progress (%)', type: 'number', min: 0, max: 100 },
-  { name: 'plannedHours', label: 'Planned Hours', type: 'number', step: '0.25' },
-  { name: 'workedHours', label: 'Worked Hours', type: 'number', step: '0.25' },
-  { name: 'breakStartTime', label: 'Break Start Time', type: 'time' },
-  { name: 'breakEndTime', label: 'Break End Time', type: 'time' },
-  { name: 'energyLevel', label: 'Energy Level', type: 'select', options: ['High', 'Medium', 'Low'] },
-  { name: 'todaysAchievement', label: "Today's Achievement", type: 'textarea' },
-  { name: 'challenges', label: 'Challenges', type: 'textarea' },
-  { name: 'tomorrowsPlan', label: "Tomorrow's Plan", type: 'textarea' },
+  { name: 'checklistItems', label: 'Checklist Items', type: 'checklist' },
 ];
+
+const normalizeChecklist = (value) => {
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+    return items.length > 0 ? items : [''];
+  }
+
+  if (typeof value === 'string') {
+    const items = value
+      .split(/\n|,|;/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return items.length > 0 ? items : [''];
+  }
+
+  return [''];
+};
+
+const sanitizeChecklist = (value) =>
+  normalizeChecklist(value)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 function Modal({ open, onClose, title, subtitle, children }) {
   useEffect(() => {
@@ -155,13 +158,18 @@ function Modal({ open, onClose, title, subtitle, children }) {
 
 export default function MyCalendarEventModal({ open, onClose, initialData, onSave, onDelete }) {
   const [formData, setFormData] = useState(initialData || {});
+  const [checklistItems, setChecklistItems] = useState(() => normalizeChecklist(initialData?.checklistItems));
   const [documentFile, setDocumentFile] = useState(null);
 
   useEffect(() => {
+    if (open) {
+      setFormData(initialData || {});
+      setChecklistItems(normalizeChecklist(initialData?.checklistItems));
+    }
     if (!open) {
       setDocumentFile(null);
     }
-  }, [open]);
+  }, [open, initialData]);
 
   const handleChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -169,7 +177,11 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (onSave) onSave(formData, documentFile);
+    const submissionData = {
+      ...formData,
+      checklistItems: sanitizeChecklist(checklistItems),
+    };
+    if (onSave) onSave(submissionData, documentFile);
   };
 
   return (
@@ -179,7 +191,7 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
           {FIELDS.map((field) => {
             const placeholder = field.placeholder ?? `Enter ${field.label.toLowerCase()}`;
             return (
-              <div key={field.name} className="flex flex-col gap-2">
+              <div key={field.name} className={field.type === 'checklist' ? 'flex flex-col gap-2 md:col-span-2' : 'flex flex-col gap-2'}>
                 <label className="text-sm font-medium text-white/80">{field.label}{field.required ? ' *' : ''}</label>
                 {field.type === 'textarea' ? (
                   <textarea
@@ -189,6 +201,44 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
                     placeholder={placeholder}
                     className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
+                ) : field.type === 'checklist' ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div className="space-y-2">
+                      {checklistItems.map((item, index) => (
+                        <div key={`${field.name}-${index}`} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={item}
+                            onChange={(e) => {
+                              const updated = [...checklistItems];
+                              updated[index] = e.target.value;
+                              setChecklistItems(updated);
+                            }}
+                            placeholder="Add checklist item"
+                            className="flex-1 rounded-xl border border-white/10 bg-[#0d0d12] px-3 py-2 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = checklistItems.filter((_, i) => i !== index);
+                              setChecklistItems(updated.length > 0 ? updated : ['']);
+                            }}
+                            className="rounded-xl border border-white/10 bg-white/5 p-2 text-slate-300 hover:bg-white/10"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setChecklistItems([...checklistItems, ''])}
+                      className="mt-3 flex items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 hover:bg-white/10"
+                    >
+                      <Plus size={14} />
+                      Add Item
+                    </button>
+                  </div>
                 ) : field.type === 'select' ? (
                   <Select
                     styles={customSelectStyles}

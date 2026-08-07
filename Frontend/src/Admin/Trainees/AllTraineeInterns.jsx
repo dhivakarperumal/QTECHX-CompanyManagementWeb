@@ -7,6 +7,7 @@ import {
   X, Mail, Phone, Building2, UserRoundPlus
 } from 'lucide-react';
 import api from '../../api';
+import TraineeAssignmentDrawer from './TraineeAssignmentDrawer';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
@@ -86,6 +87,8 @@ export default function AllTraineeInterns() {
   // Modals
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedTraineeForAssignment, setSelectedTraineeForAssignment] = useState(null);
+  const [assignmentDrawerOpen, setAssignmentDrawerOpen] = useState(false);
 
   // ── Fetch members ──
   const loadMembers = useCallback(async () => {
@@ -217,12 +220,22 @@ export default function AllTraineeInterns() {
           >
             <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
           </button>
+          {/* Assign Employee Button */}
+          <button
+            onClick={() => {
+              setSelectedTraineeForAssignment(null);
+              setAssignmentDrawerOpen(true);
+            }}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition border border-orange-500/40 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400"
+          >
+            <UserRoundPlus size={15} /> Assign Employee
+          </button>
           <button
             onClick={() => navigate('/admin/trainees/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-orange-500/25 hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
-            <UserRoundPlus size={15} /> Add Trainee and Intern
+            <UserRoundPlus size={15} /> Add Trainee
           </button>
         </div>
       </div>
@@ -417,7 +430,7 @@ export default function AllTraineeInterns() {
       {!loading && !error && members.length > 0 && viewMode === 'table' && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Member</th>
@@ -429,11 +442,13 @@ export default function AllTraineeInterns() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, i) => (
-                  <tr
-                    key={m.uuid}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
-                  >
+                {members.map((m, i) => {
+                  const hasActiveAssignment = Number(m.has_active_assignment || 0) > 0;
+                  return (
+                    <tr
+                      key={m.uuid}
+                      className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
+                    >
                     {/* Member */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
@@ -490,7 +505,22 @@ export default function AllTraineeInterns() {
 
                     {/* Actions */}
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Assign Employee - prominent button */}
+                        <button
+                          onClick={() => {
+                            if (hasActiveAssignment) return;
+                            setSelectedTraineeForAssignment(m);
+                            setAssignmentDrawerOpen(true);
+                          }}
+                          disabled={hasActiveAssignment}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${hasActiveAssignment ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60' : 'text-white bg-orange-500 hover:opacity-90'}`}
+                          style={hasActiveAssignment ? {} : { background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+                          title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
+                        >
+                          <UserRoundPlus size={13} />
+                          {hasActiveAssignment ? 'Assigned' : 'Assign'}
+                        </button>
                         <button
                           onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition"
@@ -515,7 +545,7 @@ export default function AllTraineeInterns() {
                       </div>
                     </td>
                   </tr>
-                ))}
+      )})}
               </tbody>
             </table>
           </div>
@@ -564,8 +594,10 @@ export default function AllTraineeInterns() {
       {!loading && !error && members.length > 0 && viewMode === 'card' && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {members.map((m, i) => (
-              <div key={m.uuid} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 hover:bg-white/[0.04] transition group">
+            {members.map((m, i) => {
+              const hasActiveAssignment = Number(m.has_active_assignment || 0) > 0;
+              return (
+                <div key={m.uuid} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 hover:bg-white/[0.04] transition group">
                 <div className="flex justify-between items-start mb-4">
                   <Avatar name={m.full_name} index={i} size="lg" />
                   <StatusPill status={m.status} />
@@ -595,6 +627,18 @@ export default function AllTraineeInterns() {
 
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
+                    onClick={() => {
+                      if (hasActiveAssignment) return;
+                      setSelectedTraineeForAssignment(m);
+                      setAssignmentDrawerOpen(true);
+                    }}
+                    disabled={hasActiveAssignment}
+                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${hasActiveAssignment ? 'bg-white/10 border-white/10 text-white/40 cursor-not-allowed opacity-60' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
+                    title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
+                  >
+                    <UserRoundPlus size={14} />
+                  </button>
+                  <button
                     onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
                     className="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition"
                   >
@@ -614,7 +658,7 @@ export default function AllTraineeInterns() {
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
 
           <div className="flex items-center justify-between mt-6">
@@ -628,6 +672,22 @@ export default function AllTraineeInterns() {
         </>
       )}
 
+      {/* Assignment Drawer */}
+      {assignmentDrawerOpen && (
+        <TraineeAssignmentDrawer
+          trainee={selectedTraineeForAssignment}
+          onClose={() => {
+            setAssignmentDrawerOpen(false);
+            setSelectedTraineeForAssignment(null);
+          }}
+          onSuccess={(msg) => {
+            setAssignmentDrawerOpen(false);
+            setSelectedTraineeForAssignment(null);
+            showToast(msg);
+            loadMembers();
+          }}
+        />
+      )}
     </div>
   );
 }

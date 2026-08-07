@@ -215,7 +215,7 @@ export default function AddTraineeIntern() {
       const res = isEdit ? await api.put(`/trainee-intern/${id}`, form) : await api.post('/trainee-intern', form);
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
       setSuccess(isEdit ? 'Member updated successfully!' : 'Member created successfully!');
-      setTimeout(() => navigate('/admin/trainees'), 1400);
+      setTimeout(() => navigate('/employee/trainees'), 1400);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to save member');
     } finally {
@@ -226,7 +226,7 @@ export default function AddTraineeIntern() {
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex items-start gap-4">
-        <button onClick={() => navigate('/admin/trainees')} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
+        <button onClick={() => navigate('/employee/trainees')} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition shrink-0 mt-1">
           <ArrowLeft size={16} />
         </button>
         <div>
@@ -394,3 +394,4 @@ export default function AddTraineeIntern() {
     </div>
   );
 }
+

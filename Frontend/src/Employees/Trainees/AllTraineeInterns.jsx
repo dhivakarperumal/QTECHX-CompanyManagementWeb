@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 import { 
   GraduationCap, Plus, Search, RefreshCw, Eye, Edit2, Trash2, 
   Loader2, AlertCircle, CheckCircle, LayoutGrid, List, Users, 
@@ -62,6 +63,8 @@ function StatusPill({ status }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AllTraineeInterns() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   const [viewMode, setViewMode] = useState('table');
   const [showFilters, setShowFilters] = useState(false);
@@ -95,6 +98,7 @@ export default function AllTraineeInterns() {
       if (search) params.append('search', search);
       if (typeFilter) params.append('type', typeFilter);
       if (statusFilter) params.append('status', statusFilter);
+      if (employeeId) params.append('employee_id', employeeId);
       const { data } = await api.get(`/trainee-intern?${params}`);
       if (!data.success) throw new Error(data.message || 'Failed');
       setMembers(data.data || []);
@@ -104,12 +108,14 @@ export default function AllTraineeInterns() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, typeFilter, statusFilter]);
+  }, [page, search, typeFilter, statusFilter, employeeId]);
 
   // ── Fetch stats ──
   const fetchStats = useCallback(async () => {
     try {
-      const { data } = await api.get('/trainee-intern?limit=500&page=1');
+      const params = new URLSearchParams({ limit: 500, page: 1 });
+      if (employeeId) params.append('employee_id', employeeId);
+      const { data } = await api.get(`/trainee-intern?${params}`);
       if (!data.success) return;
       const all = data.data || [];
       setStatsData({
@@ -119,7 +125,7 @@ export default function AllTraineeInterns() {
         interns:  all.filter(c => c.type === 'Intern').length,
       });
     } catch { /* silent */ }
-  }, []);
+  }, [employeeId]);
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
@@ -218,7 +224,7 @@ export default function AllTraineeInterns() {
             <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
           </button>
           <button
-            onClick={() => navigate('/admin/trainees/add')}
+            onClick={() => navigate('/employee/trainees/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-orange-500/25 hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
@@ -492,14 +498,14 @@ export default function AllTraineeInterns() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
+                          onClick={() => navigate(`/employee/trainees/view/${m.uuid}`)}
                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition"
                           title="View Details"
                         >
                           <Eye size={14} />
                         </button>
                         <button
-                          onClick={() => navigate(`/admin/trainees/edit/${m.uuid}`)}
+                          onClick={() => navigate(`/employee/trainees/edit/${m.uuid}`)}
                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition"
                           title="Edit"
                         >
@@ -595,13 +601,13 @@ export default function AllTraineeInterns() {
 
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
-                    onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
+                    onClick={() => navigate(`/employee/trainees/view/${m.uuid}`)}
                     className="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition"
                   >
                     View
                   </button>
                   <button
-                    onClick={() => navigate(`/admin/trainees/edit/${m.uuid}`)}
+                    onClick={() => navigate(`/employee/trainees/edit/${m.uuid}`)}
                     className="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition"
                   >
                     Edit
@@ -631,3 +637,4 @@ export default function AllTraineeInterns() {
     </div>
   );
 }
+

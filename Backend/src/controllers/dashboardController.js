@@ -80,17 +80,25 @@ async function getDashboardMetrics(req, res) {
         SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as proj_count FROM projects GROUP BY dt
       ) p ON p.dt = m.m_date
       LEFT JOIN (
-        SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount) as inc_amount FROM incomes GROUP BY dt
+        SELECT dt, SUM(inc_amount) AS inc_amount FROM (
+          SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount) as inc_amount FROM incomes GROUP BY dt
+          UNION ALL
+          SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as inc_amount FROM project_payments GROUP BY dt
+        ) combined GROUP BY dt
       ) i ON i.dt = m.m_date
       ORDER BY m.m_date ASC
     `);
 
-    // Current Month Income
-    const [currentIncRows] = await db.execute(
-      "SELECT IFNULL(SUM(amount), 0) AS total FROM incomes WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
+    // Current Month Income (including project payments)
+    const [incomeRows] = await db.execute(
+      `SELECT IFNULL(SUM(amount), 0) AS total FROM incomes WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
       [month, year]
     );
-    const currentMonthIncome = currentIncRows[0]?.total || 0;
+    const [projectPaymentRows] = await db.execute(
+      `SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
+      [month, year]
+    );
+    const currentMonthIncome = (incomeRows[0]?.total || 0) + (projectPaymentRows[0]?.total || 0);
 
     // New Stats for UI update
     const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");

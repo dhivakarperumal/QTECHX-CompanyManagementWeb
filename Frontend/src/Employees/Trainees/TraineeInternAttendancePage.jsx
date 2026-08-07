@@ -308,7 +308,7 @@ export default function TraineeInternAttendancePage() {
                       <td className="px-4 py-3 text-emerald-400">{person.present_days || 0}</td>
                       <td className="px-4 py-3 text-rose-400">{person.absent_days || 0}</td>
                       <td className="px-4 py-3 text-right">
-                        <Link to={`/admin/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10"><Eye size={14} /> View</Link>
+                        <Link to={`/employee/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10"><Eye size={14} /> View</Link>
                       </td>
                     </tr>
                   ))}
@@ -343,7 +343,7 @@ export default function TraineeInternAttendancePage() {
                   </div>
                   <div className="mt-5 flex items-center justify-between text-sm text-white/60">
                     <span className="font-medium">ID: {person.trainee_intern_id}</span>
-                    <Link to={`/admin/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
+                    <Link to={`/employee/trainees/attendance/view/${person.trainee_intern_id}?month=${selectedMonth}&year=${selectedYear}`} className="inline-flex items-center gap-2 rounded-full border border-orange-400/40 px-3 py-2 text-orange-300 transition hover:bg-orange-400/10">
                       <Eye size={14} /> View
                     </Link>
                   </div>
@@ -433,3 +433,4 @@ export default function TraineeInternAttendancePage() {
     </div>
   );
 }
+

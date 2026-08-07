@@ -149,7 +149,7 @@ const fmtDate = (d) => {
 };
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
-function AssignModal({ onClose, onAssigned }) {
+function AssignModal({ onClose, onAssigned, assignments }) {
   const [projects, setProjects]     = useState([]);
   const [employees, setEmployees]   = useState([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -171,6 +171,16 @@ function AssignModal({ onClose, onAssigned }) {
   }, []);
 
   const filteredEmps = employees.filter(e => {
+    const activeAssignments = (assignments || []).filter(a => 
+      a.employee_id === e.employee_id && 
+      !['Completed', 'Cancelled', 'Inactive'].includes(a.current_status || a.status)
+    );
+    const assignedProjectUuids = new Set(activeAssignments.map(a => a.project_uuid));
+    
+    if (assignedProjectUuids.size >= 3) {
+      return false;
+    }
+
     const full = `${e.first_name} ${e.last_name} ${e.designation||''}`.toLowerCase();
     return full.includes(empSearch.toLowerCase());
   });
@@ -276,6 +286,7 @@ function AssignModal({ onClose, onAssigned }) {
                   <input value={empSearch} onChange={e => setEmpSearch(e.target.value)} placeholder="Search employees…"
                     className="w-full bg-[#0e1118] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-orange-500/50 placeholder:text-white/20" />
                 </div>
+                <p className="text-[10px] text-white/40 mb-2">Employees already assigned to 3 active projects are excluded.</p>
                 {selectedCount > 0 && (
                   <p className="text-xs text-white/50 mb-2">{selectedCount} employee{selectedCount !== 1 ? 's' : ''} selected</p>
                 )}
@@ -482,7 +493,7 @@ export default function ProjectAssignments() {
         </ModalPortal>
       )}
 
-      {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} />}
+      {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} assignments={assignments} />}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -39,7 +39,7 @@ export default function TraineeInternAttendanceView() {
   }
 
   if (error) {
-    return <div className="min-h-screen bg-[#161C24] p-6 text-white"><div className="rounded-3xl border border-red-500/40 bg-red-900/20 p-10 text-center text-red-200"><p>{error}</p><Link to="/admin/trainees/attendance" className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition hover:bg-white/10">Back</Link></div></div>;
+    return <div className="min-h-screen bg-[#161C24] p-6 text-white"><div className="rounded-3xl border border-red-500/40 bg-red-900/20 p-10 text-center text-red-200"><p>{error}</p><Link to="/employee/trainees/attendance" className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition hover:bg-white/10">Back</Link></div></div>;
   }
 
   return (
@@ -51,7 +51,7 @@ export default function TraineeInternAttendanceView() {
             <h2 className="text-2xl font-semibold">Attendance details</h2>
             <p className="mt-2 text-sm text-white/60">Viewing attendance for {member?.full_name} in {new Date(year, month - 1).toLocaleString('en', { month: 'long' })} {year}.</p>
           </div>
-          <Link to="/admin/trainees/attendance" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/10">
+          <Link to="/employee/trainees/attendance" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/10">
             <ArrowLeft size={16} /> Back to Attendance
           </Link>
         </div>
@@ -103,3 +103,4 @@ export default function TraineeInternAttendanceView() {
     </div>
   );
 }
+

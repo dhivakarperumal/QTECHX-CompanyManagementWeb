@@ -172,17 +172,37 @@ export default function ProjectPayment() {
       : "Receipt",
   });
 
-  // Fetch projects on mount
+  // Fetch assigned projects on mount
   useEffect(() => {
     (async () => {
       setProjectsLoading(true);
       try {
-        const { data } = await api.get('/projects?limit=500&page=1');
-        if (data.data && Array.isArray(data.data)) setProjects(data.data);
-        else if (data.data?.rows) setProjects(data.data.rows);
-        else if (Array.isArray(data)) setProjects(data);
+        const { data } = await api.get('/projects/assignments/all?limit=500&page=1');
+        const rows = data.data || [];
+        const uniqueProjects = Array.from(
+          new Map(rows.map((row) => [
+            String(row.project_id || ''),
+            {
+              id: row.project_id,
+              uuid: row.project_uuid,
+              project_name: row.project_name,
+              project_code: row.project_code,
+              client_name: row.client_name,
+              total_project_cost: row.total_project_cost,
+              current_status: row.current_status,
+              overall_progress: row.overall_progress,
+              project_start_date: row.project_start_date,
+              estimated_completion_date: row.estimated_completion_date,
+            },
+          ])).values()
+        ).sort((a, b) => {
+          const nameA = (a.project_name || '').toString().toLowerCase();
+          const nameB = (b.project_name || '').toString().toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        setProjects(uniqueProjects);
       } catch (err) {
-        console.warn('Failed to load projects:', err);
+        console.warn('Failed to load assigned projects:', err);
       } finally {
         setProjectsLoading(false);
       }
@@ -418,7 +438,10 @@ export default function ProjectPayment() {
                            : formData.project_id
                   } : null}
                   onChange={(option) => handleChange({ target: { name: 'project_id', value: option ? option.value : '' } })}
-                  options={projects.map(proj => ({ value: proj.id, label: `${proj.project_name} (${proj.project_code})` }))}
+                  options={projects.map((proj) => ({
+                    value: proj.id,
+                    label: `${proj.project_name || 'Untitled Project'}${proj.project_code ? ` (${proj.project_code})` : ''}`,
+                  }))}
                   placeholder="Select Project"
                   isLoading={projectsLoading}
                   isClearable
