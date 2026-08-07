@@ -404,7 +404,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-white text-sm font-semibold">{record.employee_name}</p>
-                          <p className="text-[10px] text-white/50">{record.employee_code} • {record.employee_department}</p>
+                          <p className="text-[10px] text-white/50">{record.employee_code} • {record.mobile_number}</p>
                         </div>
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
                           record.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
