@@ -195,6 +195,7 @@ const getEventColor = (eventType, customColor) =>
 const OfficeCalendar = () => {
   const [events,         setEvents]         = useState([]);
   const [allEmployees,   setAllEmployees]   = useState([]);
+  const [apiProjects,    setApiProjects]    = useState([]);
   const [isLoading,      setIsLoading]      = useState(true);
   const [isSubmitting,   setIsSubmitting]   = useState(false);
   const [viewMode,       setViewMode]       = useState('month');
@@ -224,6 +225,13 @@ const OfficeCalendar = () => {
     } catch (e) { console.error(e); }
   };
 
+  const fetchApiProjects = async () => {
+    try {
+      const res = await api.get('/projects?limit=100&page=1');
+      setApiProjects(Array.isArray(res.data?.data) ? res.data.data : res.data || []);
+    } catch (e) { console.error(e); }
+  };
+
   const fetchEvents = async () => {
     try {
       const res = await api.get('/events');
@@ -236,7 +244,7 @@ const OfficeCalendar = () => {
     }
   };
 
-  useEffect(() => { fetchEvents(); fetchEmployees(); }, []);
+  useEffect(() => { fetchEvents(); fetchEmployees(); fetchApiProjects(); }, []);
 
   /* ── helpers ── */
   const ensureArrayField = (v) => {
@@ -1455,7 +1463,15 @@ const OfficeCalendar = () => {
                 <>
                   <div className="oc-full">
                     <label className="oc-flbl">Project</label>
-                    <input name="project" value={formData.project} onChange={handleFieldChange} className="oc-finput" placeholder="Select project or enter name" />
+                    <Select
+                      styles={customSelectStyles}
+                      name="project"
+                      value={formData.project ? { value: formData.project, label: formData.project } : null}
+                      onChange={option => handleFieldChange({ target: { name: 'project', value: option ? option.value : '' } })}
+                      options={apiProjects.map(p => ({ value: p.project_name, label: p.project_name }))}
+                      placeholder="Select project"
+                      isClearable
+                    />
                   </div>
                   <div>
                     <label className="oc-flbl">Date *</label>
