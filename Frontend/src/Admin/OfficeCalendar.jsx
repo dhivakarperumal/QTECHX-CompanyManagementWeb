@@ -45,25 +45,25 @@ const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
 const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
 
 const EVENT_TYPE_META = {
-  Meeting:          { dot: 'bg-blue-500',    light: '#3b82f6' },
+  Meeting:          { dot: 'bg-red-500',     light: '#ef4444' },
   Holiday:          { dot: 'bg-green-500',   light: '#22c55e' },
   Leave:            { dot: 'bg-violet-500',  light: '#8b5cf6' },
   Birthday:         { dot: 'bg-pink-500',    light: '#ec4899' },
   Anniversary:      { dot: 'bg-fuchsia-500', light: '#d946ef' },
   'Client Meeting': { dot: 'bg-indigo-500',  light: '#6366f1' },
   Training:         { dot: 'bg-emerald-500', light: '#10b981' },
-  'Office Event':   { dot: 'bg-cyan-500',    light: '#06b6d4' },
-  'Project Deadline':{ dot: 'bg-red-500',    light: '#ef4444' },
+  'Office Event':   { dot: 'bg-blue-900',    light: '#1e3a8a' },
+  'Project Deadline':{ dot: 'bg-purple-500', light: '#a855f7' },
   Reminder:         { dot: 'bg-orange-400',  light: '#f97316' },
-  Interview:        { dot: 'bg-blue-700',    light: '#1d4ed8' },
+  Interview:        { dot: 'bg-yellow-500',  light: '#eab308' },
   Other:            { dot: 'bg-slate-400',   light: '#64748b' },
 };
 
 const EVENT_TYPE_COLORS = {
-  Meeting: '#3b82f6', Holiday: '#22c55e', Leave: '#8b5cf6',
+  Meeting: '#ef4444', Holiday: '#22c55e', Leave: '#8b5cf6',
   Birthday: '#ec4899', Anniversary: '#d946ef', 'Client Meeting': '#6366f1',
-  Training: '#10b981', 'Office Event': '#06b6d4', 'Project Deadline': '#ef4444',
-  Reminder: '#f97316', Interview: '#1d4ed8', Other: '#64748b',
+  Training: '#10b981', 'Office Event': '#1e3a8a', 'Project Deadline': '#a855f7',
+  Reminder: '#f97316', Interview: '#eab308', Other: '#64748b',
 };
 
 const EVENT_TYPE_ICON = {
@@ -82,11 +82,11 @@ const QUICK_ACTIONS = [
 ];
 
 const LEGEND = [
-  { label: 'Meeting',  color: '#3b82f6' },
-  { label: 'Work',     color: '#22c55e' },
-  { label: 'Review',   color: '#f97316' },
-  { label: 'Personal', color: '#ec4899' },
-  { label: 'Holiday',  color: '#10b981' },
+  { label: 'Meeting',          color: '#ef4444' },
+  { label: 'Holiday',          color: '#22c55e' },
+  { label: 'Office Event',     color: '#1e3a8a' },
+  { label: 'Project Deadline', color: '#a855f7' },
+  { label: 'Interview',        color: '#eab308' },
 ];
 
 const defaultForm = {
@@ -195,6 +195,7 @@ const getEventColor = (eventType, customColor) =>
 const OfficeCalendar = () => {
   const [events,         setEvents]         = useState([]);
   const [allEmployees,   setAllEmployees]   = useState([]);
+  const [apiProjects,    setApiProjects]    = useState([]);
   const [isLoading,      setIsLoading]      = useState(true);
   const [isSubmitting,   setIsSubmitting]   = useState(false);
   const [viewMode,       setViewMode]       = useState('month');
@@ -224,6 +225,13 @@ const OfficeCalendar = () => {
     } catch (e) { console.error(e); }
   };
 
+  const fetchApiProjects = async () => {
+    try {
+      const res = await api.get('/projects?limit=100&page=1');
+      setApiProjects(Array.isArray(res.data?.data) ? res.data.data : res.data || []);
+    } catch (e) { console.error(e); }
+  };
+
   const fetchEvents = async () => {
     try {
       const res = await api.get('/events');
@@ -236,7 +244,7 @@ const OfficeCalendar = () => {
     }
   };
 
-  useEffect(() => { fetchEvents(); fetchEmployees(); }, []);
+  useEffect(() => { fetchEvents(); fetchEmployees(); fetchApiProjects(); }, []);
 
   /* ── helpers ── */
   const ensureArrayField = (v) => {
@@ -1455,7 +1463,15 @@ const OfficeCalendar = () => {
                 <>
                   <div className="oc-full">
                     <label className="oc-flbl">Project</label>
-                    <input name="project" value={formData.project} onChange={handleFieldChange} className="oc-finput" placeholder="Select project or enter name" />
+                    <Select
+                      styles={customSelectStyles}
+                      name="project"
+                      value={formData.project ? { value: formData.project, label: formData.project } : null}
+                      onChange={option => handleFieldChange({ target: { name: 'project', value: option ? option.value : '' } })}
+                      options={apiProjects.map(p => ({ value: p.project_name, label: p.project_name }))}
+                      placeholder="Select project"
+                      isClearable
+                    />
                   </div>
                   <div>
                     <label className="oc-flbl">Date *</label>
@@ -1474,7 +1490,7 @@ const OfficeCalendar = () => {
 
               <div>
                 <label className="oc-flbl">Color</label>
-                <input type="color" name="color" value={formData.color||'#F8740E'} onChange={handleFieldChange} className="oc-finput" style={{ height:42, padding:'4px 8px', cursor:'pointer' }} />
+                <input type="color" name="color" value={formData.color||getEventColor(formData.eventType)} onChange={handleFieldChange} className="oc-finput" style={{ height:42, padding:'4px 8px', cursor:'pointer' }} />
               </div>
               <div className="oc-full">
                 <label className="oc-flbl">Attachments</label>

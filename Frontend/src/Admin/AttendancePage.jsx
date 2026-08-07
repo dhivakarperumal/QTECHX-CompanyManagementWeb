@@ -48,8 +48,10 @@ const AttendancePage = () => {
   const [departmentData, setDepartmentData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [dateFilter, setDateFilter] = useState('Today');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [customDate, setCustomDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -74,15 +76,49 @@ const AttendancePage = () => {
   });
 
   useEffect(() => {
-    loadData();
-  }, [selectedMonth, selectedYear]);
+    const today = new Date();
+    let start, end;
+    if (dateFilter === 'Today') {
+      start = today;
+      end = today;
+    } else if (dateFilter === 'Yesterday') {
+      start = new Date(today);
+      start.setDate(today.getDate() - 1);
+      end = new Date(start);
+    } else if (dateFilter === 'This Week') {
+      start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+    } else if (dateFilter === 'This Month') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    } else if (dateFilter === 'Custom Date') {
+      start = new Date(customDate);
+      end = new Date(customDate);
+    }
+    
+    if (start && end) {
+      const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
+      const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
+      setStartDate(offsetStart.toISOString().slice(0, 10));
+      setEndDate(offsetEnd.toISOString().slice(0, 10));
+    }
+  }, [dateFilter, customDate]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      loadData();
+    }
+  }, [startDate, endDate]);
 
   const loadData = useCallback(async () => {
+    if (!startDate || !endDate) return;
     setLoading(true);
     try {
       const [empRes, sumRes] = await Promise.all([
         api.get("/employees?limit=200"),
-        api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`)
+        api.get(`/attendance/summary?startDate=${startDate}&endDate=${endDate}`)
       ]);
       const responseData = sumRes?.data || {};
       setEmployeeData(empRes?.data?.data || []);
@@ -95,7 +131,7 @@ const AttendancePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [startDate, endDate]);
 
   const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -131,15 +167,14 @@ const AttendancePage = () => {
   // Metrics Calculation
   const totalEmployees = employeeData.length;
   const presentToday = summaryData.filter(s => s.today_status === 'Present').length;
-  const absentToday = summaryData.filter(s => s.today_status === 'Absent' || s.today_status === 'Leave').length;
-  const onLeaveToday = summaryData.filter(s => s.today_status === 'Leave').length;
-  const lateToday = summaryData.filter(s => s.today_status === 'Late').length;
+  const absentToday = summaryData.filter(s => s.today_status === 'Absent').length;
+  const onLeaveToday = summaryData.filter(s => s.today_status === 'On Leave' || s.today_status === 'Leave').length;
+  const lateToday = summaryData.filter(s => s.late_entry && s.late_entry !== 'No' && s.late_entry !== '0h 0m' && s.late_entry !== '--').length;
   
   const workingNow = presentToday; 
 
   const overviewData = [
     { name: 'Present', value: presentToday, color: '#10b981' },
-    { name: 'Late', value: lateToday, color: '#f59e0b' },
     { name: 'Absent', value: absentToday, color: '#ef4444' },
     { name: 'On Leave', value: onLeaveToday, color: '#3b82f6' }
   ];
@@ -186,12 +221,29 @@ const AttendancePage = () => {
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Attendance Dashboard</h2>
-          <p className="mt-1 text-sm text-white/60">Overview of today's attendance and company metrics.</p>
+          <p className="mt-1 text-sm text-white/60">Overview of attendance and company metrics.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-white/70 font-medium bg-white/5 border border-white/10 px-4 py-2 rounded-full">
-            <CalendarDays size={16} className="text-orange-400" />
-            <span>{formattedToday}</span>
+          <div className="flex items-center gap-2">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 text-white text-sm rounded-full px-4 py-2 outline-none focus:border-orange-500/50 transition appearance-none"
+            >
+              <option value="Today" className="bg-[#0f172a]">Today</option>
+              <option value="Yesterday" className="bg-[#0f172a]">Yesterday</option>
+              <option value="This Week" className="bg-[#0f172a]">This Week</option>
+              <option value="This Month" className="bg-[#0f172a]">This Month</option>
+              <option value="Custom Date" className="bg-[#0f172a]">Custom Date</option>
+            </select>
+            {dateFilter === 'Custom Date' && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="bg-white/5 border border-white/10 text-white text-sm rounded-full px-4 py-2 outline-none focus:border-orange-500/50 transition scheme-dark"
+              />
+            )}
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -222,7 +274,7 @@ const AttendancePage = () => {
       <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
         <div className="space-y-6">
           <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-6">Today's Attendance Overview</h3>
+            <h3 className="text-lg font-bold text-white mb-6">{dateFilter === 'Today' ? "Today's" : dateFilter} Attendance Overview</h3>
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-48 h-48 relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -269,7 +321,7 @@ const AttendancePage = () => {
                      </div>
                      <div>
                        <p className="text-sm font-bold text-white">{user.employee_name || 'Unknown Employee'}</p>
-                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'Late' ? 'text-purple-400' : user.today_status === 'Leave' ? 'text-rose-400' : 'text-white/40'}`}>
+                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'On Leave' ? 'text-rose-400' : 'text-white/40'}`}>
                          <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
                        </p>
                      </div>
@@ -289,7 +341,7 @@ const AttendancePage = () => {
 
       <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">Today's Timesheet (Live)</h3>
+          <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
           
         </div>
         <div className="overflow-x-auto">
@@ -325,8 +377,7 @@ const AttendancePage = () => {
                   <td className="py-3 px-4 whitespace-nowrap">
                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                       row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
-                      row.today_status === 'Late' ? 'bg-purple-500/10 text-purple-400' :
-                      row.today_status === 'Leave' ? 'bg-rose-500/10 text-rose-400' :
+                      row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
                       'bg-slate-500/10 text-slate-300'
                     }`}>
                       {row.today_status || 'Unknown'}
@@ -372,7 +423,7 @@ const AttendancePage = () => {
                      <span className="text-xs font-bold text-white/50 uppercase">{(activity.employee_name || 'U').charAt(0)}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'Late' ? 'clocked in late' : activity.status === 'Leave' ? 'marked leave' : 'updated attendance'}</p>
+                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'On Leave' ? 'marked leave' : 'updated attendance'}</p>
                     <p className="text-xs text-white/40 mt-0.5">{activity.check_in_time ? `Check-in ${activity.check_in_time}` : 'Today'}</p>
                   </div>
                 </div>

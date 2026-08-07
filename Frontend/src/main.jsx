@@ -81,6 +81,14 @@ import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
 import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
 import EmployeeProfile from './Employees/EmployeeProfile.jsx'
 
+import EmployeeAllTraineeInterns from './Employees/Trainees/AllTraineeInterns.jsx'
+import EmployeeTraineeInternAttendancePage from './Employees/Trainees/TraineeInternAttendancePage.jsx'
+import EmployeeTraineeTaskMaster from './Employees/Trainees/TraineeTaskMaster.jsx'
+import EmployeeTraineeTaskAssign from './Employees/Trainees/TraineeTaskAssign.jsx'
+import EmployeeTraineeInternDetails from './Employees/Trainees/TraineeInternDetails.jsx'
+import EmployeeTraineeInternAttendanceView from './Employees/Trainees/TraineeInternAttendanceView.jsx'
+import EmployeeTraineeTaskDetails from './Employees/Trainees/TraineeTaskDetails.jsx'
+
 import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
 import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
 import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
@@ -466,6 +474,34 @@ const router = createHashRouter([
           {
             path: 'leaves/history/:employeeId',
             element: <EmployeeLeaveHistoryPage />,
+          },
+          {
+            path: 'trainees',
+            element: <EmployeeAllTraineeInterns />,
+          },
+          {
+            path: 'trainees/view/:id',
+            element: <EmployeeTraineeInternDetails />,
+          },
+          {
+            path: 'trainees/attendance',
+            element: <EmployeeTraineeInternAttendancePage />,
+          },
+          {
+            path: 'trainees/attendance/view/:id',
+            element: <EmployeeTraineeInternAttendanceView />,
+          },
+          {
+            path: 'trainees/tasks',
+            element: <EmployeeTraineeTaskMaster />,
+          },
+          {
+            path: 'trainees/tasks/assign',
+            element: <EmployeeTraineeTaskAssign />,
+          },
+          {
+            path: 'trainees/tasks/view/:uuid',
+            element: <EmployeeTraineeTaskDetails />,
           },
         ],
       },

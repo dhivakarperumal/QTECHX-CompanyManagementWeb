@@ -232,18 +232,24 @@ async function create(req, res) {
 
 async function summary(req, res) {
   try {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    const month = Number(req.query.month || currentMonth);
-    const year = Number(req.query.year || currentYear);
-    const rows = await getAttendanceSummary({ month, year });
+    const now = new Date();
+    
+    // YYYY-MM-DD formatting for first and last day of current month
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const firstDay = `${year}-${month}-01`;
+    const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    const startDate = req.query.startDate || firstDay;
+    const endDate = req.query.endDate || lastDay;
+    const rows = await getAttendanceSummary({ startDate, endDate });
 
     const db = getDB();
 
-    // If viewing current month, inject today's records and dynamically calculate missing statuses
-    if (month === currentMonth && year === currentYear) {
-      const now = new Date();
-      const todayDate = [
+    // If viewing a single day, inject that specific date's records and dynamically calculate missing statuses
+    if (startDate === endDate) {
+      const todayDate = startDate;
+      const currentDateStr = [
         now.getFullYear(),
         String(now.getMonth() + 1).padStart(2, '0'),
         String(now.getDate()).padStart(2, '0')
@@ -257,21 +263,23 @@ async function summary(req, res) {
       const recordsByEmp = {};
       todayRecords.forEach(r => { recordsByEmp[String(r.employee_id)] = r; });
       
+      const [leaveRecords] = await db.execute("SELECT employee_id FROM employee_leaves WHERE status = 'Approved' AND from_date <= ? AND to_date >= ?", [todayDate, todayDate]);
+      const leavesByEmp = new Set(leaveRecords.map(r => String(r.employee_id)));
+
       for (const row of rows) {
         const todayRecord = recordsByEmp[String(row.employee_id)];
         
         if (!todayRecord) {
-          if (timeInMinutes > 585) {
-            row.absent_days = (row.absent_days || 0) + 1;
-            row.today_status = 'Leave';
-          } else if (timeInMinutes >= 570) {
-            row.today_status = 'Late';
-          } else {
+          if (leavesByEmp.has(String(row.employee_id))) {
+            row.today_status = 'On Leave';
+          } else if (todayDate === currentDateStr && timeInMinutes <= 585) { // 9:45 AM cutoff
             row.today_status = 'Pending';
+          } else {
+            row.absent_days = (row.absent_days || 0) + 1;
+            row.today_status = 'Absent';
           }
         } else {
-           const hasLateEntry = Boolean(todayRecord.late_entry && todayRecord.late_entry !== 'No' && todayRecord.late_entry !== '0h 0m');
-           row.today_status = hasLateEntry ? 'Late' : (todayRecord.attendance_status || 'Present');
+           row.today_status = todayRecord.attendance_status || 'Present';
            row.check_in_time = todayRecord.check_in_time;
            row.check_out_time = todayRecord.check_out_time;
            row.break_start_time = todayRecord.break_start_time;
@@ -286,13 +294,12 @@ async function summary(req, res) {
 
     const [trendRows] = await db.execute(
       `SELECT attendance_date,
-              SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-              SUM(CASE WHEN attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count
+              SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count
        FROM attendance
-       WHERE month = ? AND year = ?
+       WHERE attendance_date BETWEEN ? AND ?
        GROUP BY attendance_date
        ORDER BY attendance_date`,
-      [month, year]
+      [startDate, endDate]
     );
 
     const trendData = (trendRows || []).slice(-7).map((entry) => {
@@ -318,7 +325,7 @@ async function summary(req, res) {
       }
       return {
         name: dayName,
-        count: Number(entry.present_count || 0) + Number(entry.late_count || 0)
+        count: Number(entry.present_count || 0)
       };
     });
 
@@ -334,14 +341,13 @@ async function summary(req, res) {
          END AS department_name,
          COUNT(*) AS total_employees,
          SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-         SUM(CASE WHEN a.attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count,
          SUM(CASE WHEN a.attendance_status = 'Leave' THEN 1 ELSE 0 END) AS leave_count
        FROM employees e
-       LEFT JOIN attendance a ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?
+       LEFT JOIN attendance a ON a.employee_id = e.employee_id AND a.attendance_date BETWEEN ? AND ?
        WHERE e.employment_status = 'Active'
        GROUP BY department_name
        ORDER BY present_count DESC, department_name`,
-      [month, year]
+      [startDate, endDate]
     );
 
     const departmentColors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
@@ -359,10 +365,10 @@ async function summary(req, res) {
       `SELECT a.*, e.first_name, e.last_name, e.employee_code
        FROM attendance a
        LEFT JOIN employees e ON e.employee_id = a.employee_id
-       WHERE a.month = ? AND a.year = ?
+       WHERE a.attendance_date BETWEEN ? AND ?
        ORDER BY COALESCE(a.updated_at, a.created_at) DESC
        LIMIT 6`,
-      [month, year]
+      [startDate, endDate]
     );
 
     const recentActivity = (activityRows || []).map((row) => ({
@@ -372,7 +378,7 @@ async function summary(req, res) {
       updated_at: row.updated_at || row.created_at
     }));
 
-    return res.json({ data: rows, month, year, trendData, departmentData, recentActivity });
+    return res.json({ data: rows, startDate, endDate, trendData, departmentData, recentActivity });
   } catch (error) {
     console.error("Attendance summary error:", error);
     return res.status(500).json({ message: "Failed to retrieve attendance summary" });
