@@ -7,6 +7,7 @@ import {
   X, Mail, Phone, Building2, UserRoundPlus
 } from 'lucide-react';
 import api from '../../api';
+import TraineeAssignmentDrawer from './TraineeAssignmentDrawer';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
@@ -86,6 +87,7 @@ export default function AllTraineeInterns() {
   // Modals
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [selectedTraineeForAssignment, setSelectedTraineeForAssignment] = useState(null);
 
   // ── Fetch members ──
   const loadMembers = useCallback(async () => {
@@ -417,7 +419,7 @@ export default function AllTraineeInterns() {
       {!loading && !error && members.length > 0 && viewMode === 'table' && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Member</th>
@@ -490,7 +492,17 @@ export default function AllTraineeInterns() {
 
                     {/* Actions */}
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Assign Employee - prominent button */}
+                        <button
+                          onClick={() => setSelectedTraineeForAssignment(m)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition shadow-sm shadow-orange-500/20 hover:opacity-90"
+                          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+                          title="Assign Employee"
+                        >
+                          <UserRoundPlus size={13} />
+                          Assign
+                        </button>
                         <button
                           onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
                           className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition"
@@ -595,6 +607,13 @@ export default function AllTraineeInterns() {
 
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
+                    onClick={() => setSelectedTraineeForAssignment(m)}
+                    className="w-10 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 hover:bg-orange-500/20 transition"
+                    title="Assign Employee"
+                  >
+                    <UserRoundPlus size={14} />
+                  </button>
+                  <button
                     onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
                     className="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition"
                   >
@@ -628,6 +647,18 @@ export default function AllTraineeInterns() {
         </>
       )}
 
+      {/* Assignment Drawer */}
+      {selectedTraineeForAssignment && (
+        <TraineeAssignmentDrawer
+          trainee={selectedTraineeForAssignment}
+          onClose={() => setSelectedTraineeForAssignment(null)}
+          onSuccess={(msg) => {
+            setSelectedTraineeForAssignment(null);
+            showToast(msg);
+            loadMembers();
+          }}
+        />
+      )}
     </div>
   );
 }

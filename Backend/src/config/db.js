@@ -1545,6 +1545,47 @@ async function ensureEmployeeLeavesSchema(pool) {
   }
 }
 
+async function ensureTraineeEmployeeAssignmentsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'trainee_employee_assignments'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS trainee_employee_assignments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        trainee_id VARCHAR(36) NOT NULL,
+        employee_id VARCHAR(36) NOT NULL,
+        trainee_name VARCHAR(255) NULL,
+        trainee_code VARCHAR(100) NULL,
+        trainee_email VARCHAR(255) NULL,
+        trainee_phone VARCHAR(50) NULL,
+        trainee_department VARCHAR(255) NULL,
+        trainee_designation VARCHAR(255) NULL,
+        trainee_course VARCHAR(255) NULL,
+        trainee_batch VARCHAR(255) NULL,
+        trainee_joining_date DATE NULL,
+        employee_name VARCHAR(255) NULL,
+        employee_code VARCHAR(100) NULL,
+        employee_email VARCHAR(255) NULL,
+        employee_phone VARCHAR(50) NULL,
+        employee_department VARCHAR(255) NULL,
+        employee_designation VARCHAR(255) NULL,
+        assigned_date DATE NULL,
+        expected_completion_date DATE NULL,
+        priority VARCHAR(50) NULL,
+        notes TEXT NULL,
+        status ENUM('Active', 'Completed', 'Cancelled') DEFAULT 'Active',
+        assigned_by VARCHAR(36) NULL,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_trainee_employee_assignments_trainee (trainee_id),
+        INDEX idx_trainee_employee_assignments_employee (employee_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+  }
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -1565,6 +1606,7 @@ async function initDB() {
     await ensureSalarySchema(pool);
     await ensureProjectPaymentSchema(pool);
     await ensureIncomesSchema(pool);
+    await ensureTraineeEmployeeAssignmentsSchema(pool);
     await seedDefaultUser(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;

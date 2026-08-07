@@ -26,10 +26,9 @@ async function createTraineeIntern(data) {
     emergency_contact_number, profile_photo, resume, college_id_doc,
     offer_letter, internship_letter, college_university, course,
     academic_department, year_semester, college_id_number, guide_name,
-    username, official_email,
     created_by, updated_by
   )`;
-  const placeholders = Array(30).fill('?').join(', ');
+  const placeholders = Array(28).fill('?').join(', ');
   const [result] = await db.execute(
     `INSERT INTO trainee_intern ${columns} VALUES (${placeholders})`,
     [
@@ -59,8 +58,6 @@ async function createTraineeIntern(data) {
       data.year_semester || null,
       data.college_id_number || null,
       data.guide_name || null,
-      data.username || null,
-      data.official_email || null,
       data.created_by || null,
       data.updated_by || null,
     ]
