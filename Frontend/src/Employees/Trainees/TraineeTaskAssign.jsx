@@ -271,10 +271,10 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
   }, [assignments, searchTerm, typeFilter]);
 
   return (
-    <div className={isModal ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
+    <div className={isModal || defaultOpenForm ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
       <Toaster position="top-right" />
 
-      {!isModal && (
+      {!(isModal || defaultOpenForm) && (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
@@ -419,229 +419,231 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
       )}
 
       {/* Assignments Table */}
-      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
-        <div className="flex flex-col gap-3 mb-4 px-2 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="text-lg font-semibold text-white">Assigned Tasks</h2>
-          <div className="flex flex-wrap items-center gap-2">
+      {!defaultOpenForm && (
+        <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+          <div className="flex flex-col gap-3 mb-4 px-2 lg:flex-row lg:items-center lg:justify-between">
+            <h2 className="text-lg font-semibold text-white">Assigned Tasks</h2>
+            <div className="flex flex-wrap items-center gap-2">
 
-            <div className="relative">
-              <Search
-                size={14}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
-              />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search assignment"
-                className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
-              />
-            </div>
-
-            <Select
-              options={[
-                { value: 'All', label: 'All Types' },
-                { value: 'Trainee', label: 'Trainee' },
-                { value: 'Intern', label: 'Intern' }
-              ]}
-              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
-              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
-              styles={customSelectStyles}
-              isSearchable={false}
-              className="w-40"
-            />
-            {/* Card / Table Toggle */}
-            <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
-              <button
-                onClick={() => setViewMode("table")}
-                className={`rounded-lg p-2 transition ${viewMode === "table"
-                    ? "bg-orange-500 text-white"
-                    : "text-white/50 hover:text-white"
-                  }`}
-                title="Table View"
-              >
-                <List size={15} />
-              </button>
-
-              <button
-                onClick={() => setViewMode("card")}
-                className={`rounded-lg p-2 transition ${viewMode === "card"
-                    ? "bg-orange-500 text-white"
-                    : "text-white/50 hover:text-white"
-                  }`}
-                title="Card View"
-              >
-                <LayoutGrid size={15} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {viewMode === 'table' ? (
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
-            <table className="min-w-full text-sm">
-              <thead className="bg-white/4 text-white/60">
-                <tr>
-                  <th className="px-4 py-4 text-left font-medium">Trainee</th>
-                  <th className="px-4 py-4 text-left font-medium">Assigned Task</th>
-                  <th className="px-4 py-4 text-left font-medium">Due Date</th>
-                  <th className="px-4 py-4 text-left font-medium">Status</th>
-                  <th className="px-4 py-4 text-left font-medium">Progress</th>
-                  <th className="px-4 py-4 text-left font-medium">Daily Report</th>
-                  <th className="px-4 py-4 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {loading ? (
-                  <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-white/40">
-                      <Loader2 size={18} className="mx-auto animate-spin" />
-                    </td>
-                  </tr>
-                ) : filteredAssignments.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
-                  </tr>
-                ) : (
-                  filteredAssignments.map((assignment) => {
-                    const isEditing = editingAssignmentUuid === assignment.uuid;
-                    return (
-                      <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
-                        <td className="px-4 py-4 font-semibold text-white">
-                          {assignment.trainee_name}
-                        </td>
-                        <td className="px-4 py-4 text-white/70">
-                          <div className="font-semibold text-white">{assignment.task_name}</div>
-                          <div className="text-xs text-white/40">Assigned: {assignment.assigned_date?.substring(0, 10)}</div>
-                        </td>
-                        <td className="px-4 py-4 text-white/70">
-                          {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}
-                        </td>
-                        <td className="px-4 py-4">
-                          {isEditing ? (
-                            <Select
-                              options={[
-                                { value: 'Pending', label: 'Pending' },
-                                { value: 'In Progress', label: 'In Progress' },
-                                { value: 'Review', label: 'Review' },
-                                { value: 'On Hold', label: 'On Hold' },
-                                { value: 'Completed', label: 'Completed' },
-                                { value: 'Cancelled', label: 'Cancelled' }
-                              ]}
-                              value={{ value: editStatus, label: editStatus }}
-                              onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
-                              styles={{
-                                ...customSelectStyles,
-                                control: (provided, state) => ({
-                                  ...customSelectStyles.control(provided, state),
-                                  minHeight: '30px',
-                                  height: '30px',
-                                }),
-                              }}
-                              isSearchable={false}
-                            />
-                          ) : (
-                            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
-                              ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
-                                assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
-                                  'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>
-                              {assignment.status}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 min-w-30">
-                          {isEditing ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0" max="100"
-                                value={editProgress}
-                                onChange={(e) => setEditProgress(e.target.value)}
-                                className="w-16 rounded-lg border border-white/10 bg-white/4 px-2 py-1 text-sm text-white outline-none focus:border-orange-500/50"
-                              />
-                              <span className="text-white/50 text-xs">%</span>
-                            </div>
-                          ) : (
-                            <div className="w-full">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-white/50">{assignment.progress}%</span>
-                              </div>
-                              <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                                <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-white/70 max-w-50">
-                          {isEditing ? (
-                            <textarea
-                              value={editDailyReport}
-                              onChange={(e) => setEditDailyReport(e.target.value)}
-                              className="w-full rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-                              rows="2"
-                              placeholder="Enter daily report..."
-                            />
-                          ) : (
-                            <div className="truncate" title={assignment.daily_report}>{assignment.daily_report || '—'}</div>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          {isEditing ? (
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => handleUpdate(assignment.uuid)} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition">
-                                <Save size={14} />
-                              </button>
-                              <button onClick={() => setEditingAssignmentUuid(null)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
-                                <X size={14} />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
-                                <Edit2 size={14} />
-                              </button>
-                              <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition">
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {loading ? (
-              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></div>
-            ) : filteredAssignments.length === 0 ? (
-              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40">No task assignments found matching this filter.</div>
-            ) : filteredAssignments.map((assignment) => (
-              <div key={assignment.uuid} className="rounded-2xl border border-white/10 bg-[#111318] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/40">{assignment.trainee_name}</p>
-                    <h3 className="mt-1 text-lg font-semibold text-white">{assignment.task_name}</h3>
-                    <p className="text-sm text-white/60">Due: {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}</p>
-                  </div>
-                  <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' : assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' : 'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>{assignment.status}</span>
-                </div>
-                <div className="mt-4 space-y-2 text-sm text-white/70">
-                  <p>Progress: {assignment.progress}%</p>
-                  <p>{assignment.daily_report || '—'}</p>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
-                </div>
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+                />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search assignment"
+                  className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
+                />
               </div>
-            ))}
+
+              <Select
+                options={[
+                  { value: 'All', label: 'All Types' },
+                  { value: 'Trainee', label: 'Trainee' },
+                  { value: 'Intern', label: 'Intern' }
+                ]}
+                value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
+                onChange={(option) => setTypeFilter(option ? option.value : 'All')}
+                styles={customSelectStyles}
+                isSearchable={false}
+                className="w-40"
+              />
+              {/* Card / Table Toggle */}
+              <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`rounded-lg p-2 transition ${viewMode === "table"
+                      ? "bg-orange-500 text-white"
+                      : "text-white/50 hover:text-white"
+                    }`}
+                  title="Table View"
+                >
+                  <List size={15} />
+                </button>
+
+                <button
+                  onClick={() => setViewMode("card")}
+                  className={`rounded-lg p-2 transition ${viewMode === "card"
+                      ? "bg-orange-500 text-white"
+                      : "text-white/50 hover:text-white"
+                    }`}
+                  title="Card View"
+                >
+                  <LayoutGrid size={15} />
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          {viewMode === 'table' ? (
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <table className="min-w-full text-sm">
+                <thead className="bg-white/4 text-white/60">
+                  <tr>
+                    <th className="px-4 py-4 text-left font-medium">Trainee</th>
+                    <th className="px-4 py-4 text-left font-medium">Assigned Task</th>
+                    <th className="px-4 py-4 text-left font-medium">Due Date</th>
+                    <th className="px-4 py-4 text-left font-medium">Status</th>
+                    <th className="px-4 py-4 text-left font-medium">Progress</th>
+                    <th className="px-4 py-4 text-left font-medium">Daily Report</th>
+                    <th className="px-4 py-4 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="px-4 py-8 text-center text-white/40">
+                        <Loader2 size={18} className="mx-auto animate-spin" />
+                      </td>
+                    </tr>
+                  ) : filteredAssignments.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
+                    </tr>
+                  ) : (
+                    filteredAssignments.map((assignment) => {
+                      const isEditing = editingAssignmentUuid === assignment.uuid;
+                      return (
+                        <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
+                          <td className="px-4 py-4 font-semibold text-white">
+                            {assignment.trainee_name}
+                          </td>
+                          <td className="px-4 py-4 text-white/70">
+                            <div className="font-semibold text-white">{assignment.task_name}</div>
+                            <div className="text-xs text-white/40">Assigned: {assignment.assigned_date?.substring(0, 10)}</div>
+                          </td>
+                          <td className="px-4 py-4 text-white/70">
+                            {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}
+                          </td>
+                          <td className="px-4 py-4">
+                            {isEditing ? (
+                              <Select
+                                options={[
+                                  { value: 'Pending', label: 'Pending' },
+                                  { value: 'In Progress', label: 'In Progress' },
+                                  { value: 'Review', label: 'Review' },
+                                  { value: 'On Hold', label: 'On Hold' },
+                                  { value: 'Completed', label: 'Completed' },
+                                  { value: 'Cancelled', label: 'Cancelled' }
+                                ]}
+                                value={{ value: editStatus, label: editStatus }}
+                                onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
+                                styles={{
+                                  ...customSelectStyles,
+                                  control: (provided, state) => ({
+                                    ...customSelectStyles.control(provided, state),
+                                    minHeight: '30px',
+                                    height: '30px',
+                                  }),
+                                }}
+                                isSearchable={false}
+                              />
+                            ) : (
+                              <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
+                                ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
+                                  assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
+                                    'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>
+                                {assignment.status}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 min-w-30">
+                            {isEditing ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="0" max="100"
+                                  value={editProgress}
+                                  onChange={(e) => setEditProgress(e.target.value)}
+                                  className="w-16 rounded-lg border border-white/10 bg-white/4 px-2 py-1 text-sm text-white outline-none focus:border-orange-500/50"
+                                />
+                                <span className="text-white/50 text-xs">%</span>
+                              </div>
+                            ) : (
+                              <div className="w-full">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs text-white/50">{assignment.progress}%</span>
+                                </div>
+                                <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                                  <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-white/70 max-w-50">
+                            {isEditing ? (
+                              <textarea
+                                value={editDailyReport}
+                                onChange={(e) => setEditDailyReport(e.target.value)}
+                                className="w-full rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50"
+                                rows="2"
+                                placeholder="Enter daily report..."
+                              />
+                            ) : (
+                              <div className="truncate" title={assignment.daily_report}>{assignment.daily_report || '—'}</div>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            {isEditing ? (
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => handleUpdate(assignment.uuid)} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition">
+                                  <Save size={14} />
+                                </button>
+                                <button onClick={() => setEditingAssignmentUuid(null)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-end gap-2">
+                                <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
+                                  <Edit2 size={14} />
+                                </button>
+                                <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition">
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {loading ? (
+                <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></div>
+              ) : filteredAssignments.length === 0 ? (
+                <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40">No task assignments found matching this filter.</div>
+              ) : filteredAssignments.map((assignment) => (
+                <div key={assignment.uuid} className="rounded-2xl border border-white/10 bg-[#111318] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/40">{assignment.trainee_name}</p>
+                      <h3 className="mt-1 text-lg font-semibold text-white">{assignment.task_name}</h3>
+                      <p className="text-sm text-white/60">Due: {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}</p>
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' : assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' : 'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>{assignment.status}</span>
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm text-white/70">
+                    <p>Progress: {assignment.progress}%</p>
+                    <p>{assignment.daily_report || '—'}</p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10"><Edit2 size={14} /></button>
+                    <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

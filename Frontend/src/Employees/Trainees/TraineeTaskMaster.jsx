@@ -105,8 +105,8 @@ const TraineeTaskMaster = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const userId      = user?.user_id || user?.id || user?.employee_id || '';          // UUID for created_by filter
-  const employeeId  = user?.employee_id || user?.user_id || user?.id || '';               // employee id for trainee filter
+  const userId = user?.user_id || user?.employee_id || user?.employeeId || user?.id || user?.uuid || '';
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   // ── state ──
   const [trainees, setTrainees]     = useState([]);
