@@ -134,6 +134,36 @@ const normalizeTaskStatus = (status) => {
   return value;
 };
 
+// Returns effective progress: uses stored value if > 0, else derives from status
+const STATUS_PROGRESS_MAP = {
+  'Pending':     0,
+  'Accepted':    10,
+  'To Do':       5,
+  'In Progress': 50,
+  'Review':      75,
+  'Testing':     85,
+  'Completed':   100,
+  'On Hold':     30,
+  'Cancelled':   0,
+  'Issue':       40,
+};
+
+const getEffectiveProgress = (task) => {
+  if (task.progress && Number(task.progress) > 0) return Number(task.progress);
+  return STATUS_PROGRESS_MAP[task.status] ?? 0;
+};
+
+const getProgressColor = (status, progress) => {
+  if (status === 'Completed') return 'bg-emerald-500';
+  if (status === 'Cancelled') return 'bg-red-500';
+  if (status === 'Review') return 'bg-violet-500';
+  if (status === 'Testing') return 'bg-blue-500';
+  if (status === 'In Progress') return 'bg-sky-500';
+  if (status === 'On Hold') return 'bg-yellow-500';
+  if (progress === 100) return 'bg-emerald-500';
+  return 'bg-orange-500';
+};
+
 const formatDateForInput = (dateString) => {
   if (!dateString) return "";
   try {
@@ -949,9 +979,12 @@ export default function TasksPage({ initialPageKey = null }) {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${task.progress}%` }} />
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${getProgressColor(task.status, getEffectiveProgress(task))}`}
+                            style={{ width: `${getEffectiveProgress(task)}%` }}
+                          />
                         </div>
-                        <span className="text-white/50 text-xs">{task.progress}%</span>
+                        <span className="text-white/50 text-xs">{getEffectiveProgress(task)}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
@@ -1035,10 +1068,13 @@ export default function TasksPage({ initialPageKey = null }) {
                   {/* Progress */}
                   <div>
                     <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                      <span>Progress</span><span>{task.progress}%</span>
+                      <span>Progress</span><span>{getEffectiveProgress(task)}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-500 rounded-full" style={{ width: `${task.progress}%` }} />
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${getProgressColor(task.status, getEffectiveProgress(task))}`}
+                        style={{ width: `${getEffectiveProgress(task)}%` }}
+                      />
                     </div>
                   </div>
 

@@ -293,7 +293,7 @@ const AttendancePage = () => {
           
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left">
+          <table className="w-full min-w-[1200px] text-sm text-left table-auto">
             <thead className="bg-white/5 text-white/50 font-medium border-b border-white/10">
               <tr>
                 <th className="py-3 px-4 rounded-tl-lg whitespace-nowrap">Employee</th>

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../PrivateRouter/AuthContext';
+import { useLocation } from 'react-router-dom';
 import Select from 'react-select';
 import api from '../../api';
 import dayjs from 'dayjs';
 import {
   Archive,
+  AlertCircle,
   CheckCircle2,
   Clock3,
   FileArchive,
@@ -14,6 +16,7 @@ import {
   FolderKanban,
   LayoutGrid,
   List,
+  X,
   Search,
   Sparkles,
   UploadCloud,
@@ -166,13 +169,14 @@ const buildAssetEntriesFromProject = (project, createId) => {
       fileName = filePath.split('/').pop();
     }
 
-    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath || fileName || '');
+    const backendAssetType = (typeof actualItem === 'object' && actualItem !== null) ? actualItem.asset_type : null;
+    const isImage = backendAssetType === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath || fileName || '');
 
     entries.push({
       id: createId(),
       projectId,
       projectName,
-      assetType: isImage ? 'image' : 'zip',
+      assetType: backendAssetType || (isImage ? 'image' : 'zip'),
       fileName: fileName || defaultLabel,
       fileSize: 0,
       mimeType: isImage ? 'image/jpeg' : 'application/zip',
@@ -222,6 +226,12 @@ const parseJsonField = (field) => {
 
 function ProjectAssetsPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const apiUrl = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  const backendBase = apiUrl.startsWith('http') ? apiUrl.replace(/\/api$/, '') : '';
+  const isImageRoute = location.pathname.endsWith('/images');
+  const isDocumentsRoute = location.pathname.endsWith('/documents');
+
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(() => localStorage.getItem(SELECTED_PROJECT_KEY) || '');
   const [imageZipFiles, setImageZipFiles] = useState([]);
@@ -230,10 +240,39 @@ function ProjectAssetsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showPopup, setShowPopup] = useState(null);
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState(isImageRoute ? 'card' : 'table');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [filterType, setFilterType] = useState(isImageRoute ? 'project_image' : isDocumentsRoute ? 'zip' : 'all');
   const [filterProject, setFilterProject] = useState('all');
+
+  const pageTitle = useMemo(() => {
+    if (isImageRoute) return 'Project Images';
+    if (isDocumentsRoute) return 'Project Documents';
+    return 'Project Assets';
+  }, [isImageRoute, isDocumentsRoute]);
+
+  const resolveUploadPath = (uploadedPath) => {
+    if (!uploadedPath) return null;
+    const rawPath = String(uploadedPath).trim();
+    if (rawPath.startsWith('http')) return rawPath;
+    const cleanPath = rawPath.replace(/^\/*/, '/');
+    if (cleanPath.startsWith('/api/')) return `${apiUrl}${cleanPath}`;
+    if (backendBase) return `${backendBase}${cleanPath}`;
+    return cleanPath;
+  };
+
+  useEffect(() => {
+    if (isImageRoute) {
+      setFilterType('project_image');
+      setViewMode('card');
+      return;
+    }
+    if (isDocumentsRoute) {
+      setFilterType('zip');
+      setViewMode('table');
+      return;
+    }
+  }, [isImageRoute, isDocumentsRoute]);
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -286,8 +325,9 @@ function ProjectAssetsPage() {
       const matchesProject = filterProject === 'all' || entry.projectId === filterProject;
       const matchesType =
         filterType === 'all' ||
+        (filterType === 'project_image' && entry.kindLabel === 'Project Image') ||
         (filterType === 'image' && entry.assetType === 'image') ||
-        (filterType === 'zip' && entry.assetType === 'zip');
+        (filterType === 'zip' && (entry.kindLabel === 'Document ZIP' || (entry.assetType === 'zip' && entry.kindLabel !== 'Project Image')));
 
       const matchesSearch =
         !normalizedSearch ||
@@ -595,9 +635,9 @@ function ProjectAssetsPage() {
             <FolderKanban size={22} className="text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Project Assets</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">{pageTitle}</h1>
             <p className="text-white/40 text-xs mt-0.5">
-              {assetEntries.length} asset{assetEntries.length !== 1 ? 's' : ''} total
+              {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''} displayed
             </p>
           </div>
         </div>
@@ -637,13 +677,15 @@ function ProjectAssetsPage() {
             <Select
               value={[
                 { value: 'all', label: 'All Types' },
-                { value: 'image', label: 'Images' },
+                { value: 'project_image', label: 'Project Images' },
+                { value: 'image', label: 'Images (Direct)' },
                 { value: 'zip', label: 'ZIP Archives' }
               ].find(opt => opt.value === filterType)}
               onChange={(option) => setFilterType(option ? option.value : 'all')}
               options={[
                 { value: 'all', label: 'All Types' },
-                { value: 'image', label: 'Images' },
+                { value: 'project_image', label: 'Project Images' },
+                { value: 'image', label: 'Images (Direct)' },
                 { value: 'zip', label: 'ZIP Archives' }
               ]}
               styles={{
@@ -730,9 +772,14 @@ function ProjectAssetsPage() {
             <div key={asset.id} className="group flex flex-col overflow-hidden bg-white/[0.03] border border-white/8 rounded-2xl hover:bg-white/[0.06] transition cursor-pointer relative">
               <div className="h-40 bg-black/20 relative flex items-center justify-center overflow-hidden">
                 {asset.assetType === 'image' && asset.uploadedPath ? (
-                  <img src={asset.uploadedPath.startsWith('http') ? asset.uploadedPath : `http://localhost:5000${asset.uploadedPath}`} alt={asset.fileName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={resolveUploadPath(asset.uploadedPath)} alt={asset.fileName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : asset.assetType === 'image' ? (
                   <ImageIcon size={48} className="text-white/10" />
+                ) : asset.kindLabel === 'Project Image' ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileImage size={40} className="text-sky-400/40" />
+                    <span className="text-[10px] text-white/30">Image Archive</span>
+                  </div>
                 ) : (
                   <FileArchive size={48} className="text-primary/20" />
                 )}
@@ -745,8 +792,12 @@ function ProjectAssetsPage() {
                   </button>
                 </div>
                 <div className="absolute top-2 left-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${asset.assetType === 'image' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
-                    {asset.assetType === 'image' ? 'Image' : 'ZIP'}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                    asset.kindLabel === 'Project Image' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                    : asset.assetType === 'image' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {asset.kindLabel === 'Project Image' ? 'Project Image' : asset.assetType === 'image' ? 'Image' : 'ZIP'}
                   </span>
                 </div>
               </div>
@@ -783,7 +834,7 @@ function ProjectAssetsPage() {
                     <td className="px-5 py-3">
                       <div className="h-10 w-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
                         {asset.assetType === 'image' && asset.uploadedPath ? (
-                          <img src={asset.uploadedPath.startsWith('http') ? asset.uploadedPath : `http://localhost:5000${asset.uploadedPath}`} alt={asset.fileName} className="h-full w-full object-cover" />
+                          <img src={resolveUploadPath(asset.uploadedPath)} alt={asset.fileName} className="h-full w-full object-cover" />
                         ) : asset.assetType === 'image' ? (
                           <ImageIcon size={18} className="text-white/20" />
                         ) : (
@@ -798,8 +849,12 @@ function ProjectAssetsPage() {
                       <p className="text-white/60 text-xs flex items-center gap-1.5"><FolderKanban size={11} /> {asset.projectName}</p>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${asset.assetType === 'image' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'}`}>
-                        {asset.assetType === 'image' ? 'Image' : 'ZIP'}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                        asset.kindLabel === 'Project Image' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/20'
+                        : asset.assetType === 'image' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/20'
+                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                      }`}>
+                        {asset.kindLabel === 'Project Image' ? 'Project Image' : asset.assetType === 'image' ? 'Image' : 'ZIP'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-xs text-white/50">
