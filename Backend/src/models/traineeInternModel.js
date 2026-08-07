@@ -8,8 +8,8 @@ const traineeInternFields = [
   'offer_letter', 'internship_letter', 'college_university', 'course',
   'academic_department', 'year_semester', 'college_id_number', 'guide_name',
   'created_at', 'updated_at', 'created_by', 'updated_by',
-  `(SELECT COUNT(*) FROM trainee_employee_assignments a WHERE a.trainee_id = ti.uuid AND a.status = 'Active') AS has_active_assignment`,
-  `(SELECT employee_name FROM trainee_employee_assignments a WHERE a.trainee_id = ti.uuid AND a.status = 'Active' LIMIT 1) AS active_employee_name`,
+  `(SELECT COUNT(*) FROM trainee_employee_assignments a WHERE (a.trainee_id = ti.uuid OR a.trainee_id = ti.person_id) AND a.status = 'Active') AS has_active_assignment`,
+  `(SELECT employee_name FROM trainee_employee_assignments a WHERE (a.trainee_id = ti.uuid OR a.trainee_id = ti.person_id) AND a.status = 'Active' LIMIT 1) AS active_employee_name`,
 ].join(', ');
 
 async function generatePersonCode(db) {

@@ -442,11 +442,13 @@ export default function AllTraineeInterns() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, i) => (
-                  <tr
-                    key={m.uuid}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
-                  >
+                {members.map((m, i) => {
+                  const hasActiveAssignment = Number(m.has_active_assignment || 0) > 0;
+                  return (
+                    <tr
+                      key={m.uuid}
+                      className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
+                    >
                     {/* Member */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
@@ -507,17 +509,17 @@ export default function AllTraineeInterns() {
                         {/* Assign Employee - prominent button */}
                         <button
                           onClick={() => {
-                            if (m.has_active_assignment) return;
+                            if (hasActiveAssignment) return;
                             setSelectedTraineeForAssignment(m);
                             setAssignmentDrawerOpen(true);
                           }}
-                          disabled={Boolean(m.has_active_assignment)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${m.has_active_assignment ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60' : 'text-white bg-orange-500 hover:opacity-90'}`}
-                          style={m.has_active_assignment ? {} : { background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-                          title={m.has_active_assignment ? 'Already assigned' : 'Assign Employee'}
+                          disabled={hasActiveAssignment}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${hasActiveAssignment ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60' : 'text-white bg-orange-500 hover:opacity-90'}`}
+                          style={hasActiveAssignment ? {} : { background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+                          title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
                         >
                           <UserRoundPlus size={13} />
-                          {m.has_active_assignment ? 'Assigned' : 'Assign'}
+                          {hasActiveAssignment ? 'Assigned' : 'Assign'}
                         </button>
                         <button
                           onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
@@ -543,7 +545,7 @@ export default function AllTraineeInterns() {
                       </div>
                     </td>
                   </tr>
-                ))}
+      )})}
               </tbody>
             </table>
           </div>
@@ -592,8 +594,10 @@ export default function AllTraineeInterns() {
       {!loading && !error && members.length > 0 && viewMode === 'card' && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {members.map((m, i) => (
-              <div key={m.uuid} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 hover:bg-white/[0.04] transition group">
+            {members.map((m, i) => {
+              const hasActiveAssignment = Number(m.has_active_assignment || 0) > 0;
+              return (
+                <div key={m.uuid} className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 hover:bg-white/[0.04] transition group">
                 <div className="flex justify-between items-start mb-4">
                   <Avatar name={m.full_name} index={i} size="lg" />
                   <StatusPill status={m.status} />
@@ -624,13 +628,13 @@ export default function AllTraineeInterns() {
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
                     onClick={() => {
-                      if (m.has_active_assignment) return;
+                      if (hasActiveAssignment) return;
                       setSelectedTraineeForAssignment(m);
                       setAssignmentDrawerOpen(true);
                     }}
-                    disabled={Boolean(m.has_active_assignment)}
-                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${m.has_active_assignment ? 'bg-white/10 border-white/10 text-white/40 cursor-not-allowed opacity-60' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
-                    title={m.has_active_assignment ? 'Already assigned' : 'Assign Employee'}
+                    disabled={hasActiveAssignment}
+                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${hasActiveAssignment ? 'bg-white/10 border-white/10 text-white/40 cursor-not-allowed opacity-60' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
+                    title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
                   >
                     <UserRoundPlus size={14} />
                   </button>
@@ -654,7 +658,7 @@ export default function AllTraineeInterns() {
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
 
           <div className="flex items-center justify-between mt-6">
