@@ -58,7 +58,8 @@ async function getAttendanceSummary({ startDate, endDate }) {
        e.employee_code,
        CONCAT(e.first_name, ' ', COALESCE(e.last_name, '')) AS employee_name,
        SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_days,
-       SUM(CASE WHEN a.attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_days
+       SUM(CASE WHEN a.attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_days,
+       SUM(CASE WHEN a.late_entry IS NOT NULL AND a.late_entry != 'No' AND a.late_entry != '--' AND a.late_entry != '0h 0m' THEN 1 ELSE 0 END) AS late_days
      FROM employees e
      LEFT JOIN attendance a
        ON a.employee_id = e.employee_id AND a.attendance_date BETWEEN ? AND ?
@@ -72,18 +73,19 @@ async function getAttendanceSummary({ startDate, endDate }) {
     ...row,
     present_days: Number(row.present_days || 0),
     absent_days: Number(row.absent_days || 0),
+    late_days: Number(row.late_days || 0),
   }));
 }
 
-async function getEmployeeAttendance({ employeeId, month, year }) {
+async function getEmployeeAttendance({ employeeId, startDate, endDate }) {
   const db = getDB();
   const [rows] = await db.execute(
     `SELECT a.*, e.first_name, e.last_name, e.employee_code
      FROM attendance a
      LEFT JOIN employees e ON e.employee_id = a.employee_id
-     WHERE a.employee_id = ? AND a.month = ? AND a.year = ?
+     WHERE a.employee_id = ? AND a.attendance_date BETWEEN ? AND ?
      ORDER BY a.attendance_date DESC`,
-    [employeeId, month, year]
+    [employeeId, startDate, endDate]
   );
 
   return rows;

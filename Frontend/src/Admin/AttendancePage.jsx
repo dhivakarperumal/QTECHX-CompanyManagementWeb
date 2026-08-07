@@ -4,6 +4,7 @@ import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useCallback } from "react";
 import Select from 'react-select';
+import { Link } from 'react-router-dom';
 import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const customSelectStyles = {
@@ -366,7 +367,8 @@ const AttendancePage = () => {
                 ) : (
                   <>
                     <th className="py-3 px-4 whitespace-nowrap">Present Days</th>
-                    <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Absent Days</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Absent Days</th>
+                    <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Late Days</th>
                   </>
                 )}
               </tr>
@@ -375,7 +377,9 @@ const AttendancePage = () => {
               {summaryData.map((row, i) => (
                 <tr key={i} className="hover:bg-white/5 transition-colors">
                   <td className="py-3 px-4 font-medium text-white whitespace-nowrap">
-                    {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span>
+                    <Link to={`/admin/attendance/view/${row.employee_id}`} className="hover:text-orange-400 transition-colors">
+                      {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span>
+                    </Link>
                   </td>
                   {isSingleDay ? (
                     <>
@@ -407,6 +411,11 @@ const AttendancePage = () => {
                       <td className="py-3 px-4 text-white/60 whitespace-nowrap">
                         <span className="px-2.5 py-1 rounded-md text-[12px] font-bold bg-rose-500/10 text-rose-400">
                           {row.absent_days || 0}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-md text-[12px] font-bold bg-purple-500/10 text-purple-400">
+                          {row.late_days || 0}
                         </span>
                       </td>
                     </>

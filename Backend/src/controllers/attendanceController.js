@@ -387,10 +387,17 @@ async function summary(req, res) {
 
 async function employeeAttendance(req, res) {
   try {
-    const month = Number(req.query.month || new Date().getMonth() + 1);
-    const year = Number(req.query.year || new Date().getFullYear());
-    const rows = await getEmployeeAttendance({ employeeId: req.params.employeeId, month, year });
-    return res.json({ data: rows, month, year });
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const firstDay = `${year}-${month}-01`;
+    const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    const startDate = req.query.startDate || firstDay;
+    const endDate = req.query.endDate || lastDay;
+    
+    const rows = await getEmployeeAttendance({ employeeId: req.params.employeeId, startDate, endDate });
+    return res.json({ data: rows, startDate, endDate });
   } catch (error) {
     console.error("Employee attendance error:", error);
     return res.status(500).json({ message: "Failed to retrieve employee attendance" });
