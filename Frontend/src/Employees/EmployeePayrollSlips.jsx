@@ -5,6 +5,8 @@ import { useAuth } from '../PrivateRouter/AuthContext';
 import { useReactToPrint } from "react-to-print";
 import { Link } from 'react-router-dom';
 import Select from 'react-select';
+import PayslipTemplate from '../Componets/PayslipTemplate';
+import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -333,106 +335,32 @@ const EmployeePayrollSlips = () => {
 
       {/* Payslip Modal */}
       {selectedPayslip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-bold text-gray-800">Payslip Preview</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrint}
-                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition shadow-sm"
-                >
-                  <Printer size={15} />
-                  Print
-                </button>
-                <button onClick={() => setSelectedPayslip(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Area */}
-            <div className="p-8 overflow-y-auto bg-white text-gray-800" ref={payslipRef}>
-              <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-6">
-                <div>
-                  <h1 className="text-3xl font-black text-gray-900 tracking-tight">Q-Techx Solutions</h1>
-                  <p className="text-sm text-gray-500 mt-1">123 Tech Avenue, Innovation Park</p>
-                  <p className="text-sm text-gray-500">City, State, ZIP</p>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-2xl font-bold text-orange-600 uppercase tracking-widest">Payslip</h2>
-                  <p className="text-sm font-medium text-gray-600 mt-1">
-                    {new Date(0, selectedPayslip.salary_month - 1).toLocaleString('default', { month: 'long' })} {selectedPayslip.salary_year}
-                  </p>
+        <ModalPortal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="font-bold text-gray-800">Payslip Preview</h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrint}
+                    className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition shadow-sm"
+                  >
+                    <Printer size={15} />
+                    Print
+                  </button>
+                  <button onClick={() => setSelectedPayslip(null)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                    <X size={20} />
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-x-10 gap-y-4 mb-8 text-sm">
-                <div>
-                  <span className="text-gray-500 block mb-1">Employee Name</span>
-                  <span className="font-bold text-base">{selectedPayslip.first_name} {selectedPayslip.last_name}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block mb-1">Employee ID</span>
-                  <span className="font-bold text-base">{selectedPayslip.employee_code || 'N/A'}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block mb-1">Present Days</span>
-                  <span className="font-semibold">{selectedPayslip.present_days}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 block mb-1">Leave Days</span>
-                  <span className="font-semibold">{selectedPayslip.leave_days}</span>
-                </div>
+              {/* Printable Area */}
+              <div className="bg-[#f8fafc] overflow-y-auto" ref={payslipRef}>
+                <PayslipTemplate payslip={selectedPayslip} />
               </div>
-
-              <div className="grid grid-cols-2 gap-8 mb-8">
-                {/* Earnings */}
-                <div>
-                  <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">EARNINGS</h3>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Basic Salary</span>
-                    <span className="font-medium">₹{parseFloat(selectedPayslip.basic_salary).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Incentive ({selectedPayslip.incentive_percentage}%)</span>
-                    <span className="font-medium">₹{parseFloat(selectedPayslip.incentive_amount).toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                {/* Deductions */}
-                <div>
-                  <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2 mb-3">DEDUCTIONS</h3>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Leave Deduction</span>
-                    <span className="font-medium">₹{parseFloat(selectedPayslip.leave_deduction).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Other Deductions</span>
-                    <span className="font-medium">₹{parseFloat(selectedPayslip.additional_deduction).toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center bg-gray-50 p-5 rounded-xl border border-gray-200">
-                <span className="font-bold text-gray-700 text-lg">Net Pay</span>
-                <span className="font-black text-2xl text-orange-700">₹{parseFloat(selectedPayslip.total_salary).toLocaleString('en-IN')}</span>
-              </div>
-
-              <div className="mt-12 pt-8 border-t border-gray-200 flex justify-between">
-                <div className="text-center">
-                  <div className="w-40 border-b border-gray-400 mb-2"></div>
-                  <span className="text-xs text-gray-500 font-medium">Employer Signature</span>
-                </div>
-                <div className="text-center">
-                  <div className="w-40 border-b border-gray-400 mb-2"></div>
-                  <span className="text-xs text-gray-500 font-medium">Employee Signature</span>
-                </div>
-              </div>
-              <p className="text-center text-xs text-gray-400 mt-8 italic">This is a system generated document and does not require a physical signature.</p>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
