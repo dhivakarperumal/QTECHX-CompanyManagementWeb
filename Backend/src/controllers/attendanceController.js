@@ -257,21 +257,23 @@ async function summary(req, res) {
       const recordsByEmp = {};
       todayRecords.forEach(r => { recordsByEmp[String(r.employee_id)] = r; });
       
+      const [leaveRecords] = await db.execute("SELECT employee_id FROM employee_leaves WHERE status = 'Approved' AND from_date <= ? AND to_date >= ?", [todayDate, todayDate]);
+      const leavesByEmp = new Set(leaveRecords.map(r => String(r.employee_id)));
+
       for (const row of rows) {
         const todayRecord = recordsByEmp[String(row.employee_id)];
         
         if (!todayRecord) {
-          if (timeInMinutes > 585) {
+          if (leavesByEmp.has(String(row.employee_id))) {
+            row.today_status = 'On Leave';
+          } else if (timeInMinutes > 585) { // 9:45 AM cutoff
             row.absent_days = (row.absent_days || 0) + 1;
-            row.today_status = 'Leave';
-          } else if (timeInMinutes >= 570) {
-            row.today_status = 'Late';
+            row.today_status = 'Absent';
           } else {
             row.today_status = 'Pending';
           }
         } else {
-           const hasLateEntry = Boolean(todayRecord.late_entry && todayRecord.late_entry !== 'No' && todayRecord.late_entry !== '0h 0m');
-           row.today_status = hasLateEntry ? 'Late' : (todayRecord.attendance_status || 'Present');
+           row.today_status = todayRecord.attendance_status || 'Present';
            row.check_in_time = todayRecord.check_in_time;
            row.check_out_time = todayRecord.check_out_time;
            row.break_start_time = todayRecord.break_start_time;
@@ -286,8 +288,7 @@ async function summary(req, res) {
 
     const [trendRows] = await db.execute(
       `SELECT attendance_date,
-              SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-              SUM(CASE WHEN attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count
+              SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count
        FROM attendance
        WHERE month = ? AND year = ?
        GROUP BY attendance_date
@@ -318,7 +319,7 @@ async function summary(req, res) {
       }
       return {
         name: dayName,
-        count: Number(entry.present_count || 0) + Number(entry.late_count || 0)
+        count: Number(entry.present_count || 0)
       };
     });
 
@@ -334,7 +335,6 @@ async function summary(req, res) {
          END AS department_name,
          COUNT(*) AS total_employees,
          SUM(CASE WHEN a.attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-         SUM(CASE WHEN a.attendance_status = 'Late' THEN 1 ELSE 0 END) AS late_count,
          SUM(CASE WHEN a.attendance_status = 'Leave' THEN 1 ELSE 0 END) AS leave_count
        FROM employees e
        LEFT JOIN attendance a ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?

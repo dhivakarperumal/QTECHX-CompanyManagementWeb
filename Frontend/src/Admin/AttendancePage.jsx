@@ -131,15 +131,14 @@ const AttendancePage = () => {
   // Metrics Calculation
   const totalEmployees = employeeData.length;
   const presentToday = summaryData.filter(s => s.today_status === 'Present').length;
-  const absentToday = summaryData.filter(s => s.today_status === 'Absent' || s.today_status === 'Leave').length;
-  const onLeaveToday = summaryData.filter(s => s.today_status === 'Leave').length;
-  const lateToday = summaryData.filter(s => s.today_status === 'Late').length;
+  const absentToday = summaryData.filter(s => s.today_status === 'Absent').length;
+  const onLeaveToday = summaryData.filter(s => s.today_status === 'On Leave' || s.today_status === 'Leave').length;
+  const lateToday = summaryData.filter(s => s.late_entry && s.late_entry !== 'No' && s.late_entry !== '0h 0m' && s.late_entry !== '--').length;
   
   const workingNow = presentToday; 
 
   const overviewData = [
     { name: 'Present', value: presentToday, color: '#10b981' },
-    { name: 'Late', value: lateToday, color: '#f59e0b' },
     { name: 'Absent', value: absentToday, color: '#ef4444' },
     { name: 'On Leave', value: onLeaveToday, color: '#3b82f6' }
   ];
@@ -269,7 +268,7 @@ const AttendancePage = () => {
                      </div>
                      <div>
                        <p className="text-sm font-bold text-white">{user.employee_name || 'Unknown Employee'}</p>
-                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'Late' ? 'text-purple-400' : user.today_status === 'Leave' ? 'text-rose-400' : 'text-white/40'}`}>
+                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'On Leave' ? 'text-rose-400' : 'text-white/40'}`}>
                          <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
                        </p>
                      </div>
@@ -325,8 +324,7 @@ const AttendancePage = () => {
                   <td className="py-3 px-4 whitespace-nowrap">
                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                       row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
-                      row.today_status === 'Late' ? 'bg-purple-500/10 text-purple-400' :
-                      row.today_status === 'Leave' ? 'bg-rose-500/10 text-rose-400' :
+                      row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
                       'bg-slate-500/10 text-slate-300'
                     }`}>
                       {row.today_status || 'Unknown'}
@@ -372,7 +370,7 @@ const AttendancePage = () => {
                      <span className="text-xs font-bold text-white/50 uppercase">{(activity.employee_name || 'U').charAt(0)}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'Late' ? 'clocked in late' : activity.status === 'Leave' ? 'marked leave' : 'updated attendance'}</p>
+                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'On Leave' ? 'marked leave' : 'updated attendance'}</p>
                     <p className="text-xs text-white/40 mt-0.5">{activity.check_in_time ? `Check-in ${activity.check_in_time}` : 'Today'}</p>
                   </div>
                 </div>
