@@ -71,11 +71,16 @@ import AdminNewTasksPage from './Admin/Tasks/AdminNewTasksPage.jsx'
 import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
 import AdminCompletedTasksPage from './Admin/Tasks/AdminCompletedTasksPage.jsx'
 import AdminCancelledTasksPage from './Admin/Tasks/AdminCancelledTasksPage.jsx'
-import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
-import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
-import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
-import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
-import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
+import {
+  AllTraineeInterns,
+  AddTraineeIntern,
+  TraineeInternDetails,
+  TraineeInternAttendancePage,
+  TraineeInternAttendanceView,
+  TraineeTaskMaster,
+  TraineeTaskAssign,
+  TraineeTaskDetails,
+} from './Admin/Trainees';
 
 import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
 import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
@@ -89,9 +94,6 @@ import EmployeeTraineeInternDetails from './Employees/Trainees/TraineeInternDeta
 import EmployeeTraineeInternAttendanceView from './Employees/Trainees/TraineeInternAttendanceView.jsx'
 import EmployeeTraineeTaskDetails from './Employees/Trainees/TraineeTaskDetails.jsx'
 
-import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
-import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
-import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
 import ReportsPage from './Admin/ReportsPage.jsx';
 import AdminProfile from './Admin/Settings/AdminProfile.jsx';
 import AdminSettingsPage from './Admin/Settings/AdminSettingsPage.jsx';
