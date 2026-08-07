@@ -302,13 +302,13 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
                   <Select
                     options={employees.map(e => ({
                       value: e.employee_id,
-                      label: `${e.employee_name}  ·  ${e.employee_code || e.employee_id}  ·  ${e.active_trainee_count} active trainee${e.active_trainee_count === 1 ? '' : 's'}`
+                      label: `${e.employee_name}  ·  ${e.employee_code || e.employee_id}`
                     }))}
                     value={selectedEmployeeId ? {
                       value: selectedEmployeeId,
                       label: (() => {
                         const e = employees.find(x => x.employee_id === selectedEmployeeId);
-                        return e ? `${e.employee_name}  ·  ${e.employee_code || e.employee_id}  ·  ${e.active_trainee_count} active trainee${e.active_trainee_count === 1 ? '' : 's'}` : '';
+                        return e ? `${e.employee_name}  ·  ${e.employee_code || e.employee_id}` : '';
                       })()
                     } : null}
                     onChange={v => setSelectedEmployeeId(v ? v.value : '')}
