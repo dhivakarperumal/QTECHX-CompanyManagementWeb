@@ -551,13 +551,13 @@ const OfficeCalendar = () => {
         .oc * { box-sizing: border-box; }
         .oc {
           font-family: 'Poppins', -apple-system, sans-serif;
-          display: flex; height: 100%; min-height: calc(100vh - 100px);
-          background: transparent; color: #fff; overflow: hidden;
+          display: flex; gap: 24px; height: 100%; min-height: calc(100vh - 100px);
+          background: transparent; color: #fff;
           margin: -1rem; /* Adjusting for padding in the main layout if necessary, assuming it fills the space */
         }
 
         /* ── Main calendar column ── */
-        .oc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .oc-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-radius: 1.25rem; }
 
         /* ── Toolbar ── */
         .oc-toolbar {
@@ -730,7 +730,7 @@ const OfficeCalendar = () => {
 
         /* ── Right panel ── */
         .oc-right {
-          width: 260px; min-width: 260px; background: rgba(255, 255, 255, 0.02); border-left: 1px solid rgba(255, 255, 255, 0.1);
+          width: 260px; min-width: 260px; background: rgba(255, 255, 255, 0.02);
           display: flex; flex-direction: column; padding: 20px 16px;
           overflow-y: auto; gap: 24px; flex-shrink: 0; backdrop-filter: blur(4px);
         }
@@ -916,9 +916,9 @@ const OfficeCalendar = () => {
 
       <Toaster position="top-right" toastOptions={{ style: { background: '#13141a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'Poppins,sans-serif', borderRadius: '12px', fontSize: '13px' } }} />
 
-      <div className="oc glass-container">
+      <div className="oc">
         {/* ═══════════════════════ MAIN CALENDAR ═══════════════════════ */}
-        <div className="oc-main">
+        <div className="oc-main glass-container">
 
           {/* Toolbar */}
           <div className="oc-toolbar" style={{ borderRadius: '1.25rem 1.25rem 0 0' }}>
@@ -1134,7 +1134,7 @@ const OfficeCalendar = () => {
         </div>
 
         {/* ═══════════════════════ RIGHT PANEL ═══════════════════════ */}
-        <aside className="oc-right" style={{ borderRadius: '0 1.25rem 1.25rem 0' }}>
+        <aside className="oc-right glass-container" style={{ borderRadius: '1.25rem' }}>
 
           {/* Mini Calendar */}
           <div>
