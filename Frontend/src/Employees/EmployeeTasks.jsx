@@ -144,7 +144,7 @@ const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
 });
 
 /* ─── status select dropdown ──────────────────────────────────── */
-const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
+const STATUS_OPTIONS = ['Pending', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 /* ═══════════════════════════════════════════════════════════════ */
 export default function EmployeeTasks() {

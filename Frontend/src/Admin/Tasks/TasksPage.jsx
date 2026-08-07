@@ -179,6 +179,7 @@ const mapTaskToViewModel = (task) => ({
   progress: Number(task.progress || 0),
   startDate: formatDateForInput(task.start_date),
   dueDate: task.due_date !== undefined && task.due_date !== null ? formatDateForInput(task.due_date) : "—",
+  createdAt: task.created_at || task.assignment_date || task.createdAt || null,
   priority: task.priority || "Medium",
   description: task.description || "",
   estimatedHours: task.estimated_hours || "",
@@ -700,7 +701,7 @@ export default function TasksPage({ initialPageKey = null }) {
     else if (pageKey === "pending") baseTasks = baseTasks.filter((task) => !['Completed', 'Cancelled'].includes(task.status));
     else if (pageKey === "cancelled") baseTasks = baseTasks.filter((task) => task.status === "Cancelled");
     else if (pageKey === "today") baseTasks = baseTasks.filter((task) => isSameDay(task.dueDate) || isSameDay(task.startDate));
-    else if (pageKey === "new") baseTasks = baseTasks.filter((task) => isSameDay(task.startDate) || isSameDay(task.dueDate));
+    else if (pageKey === "new") baseTasks = baseTasks.filter((task) => isSameDay(task.createdAt));
 
     // Apply search
     if (search.trim()) {

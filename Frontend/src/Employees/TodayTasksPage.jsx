@@ -56,7 +56,7 @@ const STATUS_STYLES = {
   'Cancelled':   { pill: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',        dot: 'bg-rose-400' },
 };
 
-const STATUS_OPTIONS = ['Pending', 'To Do', 'Accepted', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'Accepted', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 const PRIORITY_STYLES = {
   High: 'text-rose-300',
@@ -68,10 +68,13 @@ const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const v = status.toString().trim();
   if (['Pending', 'To Do'].includes(v)) return 'Pending';
+  if (['Accepted'].includes(v)) return 'Accepted';
   if (['In Progress', 'Progress'].includes(v)) return 'In Progress';
   if (['Completed', 'Done'].includes(v)) return 'Completed';
   return v;
 };
+
+const normalizeStatusForApi = (status) => normalizeStatus(status);
 
 const parseAttachments = (value) => {
   if (!value) return [];
@@ -188,7 +191,7 @@ export default function TodayTasksPage() {
   const stats = useMemo(() => ({
     total: tasks.length,
     highPrio: tasks.filter(t => t.priority === 'High').length,
-    pending: tasks.filter(t => ['Pending', 'To Do'].includes(t.status)).length,
+    pending: tasks.filter(t => ['Pending', 'Accepted'].includes(t.status)).length,
     inProgress: tasks.filter(t => ['In Progress', 'Review', 'Testing'].includes(t.status)).length,
   }), [tasks]);
 
@@ -201,7 +204,7 @@ export default function TodayTasksPage() {
     try {
       setUpdatingId(task.uuid);
       const payload = {
-        status: nextStatus,
+        status: normalizeStatusForApi(nextStatus),
         completion_date: nextStatus === 'Completed' ? new Date().toISOString() : task.completion_date,
       };
 

@@ -48,13 +48,13 @@ function TaskAvatar({ name, index }) {
 
 const STATUS_STYLES = {
   'Pending':     { pill: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',     dot: 'bg-amber-400' },
-  'To Do':       { pill: 'bg-slate-500/15 text-slate-300 border border-slate-500/25',     dot: 'bg-slate-400' },
+  
   'In Progress': { pill: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',        dot: 'bg-blue-400' },
   'Review':      { pill: 'bg-violet-500/15 text-violet-300 border border-violet-500/30',  dot: 'bg-violet-400' },
   'Testing':     { pill: 'bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30', dot: 'bg-fuchsia-400' },
 };
 
-const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
 
 const PRIORITY_STYLES = {
   High:   'text-rose-300',
@@ -138,7 +138,7 @@ export default function PendingTasksPage() {
         status:      normalizeStatus(t.status),
         attachments: parseAttachments(t.attachments),
       }));
-      // pending = Pending, To Do, In Progress, Review, Testing (NOT completed/cancelled/on hold)
+      // pending = Pending, In Progress, Review, Testing (NOT completed/cancelled/on hold)
       setAllPending(all.filter(t => !['Completed', 'Cancelled', 'On Hold'].includes(t.status)));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load pending tasks.');
