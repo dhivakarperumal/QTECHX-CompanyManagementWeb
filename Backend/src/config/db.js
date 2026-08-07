@@ -1563,6 +1563,16 @@ async function ensureTraineeEmployeeAssignmentsSchema(pool) {
         trainee_course VARCHAR(255) NULL,
         trainee_batch VARCHAR(255) NULL,
         trainee_joining_date DATE NULL,
+        person_type VARCHAR(50) NULL,
+        person_name VARCHAR(255) NULL,
+        person_id VARCHAR(100) NULL,
+        person_email VARCHAR(255) NULL,
+        person_phone VARCHAR(50) NULL,
+        department VARCHAR(255) NULL,
+        designation VARCHAR(255) NULL,
+        course VARCHAR(255) NULL,
+        batch VARCHAR(255) NULL,
+        joining_date DATE NULL,
         employee_name VARCHAR(255) NULL,
         employee_code VARCHAR(100) NULL,
         employee_email VARCHAR(255) NULL,
@@ -1583,6 +1593,45 @@ async function ensureTraineeEmployeeAssignmentsSchema(pool) {
         INDEX idx_trainee_employee_assignments_employee (employee_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     );
+  } else {
+    const [columns] = await pool.execute("SHOW COLUMNS FROM trainee_employee_assignments");
+    const columnNames = new Set(columns.map((column) => column.Field));
+    const addColumnStatements = [];
+
+    if (!columnNames.has('person_type')) {
+      addColumnStatements.push("ADD COLUMN person_type VARCHAR(50) NULL");
+    }
+    if (!columnNames.has('person_name')) {
+      addColumnStatements.push("ADD COLUMN person_name VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('person_id')) {
+      addColumnStatements.push("ADD COLUMN person_id VARCHAR(100) NULL");
+    }
+    if (!columnNames.has('person_email')) {
+      addColumnStatements.push("ADD COLUMN person_email VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('person_phone')) {
+      addColumnStatements.push("ADD COLUMN person_phone VARCHAR(50) NULL");
+    }
+    if (!columnNames.has('department')) {
+      addColumnStatements.push("ADD COLUMN department VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('designation')) {
+      addColumnStatements.push("ADD COLUMN designation VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('course')) {
+      addColumnStatements.push("ADD COLUMN course VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('batch')) {
+      addColumnStatements.push("ADD COLUMN batch VARCHAR(255) NULL");
+    }
+    if (!columnNames.has('joining_date')) {
+      addColumnStatements.push("ADD COLUMN joining_date DATE NULL");
+    }
+
+    if (addColumnStatements.length) {
+      await pool.execute(`ALTER TABLE trainee_employee_assignments ${addColumnStatements.join(', ')}`);
+    }
   }
 }
 

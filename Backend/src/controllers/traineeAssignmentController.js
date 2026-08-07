@@ -4,7 +4,7 @@ const { getDB } = require('../config/db');
 // Create or Reassign Trainee
 exports.assignTrainee = async (req, res) => {
   try {
-    const userId = req.user ? req.user.id : (req.body.assigned_by || 'system');
+    const userId = req.user?.id || req.user?.user_id || req.user?.username || req.body.assigned_by || 'system';
     const assignmentData = { ...req.body, assigned_by: userId, created_by: userId, updated_by: userId };
     
     // Validate required fields

@@ -88,6 +88,7 @@ export default function AllTraineeInterns() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [selectedTraineeForAssignment, setSelectedTraineeForAssignment] = useState(null);
+  const [assignmentDrawerOpen, setAssignmentDrawerOpen] = useState(false);
 
   // ── Fetch members ──
   const loadMembers = useCallback(async () => {
@@ -219,12 +220,22 @@ export default function AllTraineeInterns() {
           >
             <RefreshCw size={15} className={loading ? 'animate-spin text-orange-500' : ''} />
           </button>
+          {/* Assign Employee Button */}
+          <button
+            onClick={() => {
+              setSelectedTraineeForAssignment(null);
+              setAssignmentDrawerOpen(true);
+            }}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition border border-orange-500/40 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400"
+          >
+            <UserRoundPlus size={15} /> Assign Employee
+          </button>
           <button
             onClick={() => navigate('/admin/trainees/add')}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-orange-500/25 hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
-            <UserRoundPlus size={15} /> Add Trainee and Intern
+            <UserRoundPlus size={15} /> Add Trainee
           </button>
         </div>
       </div>
@@ -495,7 +506,10 @@ export default function AllTraineeInterns() {
                       <div className="flex items-center justify-end gap-2">
                         {/* Assign Employee - prominent button */}
                         <button
-                          onClick={() => setSelectedTraineeForAssignment(m)}
+                          onClick={() => {
+                            setSelectedTraineeForAssignment(m);
+                            setAssignmentDrawerOpen(true);
+                          }}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition shadow-sm shadow-orange-500/20 hover:opacity-90"
                           style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
                           title="Assign Employee"
@@ -607,7 +621,10 @@ export default function AllTraineeInterns() {
 
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
-                    onClick={() => setSelectedTraineeForAssignment(m)}
+                    onClick={() => {
+                      setSelectedTraineeForAssignment(m);
+                      setAssignmentDrawerOpen(true);
+                    }}
                     className="w-10 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 hover:bg-orange-500/20 transition"
                     title="Assign Employee"
                   >
@@ -648,11 +665,15 @@ export default function AllTraineeInterns() {
       )}
 
       {/* Assignment Drawer */}
-      {selectedTraineeForAssignment && (
+      {assignmentDrawerOpen && (
         <TraineeAssignmentDrawer
           trainee={selectedTraineeForAssignment}
-          onClose={() => setSelectedTraineeForAssignment(null)}
+          onClose={() => {
+            setAssignmentDrawerOpen(false);
+            setSelectedTraineeForAssignment(null);
+          }}
           onSuccess={(msg) => {
+            setAssignmentDrawerOpen(false);
             setSelectedTraineeForAssignment(null);
             showToast(msg);
             loadMembers();

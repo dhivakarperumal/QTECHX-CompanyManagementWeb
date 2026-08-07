@@ -45,6 +45,9 @@ const formatDate = (d) => {
 const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
   const [employees, setEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
+  const [people, setPeople] = useState([]);
+  const [loadingPeople, setLoadingPeople] = useState(true);
+  const [selectedPerson, setSelectedPerson] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   
@@ -57,15 +60,31 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const person = selectedPerson || trainee;
+  const traineeId = person?.uuid || person?.person_id || '';
+
   // Active Assignment from history
-  const activeAssignment = history.find(h => h.status === 'Active');
+  const activeAssignment = history.find(h => String(h.status).toLowerCase() === 'active');
 
   useEffect(() => {
-    if (trainee) {
-      fetchEmployees();
-      fetchHistory();
-    }
+    setSelectedEmployeeId('');
+    setAssignedDate(new Date().toISOString().split('T')[0]);
+    setExpectedDate('');
+    setPriority('Medium');
+    setNotes('');
+    setError('');
+    fetchEmployees();
+    fetchPeople();
+    setSelectedPerson(trainee || null);
   }, [trainee]);
+
+  useEffect(() => {
+    if (selectedPerson?.uuid || selectedPerson?.person_id) {
+      fetchHistory();
+    } else {
+      setHistory([]);
+    }
+  }, [selectedPerson]);
 
   const fetchEmployees = async () => {
     try {
@@ -81,10 +100,29 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
     }
   };
 
+  const fetchPeople = async () => {
+    try {
+      setLoadingPeople(true);
+      const { data } = await api.get('/trainee-intern?limit=500&page=1');
+      if (data.success) {
+        setPeople(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch trainees/interns', err);
+    } finally {
+      setLoadingPeople(false);
+    }
+  };
+
   const fetchHistory = async () => {
     try {
       setLoadingHistory(true);
-      const { data } = await api.get(`/trainee-assignments/history/${trainee.person_id}`);
+      const idToUse = traineeId;
+      if (!idToUse) {
+        setHistory([]);
+        return;
+      }
+      const { data } = await api.get(`/trainee-assignments/history/${idToUse}`);
       if (data.success) {
         setHistory(data.data || []);
       }
@@ -97,8 +135,16 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedPerson && !trainee) {
+      setError('Please select a trainee or intern.');
+      return;
+    }
     if (!selectedEmployeeId) {
       setError('Please select an employee.');
+      return;
+    }
+    if (!traineeId) {
+      setError('Selected person identifier is missing.');
       return;
     }
     setError('');
@@ -107,23 +153,33 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
       const selectedEmp = employees.find(emp => emp.employee_id === selectedEmployeeId);
       
       const payload = {
-        trainee_id: trainee.person_id,
+        trainee_id: person?.uuid || person?.person_id || null,
         employee_id: selectedEmployeeId,
-        trainee_name: trainee.full_name,
-        trainee_code: trainee.person_id,
-        trainee_email: trainee.email_address,
-        trainee_phone: trainee.mobile_number,
-        trainee_department: trainee.department,
-        trainee_designation: trainee.designation,
-        trainee_course: trainee.course,
-        trainee_batch: trainee.batch,
-        trainee_joining_date: trainee.created_at, // or whatever joining date field is available
-        employee_name: selectedEmp.employee_name,
-        employee_code: selectedEmp.employee_id,
-        employee_email: selectedEmp.email,
-        employee_phone: selectedEmp.phone,
-        employee_department: selectedEmp.department,
-        employee_designation: selectedEmp.designation,
+        trainee_name: person?.full_name || null,
+        trainee_code: person?.person_id || person?.uuid || null,
+        trainee_email: person?.email_address || null,
+        trainee_phone: person?.mobile_number || null,
+        trainee_department: person?.department || null,
+        trainee_designation: person?.designation || null,
+        trainee_course: person?.course || null,
+        trainee_batch: person?.batch || null,
+        trainee_joining_date: person?.created_at || person?.joining_date || null,
+        person_type: person?.type || 'Trainee',
+        person_name: person?.full_name || null,
+        person_id: person?.person_id || person?.uuid || null,
+        person_email: person?.email_address || null,
+        person_phone: person?.mobile_number || null,
+        department: person?.department || null,
+        designation: person?.designation || null,
+        course: person?.course || null,
+        batch: person?.batch || null,
+        joining_date: person?.created_at || person?.joining_date || null,
+        employee_name: selectedEmp?.employee_name || null,
+        employee_code: selectedEmp?.employee_id || null,
+        employee_email: selectedEmp?.email || null,
+        employee_phone: selectedEmp?.phone || null,
+        employee_department: selectedEmp?.department || null,
+        employee_designation: selectedEmp?.designation || null,
         assigned_date: assignedDate,
         expected_completion_date: expectedDate || null,
         priority,
@@ -155,31 +211,67 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
             <X size={18} />
           </button>
         </div>
+        
+        <div className="p-5">
+          <label className="block text-xs font-medium text-white/70 mb-1.5">Select Trainee / Intern *</label>
+          {loadingPeople ? (
+            <div className="h-[42px] bg-white/5 animate-pulse rounded-xl" />
+          ) : (
+            <Select
+              options={people.map(p => ({
+                value: p.uuid || p.person_id || '',
+                label: `${p.full_name} (${p.person_id || p.uuid}) - ${p.type}`
+              }))}
+              value={person ? {
+                value: person.uuid || person.person_id || '',
+                label: `${person.full_name} (${person.person_id || person.uuid}) - ${person.type}`
+              } : null}
+              onChange={(option) => {
+                const selected = people.find(p => (p.uuid || p.person_id || '') === option?.value);
+                setSelectedPerson(selected || null);
+              }}
+              styles={customSelectStyles}
+              placeholder="Search trainees or interns..."
+              isClearable
+            />
+          )}
+        </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           
-          {/* Trainee Details Card */}
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
-            <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Trainee Details</h3>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-lg shrink-0">
-                {trainee.full_name?.substring(0, 1).toUpperCase()}
-              </div>
-              <div className="space-y-1 w-full">
-                <p className="text-white font-bold">{trainee.full_name}</p>
-                <div className="flex items-center justify-between text-xs text-white/60">
-                  <span>{trainee.person_id}</span>
-                  <span className="px-2 py-0.5 bg-white/10 rounded-md">{trainee.type}</span>
+          {/* Trainee / Intern Details Card */}
+          {person ? (
+            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4">
+              <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">{person.type === 'Intern' ? 'Intern Details' : 'Trainee Details'}</h3>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-lg shrink-0">
+                  {person.full_name?.substring(0, 1).toUpperCase()}
                 </div>
-                <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/10 text-[11px] text-white/50">
-                  <div className="flex items-center gap-1.5"><Mail size={12}/> <span className="truncate">{trainee.email_address || '—'}</span></div>
-                  <div className="flex items-center gap-1.5"><Phone size={12}/> <span>{trainee.mobile_number || '—'}</span></div>
-                  <div className="flex items-center gap-1.5"><Briefcase size={12}/> <span className="truncate">{trainee.department || '—'}</span></div>
-                  <div className="flex items-center gap-1.5"><Calendar size={12}/> <span>{formatDate(trainee.created_at)}</span></div>
+                <div className="space-y-1 w-full">
+                  <p className="text-white font-bold">{person.full_name}</p>
+                  <div className="flex items-center justify-between text-xs text-white/60">
+                    <span>{person.person_id || person.uuid}</span>
+                    <span className="px-2 py-0.5 bg-white/10 rounded-md">{person.type}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/10 text-[11px] text-white/50">
+                    <div className="flex items-center gap-1.5"><Mail size={12}/> <span className="truncate">{person.email_address || '—'}</span></div>
+                    <div className="flex items-center gap-1.5"><Phone size={12}/> <span>{person.mobile_number || '—'}</span></div>
+                    <div className="flex items-center gap-1.5"><Briefcase size={12}/> <span className="truncate">{person.department || '—'}</span></div>
+                    <div className="flex items-center gap-1.5"><Calendar size={12}/> <span>{formatDate(person.created_at || person.joining_date)}</span></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2 text-[11px] text-white/50">
+                    <div className="flex items-center gap-1.5"><span className="font-semibold">Designation:</span> <span className="truncate">{person.designation || '—'}</span></div>
+                    <div className="flex items-center gap-1.5"><span className="font-semibold">Course:</span> <span className="truncate">{person.course || '—'}</span></div>
+                    <div className="flex items-center gap-1.5"><span className="font-semibold">Batch:</span> <span className="truncate">{person.batch || '—'}</span></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 text-sm text-white/40">
+              Select a trainee or intern from the dropdown above to load details.
+            </div>
+          )}
 
           {/* Current Assignment Notice */}
           {activeAssignment && (
@@ -215,7 +307,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
                       value: selectedEmployeeId,
                       label: (() => {
                         const e = employees.find(x => x.employee_id === selectedEmployeeId);
-                        return e ? `${e.employee_name} (${e.employee_id})` : '';
+                        return e ? `${e.employee_name} (${e.employee_id}) - Active Trainees: ${e.active_trainee_count}` : '';
                       })()
                     } : null}
                     onChange={v => setSelectedEmployeeId(v ? v.value : '')}
