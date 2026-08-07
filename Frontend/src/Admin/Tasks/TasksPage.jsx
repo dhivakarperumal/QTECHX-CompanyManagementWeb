@@ -961,10 +961,12 @@ export default function TasksPage({ initialPageKey = null }) {
                           className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition">
                           <Eye size={13} />
                         </button>
-                        <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
-                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
-                          <Edit3 size={13} />
-                        </button>
+                        {pageKey === 'today' && (
+                          <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
+                            className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
+                            <Edit3 size={13} />
+                          </button>
+                        )}
                         <button type="button" onClick={() => handleDeleteTask(task.uuid)} title="Delete task" aria-label="Delete task"
                           className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition">
                           <Trash2 size={13} />
@@ -1046,10 +1048,12 @@ export default function TasksPage({ initialPageKey = null }) {
                         className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition">
                         <Eye size={13} />
                       </button>
-                      <button onClick={() => handleEditTask(task.uuid)}
-                        className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition">
-                        <Edit3 size={13} />
-                      </button>
+                      {pageKey === 'today' && (
+                        <button onClick={() => handleEditTask(task.uuid)}
+                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition">
+                          <Edit3 size={13} />
+                        </button>
+                      )}
                       <button onClick={() => handleDeleteTask(task.uuid)}
                         className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition">
                         <Trash2 size={13} />
