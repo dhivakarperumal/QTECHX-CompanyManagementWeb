@@ -113,7 +113,7 @@ async function listTraineeInterns({ page, limit, search, type, status, employee_
     `SELECT ${traineeInternFields} FROM trainee_intern ti ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...values, limit, offset]
   );
-  const [countRows] = await db.execute(`SELECT COUNT(*) AS total FROM trainee_intern ${where}`, values);
+  const [countRows] = await db.execute(`SELECT COUNT(*) AS total FROM trainee_intern ti ${where}`, values);
   return { rows, total: countRows[0].total };
 }
 
