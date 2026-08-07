@@ -48,8 +48,10 @@ const AttendancePage = () => {
   const [departmentData, setDepartmentData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [dateFilter, setDateFilter] = useState('Today');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [customDate, setCustomDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -74,15 +76,49 @@ const AttendancePage = () => {
   });
 
   useEffect(() => {
-    loadData();
-  }, [selectedMonth, selectedYear]);
+    const today = new Date();
+    let start, end;
+    if (dateFilter === 'Today') {
+      start = today;
+      end = today;
+    } else if (dateFilter === 'Yesterday') {
+      start = new Date(today);
+      start.setDate(today.getDate() - 1);
+      end = new Date(start);
+    } else if (dateFilter === 'This Week') {
+      start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+    } else if (dateFilter === 'This Month') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    } else if (dateFilter === 'Custom Date') {
+      start = new Date(customDate);
+      end = new Date(customDate);
+    }
+    
+    if (start && end) {
+      const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
+      const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
+      setStartDate(offsetStart.toISOString().slice(0, 10));
+      setEndDate(offsetEnd.toISOString().slice(0, 10));
+    }
+  }, [dateFilter, customDate]);
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      loadData();
+    }
+  }, [startDate, endDate]);
 
   const loadData = useCallback(async () => {
+    if (!startDate || !endDate) return;
     setLoading(true);
     try {
       const [empRes, sumRes] = await Promise.all([
         api.get("/employees?limit=200"),
-        api.get(`/attendance/summary?month=${selectedMonth}&year=${selectedYear}`)
+        api.get(`/attendance/summary?startDate=${startDate}&endDate=${endDate}`)
       ]);
       const responseData = sumRes?.data || {};
       setEmployeeData(empRes?.data?.data || []);
@@ -95,7 +131,7 @@ const AttendancePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [startDate, endDate]);
 
   const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -185,12 +221,29 @@ const AttendancePage = () => {
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Attendance Dashboard</h2>
-          <p className="mt-1 text-sm text-white/60">Overview of today's attendance and company metrics.</p>
+          <p className="mt-1 text-sm text-white/60">Overview of attendance and company metrics.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-white/70 font-medium bg-white/5 border border-white/10 px-4 py-2 rounded-full">
-            <CalendarDays size={16} className="text-orange-400" />
-            <span>{formattedToday}</span>
+          <div className="flex items-center gap-2">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-white/5 border border-white/10 text-white text-sm rounded-full px-4 py-2 outline-none focus:border-orange-500/50 transition appearance-none"
+            >
+              <option value="Today" className="bg-[#0f172a]">Today</option>
+              <option value="Yesterday" className="bg-[#0f172a]">Yesterday</option>
+              <option value="This Week" className="bg-[#0f172a]">This Week</option>
+              <option value="This Month" className="bg-[#0f172a]">This Month</option>
+              <option value="Custom Date" className="bg-[#0f172a]">Custom Date</option>
+            </select>
+            {dateFilter === 'Custom Date' && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="bg-white/5 border border-white/10 text-white text-sm rounded-full px-4 py-2 outline-none focus:border-orange-500/50 transition scheme-dark"
+              />
+            )}
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -221,7 +274,7 @@ const AttendancePage = () => {
       <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
         <div className="space-y-6">
           <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-6">Today's Attendance Overview</h3>
+            <h3 className="text-lg font-bold text-white mb-6">{dateFilter === 'Today' ? "Today's" : dateFilter} Attendance Overview</h3>
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-48 h-48 relative">
                 <ResponsiveContainer width="100%" height="100%">
@@ -288,7 +341,7 @@ const AttendancePage = () => {
 
       <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">Today's Timesheet (Live)</h3>
+          <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
           
         </div>
         <div className="overflow-x-auto">
