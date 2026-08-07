@@ -6,7 +6,17 @@ const { v4: uuidv4 } = require("uuid");
 exports.getTraineeTasks = async (req, res) => {
   try {
     const db = getDB();
-    const [rows] = await db.execute("SELECT * FROM trainee_tasks ORDER BY created_at DESC");
+    const { created_by } = req.query;
+    let query = "SELECT * FROM trainee_tasks";
+    const params = [];
+
+    if (created_by) {
+      query += " WHERE created_by = ?";
+      params.push(created_by);
+    }
+
+    query += " ORDER BY created_at DESC";
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
     console.error("Error fetching trainee tasks:", error);
@@ -19,11 +29,10 @@ exports.createTraineeTask = async (req, res) => {
     const { task_name, description } = req.body;
     const db = getDB();
     const uuid = uuidv4();
-    const actor = req.user ? req.user.user_id || req.user.id || req.user.uuid : null;
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
     const documentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
-
-    console.log('[TraineeTask] createTraineeTask req.user:', req.user);
-    console.log('[TraineeTask] audit actor for create:', actor);
 
     await db.execute(
       `INSERT INTO trainee_tasks (uuid, task_name, description, document_path, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -42,7 +51,9 @@ exports.updateTraineeTask = async (req, res) => {
     const { uuid } = req.params;
     const { task_name, description } = req.body;
     const db = getDB();
-    const actor = req.user ? req.user.user_id || req.user.id || req.user.uuid : null;
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
     const updates = [];
     const values = [];
 
@@ -138,7 +149,9 @@ exports.assignTask = async (req, res) => {
     const assignmentDocumentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
     const db = getDB();
     const uuid = uuidv4();
-    const created_by = req.user ? req.user.user_id : null;
+    const actor = req.user
+      ? req.user.user_id || req.user.employee_id || req.user.id || req.user.uuid || req.user.username
+      : null;
 
     // Get trainee_task_id from uuid
     const [taskRows] = await db.execute("SELECT id FROM trainee_tasks WHERE uuid = ?", [trainee_task_uuid]);
@@ -149,9 +162,9 @@ exports.assignTask = async (req, res) => {
 
     await db.execute(
       `INSERT INTO trainee_task_assignments 
-        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, created_by]
+        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by, updated_by) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, actor, actor]
     );
 
     res.status(201).json({ message: "Task assigned successfully", uuid });

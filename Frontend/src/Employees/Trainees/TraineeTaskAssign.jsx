@@ -156,9 +156,12 @@ const TraineeTaskAssign = () => {
         traineeParams.append('employee_id', employeeId);
         assignmentParams.append('employee_id', employeeId);
       }
+      const taskParams = new URLSearchParams();
+      if (employeeId) taskParams.append('created_by', employeeId);
+
       const [assignmentsRes, tasksRes, traineesRes] = await Promise.all([
         api.get(`/trainee-task-assignments${assignmentParams.toString() ? `?${assignmentParams.toString()}` : ''}`),
-        api.get('/trainee-tasks'),
+        api.get(`/trainee-tasks${taskParams.toString() ? `?${taskParams.toString()}` : ''}`),
         api.get(`/trainee-intern${traineeParams.toString() ? `?${traineeParams.toString()}` : ''}`)
       ]);
       setAssignments(assignmentsRes.data);

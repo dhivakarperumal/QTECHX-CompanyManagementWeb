@@ -153,7 +153,11 @@ const TraineeTaskMaster = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/trainee-tasks');
+      const params = new URLSearchParams();
+      if (employeeId) {
+        params.append('created_by', employeeId);
+      }
+      const response = await api.get(`/trainee-tasks${params.toString() ? `?${params.toString()}` : ''}`);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching trainee tasks:', error);
@@ -281,78 +285,9 @@ const TraineeTaskMaster = () => {
       </div>
     </div>
 
-      {/* Trainee Cards Section */}
-      <div className="mb-8 mt-2">
-        <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
-                />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search trainee"
-                  className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
-                />
-              </div>
-            </div>
-            <Select
-              options={[
-                { value: 'All', label: 'All Types' },
-                { value: 'Trainee', label: 'Trainee' },
-                { value: 'Intern', label: 'Intern' }
-              ]}
-              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
-              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
-              styles={customSelectStyles}
-              isSearchable={false}
-              className="w-40"
-            />
-          </div>
-        </div>
 
-        {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
-          <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
-            <table className="min-w-full text-sm">
-              <thead className="bg-white/4 text-white/60">
-                <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Type</th>
-                  <th className="px-4 py-3 text-left">Person ID</th>
-                  <th className="px-4 py-3 text-left">Department</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
-                  <tr key={trainee.uuid} onClick={() =>
-                    (window.location.hash = `/admin/trainees/tasks/view/${trainee.uuid}`)
-                  } className="border-t border-white/10 hover:bg-white/2 cursor-pointer">
-                    <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.department || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
-        </div>
-      </div>
+      
 
       <Modal open={showForm} onClose={resetForm} title={editingUuid ? 'Edit Task' : 'Add New Task'}>
         <form onSubmit={handleSubmit} className="space-y-5">
