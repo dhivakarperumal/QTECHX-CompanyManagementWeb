@@ -291,6 +291,13 @@ const ApplyLeave = () => {
 
   const navigate = useNavigate();
 
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  const tomorrowString = `${year}-${month}-${day}`;
+
   return (
     <ModalPortal>
       <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
@@ -461,6 +468,7 @@ const ApplyLeave = () => {
                       value={formData.from_date} 
                       onChange={handleChange} 
                       required
+                      min={tomorrowString}
                       className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition scheme-dark" 
                     />
                   </div>

@@ -50,7 +50,7 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-async function getAttendanceSummary({ month, year }) {
+async function getAttendanceSummary({ startDate, endDate }) {
   const db = getDB();
   const [rows] = await db.execute(
     `SELECT
@@ -61,11 +61,11 @@ async function getAttendanceSummary({ month, year }) {
        SUM(CASE WHEN a.attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_days
      FROM employees e
      LEFT JOIN attendance a
-       ON a.employee_id = e.employee_id AND a.month = ? AND a.year = ?
+       ON a.employee_id = e.employee_id AND a.attendance_date BETWEEN ? AND ?
      WHERE e.employment_status = 'Active'
      GROUP BY e.employee_id, e.employee_code, e.first_name, e.last_name
      ORDER BY e.first_name, e.last_name`,
-    [month, year]
+    [startDate, endDate]
   );
 
   return rows.map((row) => ({

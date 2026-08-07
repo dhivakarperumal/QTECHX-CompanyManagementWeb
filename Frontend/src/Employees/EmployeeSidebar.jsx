@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Users,
   CalendarClock,
+  GraduationCap,
+  UserCheck 
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -62,6 +64,18 @@ const navItems = [
       { path: "/employee/tasks/cancelled", label: "Cancelled Tasks", icon: FileText },
     ],
   },
+
+   /* ---- TRAINING ---- */
+    {
+      label: "Trainees & Internships",
+      icon: GraduationCap,
+      children: [
+        { path: "/employee/trainees", label: "All Trainees & Interns", icon: GraduationCap },
+        { path: "/employee/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
+        { path: "/employee/trainees/tasks", label: "Tasks", icon: CheckSquare },
+        { path: "/employee/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },
+      ],
+    },
 
 
 
