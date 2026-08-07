@@ -1,9 +1,0 @@
-export { default as AllTraineeInterns } from './AllTraineeInterns.jsx';
-export { default as AddTraineeIntern } from './AddTraineeIntern.jsx';
-export { default as TraineeInternDetails } from './TraineeInternDetails.jsx';
-export { default as TraineeInternAttendancePage } from './TraineeInternAttendancePage.jsx';
-export { default as TraineeInternAttendanceView } from './TraineeInternAttendanceView.jsx';
-export { default as TraineeTaskMaster } from './TraineeTaskMaster.jsx';
-export { default as TraineeTaskAssign } from './TraineeTaskAssign.jsx';
-export { default as TraineeTaskDetails } from './TraineeTaskDetails.jsx';
-export { default as TraineeAssignmentDrawer } from './TraineeAssignmentDrawer.jsx';
