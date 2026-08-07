@@ -19,12 +19,15 @@ exports.createTraineeTask = async (req, res) => {
     const { task_name, description } = req.body;
     const db = getDB();
     const uuid = uuidv4();
-    const created_by = req.user ? req.user.user_id : null; // Assuming req.user is set by auth middleware
+    const actor = req.user ? req.user.user_id || req.user.id || req.user.uuid : null;
     const documentPath = req.file ? `/uploads/tasks/${req.file.filename}` : null;
 
+    console.log('[TraineeTask] createTraineeTask req.user:', req.user);
+    console.log('[TraineeTask] audit actor for create:', actor);
+
     await db.execute(
-      `INSERT INTO trainee_tasks (uuid, task_name, description, document_path, created_by) VALUES (?, ?, ?, ?, ?)`,
-      [uuid, task_name, description, documentPath, created_by]
+      `INSERT INTO trainee_tasks (uuid, task_name, description, document_path, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?)`,
+      [uuid, task_name, description, documentPath, actor, actor]
     );
 
     res.status(201).json({ message: "Task created successfully", uuid });
@@ -39,7 +42,7 @@ exports.updateTraineeTask = async (req, res) => {
     const { uuid } = req.params;
     const { task_name, description } = req.body;
     const db = getDB();
-    const updated_by = req.user ? req.user.user_id : null;
+    const actor = req.user ? req.user.user_id || req.user.id || req.user.uuid : null;
     const updates = [];
     const values = [];
 
@@ -58,7 +61,7 @@ exports.updateTraineeTask = async (req, res) => {
 
     if (updates.length) {
       updates.push("updated_by = ?");
-      values.push(updated_by);
+      values.push(actor);
       values.push(uuid);
       await db.execute(`UPDATE trainee_tasks SET ${updates.join(", ")} WHERE uuid = ?`, values);
     }
