@@ -290,9 +290,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           (sub.path === "/admin/projects" &&
                             (
                               location.pathname === "/admin/projects/add" ||
-                              location.pathname.startsWith("/admin/projects/view/") ||
+                              (location.pathname.startsWith("/admin/projects/view/") && !location.pathname.startsWith("/admin/projects/assignments/view/")) ||
                               location.pathname.startsWith("/admin/projects/edit/")
                             )
+                          ) ||
+
+                          // Assigned Projects
+                          (sub.path === "/admin/projects/assignments" &&
+                            location.pathname.startsWith("/admin/projects/assignments/view/")
                           ) ||
 
                             // All Employees
