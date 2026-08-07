@@ -101,7 +101,7 @@ exports.deleteTraineeTask = async (req, res) => {
 
 exports.getAssignments = async (req, res) => {
   try {
-    const { trainee_id, employee_id } = req.query;
+    const { trainee_id, employee_id, created_by } = req.query;
     const db = getDB();
 
     let query = `
@@ -127,6 +127,11 @@ exports.getAssignments = async (req, res) => {
     if (trainee_id) {
       conditions.push(`tta.trainee_intern_id = ?`);
       params.push(trainee_id);
+    }
+
+    if (created_by) {
+      conditions.push(`tta.created_by = ?`);
+      params.push(created_by);
     }
 
     if (conditions.length) {

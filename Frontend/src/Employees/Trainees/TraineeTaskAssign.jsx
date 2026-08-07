@@ -155,6 +155,7 @@ const TraineeTaskAssign = () => {
       if (employeeId) {
         traineeParams.append('employee_id', employeeId);
         assignmentParams.append('employee_id', employeeId);
+        assignmentParams.append('created_by', employeeId);
       }
       const taskParams = new URLSearchParams();
       if (employeeId) taskParams.append('created_by', employeeId);
