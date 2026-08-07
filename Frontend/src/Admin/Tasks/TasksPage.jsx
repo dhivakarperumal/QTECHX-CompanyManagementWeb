@@ -98,8 +98,70 @@ const tabs = [
   { key: "pending", label: "Pending Tasks" },
   { key: "completed", label: "Completed Tasks" },
   { key: "cancelled", label: "Cancelled Tasks" },
-
 ];
+
+const PAGE_SIZE = 10;
+
+function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChange }) {
+  if (totalPages <= 1) return null;
+  const from = (currentPage - 1) * pageSize + 1;
+  const to = Math.min(currentPage * pageSize, totalItems);
+
+  // Build page number array with ellipsis
+  const pages = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-white/8">
+      <p className="text-xs text-white/35">
+        Showing <span className="text-white/60 font-semibold">{from}–{to}</span> of <span className="text-white/60 font-semibold">{totalItems}</span> tasks
+      </p>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/8 border border-white/8 transition disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        {pages.map((p, i) =>
+          p === '...' ? (
+            <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-white/25 text-xs">…</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center border transition ${
+                p === currentPage
+                  ? 'bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/25'
+                  : 'border-white/8 text-white/40 hover:text-white hover:bg-white/8'
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/8 border border-white/8 transition disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const getPageKey = (pathname) => {
   const cleaned = pathname.replace(/.*\/admin\/tasks\/?/, "");
@@ -360,6 +422,9 @@ export default function TasksPage({ initialPageKey = null }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [viewMode, setViewMode] = useState('table');
+
+  /* ── Pagination ── */
+  const [currentPage, setCurrentPage] = useState(1);
 
   /* ── Add Task Modal ── */
   const [showAddModal, setShowAddModal] = useState(false);
@@ -754,6 +819,15 @@ export default function TasksPage({ initialPageKey = null }) {
     return baseTasks;
   }, [pageKey, selectedProject, tasksList, search, statusFilter]);
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, selectedProject, pageKey]);
+
+  const totalPages = Math.ceil(visibleTasks.length / PAGE_SIZE);
+  const paginatedTasks = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return visibleTasks.slice(start, start + PAGE_SIZE);
+  }, [visibleTasks, currentPage]);
+
   const availableTaskProjects = useMemo(() => {
     return projects.map((project) => ({
       uuid: project.uuid,
@@ -774,6 +848,9 @@ export default function TasksPage({ initialPageKey = null }) {
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">{tabs.find((tab) => tab.key === pageKey)?.label || "Tasks"}</h1>
             <p className="text-white/40 text-xs mt-0.5">{tasksLoading ? 'Loading…' : `${visibleTasks.length} task${visibleTasks.length !== 1 ? 's' : ''} total`}</p>
+            {!tasksLoading && totalPages > 1 && (
+              <p className="text-white/25 text-[11px]">Page {currentPage} of {totalPages}</p>
+            )}
           </div>
         </div>
 
