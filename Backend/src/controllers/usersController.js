@@ -131,7 +131,8 @@ async function login(req, res) {
     );
     return res.json({ message: "Login successful", token, user: publicUser(user) });
   } catch (error) {
-    return res.status(500).json({ message: "Login failed" });
+    console.error('[UsersController] login error:', error);
+    return res.status(500).json({ message: "Login failed", error: error.message });
   }
 }
 

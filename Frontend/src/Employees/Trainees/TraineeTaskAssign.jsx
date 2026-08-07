@@ -120,7 +120,7 @@ function Modal({ open, onClose, title, children }) {
   );
 }
 
-const TraineeTaskAssign = () => {
+const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
   const { user } = useAuth();
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
@@ -128,7 +128,7 @@ const TraineeTaskAssign = () => {
   const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(defaultOpenForm);
   const [typeFilter, setTypeFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
   const [searchTerm, setSearchTerm] = useState('');
@@ -271,132 +271,152 @@ const TraineeTaskAssign = () => {
   }, [assignments, searchTerm, typeFilter]);
 
   return (
-    <div className="space-y-5 pb-10 text-white min-h-screen">
+    <div className={isModal ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
       <Toaster position="top-right" />
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
-            <UserCheck size={22} className="text-orange-500" />
+      {!isModal && (
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+              <UserCheck size={22} className="text-orange-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-white">Assign Tasks</h1>
+              <p className="text-white/40 text-xs mt-0.5">Manage task assignments for trainees & interns</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Assign Tasks</h1>
-            <p className="text-white/40 text-xs mt-0.5">Manage task assignments for trainees & interns</p>
+          <div className="flex items-center gap-2">
+            {!showForm && (
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+                style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+              >
+                <Plus size={15} /> New Assignment
+              </button>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {!showForm && (
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
-            >
-              <Plus size={15} /> New Assignment
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
-      <Modal open={showForm} onClose={resetForm} title="New Task Assignment">
+      {defaultOpenForm ? (
+        /* ── Inline form when called from a parent modal ── */
+        <form onSubmit={handleAssign} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
+              <Select
+                options={tasks.map(t => ({ value: t.uuid, label: t.task_name }))}
+                value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                onChange={(option) => setSelectedTask(option ? option.value : '')}
+                styles={customSelectStyles}
+                isSearchable
+                placeholder="-- Select Task --"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
+              <Select
+                options={trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))}
+                value={selectedTrainee ? { value: selectedTrainee, label: (() => { const t = trainees.find(t => t.uuid === selectedTrainee); return t ? `${t.full_name} (${t.type})` : ''; })() } : null}
+                onChange={(option) => setSelectedTrainee(option ? option.value : '')}
+                styles={customSelectStyles}
+                isSearchable
+                placeholder="-- Select Trainee --"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
+              <input type="date" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
+              <input type="time" value={assignedTime} onChange={e => setAssignedTime(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Due Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <button type="button" onClick={resetForm}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition">
+              Cancel
+            </button>
+            <button type="submit"
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+              <Save size={15} /> Assign Task
+            </button>
+          </div>
+        </form>
+      ) : (
+        /* ── Modal form when used standalone ── */
+        <Modal open={showForm} onClose={resetForm} title="New Task Assignment">
           <form onSubmit={handleAssign} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
                 <Select
-                  options={[
-                    ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
-                  ]}
+                  options={tasks.map(t => ({ value: t.uuid, label: t.task_name }))}
                   value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
                   onChange={(option) => setSelectedTask(option ? option.value : '')}
                   styles={customSelectStyles}
-                  isSearchable={true}
+                  isSearchable
                   placeholder="-- Select Task --"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
                 <Select
-                  options={[
-                    ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
-                  ]}
-                  value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
+                  options={trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))}
+                  value={selectedTrainee ? { value: selectedTrainee, label: (() => { const t = trainees.find(t => t.uuid === selectedTrainee); return t ? `${t.full_name} (${t.type})` : ''; })() } : null}
                   onChange={(option) => setSelectedTrainee(option ? option.value : '')}
                   styles={customSelectStyles}
-                  isSearchable={true}
+                  isSearchable
                   placeholder="-- Select Trainee --"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
-                <input
-                  type="date"
-                  value={assignedDate}
-                  onChange={(e) => setAssignedDate(e.target.value)}
+                <input type="date" value={assignedDate} onChange={e => setAssignedDate(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
+                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
-                <input
-                  type="time"
-                  value={assignedTime}
-                  onChange={(e) => setAssignedTime(e.target.value)}
+                <input type="time" value={assignedTime} onChange={e => setAssignedTime(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
+                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Due Date</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
+                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 transition" />
               </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Upload Document</label>
-                <label className="cursor-pointer flex items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-3 text-sm text-white/70 hover:border-orange-500/50 transition-all">
-                  <span className="truncate">{assignmentDocument ? assignmentDocument.name : 'Choose a PDF, DOC, image, or ZIP file'}</span>
-                  <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80">
-                    Browse
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip,.rar"
-                    onChange={(e) => setAssignmentDocument(e.target.files?.[0] || null)}
-                  />
-                </label>
-              </div> */}
             </div>
-
             <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition"
-              >
+              <button type="button" onClick={resetForm}
+                className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition">
                 Cancel
               </button>
-              <button
-                type="submit"
+              <button type="submit"
                 className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
-              >
+                style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
                 <Save size={15} /> Assign Task
               </button>
             </div>
           </form>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Assignments Table */}
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
