@@ -99,9 +99,19 @@ const isSameDay = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return false;
   const today = new Date();
-  return date.getFullYear() === today.getFullYear()
-    && date.getMonth() === today.getMonth()
-    && date.getDate() === today.getDate();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return localDate.getTime() === localToday.getTime();
+};
+
+const getTodayTaskMatch = (task) => {
+  const candidates = [
+    task.assignment_date,
+    task.assigned_date,
+    task.created_at,
+  ].filter(Boolean);
+
+  return candidates.some((value) => isSameDay(value));
 };
 
 const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
@@ -156,13 +166,7 @@ export default function TodayTasksPage() {
         attachments: parseAttachments(task.attachments),
       }));
 
-      // Show tasks that have any date (due, start, assigned, or created) matching today
-      setTasks(all.filter(task =>
-        isSameDay(task.due_date) ||
-        isSameDay(task.assignment_date) ||
-        isSameDay(task.start_date) ||
-        isSameDay(task.created_at)
-      ));
+      setTasks(all.filter((task) => getTodayTaskMatch(task)));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load today tasks.');
       setTasks([]);
@@ -245,7 +249,7 @@ export default function TodayTasksPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Today Tasks</h1>
-            <p className="text-xs text-white/35 mt-0.5">{stats.total} tasks due or assigned today</p>
+            <p className="text-xs text-white/35 mt-0.5">{stats.total} tasks assigned today</p>
           </div>
         </div>
         <button

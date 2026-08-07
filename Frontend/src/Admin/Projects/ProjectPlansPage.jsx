@@ -25,6 +25,7 @@ import {
   Trash2,
   Upload,
   X,
+  Grid3x3,
 } from 'lucide-react';
 
 const pageSize = 8;
@@ -264,6 +265,7 @@ function ProjectPlansPage() {
   const [projectsList, setProjectsList] = useState([]);
   const [editingModuleIndex, setEditingModuleIndex] = useState(null);
   const [showAddModuleForm, setShowAddModuleForm] = useState(false);
+  const [viewMode, setViewMode] = useState('table');
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -903,6 +905,22 @@ function ProjectPlansPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <div className="bg-white/5 border border-white/8 rounded-xl p-1 flex gap-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-[#ff6b00] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Table View"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-[#ff6b00] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Card View"
+            >
+              <Grid3x3 size={16} />
+            </button>
+          </div>
           <button onClick={openCreateDrawer} className="h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff6b00] px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-[#e66000] active:scale-95">
             <Plus size={16} /> Add Plan
           </button>
@@ -974,6 +992,8 @@ function ProjectPlansPage() {
           <button onClick={() => setSelectedIds([])} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300 transition hover:bg-rose-500/20">Clear Selection</button>
         </div>
 
+        {viewMode === 'table' && (
+        <>
         {filteredPlans.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-[1000px] w-full text-left text-sm text-white/60">
@@ -1052,6 +1072,8 @@ function ProjectPlansPage() {
             <button onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">Next</button>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {createPortal(

@@ -445,16 +445,14 @@ export default function ProjectExpiryPage() {
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               placeholder="Search projects or clients..."
-              className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+              className="w-1/2 bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowFilters(!showFilters)} className={`h-[42px] px-4 rounded-xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${showFilters ? 'bg-[#f97316]/10 border-[#f97316]/30 text-[#f97316]' : 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white'}`}>
               <Filter size={16} /> Filters
             </button>
-            <button onClick={() => { setFilters({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false }); loadData(); }} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center" title="Reset Filters">
-              Reset
-            </button>
+          
             <button onClick={loadData} className="h-[42px] w-[42px] rounded-xl border border-white/10 text-white/60 hover:bg-white/5 hover:text-white transition-all flex items-center justify-center" title="Refresh">
               <RefreshCcw size={16} />
             </button>
@@ -526,22 +524,21 @@ export default function ProjectExpiryPage() {
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
+            <thead className="bg-white/5">
               <tr>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">#</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Project / Client</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Service Name</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8" style={{display: 'none'}}>Expiry Type</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Provider / Plan</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Dates</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Days Left</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Cost & Payment</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8 text-center">Auto</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Status</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8 text-right">Actions</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 rounded-l-xl">S No</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Project</th>
+
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Plan</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Dates</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Days Left</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Amount</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 text-center">Auto</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Status</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 text-right rounded-r-xl">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {isLoading ? (
                 <tr>
                   <td colSpan="11" className="py-12 text-center">
@@ -566,14 +563,23 @@ export default function ProjectExpiryPage() {
               ) : visibleRecords.map((record, idx) => {
                 const badge = getDaysBadge(record.days_remaining);
                 return (
-                  <tr key={record.id} className="group border-b border-white/4 hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3.5 text-xs text-white/40 font-medium">{idx + 1}</td>
-                    <td className="px-4 py-3.5 min-w-[160px]">
-                      <div className="font-medium text-white/90 text-sm truncate max-w-[150px]">{record.project_name || `Project #${record.project_id}`}</div>
-                      <div className="text-xs text-white/40 mt-0.5 truncate max-w-[150px]">{record.client_name || '—'}</div>
-                      {record.domain_name && <div className="text-[11px] text-primary/70 mt-0.5 font-medium truncate max-w-[150px]">{record.domain_name}</div>}
+                  <tr key={record.id} className="group hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-4 text-xs font-bold text-white/80">{idx + 1}</td>
+                    <td className="px-4 py-4 min-w-[200px]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
+                          {record.project_name ? record.project_name[0].toUpperCase() : 'P'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-sm">{record.project_name || `Project #${record.project_id}`}</div>
+                          <div className="text-xs text-white/40 mt-0.5 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {record.client_name || '—'}
+                          </div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-3.5 text-white/70 text-sm whitespace-nowrap">{record.service_name || '—'}</td>
+                    
                     <td className="px-4 py-3.5 whitespace-nowrap" style={{display: 'none'}}>
                       <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] font-medium text-blue-400">{record.expiry_type || '—'}</span>
                     </td>
@@ -581,27 +587,29 @@ export default function ProjectExpiryPage() {
                       <div className="text-white/70 text-sm font-medium">{record.provider_name || '—'}</div>
                       {record.plan_name && <div className="text-xs text-white/40 mt-0.5">{record.plan_name}</div>}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-xs">
+                    <td className="px-4 py-4 whitespace-nowrap text-xs">
                       <div className="text-white/60 mb-0.5"><span className="text-white/30 mr-1">Start:</span>{record.start_date ? new Date(record.start_date).toLocaleDateString('en-IN') : '—'}</div>
                       <div className="text-white/90 font-medium"><span className="text-white/30 mr-1">Exp:</span>{record.expiry_date ? new Date(record.expiry_date).toLocaleDateString('en-IN') : '—'}</div>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}>{badge.label}</span>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${badge.className}`}>{badge.label}</span>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {record.renewal_cost ? (
-                        <div className="text-emerald-400/90 text-sm font-semibold">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</div>
+                        <div className="inline-block border border-white/10 bg-white/5 rounded-lg px-3 py-1.5 text-sm font-bold text-white/90">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</div>
                       ) : <div className="text-white/40 text-sm">—</div>}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                          record.payment_status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                          record.payment_status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                          'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>{record.payment_status || 'Pending'}</span>
-                        {record.payment_method && <span className="text-[10px] text-white/30">{record.payment_method}</span>}
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium flex items-center gap-1 ${
+                          record.payment_status === 'Paid' ? 'text-emerald-400' :
+                          record.payment_status === 'Failed' ? 'text-rose-400' :
+                          'text-amber-400'
+                        }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${record.payment_status === 'Paid' ? 'bg-emerald-400' : record.payment_status === 'Failed' ? 'bg-rose-400' : 'bg-amber-400'}`}></div>
+                          {record.payment_status || 'Pending'}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       {record.auto_renew ? (
                         <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400" title="Auto renew enabled">
                           <CheckCircle2 size={12} />
@@ -610,24 +618,17 @@ export default function ProjectExpiryPage() {
                         <span className="text-white/20 text-xs">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <div className="flex flex-col gap-1.5 items-start">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span>
-                        {record.status !== 'Active' && <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-white/5 text-white/40 border border-white/10">{record.status}</span>}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                        {record.renewal_status || 'Active'}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button onClick={() => openAction(record, 'view')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/20 flex items-center justify-center text-white/60 hover:text-blue-400 transition" title="View"><Eye size={14} /></button>
-                        <button onClick={() => openEdit(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-orange-500/20 flex items-center justify-center text-white/60 hover:text-orange-400 transition" title="Edit"><Edit size={14} /></button>
-                        
-                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <button onClick={() => openAction(record, 'renew')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition" title="Renew"><RefreshCcw size={14} /></button>
-                          <button onClick={() => openAction(record, 'history')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-white/60 hover:text-purple-400 transition" title="History"><History size={14} /></button>
-                          <button onClick={() => handleReminderSend(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-sky-500/20 flex items-center justify-center text-white/60 hover:text-sky-400 transition" title="Send Reminder"><Send size={14} /></button>
-                        </div>
-
-                        <button onClick={() => handleDelete(record.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-white/60 hover:text-rose-400 transition" title="Delete"><Trash2 size={14} /></button>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => openAction(record, 'view')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition" title="View"><Eye size={14} /></button>
+                        <button onClick={() => openEdit(record)} className="w-8 h-8 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 flex items-center justify-center text-orange-500 transition" title="Edit"><Edit size={14} /></button>
+                        <button onClick={() => handleDelete(record.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/10 flex items-center justify-center text-white/40 hover:text-rose-500 transition" title="Delete"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
