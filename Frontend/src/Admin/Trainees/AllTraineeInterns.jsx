@@ -507,15 +507,17 @@ export default function AllTraineeInterns() {
                         {/* Assign Employee - prominent button */}
                         <button
                           onClick={() => {
+                            if (m.has_active_assignment) return;
                             setSelectedTraineeForAssignment(m);
                             setAssignmentDrawerOpen(true);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition shadow-sm shadow-orange-500/20 hover:opacity-90"
-                          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-                          title="Assign Employee"
+                          disabled={Boolean(m.has_active_assignment)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${m.has_active_assignment ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60' : 'text-white bg-orange-500 hover:opacity-90'}`}
+                          style={m.has_active_assignment ? {} : { background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+                          title={m.has_active_assignment ? 'Already assigned' : 'Assign Employee'}
                         >
                           <UserRoundPlus size={13} />
-                          Assign
+                          {m.has_active_assignment ? 'Assigned' : 'Assign'}
                         </button>
                         <button
                           onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
@@ -622,11 +624,13 @@ export default function AllTraineeInterns() {
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
                     onClick={() => {
+                      if (m.has_active_assignment) return;
                       setSelectedTraineeForAssignment(m);
                       setAssignmentDrawerOpen(true);
                     }}
-                    className="w-10 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 hover:bg-orange-500/20 transition"
-                    title="Assign Employee"
+                    disabled={Boolean(m.has_active_assignment)}
+                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${m.has_active_assignment ? 'bg-white/10 border-white/10 text-white/40 cursor-not-allowed opacity-60' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
+                    title={m.has_active_assignment ? 'Already assigned' : 'Assign Employee'}
                   >
                     <UserRoundPlus size={14} />
                   </button>

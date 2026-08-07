@@ -8,6 +8,8 @@ const traineeInternFields = [
   'offer_letter', 'internship_letter', 'college_university', 'course',
   'academic_department', 'year_semester', 'college_id_number', 'guide_name',
   'created_at', 'updated_at', 'created_by', 'updated_by',
+  `(SELECT COUNT(*) FROM trainee_employee_assignments a WHERE a.trainee_id = ti.uuid AND a.status = 'Active') AS has_active_assignment`,
+  `(SELECT employee_name FROM trainee_employee_assignments a WHERE a.trainee_id = ti.uuid AND a.status = 'Active' LIMIT 1) AS active_employee_name`,
 ].join(', ');
 
 async function generatePersonCode(db) {
@@ -67,13 +69,13 @@ async function createTraineeIntern(data) {
 
 async function findTraineeInternById(id) {
   const db = getDB();
-  const [rows] = await db.execute(`SELECT ${traineeInternFields} FROM trainee_intern WHERE id = ? LIMIT 1`, [id]);
+  const [rows] = await db.execute(`SELECT ${traineeInternFields} FROM trainee_intern ti WHERE id = ? LIMIT 1`, [id]);
   return rows[0] || null;
 }
 
 async function findTraineeInternByUUID(uuid) {
   const db = getDB();
-  const [rows] = await db.execute(`SELECT ${traineeInternFields} FROM trainee_intern WHERE uuid = ? LIMIT 1`, [uuid]);
+  const [rows] = await db.execute(`SELECT ${traineeInternFields} FROM trainee_intern ti WHERE uuid = ? LIMIT 1`, [uuid]);
   return rows[0] || null;
 }
 
@@ -99,7 +101,7 @@ async function listTraineeInterns({ page, limit, search, type, status }) {
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   const [rows] = await db.execute(
-    `SELECT ${traineeInternFields} FROM trainee_intern ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    `SELECT ${traineeInternFields} FROM trainee_intern ti ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...values, limit, offset]
   );
   const [countRows] = await db.execute(`SELECT COUNT(*) AS total FROM trainee_intern ${where}`, values);

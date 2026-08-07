@@ -448,7 +448,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-            {activeAssignment ? 'Reassign Employee' : 'Assign Employee'}
+            Assign Employee
           </button>
         </div>
       </div>
