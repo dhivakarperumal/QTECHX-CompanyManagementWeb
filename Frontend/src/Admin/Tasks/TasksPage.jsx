@@ -1103,6 +1103,15 @@ export default function TasksPage({ initialPageKey = null }) {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={visibleTasks.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          )}
         </div>
       )}
 
