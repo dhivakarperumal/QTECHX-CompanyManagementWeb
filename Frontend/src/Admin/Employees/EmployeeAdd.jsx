@@ -9,8 +9,8 @@ const customSelectStyles = {
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -412,7 +412,28 @@ const EmployeeAdd = () => {
     fetchEmployee();
   }, [id, isEditMode]);
 
-  const departments = ["Frontend", "Backend"];
+  const departments = [
+    "Frontend Developer",
+    "Backend Developer",
+    "Full Stack Developer",
+    "Web Developer",
+    "Mobile App Developer",
+    "UI/UX Designer",
+    "Figma Designer",
+    "Graphic Designer",
+    "Video Editor",
+    "Digital Marketing Executive",
+    "SEO Specialist",
+    "HR Executive",
+    "Recruiter",
+    "Technical Support Engineer",
+    "Business Development Executive",
+    "Accountant",
+    "Office Administrator",
+    "Software Architect",
+    "AI/ML Engineer",
+    "Data Analyst",
+  ];
 
   const validateField = (name, value) => {
     if (!value) return "";
