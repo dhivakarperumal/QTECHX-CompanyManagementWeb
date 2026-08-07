@@ -5,8 +5,9 @@ import { useAuth } from '../../PrivateRouter/AuthContext';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import {
-  GraduationCap, Plus, Edit2, Trash2, Loader2, Save, X,
-  Search, UploadCloud, UserCheck, Eye, RefreshCw, Users, Activity, BookOpen, TrendingUp
+  Users, Activity, GraduationCap, TrendingUp, Search, Plus, 
+  Edit2, Trash2, X, UploadCloud, RefreshCw, UserCheck, 
+  ClipboardList, Clock, CheckCircle, Loader, Loader2, Save, Eye, BookOpen
 } from 'lucide-react';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 import EmployeeTraineeTaskAssign from './TraineeTaskAssign';
@@ -109,10 +110,12 @@ const TraineeTaskMaster = () => {
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   // ── state ──
-  const [trainees, setTrainees]     = useState([]);
-  const [loadingT, setLoadingT]     = useState(true);
-  const [tasks, setTasks]           = useState([]);
+  const [trainees, setTrainees] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [loadingT, setLoadingT] = useState(true);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -156,7 +159,25 @@ const TraineeTaskMaster = () => {
     }
   };
 
-  useEffect(() => { fetchTrainees(); fetchTasks(); }, [employeeId, userId]);
+  const fetchAssignments = async () => {
+    try {
+      setLoadingAssignments(true);
+      const params = new URLSearchParams();
+      if (employeeId) {
+        params.append('employee_id', employeeId);
+        params.append('created_by', employeeId);
+      }
+      const res = await api.get(`/trainee-task-assignments${params.toString() ? `?${params}` : ''}`);
+      setAssignments(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error('fetchAssignments', e);
+      toast.error('Failed to load assignments');
+    } finally {
+      setLoadingAssignments(false);
+    }
+  };
+
+  useEffect(() => { fetchTrainees(); fetchTasks(); fetchAssignments(); }, [employeeId, userId]);
 
   // ── filtered trainees ──
   const filteredTrainees = useMemo(() => {
@@ -169,16 +190,13 @@ const TraineeTaskMaster = () => {
   }, [trainees, searchTerm, typeFilter]);
 
   // ── stats ──
+  const totalTasks = assignments.length;
+  const pendingTasks = assignments.filter(a => a.status === 'Pending').length;
+  const inProgressTasks = assignments.filter(a => a.status === 'In Progress').length;
+  const completedTasks = assignments.filter(a => a.status === 'Completed').length;
+
   const totalMembers = trainees.length;
-  const activeMembers = trainees.filter(t => (t.status || '').toLowerCase() === 'active').length;
-  const traineeCount = trainees.filter(t => (t.type || '').toLowerCase() === 'trainee').length;
-  const internCount  = trainees.filter(t => (t.type || '').toLowerCase() === 'intern').length;
-
   const filteredTotalMembers = filteredTrainees.length;
-  const filteredActiveMembers = filteredTrainees.filter(t => (t.status || '').toLowerCase() === 'active').length;
-  const filteredTraineeCount = filteredTrainees.filter(t => (t.type || '').toLowerCase() === 'trainee').length;
-  const filteredInternCount  = filteredTrainees.filter(t => (t.type || '').toLowerCase() === 'intern').length;
-
   const hasMemberFilters = Boolean(searchTerm.trim() || typeFilter !== 'All');
 
   // ── filtered tasks ──
@@ -250,7 +268,7 @@ const TraineeTaskMaster = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => { fetchTrainees(); fetchTasks(); }}
+          <button onClick={() => { fetchTrainees(); fetchTasks(); fetchAssignments(); }}
             className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition" title="Refresh">
             <RefreshCw size={16} />
           </button>
@@ -268,10 +286,10 @@ const TraineeTaskMaster = () => {
 
       {/* ── Stat cards ── */}
       <div className="flex flex-wrap gap-3">
-        <StatCard icon={Users}      iconClass="bg-blue-500/15 text-blue-400"    label="Total Members" value={hasMemberFilters ? filteredTotalMembers : totalMembers} />
-        <StatCard icon={Activity}   iconClass="bg-emerald-500/15 text-emerald-400" label="Active"     value={hasMemberFilters ? filteredActiveMembers : activeMembers} />
-        <StatCard icon={GraduationCap} iconClass="bg-orange-500/15 text-orange-500" label="Trainees"  value={hasMemberFilters ? filteredTraineeCount : traineeCount} />
-        <StatCard icon={TrendingUp} iconClass="bg-purple-500/15 text-purple-400" label="Interns"      value={hasMemberFilters ? filteredInternCount : internCount} />
+        <StatCard icon={ClipboardList} iconClass="bg-blue-500/15 text-blue-400"    label="Total Tasks"     value={totalTasks} />
+        <StatCard icon={Clock}         iconClass="bg-orange-500/15 text-orange-500" label="Pending Task"    value={pendingTasks} />
+        <StatCard icon={Loader}        iconClass="bg-purple-500/15 text-purple-400" label="In Processing"   value={inProgressTasks} />
+        <StatCard icon={CheckCircle}   iconClass="bg-emerald-500/15 text-emerald-400" label="Completed Task" value={completedTasks} />
       </div>
 
       {/* ── Search + filter ── */}
