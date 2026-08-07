@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -120,6 +121,9 @@ function Modal({ open, onClose, title, children }) {
 }
 
 const TraineeTaskAssign = () => {
+  const { user } = useAuth();
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
+
   const [assignments, setAssignments] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
@@ -146,10 +150,16 @@ const TraineeTaskAssign = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const traineeParams = new URLSearchParams();
+      const assignmentParams = new URLSearchParams();
+      if (employeeId) {
+        traineeParams.append('employee_id', employeeId);
+        assignmentParams.append('employee_id', employeeId);
+      }
       const [assignmentsRes, tasksRes, traineesRes] = await Promise.all([
-        api.get('/trainee-task-assignments'),
+        api.get(`/trainee-task-assignments${assignmentParams.toString() ? `?${assignmentParams.toString()}` : ''}`),
         api.get('/trainee-tasks'),
-        api.get('/trainee-intern')
+        api.get(`/trainee-intern${traineeParams.toString() ? `?${traineeParams.toString()}` : ''}`)
       ]);
       setAssignments(assignmentsRes.data);
       setTasks(tasksRes.data);
@@ -167,7 +177,7 @@ const TraineeTaskAssign = () => {
       await fetchData();
     };
     loadData();
-  }, []);
+  }, [employeeId]);
 
   const handleAssign = async (e) => {
     e.preventDefault();

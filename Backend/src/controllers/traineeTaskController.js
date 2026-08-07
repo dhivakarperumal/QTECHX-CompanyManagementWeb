@@ -87,24 +87,40 @@ exports.deleteTraineeTask = async (req, res) => {
 
 exports.getAssignments = async (req, res) => {
   try {
-    const { trainee_id } = req.query;
+    const { trainee_id, employee_id } = req.query;
     const db = getDB();
-    
+
     let query = `
       SELECT tta.*, tt.task_name, tt.description, tt.document_path AS task_document_path, ti.full_name as trainee_name, ti.type as trainee_type
       FROM trainee_task_assignments tta
       JOIN trainee_tasks tt ON tta.trainee_task_id = tt.id
       JOIN trainee_intern ti ON tta.trainee_intern_id = ti.uuid
     `;
-    
+
     const params = [];
+    const conditions = [];
+
+    if (employee_id) {
+      query += `
+        JOIN trainee_employee_assignments tea
+          ON tea.trainee_id = tta.trainee_intern_id
+          AND tea.status = 'Active'
+      `;
+      conditions.push(`tea.employee_id = ?`);
+      params.push(employee_id);
+    }
+
     if (trainee_id) {
-      query += ` WHERE tta.trainee_intern_id = ? `;
+      conditions.push(`tta.trainee_intern_id = ?`);
       params.push(trainee_id);
     }
-    
+
+    if (conditions.length) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
     query += ` ORDER BY tta.created_at DESC `;
-    
+
     const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -120,6 +121,9 @@ function Modal({ open, onClose, title, children }) {
 }
 
 const TraineeTaskMaster = () => {
+  const { user } = useAuth();
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -138,7 +142,9 @@ const TraineeTaskMaster = () => {
 
   const fetchTrainees = async () => {
     try {
-      const response = await api.get('/trainee-intern');
+      const params = new URLSearchParams();
+      if (employeeId) params.append('employee_id', employeeId);
+      const response = await api.get(`/trainee-intern${params.toString() ? `?${params.toString()}` : ''}`);
       setTrainees(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching trainees:', error);
@@ -161,7 +167,7 @@ const TraineeTaskMaster = () => {
   useEffect(() => {
     fetchTasks();
     fetchTrainees();
-  }, []);
+  }, [employeeId]);
 
   const getDocumentUrl = (documentPath) => {
     if (!documentPath) return null;
