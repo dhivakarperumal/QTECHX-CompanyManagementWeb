@@ -97,7 +97,9 @@ async function getDashboardMetrics(req, res) {
       "SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
       [month, year]
     );
-    const currentMonthIncome = (parseFloat(currentIncRows[0]?.total) || 0) + (parseFloat(currentProjectPaymentRows[0]?.total) || 0);
+    const currentMonthIncomes = parseFloat(currentIncRows[0]?.total) || 0;
+    const currentMonthProjectPayments = parseFloat(currentProjectPaymentRows[0]?.total) || 0;
+    const currentMonthIncome = currentMonthIncomes + currentMonthProjectPayments;
 
     // New Stats for UI update
     const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");
@@ -133,6 +135,8 @@ async function getDashboardMetrics(req, res) {
       recentActivity: recentRows,
       overviewData: overviewRows,
       currentMonthIncome,
+      currentMonthIncomes,
+      currentMonthProjectPayments,
       clientStats: { total: totalClients, breakdown: clientRows, pendingFollowUps },
       traineeStats: traineeTypeRows,
       projectStats: projectStatusRows,

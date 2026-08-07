@@ -377,6 +377,8 @@ const AdminDashboard = () => {
 
   const TARGET_REVENUE = 500000;
   const currentIncome = dashboard ? safeNumber(dashboard.currentMonthIncome) : 0;
+  const currentProjectPayments = dashboard ? safeNumber(dashboard.currentMonthProjectPayments) : 0;
+  const currentIncomes = dashboard ? safeNumber(dashboard.currentMonthIncomes) : 0;
   const targetPercentage = Math.min(Math.round((currentIncome / TARGET_REVENUE) * 100), 100);
 
   const upcomingEvents = (dashboard?.upcomingEvents || []).map(e => {
@@ -449,45 +451,44 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="relative z-10 grid grid-cols-1 gap-4 flex-1">
-              <div className="rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 to-transparent pt-6 px-6 pb-4 shadow-md shadow-black/20 flex flex-col justify-center relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
-                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 blur-2xl rounded-full group-hover:bg-emerald-500/30 transition-colors" />
-                
-                <div className="absolute bottom-0 left-0 right-0 h-24 opacity-60 pointer-events-none">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="relative z-10 flex items-start justify-between gap-3 mb-3">
-                  <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Current Month Income</p>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 shadow-inner">
-                    <DollarSign size={18} />
+            <div className="grid grid-cols-1 gap-4 flex-1">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-sky-500/15 bg-sky-500/10 p-6 shadow-md shadow-black/20 flex flex-col justify-between overflow-hidden group hover:border-sky-500/30 transition-colors">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Project Payments</p>
+                      <p className="text-sm text-white/40 mt-1">Collected this month</p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500/20 text-sky-400 shadow-inner">
+                      <DollarSign size={18} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthProjectPayments).toLocaleString('en-IN') : 0}</p>
+                    {/* <p className="mt-3 text-[11px] text-white/40">From <button onClick={() => navigate('/admin/expenses/project-payment')} className="text-sky-300 hover:text-sky-200 underline">Project Payment</button> page</p> */}
                   </div>
                 </div>
-                <div className="relative z-10 flex items-end gap-3">
-                  <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthIncome).toLocaleString('en-IN') : 0}</p>
-                </div>
-                <div className="relative z-10 mt-4 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
-                    <TrendingUp size={12} /> +12%
-                  </span>
-                  <span className="text-[11px] text-white/40">vs last month</span>
+                <div className="rounded-[1.5rem] border border-emerald-500/15 bg-emerald-500/10 p-6 shadow-md shadow-black/20 flex flex-col justify-between overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em] font-medium">Other Incomes</p>
+                      <p className="text-sm text-white/40 mt-1">Recorded this month</p>
+                    </div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 shadow-inner">
+                      <DollarSign size={18} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthIncomes).toLocaleString('en-IN') : 0}</p>
+                    {/* <p className="mt-3 text-[11px] text-white/40">From <button onClick={() => navigate('/admin/expenses/incomes')} className="text-emerald-300 hover:text-emerald-200 underline">Income</button> page</p> */}
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="rounded-[1.25rem] border border-rose-500/10 bg-rose-500/[0.03] p-4 shadow-sm hover:bg-rose-500/[0.05] transition-colors">
                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Monthly Payroll</p>
-                   <p className="text-xl font-bold text-rose-300">₹{dashboard ? formatPayroll(dashboard.monthlyPayroll) : 0}</p>
+                   <p className="text-xl font-bold text-rose-300">{dashboard ? formatPayroll(dashboard.monthlyPayroll) : 0}</p>
                 </div>
                 <div className="rounded-[1.25rem] border border-blue-500/10 bg-blue-500/[0.03] p-4 shadow-sm hover:bg-blue-500/[0.05] transition-colors">
                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Net Est. Profit</p>
