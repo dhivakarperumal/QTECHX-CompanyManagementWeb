@@ -214,6 +214,8 @@ const AttendancePage = () => {
     updated_at: new Date().toISOString()
   }));
 
+  const isSingleDay = startDate === endDate;
+
   return (
     <div className="space-y-6 text-white pb-10">
       
@@ -349,15 +351,24 @@ const AttendancePage = () => {
             <thead className="bg-white/5 text-white/50 font-medium border-b border-white/10">
               <tr>
                 <th className="py-3 px-4 rounded-tl-lg whitespace-nowrap">Employee</th>
-                <th className="py-3 px-4 whitespace-nowrap">Start Time</th>
-                <th className="py-3 px-4 whitespace-nowrap">End Time</th>
-                <th className="py-3 px-4 whitespace-nowrap">Break Start</th>
-                <th className="py-3 px-4 whitespace-nowrap">Break End</th>
-                <th className="py-3 px-4 whitespace-nowrap">Working Hrs</th>
-                <th className="py-3 px-4 whitespace-nowrap">Late Entry</th>
-                <th className="py-3 px-4 whitespace-nowrap">Early Exit</th>
-                <th className="py-3 px-4 whitespace-nowrap">Overtime</th>
-                <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Status</th>
+                {isSingleDay ? (
+                  <>
+                    <th className="py-3 px-4 whitespace-nowrap">Start Time</th>
+                    <th className="py-3 px-4 whitespace-nowrap">End Time</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Break Start</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Break End</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Working Hrs</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Late Entry</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Early Exit</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Overtime</th>
+                    <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Status</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="py-3 px-4 whitespace-nowrap">Present Days</th>
+                    <th className="py-3 px-4 whitespace-nowrap rounded-tr-lg">Absent Days</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -366,23 +377,40 @@ const AttendancePage = () => {
                   <td className="py-3 px-4 font-medium text-white whitespace-nowrap">
                     {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span>
                   </td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_in_time || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_out_time || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_start_time || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_end_time || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.working_hours || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.late_entry || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.early_exit || '--'}</td>
-                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.overtime || '--'}</td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
-                      row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
-                      'bg-slate-500/10 text-slate-300'
-                    }`}>
-                      {row.today_status || 'Unknown'}
-                    </span>
-                  </td>
+                  {isSingleDay ? (
+                    <>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_in_time || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.check_out_time || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_start_time || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.break_end_time || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.working_hours || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.late_entry || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.early_exit || '--'}</td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.overtime || '--'}</td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                          row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
+                          row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
+                          'bg-slate-500/10 text-slate-300'
+                        }`}>
+                          {row.today_status || 'Unknown'}
+                        </span>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-md text-[12px] font-bold bg-emerald-500/10 text-emerald-400">
+                          {row.present_days || 0}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-white/60 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-md text-[12px] font-bold bg-rose-500/10 text-rose-400">
+                          {row.absent_days || 0}
+                        </span>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -395,7 +423,7 @@ const AttendancePage = () => {
         
         {/* Trend */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-           <h3 className="text-lg font-bold text-white mb-6">Attendance Trend <span className="text-xs font-normal text-white/40">(This Week)</span></h3>
+           <h3 className="text-lg font-bold text-white mb-6">Attendance Trend <span className="text-xs font-normal text-white/40">({dateFilter})</span></h3>
            <div className="h-48 w-full">
              {trendData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
