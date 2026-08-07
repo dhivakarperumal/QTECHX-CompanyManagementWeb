@@ -1,9 +1,9 @@
-﻿const express = require('express');
+const express = require('express');
 const { authenticate, authorize } = require('../security/authMiddleware');
 const { upload } = require('../config/multerConfig');
 const {
   createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler, getProjectByIdHandler,
-  updateProjectHandler, deleteProjectHandler,
+  updateProjectHandler, deleteProjectHandler, getProjectProgressHandler,
 } = require('../controllers/projectController');
 const {
   assignHandler,
@@ -45,6 +45,7 @@ router.put(   '/:id/assignments', authenticate, managers, updateAssignmentsHandl
 router.put(   '/:id/assignments/:assignmentId', authenticate, managers, updateAssignmentHandler);
 router.delete('/:id/assignments', authenticate, managers, unassignHandler);
 
+router.get(   '/:id/progress', authenticate, allStaff, getProjectProgressHandler);
 router.get(   '/:id', authenticate, allStaff, getProjectByIdHandler);
 router.put(   '/:id', authenticate, managers, uploadFields, updateProjectHandler);
 router.delete('/:id', authenticate, admins,   deleteProjectHandler);

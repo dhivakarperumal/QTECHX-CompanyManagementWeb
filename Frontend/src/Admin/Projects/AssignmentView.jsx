@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, FolderKanban, Users, User,
@@ -81,8 +81,16 @@ export default function AssignmentView() {
   const [activeTab, setActiveTab] = useState('overview');
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removing, setRemoving] = useState(false);
+  const [progressData, setProgressData] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
+  const fetchProgress = useCallback(async (projectId) => {
+    try {
+      const { data } = await api.get(`/projects/${projectId}/progress`);
+      if (data.success) setProgressData(data);
+    } catch (e) { console.error('fetchProgress error', e); }
+  }, []);
 
   const fetchData = async () => {
     setLoading(true); setError('');
@@ -93,6 +101,7 @@ export default function AssignmentView() {
       ]);
       if (!projRes.data.success) throw new Error(projRes.data.message || 'Project not found');
       setProject(projRes.data.data);
+      fetchProgress(id);
 
       const d = assignRes.data;
       let emps = [];
@@ -273,25 +282,63 @@ export default function AssignmentView() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
                   <TrendingUp size={16} className="text-emerald-400" />
-                  <h3 className="text-base font-semibold">Progress</h3>
+                  <h3 className="text-base font-semibold">Project Progress</h3>
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between text-sm text-white/60 mb-1">
-                      <span>Overall</span>
-                      <span>{project.overall_progress || 0}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/10">
-                      <div className="h-2 rounded-full bg-orange-500" style={{ width: `${project.overall_progress || 0}%` }} />
-                    </div>
+
+                {progressData?.total > 0 && progressData?.progress >= 100 ? (
+                  <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-emerald-400 font-bold text-sm">
+                    <CheckCircle size={18} />
+                    ✅ Project Completed (100%)
                   </div>
-                  <InfoCard title="Cost"                 value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
-                  <InfoCard title="Start Date"           value={fmtDate(project.project_start_date)} icon={CalendarDays} />
-                  <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
-                </div>
+                ) : (() => {
+                  const pct = progressData?.progress ?? 0;
+                  const barColor = pct >= 70 ? '#22c55e' : pct >= 40 ? '#f97316' : '#ef4444';
+                  return (
+                    <>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-white/50">Overall</span>
+                        <span className="font-bold text-lg" style={{ color: barColor }}>{pct}%</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-1000"
+                          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}aa, ${barColor})` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-white/30 mt-1">
+                        <span>0%</span><span>50%</span><span>100%</span>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {(progressData?.total ?? 0) > 0 ? (
+                  <div className="grid grid-cols-4 gap-2 pt-1">
+                    {[
+                      { label: 'Total',       value: progressData?.total,      color: 'border-white/10 text-white/80' },
+                      { label: 'Completed',   value: progressData?.completed,  color: 'border-emerald-500/30 text-emerald-400' },
+                      { label: 'Remaining',   value: progressData?.remaining,  color: 'border-orange-500/30 text-orange-400' },
+                      { label: 'In Progress', value: progressData?.inProgress, color: 'border-blue-500/30 text-blue-400' },
+                      { label: 'Pending',     value: progressData?.pending,    color: 'border-yellow-500/30 text-yellow-400' },
+                      { label: 'On Hold',     value: progressData?.onHold,     color: 'border-violet-500/30 text-violet-400' },
+                      { label: 'Cancelled',   value: progressData?.cancelled,  color: 'border-rose-500/30 text-rose-400' },
+                    ].map(s => (
+                      <div key={s.label} className={`flex flex-col items-center justify-center rounded-xl border p-2 ${s.color}`}>
+                        <span className="text-sm font-bold">{s.value ?? 0}</span>
+                        <span className="text-[9px] uppercase tracking-wide mt-0.5 opacity-70 text-center">{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/30 text-center py-1">No tasks assigned yet.</p>
+                )}
+
+                <InfoCard title="Cost"                 value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
+                <InfoCard title="Start Date"           value={fmtDate(project.project_start_date)} icon={CalendarDays} />
+                <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
               </div>
             </div>
 

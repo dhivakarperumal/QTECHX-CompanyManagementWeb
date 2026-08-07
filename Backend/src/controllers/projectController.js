@@ -1,4 +1,4 @@
-﻿const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { getDB } = require('../config/db');
 const {
@@ -229,7 +229,65 @@ async function deleteProjectHandler(req, res) {
   }
 }
 
+/** GET /api/projects/:id/progress */
+async function getProjectProgressHandler(req, res) {
+  try {
+    const project = await findProjectByUUID(req.params.id);
+    if (!project) return fail(res, 'Project not found', 404);
+
+    const db = getDB();
+    const [rows] = await db.execute(
+      'SELECT task_details FROM employee_task_assignments WHERE project_id = ?',
+      [project.id]
+    );
+
+    let total = 0;
+    let completed = 0;
+    let inProgress = 0;
+    let pending = 0;
+    let onHold = 0;
+    let cancelled = 0;
+
+    rows.forEach(row => {
+      let tasks = [];
+      try {
+        tasks = typeof row.task_details === 'string' ? JSON.parse(row.task_details) : (row.task_details || []);
+      } catch (e) {}
+
+      if (Array.isArray(tasks)) {
+        tasks.forEach(task => {
+          total++;
+          const status = task.status || 'Pending';
+          if (status === 'Completed') completed++;
+          else if (status === 'In Progress') inProgress++;
+          else if (status === 'Pending') pending++;
+          else if (status === 'On Hold') onHold++;
+          else if (status === 'Cancelled') cancelled++;
+        });
+      }
+    });
+
+    const remaining = total - completed;
+    let progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+    if (progress > 100) progress = 100;
+
+    return ok(res, {
+      total,
+      completed,
+      inProgress,
+      pending,
+      onHold,
+      cancelled,
+      remaining,
+      progress
+    });
+  } catch (err) {
+    console.error('getProjectProgressHandler:', err);
+    return fail(res, 'Failed to calculate project progress', 500, err.message);
+  }
+}
+
 module.exports = {
   createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler,
-  getProjectByIdHandler, updateProjectHandler, deleteProjectHandler,
+  getProjectByIdHandler, updateProjectHandler, deleteProjectHandler, getProjectProgressHandler,
 };

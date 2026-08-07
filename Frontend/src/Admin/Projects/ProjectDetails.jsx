@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2,
@@ -26,6 +26,105 @@ const InfoCard = ({ title, value, icon: Icon }) => (
     <div className="text-white font-semibold text-sm leading-6">{value || '—'}</div>
   </div>
 );
+
+const StatPill = ({ label, value, color }) => (
+  <div className={`flex flex-col items-center justify-center rounded-xl border p-3 ${color}`}>
+    <span className="text-lg font-bold">{value}</span>
+    <span className="text-[10px] uppercase tracking-wider mt-0.5 opacity-70">{label}</span>
+  </div>
+);
+
+function ProgressSection({ projectId }) {
+  const [progress, setProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProgress = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/projects/${projectId}/progress`);
+      if (data.success) setProgress(data);
+    } catch (err) {
+      console.error('Failed to load progress:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchProgress();
+    const interval = setInterval(fetchProgress, 15000);
+    return () => clearInterval(interval);
+  }, [fetchProgress]);
+
+  if (loading && !progress) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 flex items-center justify-center min-h-[120px]">
+        <Loader2 size={20} className="animate-spin text-white/30" />
+      </div>
+    );
+  }
+
+  const pct = progress?.progress ?? 0;
+  const total = progress?.total ?? 0;
+  const completed = progress?.completed ?? 0;
+  const inProgress = progress?.inProgress ?? 0;
+  const pending = progress?.pending ?? 0;
+  const onHold = progress?.onHold ?? 0;
+  const cancelled = progress?.cancelled ?? 0;
+  const remaining = progress?.remaining ?? 0;
+
+  const barColor = pct >= 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#3b82f6' : '#ef4444';
+  const isFullyCompleted = pct >= 100 && total > 0;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
+      <div className="flex items-center gap-2 mb-1">
+        <TrendingUp size={16} className="text-emerald-400" />
+        <h2 className="text-base font-semibold">Project Progress</h2>
+        {loading && <Loader2 size={12} className="animate-spin text-white/30 ml-auto" />}
+      </div>
+
+      {isFullyCompleted ? (
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-emerald-400 font-bold text-sm">
+          <CheckCircle size={18} />
+          ✅ Project Completed (100%)
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between text-sm mb-1">
+            <span className="text-white/50">Overall Progress</span>
+            <span className="font-bold text-lg" style={{ color: barColor }}>{pct}%</span>
+          </div>
+          <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-1000"
+              style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}aa, ${barColor})` }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-white/30 mt-1">
+            <span>0%</span><span>50%</span><span>100%</span>
+          </div>
+        </>
+      )}
+
+      {total === 0 ? (
+        <p className="text-xs text-white/30 text-center py-2">No tasks assigned yet.</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <StatPill label="Total"       value={total}      color="border-white/10 text-white/80" />
+          <StatPill label="Completed"   value={completed}  color="border-emerald-500/30 text-emerald-400" />
+          <StatPill label="Remaining"   value={remaining}  color="border-orange-500/30 text-orange-400" />
+          <StatPill label="In Progress" value={inProgress} color="border-blue-500/30 text-blue-400" />
+          <StatPill label="Pending"     value={pending}    color="border-yellow-500/30 text-yellow-400" />
+          <StatPill label="On Hold"     value={onHold}     color="border-violet-500/30 text-violet-400" />
+          <div className="col-span-3">
+            <StatPill label="Cancelled" value={cancelled}  color="border-rose-500/30 text-rose-400" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProjectDetails() {
   const { id } = useParams();
@@ -113,26 +212,16 @@ export default function ProjectDetails() {
             <InfoCard title="Client"       value={project.client_name} icon={Users} />
           </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp size={16} className="text-emerald-400" />
-            <h2 className="text-base font-semibold">Progress</h2>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-sm text-white/60 mb-1">
-                <span>Overall</span>
-                <span>{project.overall_progress || 0}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/10">
-                <div className="h-2 rounded-full bg-orange-500" style={{ width: `${project.overall_progress || 0}%` }} />
-              </div>
-            </div>
-            <InfoCard title="Cost"                 value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
-            <InfoCard title="Start Date"           value={fmtDate(project.project_start_date)} icon={CalendarDays} />
-            <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
-          </div>
-        </div>
+
+        {/* Dynamic Progress Section */}
+        <ProgressSection projectId={id} />
+      </div>
+
+      {/* Dates */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <InfoCard title="Start Date"           value={fmtDate(project.project_start_date)} icon={CalendarDays} />
+        <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />
+        <InfoCard title="Total Cost"           value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
       </div>
 
       {/* Client & Tech */}

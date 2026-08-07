@@ -179,6 +179,7 @@ const mapTaskToViewModel = (task) => ({
   progress: Number(task.progress || 0),
   startDate: formatDateForInput(task.start_date),
   dueDate: task.due_date !== undefined && task.due_date !== null ? formatDateForInput(task.due_date) : "—",
+  createdAt: task.created_at || task.assignment_date || task.createdAt || null,
   priority: task.priority || "Medium",
   description: task.description || "",
   estimatedHours: task.estimated_hours || "",
@@ -199,6 +200,7 @@ const EMPTY_TASK_FORM = {
   start_date: '',
   due_date: '',
   estimated_hours: '',
+  progress: 0,
   priority: '',
   attachments: [],
 };
@@ -453,6 +455,7 @@ export default function TasksPage({ initialPageKey = null }) {
           start_date: task.startDate || '',
           due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
+          progress: task.progress || 0,
           priority: task.priority || '',
           attachments: task.attachments || [],
         });
@@ -700,7 +703,7 @@ export default function TasksPage({ initialPageKey = null }) {
     else if (pageKey === "pending") baseTasks = baseTasks.filter((task) => !['Completed', 'Cancelled'].includes(task.status));
     else if (pageKey === "cancelled") baseTasks = baseTasks.filter((task) => task.status === "Cancelled");
     else if (pageKey === "today") baseTasks = baseTasks.filter((task) => isSameDay(task.dueDate) || isSameDay(task.startDate));
-    else if (pageKey === "new") baseTasks = baseTasks.filter((task) => isSameDay(task.startDate) || isSameDay(task.dueDate));
+    else if (pageKey === "new") baseTasks = baseTasks.filter((task) => isSameDay(task.createdAt));
 
     // Apply search
     if (search.trim()) {
@@ -745,16 +748,17 @@ export default function TasksPage({ initialPageKey = null }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            id="btn-assign-task"
-            onClick={() => navigate('/admin/tasks/assign')}
-             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-          >
-            <UserPlus size={15} /> Task Assign
-          </button>
-         
+          {pageKey !== 'completed' && pageKey !== 'cancelled' && (
+            <button
+              type="button"
+              id="btn-assign-task"
+              onClick={() => navigate('/admin/tasks/assign')}
+               className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+            >
+              <UserPlus size={15} /> Task Assign
+            </button>
+          )}
         </div>
       </div>
 
@@ -959,10 +963,12 @@ export default function TasksPage({ initialPageKey = null }) {
                           className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 border border-transparent hover:border-blue-500/25 flex items-center justify-center transition">
                           <Eye size={13} />
                         </button>
-                        <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
-                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
-                          <Edit3 size={13} />
-                        </button>
+                        {pageKey === 'today' && (
+                          <button type="button" onClick={() => handleEditTask(task.uuid)} title="Edit task" aria-label="Edit task"
+                            className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
+                            <Edit3 size={13} />
+                          </button>
+                        )}
                         <button type="button" onClick={() => handleDeleteTask(task.uuid)} title="Delete task" aria-label="Delete task"
                           className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition">
                           <Trash2 size={13} />
@@ -1044,10 +1050,12 @@ export default function TasksPage({ initialPageKey = null }) {
                         className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/15 text-white/40 hover:text-blue-400 flex items-center justify-center transition">
                         <Eye size={13} />
                       </button>
-                      <button onClick={() => handleEditTask(task.uuid)}
-                        className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition">
-                        <Edit3 size={13} />
-                      </button>
+                      {pageKey === 'today' && (
+                        <button onClick={() => handleEditTask(task.uuid)}
+                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition">
+                          <Edit3 size={13} />
+                        </button>
+                      )}
                       <button onClick={() => handleDeleteTask(task.uuid)}
                         className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 flex items-center justify-center transition">
                         <Trash2 size={13} />
@@ -1319,6 +1327,9 @@ export default function TasksPage({ initialPageKey = null }) {
                 isSearchable={false}
               />
             </FieldBox>
+            <FieldBox label="Progress (%)">
+              <input type="number" min="0" max="100" value={taskUpdateForm.progress} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, progress: e.target.value }))} className={inputCls} placeholder="e.g. 50" />
+            </FieldBox>
             <FieldBox label="Start Date">
               <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
             </FieldBox>
@@ -1470,6 +1481,9 @@ export default function TasksPage({ initialPageKey = null }) {
               styles={customSelectStyles}
               isSearchable={false}
             />
+          </FieldBox>
+          <FieldBox label="Progress (%)">
+            <input type="number" min="0" max="100" value={taskForm.progress} onChange={(e) => setTaskForm((p) => ({ ...p, progress: e.target.value }))} className={inputCls} placeholder="e.g. 50" />
           </FieldBox>
           <FieldBox label="Start Date">
             <input type="date" value={taskForm.start_date} onChange={(e) => setTaskForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />

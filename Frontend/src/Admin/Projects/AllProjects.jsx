@@ -177,6 +177,7 @@ export default function AllProjects() {
   const [statusModalLoading, setStatusModalLoading] = useState(false);
   const [statusModalError, setStatusModalError] = useState('');
   const [limit, setLimit] = useState(15);
+  const [progressMap, setProgressMap] = useState({});  // uuid -> progress%
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3500); };
 
@@ -213,9 +214,19 @@ export default function AllProjects() {
       if (statusFilter) p.append('current_status', statusFilter);
       const { data } = await api.get(`/projects?${p}`);
       if (data.success === false) throw new Error(data.message || 'Failed');
-      setProjects(data.data || []);
-      setTotal(data.pagination?.total ?? (data.data || []).length);
+      const projectList = data.data || [];
+      setProjects(projectList);
+      setTotal(data.pagination?.total ?? projectList.length);
       setTotalPages(data.pagination?.pages ?? 1);
+      // Batch-fetch progress for all visible projects
+      const progressResults = await Promise.allSettled(
+        projectList.map(proj =>
+          api.get(`/projects/${proj.uuid}/progress`).then(res => ({ uuid: proj.uuid, progress: res.data?.progress ?? 0 }))
+        )
+      );
+      const newMap = {};
+      progressResults.forEach(r => { if (r.status === 'fulfilled') newMap[r.value.uuid] = r.value.progress; });
+      setProgressMap(newMap);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load projects');
     } finally { setLoading(false); }
@@ -701,9 +712,9 @@ export default function AllProjects() {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                          <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${progressMap[p.uuid] ?? 0}%` }} />
                         </div>
-                        <span className="text-white/50 text-xs">{p.overall_progress || 0}%</span>
+                        <span className="text-white/50 text-xs">{progressMap[p.uuid] ?? '—'}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-3.5"><span className="text-white/35 text-xs">{fmtDate(p.project_start_date)}</span></td>
@@ -760,10 +771,10 @@ export default function AllProjects() {
               )}
               <div>
                 <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                  <span>Progress</span><span>{p.overall_progress || 0}%</span>
+                  <span>Progress</span><span>{progressMap[p.uuid] ?? 0}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                  <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${progressMap[p.uuid] ?? 0}%` }} />
                 </div>
               </div>
               <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">

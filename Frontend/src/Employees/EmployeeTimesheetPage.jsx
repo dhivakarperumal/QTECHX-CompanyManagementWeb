@@ -13,6 +13,7 @@ const STATUS_STYLES = {
 const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const value = status.toString().trim();
+  if (['Accepted'].includes(value)) return 'Accepted';
   if (['Pending', 'To Do'].includes(value)) return 'Pending';
   if (['In Progress', 'Progress'].includes(value)) return 'In Progress';
   if (['Completed', 'Done'].includes(value)) return 'Completed';

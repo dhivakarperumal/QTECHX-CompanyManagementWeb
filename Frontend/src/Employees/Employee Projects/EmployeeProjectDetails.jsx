@@ -281,6 +281,16 @@ export default function EmployeeProjectDetails() {
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [progressData, setProgressData] = useState(null);
+
+  const fetchProgress = useCallback(async (projectUUID) => {
+    try {
+      const { data } = await api.get(`/projects/${projectUUID}/progress`);
+      if (data.success) setProgressData(data);
+    } catch (e) {
+      console.error('Failed to fetch progress:', e);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -294,6 +304,7 @@ export default function EmployeeProjectDetails() {
         if (!projRes.data.success) throw new Error(projRes.data.message || 'Project not found');
         
         setProject(projRes.data.data);
+        await fetchProgress(id);
         
         const employees = assignRes.data?.assignedEmployees
                         || assignRes.data?.project?.employees
@@ -302,9 +313,6 @@ export default function EmployeeProjectDetails() {
         setAssignments(employees);
 
         let projTasks = tasksRes.data?.data || [];
-        // Filter tasks to only show tasks assigned to this employee if needed, 
-        // or let them see all if they are part of the project.
-        // If the user specifically wants "assigned tasks", we filter by their user_id:
         if (user?.user_id) {
           projTasks = projTasks.filter(t => t.assigned_to === user.user_id || t.assigned_to === user.employee_id || !t.assigned_to);
         }
@@ -316,9 +324,16 @@ export default function EmployeeProjectDetails() {
         setLoading(false);
       }
     })();
-  }, [id, user]);
+  }, [id, user, fetchProgress]);
 
-  /* ── loading ── */
+  // Poll progress every 15 seconds for real-time updates
+  useEffect(() => {
+    if (!id) return;
+    const interval = setInterval(() => fetchProgress(id), 15000);
+    return () => clearInterval(interval);
+  }, [id, fetchProgress]);
+
+
   if (loading) return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -341,8 +356,9 @@ export default function EmployeeProjectDetails() {
     </div>
   );
 
-  const progress = Number(project.overall_progress) || 0;
-  const progressColor = progress >= 80 ? '#22c55e' : progress >= 50 ? '#f97316' : '#ef4444';
+  const pct = progressData?.progress ?? 0;
+  const progressColor = pct >= 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#3b82f6' : '#ef4444';
+  const isFullyCompleted = pct >= 100 && (progressData?.total ?? 0) > 0;
 
   return (
     <div className="pb-12 text-white">
@@ -403,9 +419,9 @@ export default function EmployeeProjectDetails() {
               {/* Top stat strip */}
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { label:'Progress',   value:`${progress}%`,                         icon:BarChart3,   cls:'text-emerald-400', bg:'bg-emerald-500/10' },
+                  { label:'Progress',   value:`${pct}%`,                               icon:BarChart3,   cls:'text-emerald-400', bg:'bg-emerald-500/10' },
                   { label:'Budget',     value:formatCurrency(project.total_project_cost), icon:DollarSign,  cls:'text-blue-400',    bg:'bg-blue-500/10'    },
-                  { label:'Deadline',   value:fmtDate(project.estimated_completion_date), icon:Clock,    cls:'text-rose-400',    bg:'bg-rose-500/10'    },
+                  { label:'Deadline',   value:fmtDate(project.estimated_completion_date), icon:Clock,       cls:'text-rose-400',    bg:'bg-rose-500/10'    },
                 ].map(s => {
                   const Icon = s.icon;
                   return (
@@ -422,24 +438,60 @@ export default function EmployeeProjectDetails() {
                 })}
               </div>
 
-              {/* Progress bar */}
-              <div className="rounded-2xl border border-white/10 bg-[#111318] p-5">
-                <div className="flex items-center justify-between mb-3">
+              {/* Progress card — dynamic from employee_task_assignments */}
+              <div className="rounded-2xl border border-white/10 bg-[#111318] p-5 space-y-4">
+                <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <TrendingUp size={16} className="text-emerald-400" />
                     <span className="font-semibold text-sm">Overall Progress</span>
                   </div>
-                  <span className="text-2xl font-bold" style={{ color: progressColor }}>{progress}%</span>
+                  {isFullyCompleted ? (
+                    <span className="text-emerald-400 font-bold text-sm">100%</span>
+                  ) : (
+                    <span className="text-2xl font-bold" style={{ color: progressColor }}>{pct}%</span>
+                  )}
                 </div>
-                <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-1000"
-                    style={{ width:`${progress}%`, background:`linear-gradient(90deg, ${progressColor}cc, ${progressColor})` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-white/30">
-                  <span>0%</span><span>50%</span><span>100%</span>
-                </div>
+
+                {isFullyCompleted ? (
+                  <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-emerald-400 font-bold text-sm">
+                    <CheckCircle size={18} />
+                    ✅ Project Completed (100%)
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{ width:`${pct}%`, background:`linear-gradient(90deg, ${progressColor}cc, ${progressColor})` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1 text-xs text-white/30">
+                      <span>0%</span><span>50%</span><span>100%</span>
+                    </div>
+                  </>
+                )}
+
+                {/* Task breakdown stats */}
+                {(progressData?.total ?? 0) > 0 ? (
+                  <div className="grid grid-cols-4 gap-2 pt-1">
+                    {[
+                      { label: 'Total',       value: progressData?.total,      color: 'border-white/10 text-white/80' },
+                      { label: 'Completed',   value: progressData?.completed,  color: 'border-emerald-500/30 text-emerald-400' },
+                      { label: 'Remaining',   value: progressData?.remaining,  color: 'border-orange-500/30 text-orange-400' },
+                      { label: 'In Progress', value: progressData?.inProgress, color: 'border-blue-500/30 text-blue-400' },
+                      { label: 'Pending',     value: progressData?.pending,    color: 'border-yellow-500/30 text-yellow-400' },
+                      { label: 'On Hold',     value: progressData?.onHold,     color: 'border-violet-500/30 text-violet-400' },
+                      { label: 'Cancelled',   value: progressData?.cancelled,  color: 'border-rose-500/30 text-rose-400' },
+                    ].map(s => (
+                      <div key={s.label} className={`flex flex-col items-center justify-center rounded-xl border p-2 ${s.color}`}>
+                        <span className="text-base font-bold">{s.value ?? 0}</span>
+                        <span className="text-[9px] uppercase tracking-wide mt-0.5 opacity-70 text-center">{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/30 text-center py-1">No tasks assigned yet.</p>
+                )}
               </div>
 
               {/* 2-col: Description + Client & Team */}

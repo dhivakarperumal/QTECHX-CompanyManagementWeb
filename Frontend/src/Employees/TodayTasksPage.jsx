@@ -47,6 +47,7 @@ function TaskAvatar({ name, index }) {
 const STATUS_STYLES = {
   'Pending':     { pill: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',     dot: 'bg-amber-400' },
   'To Do':       { pill: 'bg-slate-500/15 text-slate-300 border border-slate-500/25',     dot: 'bg-slate-400' },
+  'Accepted':    { pill: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',         dot: 'bg-sky-400' },
   'In Progress': { pill: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',        dot: 'bg-blue-400' },
   'Review':      { pill: 'bg-violet-500/15 text-violet-300 border border-violet-500/30',  dot: 'bg-violet-400' },
   'Testing':     { pill: 'bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30', dot: 'bg-fuchsia-400' },
@@ -55,7 +56,7 @@ const STATUS_STYLES = {
   'Cancelled':   { pill: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',        dot: 'bg-rose-400' },
 };
 
-const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'Accepted', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 const PRIORITY_STYLES = {
   High: 'text-rose-300',
@@ -67,10 +68,13 @@ const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const v = status.toString().trim();
   if (['Pending', 'To Do'].includes(v)) return 'Pending';
+  if (['Accepted'].includes(v)) return 'Accepted';
   if (['In Progress', 'Progress'].includes(v)) return 'In Progress';
   if (['Completed', 'Done'].includes(v)) return 'Completed';
   return v;
 };
+
+const normalizeStatusForApi = (status) => normalizeStatus(status);
 
 const parseAttachments = (value) => {
   if (!value) return [];
@@ -98,9 +102,19 @@ const isSameDay = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return false;
   const today = new Date();
-  return date.getFullYear() === today.getFullYear()
-    && date.getMonth() === today.getMonth()
-    && date.getDate() === today.getDate();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return localDate.getTime() === localToday.getTime();
+};
+
+const getTodayTaskMatch = (task) => {
+  const candidates = [
+    task.assignment_date,
+    task.assigned_date,
+    task.created_at,
+  ].filter(Boolean);
+
+  return candidates.some((value) => isSameDay(value));
 };
 
 const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
@@ -155,13 +169,7 @@ export default function TodayTasksPage() {
         attachments: parseAttachments(task.attachments),
       }));
 
-      // Show tasks that have any date (due, start, assigned, or created) matching today
-      setTasks(all.filter(task =>
-        isSameDay(task.due_date) ||
-        isSameDay(task.assignment_date) ||
-        isSameDay(task.start_date) ||
-        isSameDay(task.created_at)
-      ));
+      setTasks(all.filter((task) => getTodayTaskMatch(task)));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load today tasks.');
       setTasks([]);
@@ -183,7 +191,7 @@ export default function TodayTasksPage() {
   const stats = useMemo(() => ({
     total: tasks.length,
     highPrio: tasks.filter(t => t.priority === 'High').length,
-    pending: tasks.filter(t => ['Pending', 'To Do'].includes(t.status)).length,
+    pending: tasks.filter(t => ['Pending', 'Accepted'].includes(t.status)).length,
     inProgress: tasks.filter(t => ['In Progress', 'Review', 'Testing'].includes(t.status)).length,
   }), [tasks]);
 
@@ -196,7 +204,7 @@ export default function TodayTasksPage() {
     try {
       setUpdatingId(task.uuid);
       const payload = {
-        status: nextStatus,
+        status: normalizeStatusForApi(nextStatus),
         completion_date: nextStatus === 'Completed' ? new Date().toISOString() : task.completion_date,
       };
 
@@ -244,7 +252,7 @@ export default function TodayTasksPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Today Tasks</h1>
-            <p className="text-xs text-white/35 mt-0.5">{stats.total} tasks due or assigned today</p>
+            <p className="text-xs text-white/35 mt-0.5">{stats.total} tasks assigned today</p>
           </div>
         </div>
         <button
@@ -432,7 +440,12 @@ export default function TodayTasksPage() {
                               e.target.value = '';
                             }} />
                           </label>
-                          {task.status !== 'Completed' && (
+                          {task.status === 'Accepted' && (
+                            <button type="button" title="Start task" onClick={() => updateTaskStatus(task, 'In Progress')} disabled={isUpdating} className="w-8 h-8 rounded-xl border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20 transition-all disabled:opacity-50">
+                              <Zap size={14} />
+                            </button>
+                          )}
+                          {task.status !== 'Completed' && task.status !== 'Accepted' && (
                             <button type="button" title="Mark complete" onClick={() => updateTaskStatus(task, 'Completed')} disabled={isUpdating} className="w-8 h-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50">
                               <CheckCircle2 size={14} />
                             </button>
@@ -504,7 +517,12 @@ export default function TodayTasksPage() {
                       e.target.value = '';
                     }} />
                   </label>
-                  {task.status !== 'Completed' && (
+                  {task.status === 'Accepted' && (
+                    <button type="button" title="Start task" onClick={() => updateTaskStatus(task, 'In Progress')} disabled={isUpdating} className="w-9 h-9 rounded-xl border border-blue-500/30 bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20 transition-all disabled:opacity-50">
+                      {isUpdating ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                    </button>
+                  )}
+                  {task.status !== 'Completed' && task.status !== 'Accepted' && (
                     <button type="button" title="Mark complete" disabled={isUpdating} onClick={() => updateTaskStatus(task, 'Completed')} className="w-9 h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50">
                       {isUpdating ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
                     </button>

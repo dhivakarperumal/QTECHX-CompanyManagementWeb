@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Select from 'react-select';
-import { CalendarClock, Search, Plus, Eye, Edit, RefreshCcw, History, Send, Download, Printer, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Clock3, XCircle } from 'lucide-react';
+import { CalendarClock, Search, Plus, Eye, Edit, RefreshCcw, History, Send, Download, Printer, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Clock3, XCircle, Grid3x3, List } from 'lucide-react';
 import api from '../../api';
 
 const customSelectStyles = {
@@ -94,6 +94,8 @@ const customSelectStyles = {
 const expiryTypeOptions = ['Hosting', 'Domain', 'SSL', 'Maintenance', 'License', 'Subscription', 'Support Plan'];
 const renewalStatusOptions = ['Active', 'Expiring Soon', 'Expired', 'Renewed'];
 const statusOptions = ['Active', 'Inactive'];
+const planNameOptions = ['Basic Plan', '6 Month Plan', 'Yearly Plan', 'Business Pro', 'Enterprise', 'Standard', 'Premium', 'Custom Plan'];
+const providerOptions = ['GoDaddy', 'AWS', 'Namecheap', 'HostGator', 'Bluehost', 'SiteGround', 'Cloudflare', 'Linode', 'DigitalOcean', 'Hostinger', 'DomainComme', 'Other'];
 
 function getBadgeClass(status) {
   if (!status) return 'bg-slate-700 text-slate-100';
@@ -127,6 +129,8 @@ export default function ProjectExpiryPage() {
   const [filters, setFilters] = useState({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false });
   const [form, setForm] = useState({ project_id: '', client_id: '', client_name: '', domain_name: '', expiry_type: 'Hosting', project_type: '', service_name: '', provider_name: '', plan_name: '', price_per_month: '', purchase_date: '', start_date: '', expiry_date: '', renewal_cost: '', payment_status: 'Pending', payment_method: '', invoice_number: '', auto_renew: false, renewal_status: 'Active', notes: '', internal_notes: '', status: 'Active' });
   const [renewForm, setRenewForm] = useState({ renewal_type: 'Hosting', new_expiry_date: '', renewal_amount: '', tax_amount: '', total_amount: '', payment_method: '', payment_status: 'Pending', invoice_number: '', notes: '' });
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState('table');
 
   const fetchExpiryData = async () => {
     setIsLoading(true);
@@ -362,12 +366,12 @@ export default function ProjectExpiryPage() {
   };
 
   const statsCards = [
-    { key: 'total_projects', label: 'Total Projects', icon: Sparkles, value: stats.total_projects || 0, tone: 'from-indigo-500 to-violet-500' },
-    { key: 'active_records', label: 'Active Projects', icon: CheckCircle2, value: stats.active_records || 0, tone: 'from-emerald-500 to-green-500' },
-    { key: 'expiring_today', label: 'Expiring Today', icon: AlertTriangle, value: stats.expiring_today || 0, tone: 'from-amber-500 to-orange-500' },
-    { key: 'expiring_7_days', label: 'Expiring in 7 Days', icon: Clock3, value: stats.expiring_7_days || 0, tone: 'from-orange-500 to-rose-500' },
-    { key: 'expiring_30_days', label: 'Expiring in 30 Days', icon: CalendarClock, value: stats.expiring_30_days || 0, tone: 'from-cyan-500 to-sky-500' },
-    { key: 'expired_projects', label: 'Expired Projects', icon: XCircle, value: stats.expired_projects || 0, tone: 'from-rose-600 to-red-500' },
+    { key: 'total_projects', label: 'Total Projects', icon: Sparkles, value: stats.total_projects || 0, tone: 'from-blue-500 to-indigo-500', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400' },
+    { key: 'active_records', label: 'Active', icon: CheckCircle2, value: stats.active_records || 0, tone: 'from-emerald-500 to-green-500', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400' },
+    { key: 'expiring_today', label: 'Expiring Today', icon: AlertTriangle, value: stats.expiring_today || 0, tone: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400' },
+    { key: 'expiring_7_days', label: 'Expiring in 7D', icon: Clock3, value: stats.expiring_7_days || 0, tone: 'from-orange-500 to-rose-500', iconBg: 'bg-orange-500/10', iconColor: 'text-orange-400' },
+    { key: 'expiring_30_days', label: 'Expiring in 30D', icon: CalendarClock, value: stats.expiring_30_days || 0, tone: 'from-cyan-500 to-sky-500', iconBg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
+    { key: 'expired_projects', label: 'Expired', icon: XCircle, value: stats.expired_projects || 0, tone: 'from-rose-600 to-red-500', iconBg: 'bg-rose-500/10', iconColor: 'text-rose-400' },
   ];
 
   return (
@@ -390,9 +394,27 @@ export default function ProjectExpiryPage() {
             <p className="text-white/40 text-xs mt-0.5">Track hosting, domain, SSL, and other renewals.</p>
           </div>
         </div>
-        <button onClick={openCreate} className="flex items-center justify-center gap-2 bg-linear-to-r from-[#f97316] to-[#ea580c] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95">
-          <Plus size={16} /> Add Expiry
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="bg-white/5 border border-white/8 rounded-xl p-1 flex gap-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-primary text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Table View"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-primary text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Card View"
+            >
+              <Grid3x3 size={16} />
+            </button>
+          </div>
+          <button onClick={openCreate} className="flex items-center justify-center gap-2 bg-linear-to-r from-[#f97316] to-[#ea580c] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95">
+            <Plus size={16} /> Add Expiry
+          </button>
+        </div>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -400,12 +422,14 @@ export default function ProjectExpiryPage() {
         {statsCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.key} className="bg-white/5 border border-white/8 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden group">
-              <div className="flex items-center justify-between relative z-10">
-                <p className="text-xs font-medium text-white/50">{card.label}</p>
-                <Icon size={16} className="text-white/40 group-hover:text-white transition-colors" />
+            <div key={card.key} className="bg-white/5 border border-white/8 rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center relative z-10 ${card.iconBg} ${card.iconColor}`}>
+                <Icon size={20} />
               </div>
-              <p className="text-2xl font-bold text-white relative z-10">{card.value}</p>
+              <div className="relative z-10 flex flex-col">
+                <p className="text-xl font-bold text-white leading-tight">{card.value}</p>
+                <p className="text-xs font-medium text-white/50">{card.label}</p>
+              </div>
               <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full bg-linear-to-br ${card.tone} opacity-10 blur-xl group-hover:opacity-20 transition-opacity`} />
             </div>
           );
@@ -414,27 +438,29 @@ export default function ProjectExpiryPage() {
 
       {/* ── Search & Filters ── */}
       <div className="bg-white/5 border border-white/8 rounded-2xl p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder="Search projects or clients..."
-                className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-              />
-            </div>
-            <button onClick={() => { setFilters({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false }); loadData(); }} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center">
-              Reset
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+            <input
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              placeholder="Search projects or clients..."
+              className="w-1/2 bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowFilters(!showFilters)} className={`h-[42px] px-4 rounded-xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${showFilters ? 'bg-[#f97316]/10 border-[#f97316]/30 text-[#f97316]' : 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white'}`}>
+              <Filter size={16} /> Filters
             </button>
-            <button onClick={loadData} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center">
+          
+            <button onClick={loadData} className="h-[42px] w-[42px] rounded-xl border border-white/10 text-white/60 hover:bg-white/5 hover:text-white transition-all flex items-center justify-center" title="Refresh">
               <RefreshCcw size={16} />
             </button>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
           <Select
             value={filters.project_id ? { value: filters.project_id, label: projects.find(p => String(p.id) === String(filters.project_id))?.project_name || 'All projects' } : null}
             onChange={(option) => setFilters({ ...filters, project_id: option ? option.value : '' })}
@@ -490,28 +516,29 @@ export default function ProjectExpiryPage() {
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Table View ── */}
+      {viewMode === 'table' && (
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
+            <thead className="bg-white/5">
               <tr>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">#</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Project / Client</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Service Name</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Expiry Type</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Provider / Plan</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Dates</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Days Left</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Cost & Payment</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8 text-center">Auto</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Status</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8 text-right">Actions</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 rounded-l-xl">S No</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Project</th>
+
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Plan</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Dates</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Days Left</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Amount</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 text-center">Auto</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4">Status</th>
+                <th className="uppercase tracking-widest text-[10px] font-bold text-white/50 py-4 px-4 text-right rounded-r-xl">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {isLoading ? (
                 <tr>
                   <td colSpan="11" className="py-12 text-center">
@@ -536,42 +563,53 @@ export default function ProjectExpiryPage() {
               ) : visibleRecords.map((record, idx) => {
                 const badge = getDaysBadge(record.days_remaining);
                 return (
-                  <tr key={record.id} className="group border-b border-white/4 hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3.5 text-xs text-white/40 font-medium">{idx + 1}</td>
-                    <td className="px-4 py-3.5 min-w-[160px]">
-                      <div className="font-medium text-white/90 text-sm truncate max-w-[150px]">{record.project_name || `Project #${record.project_id}`}</div>
-                      <div className="text-xs text-white/40 mt-0.5 truncate max-w-[150px]">{record.client_name || '—'}</div>
-                      {record.domain_name && <div className="text-[11px] text-primary/70 mt-0.5 font-medium truncate max-w-[150px]">{record.domain_name}</div>}
+                  <tr key={record.id} className="group hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-4 text-xs font-bold text-white/80">{idx + 1}</td>
+                    <td className="px-4 py-4 min-w-[200px]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
+                          {record.project_name ? record.project_name[0].toUpperCase() : 'P'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-sm">{record.project_name || `Project #${record.project_id}`}</div>
+                          <div className="text-xs text-white/40 mt-0.5 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {record.client_name || '—'}
+                          </div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-3.5 text-white/70 text-sm whitespace-nowrap">{record.service_name || '—'}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
+                    
+                    <td className="px-4 py-3.5 whitespace-nowrap" style={{display: 'none'}}>
                       <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] font-medium text-blue-400">{record.expiry_type || '—'}</span>
                     </td>
                     <td className="px-4 py-3.5 min-w-[140px]">
                       <div className="text-white/70 text-sm font-medium">{record.provider_name || '—'}</div>
                       {record.plan_name && <div className="text-xs text-white/40 mt-0.5">{record.plan_name}</div>}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-xs">
+                    <td className="px-4 py-4 whitespace-nowrap text-xs">
                       <div className="text-white/60 mb-0.5"><span className="text-white/30 mr-1">Start:</span>{record.start_date ? new Date(record.start_date).toLocaleDateString('en-IN') : '—'}</div>
                       <div className="text-white/90 font-medium"><span className="text-white/30 mr-1">Exp:</span>{record.expiry_date ? new Date(record.expiry_date).toLocaleDateString('en-IN') : '—'}</div>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}>{badge.label}</span>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${badge.className}`}>{badge.label}</span>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {record.renewal_cost ? (
-                        <div className="text-emerald-400/90 text-sm font-semibold">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</div>
+                        <div className="inline-block border border-white/10 bg-white/5 rounded-lg px-3 py-1.5 text-sm font-bold text-white/90">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</div>
                       ) : <div className="text-white/40 text-sm">—</div>}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                          record.payment_status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                          record.payment_status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                          'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>{record.payment_status || 'Pending'}</span>
-                        {record.payment_method && <span className="text-[10px] text-white/30">{record.payment_method}</span>}
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium flex items-center gap-1 ${
+                          record.payment_status === 'Paid' ? 'text-emerald-400' :
+                          record.payment_status === 'Failed' ? 'text-rose-400' :
+                          'text-amber-400'
+                        }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${record.payment_status === 'Paid' ? 'bg-emerald-400' : record.payment_status === 'Failed' ? 'bg-rose-400' : 'bg-amber-400'}`}></div>
+                          {record.payment_status || 'Pending'}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       {record.auto_renew ? (
                         <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400" title="Auto renew enabled">
                           <CheckCircle2 size={12} />
@@ -580,20 +618,17 @@ export default function ProjectExpiryPage() {
                         <span className="text-white/20 text-xs">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <div className="flex flex-col gap-1.5 items-start">
-                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span>
-                        {record.status !== 'Active' && <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-white/5 text-white/40 border border-white/10">{record.status}</span>}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                        {record.renewal_status || 'Active'}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button onClick={() => openAction(record, 'view')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/20 flex items-center justify-center text-white/60 hover:text-blue-400 transition" title="View"><Eye size={14} /></button>
-                        <button onClick={() => openEdit(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-orange-500/20 flex items-center justify-center text-white/60 hover:text-orange-400 transition" title="Edit"><Edit size={14} /></button>
-                        <button onClick={() => openAction(record, 'renew')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition" title="Renew"><RefreshCcw size={14} /></button>
-                        <button onClick={() => openAction(record, 'history')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-white/60 hover:text-purple-400 transition" title="History"><History size={14} /></button>
-                        <button onClick={() => handleReminderSend(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-sky-500/20 flex items-center justify-center text-white/60 hover:text-sky-400 transition" title="Send Reminder"><Send size={14} /></button>
-                        <button onClick={() => handleDelete(record.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-white/60 hover:text-rose-400 transition" title="Delete"><Trash2 size={14} /></button>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => openAction(record, 'view')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition" title="View"><Eye size={14} /></button>
+                        <button onClick={() => openEdit(record)} className="w-8 h-8 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 flex items-center justify-center text-orange-500 transition" title="Edit"><Edit size={14} /></button>
+                        <button onClick={() => handleDelete(record.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/10 flex items-center justify-center text-white/40 hover:text-rose-500 transition" title="Delete"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -603,6 +638,87 @@ export default function ProjectExpiryPage() {
           </table>
         </div>
       </div>
+      )}
+
+      {/* ── Card View ── */}
+      {viewMode === 'card' && (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {isLoading ? (
+          <div className="col-span-full py-12 text-center">
+            <div className="flex flex-col items-center justify-center text-white/40">
+              <RefreshCcw size={32} className="animate-spin mb-4 opacity-20" />
+              <p className="text-sm font-medium">Loading expiry records...</p>
+            </div>
+          </div>
+        ) : visibleRecords.length === 0 ? (
+          <div className="col-span-full py-12 text-center">
+            <div className="flex flex-col items-center justify-center text-white/40">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <CalendarClock size={24} />
+              </div>
+              <p className="text-sm font-medium text-white/60">No expiry records found</p>
+              <p className="text-xs mt-1 text-white/40">Try adjusting your filters or search query.</p>
+            </div>
+          </div>
+        ) : visibleRecords.map((record) => {
+          const badge = getDaysBadge(record.days_remaining);
+          return (
+            <div key={record.id} className="bg-white/5 border border-white/8 rounded-2xl p-5 hover:bg-white/[0.08] transition-colors group">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="font-medium text-white/90 text-sm truncate">{record.project_name || `Project #${record.project_id}`}</h3>
+                  <p className="text-xs text-white/40 mt-1">{record.client_name || '—'}</p>
+                  {record.domain_name && <p className="text-[11px] text-primary/70 mt-1 font-medium truncate">{record.domain_name}</p>}
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${badge.className}`}>{badge.label}</span>
+              </div>
+              
+              <div className="space-y-3 border-t border-white/10 pt-4 mb-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Provider</span>
+                  <span className="text-white/80 font-medium">{record.provider_name || '—'}</span>
+                </div>
+                {record.plan_name && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/40">Plan</span>
+                    <span className="text-white/80 font-medium">{record.plan_name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Expiry Date</span>
+                  <span className="text-white/80 font-medium">{record.expiry_date ? new Date(record.expiry_date).toLocaleDateString('en-IN') : '—'}</span>
+                </div>
+                {record.renewal_cost && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/40">Renewal Cost</span>
+                    <span className="text-emerald-400 font-medium">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Payment Status</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                    record.payment_status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                    record.payment_status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                    'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  }`}>{record.payment_status || 'Pending'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Status</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => openAction(record, 'view')} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-blue-500/20 flex items-center justify-center text-white/60 hover:text-blue-400 transition text-xs font-medium" title="View"><Eye size={12} className="mr-1" /> View</button>
+                <button onClick={() => openEdit(record)} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-orange-500/20 flex items-center justify-center text-white/60 hover:text-orange-400 transition text-xs font-medium" title="Edit"><Edit size={12} className="mr-1" /> Edit</button>
+                <button onClick={() => openAction(record, 'renew')} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition text-xs font-medium" title="Renew"><RefreshCcw size={12} className="mr-1" /> Renew</button>
+                <button onClick={() => handleDelete(record.id)} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-white/60 hover:text-rose-400 transition text-xs font-medium" title="Delete"><Trash2 size={12} className="mr-1" /> Delete</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      )}
 
       {/* ── Modals ── */}
       {actionModal && (
@@ -807,7 +923,7 @@ export default function ProjectExpiryPage() {
                 </label>
                 <input value={form.project_type} onChange={(e) => setForm({ ...form, project_type: e.target.value })} placeholder="e.g. Website, Mobile App" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
               </div>
-              <div>
+              <div style={{display: 'none'}}>
                 <label className="mb-2 flex items-center justify-between text-xs font-medium text-white/60">
                   Service Name
                   {form.service_name && <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 rounded-sm">auto-filled</span>}
@@ -819,13 +935,29 @@ export default function ProjectExpiryPage() {
                   Provider / Plan
                   {form.provider_name && <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 rounded-sm">auto-filled</span>}
                 </label>
-                <input value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} placeholder="e.g. GoDaddy, AWS" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
+                <Select
+                  value={form.provider_name ? { value: form.provider_name, label: form.provider_name } : null}
+                  onChange={(option) => setForm({ ...form, provider_name: option ? option.value : '' })}
+                  options={providerOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  placeholder="Select provider"
+                  isSearchable={true}
+                  isClearable={true}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-xs font-medium text-white/60">Plan Name</label>
-                <input value={form.plan_name} onChange={(e) => setForm({ ...form, plan_name: e.target.value })} placeholder="e.g. Business Pro" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
+                <Select
+                  value={form.plan_name ? { value: form.plan_name, label: form.plan_name } : null}
+                  onChange={(option) => setForm({ ...form, plan_name: option ? option.value : '' })}
+                  options={planNameOptions.map(o => ({ value: o, label: o }))}
+                  styles={customSelectStyles}
+                  placeholder="Select plan"
+                  isSearchable={true}
+                  isClearable={true}
+                />
               </div>
-              <div>
+              <div style={{display: 'none'}}>
                 <label className="mb-2 block text-xs font-medium text-white/60">Price / Month (₹)</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm font-medium">₹</span>
@@ -895,7 +1027,7 @@ export default function ProjectExpiryPage() {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="md:col-span-2" style={{display: 'none'}}>
                 <label className="mb-2 block text-xs font-medium text-white/60">Internal Notes</label>
                 <textarea value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} rows="2" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors" />
               </div>
