@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 import { 
   GraduationCap, Plus, Search, RefreshCw, Eye, Edit2, Trash2, 
   Loader2, AlertCircle, CheckCircle, LayoutGrid, List, Users, 
@@ -62,6 +63,8 @@ function StatusPill({ status }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AllTraineeInterns() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   const [viewMode, setViewMode] = useState('table');
   const [showFilters, setShowFilters] = useState(false);
@@ -95,6 +98,7 @@ export default function AllTraineeInterns() {
       if (search) params.append('search', search);
       if (typeFilter) params.append('type', typeFilter);
       if (statusFilter) params.append('status', statusFilter);
+      if (employeeId) params.append('employee_id', employeeId);
       const { data } = await api.get(`/trainee-intern?${params}`);
       if (!data.success) throw new Error(data.message || 'Failed');
       setMembers(data.data || []);
@@ -104,12 +108,14 @@ export default function AllTraineeInterns() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, typeFilter, statusFilter]);
+  }, [page, search, typeFilter, statusFilter, employeeId]);
 
   // ── Fetch stats ──
   const fetchStats = useCallback(async () => {
     try {
-      const { data } = await api.get('/trainee-intern?limit=500&page=1');
+      const params = new URLSearchParams({ limit: 500, page: 1 });
+      if (employeeId) params.append('employee_id', employeeId);
+      const { data } = await api.get(`/trainee-intern?${params}`);
       if (!data.success) return;
       const all = data.data || [];
       setStatsData({
@@ -119,7 +125,7 @@ export default function AllTraineeInterns() {
         interns:  all.filter(c => c.type === 'Intern').length,
       });
     } catch { /* silent */ }
-  }, []);
+  }, [employeeId]);
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
   useEffect(() => { fetchStats(); }, [fetchStats]);

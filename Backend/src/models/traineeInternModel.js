@@ -79,7 +79,7 @@ async function findTraineeInternByUUID(uuid) {
   return rows[0] || null;
 }
 
-async function listTraineeInterns({ page, limit, search, type, status }) {
+async function listTraineeInterns({ page, limit, search, type, status, employee_id }) {
   const db = getDB();
   const offset = (page - 1) * limit;
   const conditions = [];
@@ -97,6 +97,15 @@ async function listTraineeInterns({ page, limit, search, type, status }) {
   if (status) {
     conditions.push('status = ?');
     values.push(status);
+  }
+  if (employee_id) {
+    conditions.push(`EXISTS (
+      SELECT 1 FROM trainee_employee_assignments a
+      WHERE a.status = 'Active'
+        AND a.employee_id = ?
+        AND (a.trainee_id = ti.uuid OR a.trainee_id = ti.person_id)
+    )`);
+    values.push(employee_id);
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

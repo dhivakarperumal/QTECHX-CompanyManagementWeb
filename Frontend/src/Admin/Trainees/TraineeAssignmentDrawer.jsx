@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { X, User, Briefcase, Mail, Phone, Calendar, Clock, ChevronDown, CheckCircle, Loader2 } from 'lucide-react';
 import Select from 'react-select';
 import api from '../../api';
@@ -199,7 +200,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
     }
   };
 
-  return (
+  const drawerContent = (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999]" onClick={onClose} />
       <div className="fixed top-0 right-0 h-full w-[90%] sm:w-[450px] bg-[#111318] shadow-2xl z-[1000] flex flex-col border-l border-white/10 animate-in slide-in-from-right duration-300">
@@ -454,6 +455,8 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
       </div>
     </>
   );
+
+  return ReactDOM.createPortal(drawerContent, document.body);
 };
 
 export default TraineeAssignmentDrawer;
