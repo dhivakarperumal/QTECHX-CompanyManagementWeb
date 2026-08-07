@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Loader2, ExternalLink, UserCircle2 } from 'lucide-react';
+import { useAuth } from '../../PrivateRouter/AuthContext';
+import { ArrowLeft, FileText, Loader2, ExternalLink, UserCircle2, ClipboardList, Clock, CheckCircle, Loader } from 'lucide-react';
 import api from '../../api';
 
 function buildUploadUrl(filePath) {
@@ -15,20 +16,29 @@ function buildUploadUrl(filePath) {
 export default function TraineeInternDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const employeeId = user?.employee_id || user?.id || user?.uuid;
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('Overview');
+  const [assignments, setAssignments] = useState([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true); setError('');
       try {
-        const { data } = await api.get(`/trainee-intern/${id}`);
-        if (!data.success) throw new Error(data.message || 'Failed');
-        setMember(data.data);
+        const [memberRes, assignmentsRes] = await Promise.all([
+          api.get(`/trainee-intern/${id}`),
+          api.get(`/trainee-task-assignments?trainee_id=${id}${employeeId ? `&created_by=${employeeId}` : ''}`)
+        ]);
+        
+        if (!memberRes.data.success) throw new Error(memberRes.data.message || 'Failed');
+        setMember(memberRes.data.data);
+        
+        setAssignments(assignmentsRes.data || []);
       } catch (err) {
-        setError(err?.response?.data?.message || err.message || 'Failed to load member');
+        setError(err?.response?.data?.message || err.message || 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -95,6 +105,53 @@ export default function TraineeInternDetails() {
             </div>
           </div>
         );
+      case 'Assigned Tasks':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-white/40">Task Assignments</h3>
+              <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/50 text-xs font-medium">{assignments.length} Total</span>
+            </div>
+            
+            {assignments.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40 text-sm">
+                No tasks assigned to this trainee yet.
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {assignments.map(a => (
+                  <div key={a.uuid} className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition hover:bg-white/10">
+                    <div>
+                      <h4 className="text-base font-bold text-white flex items-center gap-2">
+                        {a.task_name}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          a.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          a.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                          a.status === 'Review' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                          a.status === 'Cancelled' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                          'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                        }`}>
+                          {a.status}
+                        </span>
+                      </h4>
+                      <div className="text-xs text-white/50 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span>Assigned: {new Date(a.assigned_date).toLocaleDateString()}</span>
+                        <span>Due: {a.due_date ? new Date(a.due_date).toLocaleDateString() : 'N/A'}</span>
+                        <span>Progress: {a.progress}%</span>
+                      </div>
+                    </div>
+                    
+                    {a.assignment_document_path && (
+                      <a href={buildUploadUrl(a.assignment_document_path)} target="_blank" rel="noreferrer" className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-orange-400 hover:text-orange-300 hover:bg-white/10 transition">
+                        <ExternalLink size={13} /> Document
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
       default:
         return null;
     }
@@ -133,7 +190,7 @@ export default function TraineeInternDetails() {
           </div>
 
           <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-            {['Overview', 'Documents'].map((tab) => (
+            {['Overview', 'Documents', 'Assigned Tasks'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -143,7 +200,7 @@ export default function TraineeInternDetails() {
                     : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-transparent'
                 }`}
               >
-                {tab === 'Overview' ? <FileText size={16} /> : <ExternalLink size={16} />}
+                {tab === 'Overview' ? <FileText size={16} /> : tab === 'Documents' ? <ExternalLink size={16} /> : <ClipboardList size={16} />}
                 {tab}
               </button>
             ))}

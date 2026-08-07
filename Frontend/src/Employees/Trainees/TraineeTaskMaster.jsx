@@ -327,33 +327,17 @@ const TraineeTaskMaster = () => {
 
       {/* ── Predefined Tasks section ── */}
       <div className="rounded-2xl border border-white/8 bg-[#111318] overflow-hidden">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-white/[0.05]">
-          <div className="flex items-center gap-2">
-            <BookOpen size={16} className="text-orange-400" />
-            <h2 className="text-sm font-bold text-white">Predefined Tasks</h2>
-            <span className="ml-1 px-2 py-0.5 rounded-full bg-white/10 text-white/50 text-xs font-medium">{taskCountLabel}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-              <input value={taskSearch} onChange={e => setTaskSearch(e.target.value)} placeholder="Search tasks…"
-                className="w-52 rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-8 pr-3 text-xs text-white outline-none focus:border-orange-500/50 transition" />
-            </div>
-            {hasTaskFilters && (
-              <button onClick={() => setTaskSearch('')}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-semibold text-white/60 transition hover:bg-white/10 hover:text-white">
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
+        
+          
+       
+       
 
         {viewMode === 'table' ? (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-white/[0.03] border-b border-white/8">
                 <tr>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider w-12">#</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider w-12">S No</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Task Name</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Description</th>
                   <th className="px-5 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wider">Actions</th>
