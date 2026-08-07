@@ -121,6 +121,11 @@ function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChang
     pages.push(totalPages);
   }
 
+  const changePage = (page) => {
+    const clamped = Math.max(1, Math.min(totalPages, page));
+    if (clamped !== currentPage) onPageChange(clamped);
+  };
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-white/8">
       <p className="text-xs text-white/35">
@@ -128,7 +133,7 @@ function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChang
       </p>
       <div className="flex items-center gap-1.5">
         <button
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => changePage(currentPage - 1)}
           disabled={currentPage === 1}
           className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/8 border border-white/8 transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
@@ -140,7 +145,7 @@ function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChang
           ) : (
             <button
               key={p}
-              onClick={() => onPageChange(p)}
+              onClick={() => changePage(p)}
               className={`w-8 h-8 rounded-lg text-xs font-semibold flex items-center justify-center border transition ${
                 p === currentPage
                   ? 'bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/25'
@@ -152,7 +157,7 @@ function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChang
           )
         )}
         <button
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => changePage(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/8 border border-white/8 transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
@@ -823,10 +828,18 @@ export default function TasksPage({ initialPageKey = null }) {
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, selectedProject, pageKey]);
 
   const totalPages = Math.ceil(visibleTasks.length / PAGE_SIZE);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages > 0 ? totalPages : 1);
+    }
+  }, [currentPage, totalPages]);
+
+  const pageStartIndex = (currentPage - 1) * PAGE_SIZE;
   const paginatedTasks = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
+    const start = pageStartIndex;
     return visibleTasks.slice(start, start + PAGE_SIZE);
-  }, [visibleTasks, currentPage]);
+  }, [visibleTasks, pageStartIndex]);
 
   const availableTaskProjects = useMemo(() => {
     return projects.map((project) => ({
@@ -1029,12 +1042,12 @@ export default function TasksPage({ initialPageKey = null }) {
                       </div>
                     </td>
                   </tr>
-                ) : visibleTasks.map((task, index) => (
+                ) : paginatedTasks.map((task, index) => (
                   <tr key={task.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold shrink-0 bg-white/5 text-white/40 border border-white/10">
-                          {index + 1}
+                          {pageStartIndex + index + 1}
                         </div>
                         <div>
                           <div className="text-white font-semibold text-sm leading-tight">{task.name}</div>
@@ -1113,7 +1126,7 @@ export default function TasksPage({ initialPageKey = null }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {visibleTasks.map((task, index) => (
+              {paginatedTasks.map((task, index) => (
                 <div
                   key={task.id}
                   className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 flex flex-col gap-3 hover:bg-white/[0.05] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-200"
@@ -1122,7 +1135,7 @@ export default function TasksPage({ initialPageKey = null }) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center text-[10px] font-bold bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                        {index + 1}
+                        {pageStartIndex + index + 1}
                       </div>
                       <div className="min-w-0">
                         <p className="text-white font-semibold text-sm leading-tight truncate">{task.name}</p>
@@ -1179,9 +1192,17 @@ export default function TasksPage({ initialPageKey = null }) {
               ))}
             </div>
           )}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={visibleTasks.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          )}
         </>
       )}
-
       {/* ════════════════════════════════════════════════
           MODAL: View Task Details
       ════════════════════════════════════════════════ */}
