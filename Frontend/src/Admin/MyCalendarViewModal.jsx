@@ -78,15 +78,6 @@ export default function MyCalendarViewModal({ open, onClose, event, onEdit }) {
             <Row label="Date" value={dayjs(dateStr).format('dddd, MMMM D, YYYY')} />
             <Row label="Time" value={event.allDay ? 'All Day' : `${event.startTime || '--'} – ${event.endTime || '--'}`} />
             {event.estimatedDuration && <Row label="Duration" value={event.estimatedDuration} />}
-            {event.location && <Row label="Location" value={event.location} />}
-            {event.meetingLink && (
-               <div className="flex justify-between py-2 border-b border-white/[0.04] last:border-0 last:pb-0 first:pt-0 gap-4">
-                 <span className="text-[11px] text-white/40 font-medium shrink-0 uppercase tracking-wide">Link</span>
-                 <a href={event.meetingLink.startsWith('http') ? event.meetingLink : `https://${event.meetingLink}`} target="_blank" rel="noreferrer" className="text-sm font-medium text-primary hover:underline truncate">
-                   {event.meetingLink}
-                 </a>
-               </div>
-            )}
             <Row label="Status" value={event.status} />
             <Row label="Priority" value={event.priority} />
           </Section>
@@ -108,69 +99,23 @@ export default function MyCalendarViewModal({ open, onClose, event, onEdit }) {
             </Section>
           )}
 
-          {(event.project || event.module || event.task || event.progress !== undefined) && (
-            <Section title="Project & Tracking" icon={Target}>
-              <Row label="Project" value={event.project} />
-              <Row label="Module" value={event.module} />
-              <Row label="Task" value={event.task} />
-              <Row label="Planned Hours" value={event.plannedHours ? `${event.plannedHours} hrs` : null} />
-              <Row label="Worked Hours" value={event.workedHours ? `${event.workedHours} hrs` : null} />
-              {event.progress !== undefined && (
-                <div className="py-2">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-[11px] text-white/40 font-medium uppercase tracking-wide">Progress</span>
-                    <span className="text-[11px] font-bold text-white">{event.progress}%</span>
-                  </div>
-                  <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-primary h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, event.progress))}%` }} />
-                  </div>
-                </div>
-              )}
-            </Section>
-          )}
-
-          {(event.dailyGoal || event.expectedOutcome || event.checklistItems) && (
-            <Section title="Goals & Checklist" icon={CheckSquare}>
-              {event.dailyGoal && (
-                <div className="mb-3 last:mb-0">
-                  <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Daily Goal</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.dailyGoal}</p>
-                </div>
-              )}
-              {event.expectedOutcome && (
-                <div className="mb-3 last:mb-0">
-                  <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Expected Outcome</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.expectedOutcome}</p>
-                </div>
-              )}
+          {event.checklistItems && (
+            <Section title="Checklist" icon={Target}>
               {event.checklistItems && (
                 <div className="mb-3 last:mb-0">
                   <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Checklist Items</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.checklistItems}</p>
-                </div>
-              )}
-            </Section>
-          )}
-          
-          {(event.energyLevel || event.todaysAchievement || event.challenges || event.tomorrowsPlan) && (
-            <Section title="End of Day Reflection" icon={Flame}>
-              <Row label="Energy Level" value={event.energyLevel} />
-              {event.todaysAchievement && (
-                <div className="mb-3 last:mb-0">
-                  <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Today's Achievement</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.todaysAchievement}</p>
-                </div>
-              )}
-              {event.challenges && (
-                <div className="mb-3 last:mb-0">
-                  <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Challenges</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.challenges}</p>
-                </div>
-              )}
-              {event.tomorrowsPlan && (
-                <div className="mb-3 last:mb-0">
-                  <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide mb-1">Tomorrow's Plan</p>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{event.tomorrowsPlan}</p>
+                  <ul className="space-y-2 text-sm text-white/80">
+                    {Array.isArray(event.checklistItems)
+                      ? event.checklistItems.map((item, index) => (
+                          <li key={`${item}-${index}`} className="flex items-start gap-2">
+                            <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                            <span className="flex-1 whitespace-pre-wrap">{item}</span>
+                          </li>
+                        ))
+                      : typeof event.checklistItems === 'string' && (
+                          <li className="whitespace-pre-wrap">{event.checklistItems}</li>
+                        )}
+                  </ul>
                 </div>
               )}
             </Section>
