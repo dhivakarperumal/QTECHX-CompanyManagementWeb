@@ -169,58 +169,71 @@ const TraineeTaskAssign = () => {
     loadData();
   }, []);
 
-  const handleAssign = async (e) => {
+  const handleAssignSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedTask || !selectedTrainee || !assignedDate) {
-      toast.error('Task, Trainee, and Assigned Date are required');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('trainee_task_uuid', selectedTask);
-      formData.append('trainee_intern_uuid', selectedTrainee);
-      formData.append('assigned_date', assignedDate);
-      formData.append('assigned_time', assignedTime);
-      formData.append('due_date', dueDate);
-      if (assignmentDocument) {
-        formData.append('assignment_document', assignmentDocument);
+    
+    if (editingAssignmentUuid) {
+      // Update existing assignment
+      try {
+        await api.put(`/trainee-task-assignments/${editingAssignmentUuid}`, {
+          progress: editProgress,
+          status: editStatus,
+          daily_report: editDailyReport,
+          due_date: dueDate
+        });
+        toast.success('Assignment updated successfully');
+        resetForm();
+        fetchData();
+      } catch (error) {
+        console.error('Error updating assignment:', error);
+        toast.error('Failed to update assignment');
+      }
+    } else {
+      // Create new assignment
+      if (!selectedTask || !selectedTrainee || !assignedDate) {
+        toast.error('Task, Trainee, and Assigned Date are required');
+        return;
       }
 
-      await api.post('/trainee-task-assignments', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      toast.success('Task assigned successfully');
+      try {
+        const formData = new FormData();
+        formData.append('trainee_task_uuid', selectedTask);
+        formData.append('trainee_intern_uuid', selectedTrainee);
+        formData.append('assigned_date', assignedDate);
+        formData.append('assigned_time', assignedTime);
+        formData.append('due_date', dueDate);
+        if (assignmentDocument) {
+          formData.append('assignment_document', assignmentDocument);
+        }
 
-      resetForm();
-      fetchData(); // Refresh list
-    } catch (error) {
-      console.error('Error assigning task:', error);
-      toast.error('Failed to assign task');
+        await api.post('/trainee-task-assignments', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        toast.success('Task assigned successfully');
+
+        resetForm();
+        fetchData(); // Refresh list
+      } catch (error) {
+        console.error('Error assigning task:', error);
+        toast.error('Failed to assign task');
+      }
     }
   };
 
   const handleEditClick = (assignment) => {
     setEditingAssignmentUuid(assignment.uuid);
-    setEditProgress(assignment.progress);
-    setEditStatus(assignment.status);
+    setEditProgress(assignment.progress || 0);
+    setEditStatus(assignment.status || 'Pending');
     setEditDailyReport(assignment.daily_report || '');
-  };
-
-  const handleUpdate = async (uuid) => {
-    try {
-      await api.put(`/trainee-task-assignments/${uuid}`, {
-        progress: editProgress,
-        status: editStatus,
-        daily_report: editDailyReport
-      });
-      toast.success('Assignment updated successfully');
-      setEditingAssignmentUuid(null);
-      fetchData();
-    } catch (error) {
-      console.error('Error updating assignment:', error);
-      toast.error('Failed to update assignment');
-    }
+    setDueDate(assignment.due_date ? assignment.due_date.substring(0, 10) : '');
+    
+    // For display purposes in the disabled fields
+    setSelectedTask(assignment.task_name);
+    setSelectedTrainee(assignment.trainee_name);
+    setAssignedDate(assignment.assigned_date ? assignment.assigned_date.substring(0, 10) : '');
+    setAssignedTime(assignment.assigned_time || '');
+    
+    setShowForm(true);
   };
 
   const handleDelete = async (uuid) => {
@@ -243,6 +256,10 @@ const TraineeTaskAssign = () => {
     setAssignedTime('');
     setDueDate('');
     setAssignmentDocument(null);
+    setEditingAssignmentUuid(null);
+    setEditProgress(0);
+    setEditStatus('Pending');
+    setEditDailyReport('');
     setShowForm(false);
   };
 
@@ -284,58 +301,77 @@ const TraineeTaskAssign = () => {
         </div>
       </div>
 
-      <Modal open={showForm} onClose={resetForm} title="New Task Assignment">
-          <form onSubmit={handleAssign} className="space-y-5">
+      <Modal open={showForm} onClose={resetForm} title={editingAssignmentUuid ? "Edit Task Assignment" : "New Task Assignment"}>
+          <form onSubmit={handleAssignSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
-                <Select
-                  options={[
-                    ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
-                  ]}
-                  value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
-                  onChange={(option) => setSelectedTask(option ? option.value : '')}
-                  styles={customSelectStyles}
-                  isSearchable={true}
-                  placeholder="-- Select Task --"
-                />
-              </div>
+              {editingAssignmentUuid ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Task</label>
+                    <input type="text" value={selectedTask} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Trainee/Intern</label>
+                    <input type="text" value={selectedTrainee} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date</label>
+                    <input type="date" value={assignedDate} disabled style={{ colorScheme: 'dark' }} className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
+                    <Select
+                      options={[
+                        ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
+                      ]}
+                      value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                      onChange={(option) => setSelectedTask(option ? option.value : '')}
+                      styles={customSelectStyles}
+                      isSearchable={true}
+                      placeholder="-- Select Task --"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
-                <Select
-                  options={[
-                    ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
-                  ]}
-                  value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
-                  onChange={(option) => setSelectedTrainee(option ? option.value : '')}
-                  styles={customSelectStyles}
-                  isSearchable={true}
-                  placeholder="-- Select Trainee --"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
+                    <Select
+                      options={[
+                        ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
+                      ]}
+                      value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
+                      onChange={(option) => setSelectedTrainee(option ? option.value : '')}
+                      styles={customSelectStyles}
+                      isSearchable={true}
+                      placeholder="-- Select Trainee --"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
-                <input
-                  type="date"
-                  value={assignedDate}
-                  onChange={(e) => setAssignedDate(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
+                    <input
+                      type="date"
+                      value={assignedDate}
+                      onChange={(e) => setAssignedDate(e.target.value)}
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
-                <input
-                  type="time"
-                  value={assignedTime}
-                  onChange={(e) => setAssignedTime(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
+                    <input
+                      type="time"
+                      value={assignedTime}
+                      onChange={(e) => setAssignedTime(e.target.value)}
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Due Date</label>
@@ -348,21 +384,47 @@ const TraineeTaskAssign = () => {
                 />
               </div>
 
-              {/* <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Upload Document</label>
-                <label className="cursor-pointer flex items-center justify-between gap-3 rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-3 text-sm text-white/70 hover:border-orange-500/50 transition-all">
-                  <span className="truncate">{assignmentDocument ? assignmentDocument.name : 'Choose a PDF, DOC, image, or ZIP file'}</span>
-                  <span className="inline-flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80">
-                    Browse
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.zip,.rar"
-                    onChange={(e) => setAssignmentDocument(e.target.files?.[0] || null)}
-                  />
-                </label>
-              </div> */}
+              {/* {editingAssignmentUuid && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Status</label>
+                    <Select
+                      options={[
+                        { value: 'Pending', label: 'Pending' },
+                        { value: 'In Progress', label: 'In Progress' },
+                        { value: 'Review', label: 'Review' },
+                        { value: 'On Hold', label: 'On Hold' },
+                        { value: 'Completed', label: 'Completed' },
+                        { value: 'Cancelled', label: 'Cancelled' }
+                      ]}
+                      value={{ value: editStatus, label: editStatus }}
+                      onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
+                      styles={customSelectStyles}
+                      isSearchable={false}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Progress (%)</label>
+                    <input
+                      type="number"
+                      min="0" max="100"
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Daily Report</label>
+                    <textarea
+                      value={editDailyReport}
+                      onChange={(e) => setEditDailyReport(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                      rows="3"
+                      placeholder="Enter daily report updates..."
+                    />
+                  </div>
+                </>
+              )} */}
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
@@ -378,7 +440,7 @@ const TraineeTaskAssign = () => {
                 className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
                 style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
               >
-                <Save size={15} /> Assign Task
+                <Save size={15} /> {editingAssignmentUuid ? 'Update Assignment' : 'Assign Task'}
               </button>
             </div>
           </form>
@@ -470,7 +532,6 @@ const TraineeTaskAssign = () => {
                   </tr>
                 ) : (
                   filteredAssignments.map((assignment) => {
-                    const isEditing = editingAssignmentUuid === assignment.uuid;
                     return (
                       <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
                         <td className="px-4 py-4 font-semibold text-white">
@@ -484,50 +545,14 @@ const TraineeTaskAssign = () => {
                           {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}
                         </td>
                         <td className="px-4 py-4">
-                          {isEditing ? (
-                            <Select
-                              options={[
-                                { value: 'Pending', label: 'Pending' },
-                                { value: 'In Progress', label: 'In Progress' },
-                                { value: 'Review', label: 'Review' },
-                                { value: 'On Hold', label: 'On Hold' },
-                                { value: 'Completed', label: 'Completed' },
-                                { value: 'Cancelled', label: 'Cancelled' }
-                              ]}
-                              value={{ value: editStatus, label: editStatus }}
-                              onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
-                              styles={{
-                                ...customSelectStyles,
-                                control: (provided, state) => ({
-                                  ...customSelectStyles.control(provided, state),
-                                  minHeight: '30px',
-                                  height: '30px',
-                                }),
-                              }}
-                              isSearchable={false}
-                            />
-                          ) : (
                             <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
                               ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
                                 assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
                                   'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>
                               {assignment.status}
                             </span>
-                          )}
                         </td>
                         <td className="px-4 py-4 min-w-30">
-                          {isEditing ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0" max="100"
-                                value={editProgress}
-                                onChange={(e) => setEditProgress(e.target.value)}
-                                className="w-16 rounded-lg border border-white/10 bg-white/4 px-2 py-1 text-sm text-white outline-none focus:border-orange-500/50"
-                              />
-                              <span className="text-white/50 text-xs">%</span>
-                            </div>
-                          ) : (
                             <div className="w-full">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs text-white/50">{assignment.progress}%</span>
@@ -536,32 +561,11 @@ const TraineeTaskAssign = () => {
                                 <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
                               </div>
                             </div>
-                          )}
                         </td>
                         <td className="px-4 py-4 text-white/70 max-w-50">
-                          {isEditing ? (
-                            <textarea
-                              value={editDailyReport}
-                              onChange={(e) => setEditDailyReport(e.target.value)}
-                              className="w-full rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50"
-                              rows="2"
-                              placeholder="Enter daily report..."
-                            />
-                          ) : (
                             <div className="truncate" title={assignment.daily_report}>{assignment.daily_report || '—'}</div>
-                          )}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          {isEditing ? (
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => handleUpdate(assignment.uuid)} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 transition">
-                                <Save size={14} />
-                              </button>
-                              <button onClick={() => setEditingAssignmentUuid(null)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
-                                <X size={14} />
-                              </button>
-                            </div>
-                          ) : (
                             <div className="flex justify-end gap-2">
                               <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
                                 <Edit2 size={14} />
@@ -570,7 +574,6 @@ const TraineeTaskAssign = () => {
                                 <Trash2 size={14} />
                               </button>
                             </div>
-                          )}
                         </td>
                       </tr>
                     );

@@ -8,15 +8,15 @@ const taskUpload = upload.single("task_document");
 const assignmentUpload = upload.single("assignment_document");
 
 // Trainee Tasks
-router.get("/trainee-tasks", traineeTaskController.getTraineeTasks);
-router.post("/trainee-tasks", taskUpload, traineeTaskController.createTraineeTask);
-router.put("/trainee-tasks/:uuid", taskUpload, traineeTaskController.updateTraineeTask);
-router.delete("/trainee-tasks/:uuid", traineeTaskController.deleteTraineeTask);
+router.get("/trainee-tasks", verifyToken.authenticate, traineeTaskController.getTraineeTasks);
+router.post("/trainee-tasks", verifyToken.authenticate, taskUpload, traineeTaskController.createTraineeTask);
+router.put("/trainee-tasks/:uuid", verifyToken.authenticate, taskUpload, traineeTaskController.updateTraineeTask);
+router.delete("/trainee-tasks/:uuid", verifyToken.authenticate, traineeTaskController.deleteTraineeTask);
 
 // Trainee Task Assignments
-router.get("/trainee-task-assignments", traineeTaskController.getAssignments);
-router.post("/trainee-task-assignments", assignmentUpload, traineeTaskController.assignTask);
-router.put("/trainee-task-assignments/:uuid", assignmentUpload, traineeTaskController.updateAssignment);
-router.delete("/trainee-task-assignments/:uuid", traineeTaskController.deleteAssignment);
+router.get("/trainee-task-assignments", verifyToken.authenticate, traineeTaskController.getAssignments);
+router.post("/trainee-task-assignments", verifyToken.authenticate, assignmentUpload, traineeTaskController.assignTask);
+router.put("/trainee-task-assignments/:uuid", verifyToken.authenticate, assignmentUpload, traineeTaskController.updateAssignment);
+router.delete("/trainee-task-assignments/:uuid", verifyToken.authenticate, traineeTaskController.deleteAssignment);
 
 module.exports = router;
