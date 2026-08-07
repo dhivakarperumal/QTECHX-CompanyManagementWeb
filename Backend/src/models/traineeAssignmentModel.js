@@ -106,6 +106,18 @@ const TraineeAssignmentModel = {
     `;
     const [rows] = await db.execute(query);
     return rows;
+  },
+
+  // Get all trainee_ids that currently have an Active assignment
+  getActiveTraineeIds: async () => {
+    const db = getDB();
+    const query = `
+      SELECT DISTINCT trainee_id
+      FROM trainee_employee_assignments
+      WHERE status = 'Active'
+    `;
+    const [rows] = await db.execute(query);
+    return rows.map(r => r.trainee_id);
   }
 };
 

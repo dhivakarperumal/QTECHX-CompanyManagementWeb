@@ -93,3 +93,13 @@ exports.getAvailableEmployees = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error fetching available employees' });
   }
 };
+// Get all trainee IDs that currently have an active assignment
+exports.getActiveTraineeIds = async (req, res) => {
+  try {
+    const ids = await TraineeAssignmentModel.getActiveTraineeIds();
+    res.status(200).json({ success: true, data: ids });
+  } catch (error) {
+    console.error('Error fetching active trainee ids:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

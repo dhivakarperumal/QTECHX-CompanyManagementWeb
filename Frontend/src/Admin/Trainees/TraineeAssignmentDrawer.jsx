@@ -51,6 +51,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [activeAssignedIds, setActiveAssignedIds] = useState(new Set());
   
   // Form State
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
@@ -76,6 +77,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
     setError('');
     fetchEmployees();
     fetchPeople();
+    fetchActiveAssignments();
     setSelectedPerson(trainee || null);
   }, [trainee]);
 
@@ -112,6 +114,17 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
       console.error('Failed to fetch trainees/interns', err);
     } finally {
       setLoadingPeople(false);
+    }
+  };
+
+  const fetchActiveAssignments = async () => {
+    try {
+      const { data } = await api.get('/trainee-assignments/active-trainee-ids');
+      if (data.success) {
+        setActiveAssignedIds(new Set(data.data || []));
+      }
+    } catch (err) {
+      console.error('Failed to fetch active assignments', err);
     }
   };
 
@@ -219,10 +232,12 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
             <div className="h-[42px] bg-white/5 animate-pulse rounded-xl" />
           ) : (
             <Select
-              options={people.map(p => ({
-                value: p.uuid || p.person_id || '',
-                label: `${p.full_name} (${p.person_id || p.uuid}) - ${p.type}`
-              }))}
+              options={people
+                .filter(p => !activeAssignedIds.has(p.uuid) && !activeAssignedIds.has(p.person_id))
+                .map(p => ({
+                  value: p.uuid || p.person_id || '',
+                  label: `${p.full_name} (${p.person_id || p.uuid}) - ${p.type}`
+                }))}
               value={person ? {
                 value: person.uuid || person.person_id || '',
                 label: `${person.full_name} (${person.person_id || person.uuid}) - ${person.type}`

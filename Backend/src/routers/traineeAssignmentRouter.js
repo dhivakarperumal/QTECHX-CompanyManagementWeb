@@ -10,6 +10,9 @@ router.post('/', traineeAssignmentController.assignTrainee);
 // GET /api/trainee-assignments/history/:traineeId
 router.get('/history/:traineeId', traineeAssignmentController.getAssignmentHistory);
 
+// GET /api/trainee-assignments/active-trainee-ids
+router.get('/active-trainee-ids', traineeAssignmentController.getActiveTraineeIds);
+
 // GET /api/trainee-assignments/available-employees (or route inside employees, but putting it here for simplicity)
 router.get('/available-employees', traineeAssignmentController.getAvailableEmployees);
 
