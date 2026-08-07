@@ -98,7 +98,7 @@ const AttendancePage = () => {
       start = new Date(customDate);
       end = new Date(customDate);
     }
-    
+
     if (start && end) {
       const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
       const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
@@ -147,8 +147,8 @@ const AttendancePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.employee_id) {
-       setError("Please select an employee");
-       return;
+      setError("Please select an employee");
+      return;
     }
     setSubmitting(true);
     setError(null);
@@ -171,8 +171,8 @@ const AttendancePage = () => {
   const absentToday = summaryData.filter(s => s.today_status === 'Absent').length;
   const onLeaveToday = summaryData.filter(s => s.today_status === 'On Leave' || s.today_status === 'Leave').length;
   const lateToday = summaryData.filter(s => s.late_entry && s.late_entry !== 'No' && s.late_entry !== '0h 0m' && s.late_entry !== '--').length;
-  
-  const workingNow = presentToday; 
+
+  const workingNow = presentToday;
 
   const overviewData = [
     { name: 'Present', value: presentToday, color: '#10b981' },
@@ -219,7 +219,7 @@ const AttendancePage = () => {
 
   return (
     <div className="space-y-6 text-white pb-10">
-      
+
       {/* Header */}
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
         <div>
@@ -265,87 +265,18 @@ const AttendancePage = () => {
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard icon={<Users className="text-blue-400" />} title="Total Employees" value={totalEmployees} subtext="+8 This Month" bgColor="bg-blue-500/10" />
-        <StatCard icon={<UserCheck className="text-emerald-400" />} title="Present Today" value={presentToday} subtext={`${presentPercentage}% of total`} bgColor="bg-emerald-500/10" />
-        <StatCard icon={<UserX className="text-rose-400" />} title="Absent Today" value={absentToday} subtext={`${((absentToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-rose-500/10" />
-        <StatCard icon={<UserMinus className="text-orange-400" />} title="On Leave Today" value={onLeaveToday} subtext={`${((onLeaveToday/totalEmployees)*100 || 0).toFixed(1)}% of total`} bgColor="bg-orange-500/10" />
-        <StatCard icon={<Clock className="text-purple-400" />} title="Late Today" value={lateToday} subtext={`${presentToday > 0 ? ((lateToday/presentToday)*100).toFixed(1) : 0}% of present`} bgColor="bg-purple-500/10" />
+        <StatCard icon={<Users className="text-blue-400" />} title="Total Employees" value={totalEmployees} bgColor="bg-blue-500/10" />
+        <StatCard icon={<UserCheck className="text-emerald-400" />} title="Present" value={presentToday} subtext={`${presentPercentage}% of total`} bgColor="bg-emerald-500/10" />
+        <StatCard icon={<UserX className="text-rose-400" />} title="Absent" value={absentToday} subtext={`${((absentToday / totalEmployees) * 100 || 0).toFixed(1)}% of total`} bgColor="bg-rose-500/10" />
+        <StatCard icon={<UserMinus className="text-orange-400" />} title="On Leave" value={onLeaveToday} subtext={`${((onLeaveToday / totalEmployees) * 100 || 0).toFixed(1)}% of total`} bgColor="bg-orange-500/10" />
+        <StatCard icon={<Clock className="text-purple-400" />} title="Late" value={lateToday} subtext={`${presentToday > 0 ? ((lateToday / presentToday) * 100).toFixed(1) : 0}% of present`} bgColor="bg-purple-500/10" />
         <StatCard icon={<UserCog className="text-indigo-400" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-500/10" />
-      </div>
-
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-        <div className="space-y-6">
-          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-6">{dateFilter === 'Today' ? "Today's" : dateFilter} Attendance Overview</h3>
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="w-48 h-48 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={overviewData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
-                      {overviewData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-bold text-white">{presentPercentage}%</span>
-                  <span className="text-xs text-emerald-400 font-medium">Present</span>
-                </div>
-              </div>
-              
-              <div className="flex-1 grid grid-cols-2 gap-y-4 gap-x-8">
-                {overviewData.map(item => (
-                  <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span className="text-sm font-medium text-white/70">{item.name}</span>
-                    </div>
-                    <span className="text-sm font-bold text-white">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 h-96 flex flex-col">
-            <h3 className="text-lg font-bold text-white mb-4">Live Status <span className="text-xs font-normal text-white/40">(Real-time)</span></h3>
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-               {summaryData.slice(0, 6).map((user, i) => (
-                 <div key={i} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-3">
-                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-white/70 uppercase">
-                        {(user.employee_name || 'U').charAt(0)}
-                     </div>
-                     <div>
-                       <p className="text-sm font-bold text-white">{user.employee_name || 'Unknown Employee'}</p>
-                       <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'On Leave' ? 'text-rose-400' : 'text-white/40'}`}>
-                         <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
-                       </p>
-                     </div>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-sm font-bold text-white/80">{user.check_in_time || '--'}</p>
-                   </div>
-                 </div>
-               ))}
-            </div>
-            <button className="w-full mt-4 py-2 text-sm font-bold text-orange-400 hover:text-orange-300 transition">
-              View All Employees &rarr;
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
-          
+
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px] text-sm text-left table-auto">
@@ -392,11 +323,10 @@ const AttendancePage = () => {
                       <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.early_exit || '--'}</td>
                       <td className="py-3 px-4 text-white/60 whitespace-nowrap">{row.overtime || '--'}</td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                          row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
-                          row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
-                          'bg-slate-500/10 text-slate-300'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${row.today_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' :
+                            row.today_status === 'On Leave' ? 'bg-rose-500/10 text-rose-400' :
+                              'bg-slate-500/10 text-slate-300'
+                          }`}>
                           {row.today_status || 'Unknown'}
                         </span>
                       </td>
@@ -427,45 +357,114 @@ const AttendancePage = () => {
         </div>
       </div>
 
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+        <div className="space-y-6">
+          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+            <h3 className="text-lg font-bold text-white mb-6">{dateFilter === 'Today' ? "Today's" : dateFilter} Attendance Overview</h3>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-48 h-48 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={overviewData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
+                      {overviewData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-bold text-white">{presentPercentage}%</span>
+                  <span className="text-xs text-emerald-400 font-medium">Present</span>
+                </div>
+              </div>
+
+              <div className="flex-1 grid grid-cols-2 gap-y-4 gap-x-8">
+                {overviewData.map(item => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-sm font-medium text-white/70">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-bold text-white">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 h-96 flex flex-col">
+            <h3 className="text-lg font-bold text-white mb-4">Live Status <span className="text-xs font-normal text-white/40">(Real-time)</span></h3>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+              {summaryData.slice(0, 6).map((user, i) => (
+                <div key={i} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-white/70 uppercase">
+                      {(user.employee_name || 'U').charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">{user.employee_name || 'Unknown Employee'}</p>
+                      <p className={`text-xs font-medium flex items-center gap-1 ${user.today_status === 'Present' ? 'text-emerald-400' : user.today_status === 'On Leave' ? 'text-rose-400' : 'text-white/40'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span> {user.today_status || 'Offline'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-white/80">{user.check_in_time || '--'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="w-full mt-4 py-2 text-sm font-bold text-orange-400 hover:text-orange-300 transition">
+              View All Employees &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* Trend */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
-           <h3 className="text-lg font-bold text-white mb-6">Attendance Trend <span className="text-xs font-normal text-white/40">({dateFilter})</span></h3>
-           <div className="h-48 w-full">
-             {trendData.length > 0 ? (
-               <ResponsiveContainer width="100%" height="100%">
-                 <LineChart data={trendData}>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff1a" />
-                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                   <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
-                   <Line type="monotone" dataKey="count" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#0f172a' }} activeDot={{ r: 6 }} />
-                 </LineChart>
-               </ResponsiveContainer>
-             ) : (
-               <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/50">No trend data available yet.</div>
-             )}
-           </div>
+          <h3 className="text-lg font-bold text-white mb-6">Attendance Trend <span className="text-xs font-normal text-white/40">({dateFilter})</span></h3>
+          <div className="h-48 w-full">
+            {trendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff1a" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                  <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff1a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <Line type="monotone" dataKey="count" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#0f172a' }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/50">No trend data available yet.</div>
+            )}
+          </div>
         </div>
 
         {/* Recent Activity */}
         <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10 overflow-hidden flex flex-col">
-           <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>
-           <div className="flex-1 overflow-y-auto space-y-4">
-             {computedRecentActivity.map((activity, i) => (
-                <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/5 p-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mt-1">
-                     <span className="text-xs font-bold text-white/50 uppercase">{(activity.employee_name || 'U').charAt(0)}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'On Leave' ? 'marked leave' : 'updated attendance'}</p>
-                    <p className="text-xs text-white/40 mt-0.5">{activity.check_in_time ? `Check-in ${activity.check_in_time}` : 'Today'}</p>
-                  </div>
+          <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>
+          <div className="flex-1 overflow-y-auto space-y-4">
+            {computedRecentActivity.map((activity, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/5 p-3">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mt-1">
+                  <span className="text-xs font-bold text-white/50 uppercase">{(activity.employee_name || 'U').charAt(0)}</span>
                 </div>
-             ))}
-           </div>
+                <div className="flex-1">
+                  <p className="text-sm text-white/70 font-medium"><span className="font-bold text-white">{activity.employee_name || 'Employee'}</span> {activity.status === 'Present' ? 'logged in' : activity.status === 'On Leave' ? 'marked leave' : 'updated attendance'}</p>
+                  <p className="text-xs text-white/40 mt-0.5">{activity.check_in_time ? `Check-in ${activity.check_in_time}` : 'Today'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
@@ -491,7 +490,7 @@ const AttendancePage = () => {
                     <AlertCircle size={16} className="shrink-0" /> {error}
                   </div>
                 )}
-                
+
                 <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="mb-2 block text-sm text-white/70">Select Employee</label>
@@ -503,12 +502,12 @@ const AttendancePage = () => {
                       value={
                         form.employee_id
                           ? {
-                              value: form.employee_id,
-                              label: (() => {
-                                const emp = employeeData.find(e => e.employee_id === form.employee_id);
-                                return emp ? `${emp.first_name} ${emp.last_name} (${emp.employee_code})` : form.employee_id;
-                              })()
-                            }
+                            value: form.employee_id,
+                            label: (() => {
+                              const emp = employeeData.find(e => e.employee_id === form.employee_id);
+                              return emp ? `${emp.first_name} ${emp.last_name} (${emp.employee_code})` : form.employee_id;
+                            })()
+                          }
                           : null
                       }
                       onChange={(opt) => handleFormChange({ target: { name: 'employee_id', value: opt ? opt.value : '' } })}
@@ -517,7 +516,7 @@ const AttendancePage = () => {
                       isSearchable={true}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Date</label>
                     <input
@@ -569,7 +568,7 @@ const AttendancePage = () => {
                       <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
                     <div className="flex gap-2">
@@ -596,7 +595,7 @@ const AttendancePage = () => {
                       <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
-                  
+
                   <div className="md:col-span-2 pt-4 flex justify-end gap-3 border-t border-white/10">
                     <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-6 py-3 text-white/70 hover:bg-white/10">Cancel</button>
                     <button type="submit" disabled={submitting} className="rounded-2xl bg-orange-500 px-6 py-3 font-medium text-white transition hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center min-w-30">
@@ -615,13 +614,19 @@ const AttendancePage = () => {
 };
 
 const StatCard = ({ icon, title, value, subtext, bgColor }) => (
-  <div className="bg-[#0f172a]/70 p-4 rounded-3xl shadow-lg border border-white/10 flex flex-col justify-center items-center text-center hover:bg-white/2 transition cursor-default">
-    <div className={`w-12 h-12 rounded-full ${bgColor} flex items-center justify-center mb-3`}>
+  <div className="bg-[#0f172a]/70 p-5 rounded-2xl border border-white/10 flex items-center gap-4 hover:bg-white/5 transition cursor-default">
+    <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0`}>
       {icon}
     </div>
-    <p className="text-xs font-bold text-white/50 uppercase tracking-wider">{title}</p>
-    <h3 className="text-2xl font-black text-white mt-1 mb-1">{value}</h3>
-    <p className={`text-xs font-medium ${subtext.includes('+') || subtext.includes('Working') ? 'text-emerald-400' : 'text-white/40'}`}>{subtext}</p>
+    <div>
+      <h3 className="text-xl font-bold text-white leading-tight">{value}</h3>
+      <p className="text-sm font-medium text-white/50">{title}</p>
+      {subtext && (
+        <p className={`text-[10px] font-medium mt-0.5 ${subtext.includes('+') || subtext.includes('Working') ? 'text-emerald-400' : 'text-white/40'}`}>
+          {subtext}
+        </p>
+      )}
+    </div>
   </div>
 );
 
