@@ -325,8 +325,14 @@ const AdminDashboard = () => {
   const formatPayroll = (amount) => {
     if (!amount && amount !== 0) return '—';
     const n = Number(amount || 0);
+    if (!Number.isFinite(n)) return '—';
     if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`;
     return `₹${n.toLocaleString('en-IN')}`;
+  };
+
+  const safeNumber = (value) => {
+    const n = typeof value === 'number' ? value : parseFloat(value);
+    return Number.isFinite(n) ? n : 0;
   };
 
   const stats = [
@@ -370,7 +376,7 @@ const AdminDashboard = () => {
   };
 
   const TARGET_REVENUE = 500000;
-  const currentIncome = dashboard ? (dashboard.currentMonthIncome || 0) : 0;
+  const currentIncome = dashboard ? safeNumber(dashboard.currentMonthIncome) : 0;
   const targetPercentage = Math.min(Math.round((currentIncome / TARGET_REVENUE) * 100), 100);
 
   const upcomingEvents = (dashboard?.upcomingEvents || []).map(e => {
@@ -468,7 +474,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="relative z-10 flex items-end gap-3">
-                  <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? (dashboard.currentMonthIncome || 0).toLocaleString('en-IN') : 0}</p>
+                  <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthIncome).toLocaleString('en-IN') : 0}</p>
                 </div>
                 <div className="relative z-10 mt-4 flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400">
@@ -481,11 +487,11 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-[1.25rem] border border-rose-500/10 bg-rose-500/[0.03] p-4 shadow-sm hover:bg-rose-500/[0.05] transition-colors">
                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Monthly Payroll</p>
-                   <p className="text-xl font-bold text-rose-300">₹{dashboard ? (dashboard.monthlyPayroll || 0).toLocaleString('en-IN') : 0}</p>
+                   <p className="text-xl font-bold text-rose-300">₹{dashboard ? formatPayroll(dashboard.monthlyPayroll) : 0}</p>
                 </div>
                 <div className="rounded-[1.25rem] border border-blue-500/10 bg-blue-500/[0.03] p-4 shadow-sm hover:bg-blue-500/[0.05] transition-colors">
                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1.5 font-medium">Net Est. Profit</p>
-                   <p className="text-xl font-bold text-blue-300">₹{dashboard ? ((dashboard.currentMonthIncome || 0) - (dashboard.monthlyPayroll || 0)).toLocaleString('en-IN') : 0}</p>
+                   <p className="text-xl font-bold text-blue-300">₹{dashboard ? safeNumber(safeNumber(dashboard.currentMonthIncome) - safeNumber(dashboard.monthlyPayroll)).toLocaleString('en-IN') : 0}</p>
                 </div>
               </div>
 

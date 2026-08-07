@@ -433,15 +433,15 @@ export default function ProjectPayment() {
               <div className="mt-6 grid gap-4 md:grid-cols-4 bg-white/5 p-4 rounded-xl border border-white/10">
                 <div>
                   <span className="block text-xs text-white/50 mb-1">Project Name</span>
-                  <span className="font-semibold">{selectedProjectDetails.project_name}</span>
+                  <span className="font-semibold text-white">{selectedProjectDetails.project_name}</span>
                 </div>
                 <div>
                   <span className="block text-xs text-white/50 mb-1">Project UUID</span>
-                  <span className="font-semibold">{selectedProjectDetails.uuid}</span>
+                  <span className="font-semibold text-white">{selectedProjectDetails.uuid}</span>
                 </div>
                 <div>
                   <span className="block text-xs text-white/50 mb-1">Client Name</span>
-                  <span className="font-semibold">{selectedProjectDetails.client_name || 'N/A'}</span>
+                  <span className="font-semibold text-white">{selectedProjectDetails.client_name || 'N/A'}</span>
                 </div>
                 <div>
                   <span className="block text-xs text-white/50 mb-1">Total Project Cost</span>
@@ -473,7 +473,7 @@ export default function ProjectPayment() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <label className="text-sm text-white/60">
                 <span className="mb-1.5 block font-medium">Amount Paid (₹) *</span>
-                <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" value={formData.amount_paid} onChange={handleChange} required />
+                <input className={fieldClass} type="number" name="amount_paid" min="1" step="0.01" placeholder="Enter Amount" value={formData.amount_paid} onChange={handleChange} required />
               </label>
 
               <label className="text-sm text-white/60">
@@ -508,7 +508,7 @@ export default function ProjectPayment() {
 
               <label className="text-sm text-white/60 lg:col-span-2">
                 <span className="mb-1.5 block font-medium">To (Admin)</span>
-                <input className={readOnlyFieldClass} type="text" readOnly value={user?.username || user?.name || 'Admin'} />
+                <input className={readOnlyFieldClass} type="text" readOnly value="Q-Techx Solutions" />
               </label>
 
               <label className="text-sm text-white/60 lg:col-span-2">
