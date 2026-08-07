@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import api from '../api';
@@ -299,6 +299,7 @@ const MyCalendar = () => {
   const [modalData, setModalData] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewModalData, setViewModalData] = useState(null);
+  const [miniCalDate, setMiniCalDate] = useState(dayjs());
 
   useEffect(() => { fetchEvents(); }, [user]);
 
@@ -397,8 +398,9 @@ const MyCalendar = () => {
   };
 
   // Mini calendar
-  const miniStart = currentDate.startOf('month').subtract((currentDate.startOf('month').day() + 6) % 7, 'day');
-  const miniEnd = currentDate.endOf('month').add((7 - currentDate.endOf('month').day()) % 7, 'day');
+  const monthStart = miniCalDate.startOf('month');
+  const miniStart = monthStart.day(0);
+  const miniEnd = miniCalDate.endOf('month').day(6);
   const miniDays = [];
   let md = miniStart;
   while (md.isBefore(miniEnd) || md.isSame(miniEnd, 'day')) { miniDays.push(md); md = md.add(1, 'day'); }
@@ -460,6 +462,52 @@ const MyCalendar = () => {
           className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-3.5 rounded-2xl font-semibold shadow-lg shadow-primary/25 transition-all">
           <Plus size={18} /> New Event
         </button>
+
+        {/* Mini Calendar */}
+        <div className="bg-[#13141a]/90 backdrop-blur-sm border border-white/10 rounded-3xl p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setMiniCalDate(d => d.subtract(1, 'month'))} className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all text-white/70 hover:text-white">
+              <ChevronLeft size={14} />
+            </button>
+            <h3 className="font-bold text-[15px]">{miniCalDate.format('MMMM YYYY')}</h3>
+            <button onClick={() => setMiniCalDate(d => d.add(1, 'month'))} className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all text-white/70 hover:text-white">
+              <ChevronRight size={14} />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 text-center mb-2">
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d, i) => (
+              <div key={d} className={`text-[11px] font-bold ${i === 0 || i === 6 ? 'text-rose-500' : 'text-white/50'}`}>{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-y-1 gap-x-0.5">
+            {miniDays.map(date => {
+              const isOther = date.month() !== miniCalDate.month();
+              const isSelected = date.isSame(selectedDate, 'day');
+              const dOW = date.day();
+              const isWeekend = dOW === 0 || dOW === 6;
+              const hasEv = events.some(e => {
+                const { start, end } = getEventDates(e);
+                return date.isBetween(start, end, 'day', '[]');
+              });
+              
+              return (
+                <button
+                  key={date.format('YYYY-MM-DD')}
+                  onClick={() => { setCurrentDate(date); setSelectedDate(date); }}
+                  className={`relative w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold mx-auto transition-all
+                    ${isOther ? 'text-white/20' : isSelected ? 'bg-primary text-white shadow-[0_0_12px_rgba(248,116,14,0.4)]' : 'hover:bg-white/10 text-white/80'}
+                    ${!isSelected && !isOther && isWeekend ? 'text-rose-500' : ''}
+                  `}
+                >
+                  {date.format('D')}
+                  {hasEv && !isSelected && !isOther && (
+                    <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-primary shadow-[0_0_4px_#F8740E]"></span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Schedule */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-4 shadow-lg">
