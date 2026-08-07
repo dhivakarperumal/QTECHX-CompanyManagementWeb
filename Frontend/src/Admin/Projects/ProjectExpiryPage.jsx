@@ -129,6 +129,7 @@ export default function ProjectExpiryPage() {
   const [filters, setFilters] = useState({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false });
   const [form, setForm] = useState({ project_id: '', client_id: '', client_name: '', domain_name: '', expiry_type: 'Hosting', project_type: '', service_name: '', provider_name: '', plan_name: '', price_per_month: '', purchase_date: '', start_date: '', expiry_date: '', renewal_cost: '', payment_status: 'Pending', payment_method: '', invoice_number: '', auto_renew: false, renewal_status: 'Active', notes: '', internal_notes: '', status: 'Active' });
   const [renewForm, setRenewForm] = useState({ renewal_type: 'Hosting', new_expiry_date: '', renewal_amount: '', tax_amount: '', total_amount: '', payment_method: '', payment_status: 'Pending', invoice_number: '', notes: '' });
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchExpiryData = async () => {
     setIsLoading(true);
@@ -364,12 +365,12 @@ export default function ProjectExpiryPage() {
   };
 
   const statsCards = [
-    { key: 'total_projects', label: 'Total Projects', icon: Sparkles, value: stats.total_projects || 0, tone: 'from-indigo-500 to-violet-500' },
-    { key: 'active_records', label: 'Active Projects', icon: CheckCircle2, value: stats.active_records || 0, tone: 'from-emerald-500 to-green-500' },
-    { key: 'expiring_today', label: 'Expiring Today', icon: AlertTriangle, value: stats.expiring_today || 0, tone: 'from-amber-500 to-orange-500' },
-    { key: 'expiring_7_days', label: 'Expiring in 7 Days', icon: Clock3, value: stats.expiring_7_days || 0, tone: 'from-orange-500 to-rose-500' },
-    { key: 'expiring_30_days', label: 'Expiring in 30 Days', icon: CalendarClock, value: stats.expiring_30_days || 0, tone: 'from-cyan-500 to-sky-500' },
-    { key: 'expired_projects', label: 'Expired Projects', icon: XCircle, value: stats.expired_projects || 0, tone: 'from-rose-600 to-red-500' },
+    { key: 'total_projects', label: 'Total Projects', icon: Sparkles, value: stats.total_projects || 0, tone: 'from-blue-500 to-indigo-500', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400' },
+    { key: 'active_records', label: 'Active', icon: CheckCircle2, value: stats.active_records || 0, tone: 'from-emerald-500 to-green-500', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-400' },
+    { key: 'expiring_today', label: 'Expiring Today', icon: AlertTriangle, value: stats.expiring_today || 0, tone: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-400' },
+    { key: 'expiring_7_days', label: 'Expiring in 7D', icon: Clock3, value: stats.expiring_7_days || 0, tone: 'from-orange-500 to-rose-500', iconBg: 'bg-orange-500/10', iconColor: 'text-orange-400' },
+    { key: 'expiring_30_days', label: 'Expiring in 30D', icon: CalendarClock, value: stats.expiring_30_days || 0, tone: 'from-cyan-500 to-sky-500', iconBg: 'bg-cyan-500/10', iconColor: 'text-cyan-400' },
+    { key: 'expired_projects', label: 'Expired', icon: XCircle, value: stats.expired_projects || 0, tone: 'from-rose-600 to-red-500', iconBg: 'bg-rose-500/10', iconColor: 'text-rose-400' },
   ];
 
   return (
@@ -402,12 +403,14 @@ export default function ProjectExpiryPage() {
         {statsCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.key} className="bg-white/5 border border-white/8 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden group">
-              <div className="flex items-center justify-between relative z-10">
-                <p className="text-xs font-medium text-white/50">{card.label}</p>
-                <Icon size={16} className="text-white/40 group-hover:text-white transition-colors" />
+            <div key={card.key} className="bg-white/5 border border-white/8 rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center relative z-10 ${card.iconBg} ${card.iconColor}`}>
+                <Icon size={20} />
               </div>
-              <p className="text-2xl font-bold text-white relative z-10">{card.value}</p>
+              <div className="relative z-10 flex flex-col">
+                <p className="text-xl font-bold text-white leading-tight">{card.value}</p>
+                <p className="text-xs font-medium text-white/50">{card.label}</p>
+              </div>
               <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full bg-linear-to-br ${card.tone} opacity-10 blur-xl group-hover:opacity-20 transition-opacity`} />
             </div>
           );
@@ -416,27 +419,31 @@ export default function ProjectExpiryPage() {
 
       {/* ── Search & Filters ── */}
       <div className="bg-white/5 border border-white/8 rounded-2xl p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder="Search projects or clients..."
-                className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
-              />
-            </div>
-            <button onClick={() => { setFilters({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false }); loadData(); }} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center">
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+            <input
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              placeholder="Search projects or clients..."
+              className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowFilters(!showFilters)} className={`h-[42px] px-4 rounded-xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${showFilters ? 'bg-[#f97316]/10 border-[#f97316]/30 text-[#f97316]' : 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white'}`}>
+              <Filter size={16} /> Filters
+            </button>
+            <button onClick={() => { setFilters({ search: '', project_id: '', client_id: '', expiry_type: '', renewal_status: '', status: '', from_date: '', to_date: '', expiring_today: false, next_7_days: false, next_30_days: false, expired: false }); loadData(); }} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center" title="Reset Filters">
               Reset
             </button>
-            <button onClick={loadData} className="h-[42px] px-4 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 hover:text-white transition-all flex items-center justify-center">
+            <button onClick={loadData} className="h-[42px] w-[42px] rounded-xl border border-white/10 text-white/60 hover:bg-white/5 hover:text-white transition-all flex items-center justify-center" title="Refresh">
               <RefreshCcw size={16} />
             </button>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
           <Select
             value={filters.project_id ? { value: filters.project_id, label: projects.find(p => String(p.id) === String(filters.project_id))?.project_name || 'All projects' } : null}
             onChange={(option) => setFilters({ ...filters, project_id: option ? option.value : '' })}
@@ -492,6 +499,7 @@ export default function ProjectExpiryPage() {
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Table View ── */}
@@ -503,7 +511,7 @@ export default function ProjectExpiryPage() {
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">#</th>
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Project / Client</th>
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Service Name</th>
-                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Expiry Type</th>
+                <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8" style={{display: 'none'}}>Expiry Type</th>
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Provider / Plan</th>
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Dates</th>
                 <th className="uppercase tracking-widest text-[10px] font-semibold text-white/40 pb-4 px-4 border-b border-white/8">Days Left</th>
@@ -546,7 +554,7 @@ export default function ProjectExpiryPage() {
                       {record.domain_name && <div className="text-[11px] text-primary/70 mt-0.5 font-medium truncate max-w-[150px]">{record.domain_name}</div>}
                     </td>
                     <td className="px-4 py-3.5 text-white/70 text-sm whitespace-nowrap">{record.service_name || '—'}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
+                    <td className="px-4 py-3.5 whitespace-nowrap" style={{display: 'none'}}>
                       <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] font-medium text-blue-400">{record.expiry_type || '—'}</span>
                     </td>
                     <td className="px-4 py-3.5 min-w-[140px]">
@@ -809,7 +817,7 @@ export default function ProjectExpiryPage() {
                 </label>
                 <input value={form.project_type} onChange={(e) => setForm({ ...form, project_type: e.target.value })} placeholder="e.g. Website, Mobile App" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-white/20" />
               </div>
-              <div>
+              <div style={{display: 'none'}}>
                 <label className="mb-2 flex items-center justify-between text-xs font-medium text-white/60">
                   Service Name
                   {form.service_name && <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 rounded-sm">auto-filled</span>}
@@ -843,7 +851,7 @@ export default function ProjectExpiryPage() {
                   isClearable={true}
                 />
               </div>
-              <div>
+              <div style={{display: 'none'}}>
                 <label className="mb-2 block text-xs font-medium text-white/60">Price / Month (₹)</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm font-medium">₹</span>
@@ -913,7 +921,7 @@ export default function ProjectExpiryPage() {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="md:col-span-2" style={{display: 'none'}}>
                 <label className="mb-2 block text-xs font-medium text-white/60">Internal Notes</label>
                 <textarea value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} rows="2" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors" />
               </div>
