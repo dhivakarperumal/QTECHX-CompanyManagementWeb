@@ -81,6 +81,45 @@ function parseEmployeeAssignments(value) {
   return [];
 }
 
+async function getActiveProjectCountForEmployee(employeeId, excludeProjectId = null) {
+  if (!employeeId) return 0;
+  const db = getDB();
+  const params = [String(employeeId).trim()];
+  let excludeSql = '';
+  if (excludeProjectId) {
+    excludeSql = 'AND pa.project_id != ?';
+    params.push(excludeProjectId);
+  }
+
+  const [rows] = await db.execute(
+    `SELECT COUNT(DISTINCT pa.project_id) AS active_project_count
+     FROM project_assignments pa
+     JOIN projects p ON p.id = pa.project_id
+     WHERE JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(? AS CHAR)), '$')
+       AND p.current_status NOT IN ('Completed','Cancelled','Inactive')
+       ${excludeSql}`,
+    params
+  );
+
+  return Number(rows[0]?.active_project_count || 0);
+}
+
+async function getActiveProjectCountsForEmployees(employeeIds = [], excludeProjectId = null) {
+  const counts = {};
+  for (const employeeId of [...new Set((employeeIds || []).map((id) => String(id).trim()).filter(Boolean))]) {
+    counts[employeeId] = await getActiveProjectCountForEmployee(employeeId, excludeProjectId);
+  }
+  return counts;
+}
+
+async function validateAssignmentLimitForEmployees(employeeIds = [], projectId = null, existingEmployeeIds = []) {
+  const existingSet = new Set((existingEmployeeIds || []).map((id) => String(id).trim()).filter(Boolean));
+  const counts = await getActiveProjectCountsForEmployees(employeeIds, projectId);
+  return Object.entries(counts)
+    .filter(([employeeId, count]) => count >= 3 && !existingSet.has(employeeId))
+    .map(([employeeId]) => employeeId);
+}
+
 async function hydrateEmployeeAssignments(assignments = [], rowAssignedDate = null, rowCreatedAt = null) {
   const db = getDB();
   const normalizedAssignments = Array.isArray(assignments)
@@ -149,6 +188,16 @@ async function assignEmployeesToProject({ project_id, employee_ids = [], status 
   const actor = created_by || updated_by || null;
   const finalAssignedDate = assigned_date || getCurrentDateTimeString();
   const [existingRows] = await db.execute('SELECT id, employee_ids, status, assigned_date FROM project_assignments WHERE project_id = ? LIMIT 1', [project_id]);
+  const existingAssignments = existingRows[0] ? parseEmployeeAssignments(existingRows[0].employee_ids) : [];
+  const existingEmployeeIds = existingAssignments.map((employee) => String(employee.employee_id).trim()).filter(Boolean);
+  const blockedEmployees = await validateAssignmentLimitForEmployees(
+    payloads.map((emp) => emp.employee_id),
+    project_id,
+    existingEmployeeIds
+  );
+  if (blockedEmployees.length) {
+    throw new Error('This employee is already assigned to the maximum of 3 active projects.');
+  }
 
   // ── Enrich payloads with LIVE DB employee data before storing ──────────────
   // This prevents saving null names into the blob when the frontend only sends employee_id
@@ -218,7 +267,17 @@ async function syncProjectAssignments({ project_id, employee_ids = [], status = 
   const payloads = serializeEmployeeAssignments(employee_ids);
   const actor = updated_by || null;
   const finalAssignedDate = assigned_date || getCurrentDateTimeString();
-  const [existingRows] = await db.execute('SELECT id, assigned_date FROM project_assignments WHERE project_id = ? LIMIT 1', [project_id]);
+  const [existingRows] = await db.execute('SELECT id, employee_ids, assigned_date FROM project_assignments WHERE project_id = ? LIMIT 1', [project_id]);
+  const existingAssignments = existingRows[0] ? parseEmployeeAssignments(existingRows[0].employee_ids) : [];
+  const existingEmployeeIds = existingAssignments.map((employee) => String(employee.employee_id).trim()).filter(Boolean);
+  const blockedEmployees = await validateAssignmentLimitForEmployees(
+    payloads.map((emp) => emp.employee_id),
+    project_id,
+    existingEmployeeIds
+  );
+  if (blockedEmployees.length) {
+    throw new Error('This employee is already assigned to the maximum of 3 active projects.');
+  }
 
   const enrichedPayloads = payloads.map(emp => ({
     ...emp,
@@ -272,6 +331,14 @@ async function updateProjectAssignmentEntry({ project_id, assignment_id, employe
   const currentAssignments = parseEmployeeAssignments(assignmentRow.employee_ids);
   const normalizedEmployeeId = employee_id ? String(employee_id).trim() : '';
   if (!normalizedEmployeeId) return null;
+
+  const currentEmployeeIds = currentAssignments.map((employee) => String(employee.employee_id).trim()).filter(Boolean);
+  if (!currentEmployeeIds.includes(normalizedEmployeeId)) {
+    const blockedCount = await getActiveProjectCountForEmployee(normalizedEmployeeId, project_id);
+    if (blockedCount >= 3) {
+      throw new Error('This employee is already assigned to the maximum of 3 active projects.');
+    }
+  }
 
   let updated = false;
   const updatedAssignments = currentAssignments.map((employee) => {
@@ -391,20 +458,35 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
   const db = getDB();
   const term = `%${(search || '').trim()}%`;
   const [rows] = await db.execute(
-    `SELECT employee_id, employee_code, first_name, last_name, profile_photo, designation, role, personal_email, official_email, mobile_number, alternate_mobile, employment_status
-     FROM employees
-     WHERE employment_status = ?
+    `SELECT e.employee_id, e.employee_code, e.first_name, e.last_name, e.profile_photo, e.designation, e.role, e.personal_email, e.official_email, e.mobile_number, e.alternate_mobile, e.employment_status,
+      COALESCE(
+        (SELECT COUNT(DISTINCT pa.project_id)
+         FROM project_assignments pa
+         JOIN projects p ON p.id = pa.project_id
+         WHERE JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
+           AND p.current_status NOT IN ('Completed','Cancelled','Inactive')
+        ), 0
+      ) AS active_project_count
+     FROM employees e
+     WHERE e.employment_status = ?
        AND (
-         LOWER(CONCAT(first_name, ' ', COALESCE(last_name, ''))) LIKE LOWER(?) OR
-         LOWER(employee_id) LIKE LOWER(?) OR
-         LOWER(employee_code) LIKE LOWER(?) OR
-         LOWER(personal_email) LIKE LOWER(?) OR
-         LOWER(official_email) LIKE LOWER(?) OR
-         LOWER(mobile_number) LIKE LOWER(?) OR
-         LOWER(designation) LIKE LOWER(?) OR
-         LOWER(role) LIKE LOWER(?)
+         LOWER(CONCAT(e.first_name, ' ', COALESCE(e.last_name, ''))) LIKE LOWER(?) OR
+         LOWER(e.employee_id) LIKE LOWER(?) OR
+         LOWER(e.employee_code) LIKE LOWER(?) OR
+         LOWER(e.personal_email) LIKE LOWER(?) OR
+         LOWER(e.official_email) LIKE LOWER(?) OR
+         LOWER(e.mobile_number) LIKE LOWER(?) OR
+         LOWER(e.designation) LIKE LOWER(?) OR
+         LOWER(e.role) LIKE LOWER(?)
        )
-     ORDER BY first_name, last_name
+       AND (
+         SELECT COUNT(DISTINCT pa2.project_id)
+         FROM project_assignments pa2
+         JOIN projects p2 ON p2.id = pa2.project_id
+         WHERE JSON_CONTAINS(pa2.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
+           AND p2.current_status NOT IN ('Completed','Cancelled','Inactive')
+       ) < 3
+     ORDER BY e.first_name, e.last_name
      LIMIT 50`,
     [status, term, term, term, term, term, term, term, term]
   );

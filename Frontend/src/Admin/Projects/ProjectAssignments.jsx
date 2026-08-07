@@ -173,7 +173,7 @@ function AssignModal({ onClose, onAssigned, assignments }) {
   const filteredEmps = employees.filter(e => {
     const activeAssignments = (assignments || []).filter(a => 
       a.employee_id === e.employee_id && 
-      !['Completed', 'Cancelled'].includes(a.current_status || a.status)
+      !['Completed', 'Cancelled', 'Inactive'].includes(a.current_status || a.status)
     );
     const assignedProjectUuids = new Set(activeAssignments.map(a => a.project_uuid));
     
@@ -286,6 +286,7 @@ function AssignModal({ onClose, onAssigned, assignments }) {
                   <input value={empSearch} onChange={e => setEmpSearch(e.target.value)} placeholder="Search employees…"
                     className="w-full bg-[#0e1118] border border-white/10 text-white text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-orange-500/50 placeholder:text-white/20" />
                 </div>
+                <p className="text-[10px] text-white/40 mb-2">Employees already assigned to 3 active projects are excluded.</p>
                 {selectedCount > 0 && (
                   <p className="text-xs text-white/50 mb-2">{selectedCount} employee{selectedCount !== 1 ? 's' : ''} selected</p>
                 )}

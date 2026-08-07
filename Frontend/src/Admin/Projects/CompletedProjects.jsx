@@ -480,14 +480,8 @@ export default function CompletedProjects() {
                       placeholder="Search by name, ID, email, phone, designation"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50"
                     />
+                    <p className="text-[10px] text-white/40 mt-2">Search results exclude employees already assigned to 3 active projects.</p>
                   </div>
-
-                  {assignmentError && (
-                    <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-400">{assignmentError}</div>
-                  )}
-                  {assignmentSuccess && (
-                    <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">{assignmentSuccess}</div>
-                  )}
 
                   {assignmentLoading ? (
                     <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/45">Searching active employees…</div>
