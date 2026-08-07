@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Select from 'react-select';
-import { CalendarClock, Search, Plus, Eye, Edit, RefreshCcw, History, Send, Download, Printer, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Clock3, XCircle } from 'lucide-react';
+import { CalendarClock, Search, Plus, Eye, Edit, RefreshCcw, History, Send, Download, Printer, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle2, Clock3, XCircle, Grid3x3, List } from 'lucide-react';
 import api from '../../api';
 
 const customSelectStyles = {
@@ -130,6 +130,7 @@ export default function ProjectExpiryPage() {
   const [form, setForm] = useState({ project_id: '', client_id: '', client_name: '', domain_name: '', expiry_type: 'Hosting', project_type: '', service_name: '', provider_name: '', plan_name: '', price_per_month: '', purchase_date: '', start_date: '', expiry_date: '', renewal_cost: '', payment_status: 'Pending', payment_method: '', invoice_number: '', auto_renew: false, renewal_status: 'Active', notes: '', internal_notes: '', status: 'Active' });
   const [renewForm, setRenewForm] = useState({ renewal_type: 'Hosting', new_expiry_date: '', renewal_amount: '', tax_amount: '', total_amount: '', payment_method: '', payment_status: 'Pending', invoice_number: '', notes: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState('table');
 
   const fetchExpiryData = async () => {
     setIsLoading(true);
@@ -393,9 +394,27 @@ export default function ProjectExpiryPage() {
             <p className="text-white/40 text-xs mt-0.5">Track hosting, domain, SSL, and other renewals.</p>
           </div>
         </div>
-        <button onClick={openCreate} className="flex items-center justify-center gap-2 bg-linear-to-r from-[#f97316] to-[#ea580c] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95">
-          <Plus size={16} /> Add Expiry
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="bg-white/5 border border-white/8 rounded-xl p-1 flex gap-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-primary text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Table View"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-primary text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              title="Card View"
+            >
+              <Grid3x3 size={16} />
+            </button>
+          </div>
+          <button onClick={openCreate} className="flex items-center justify-center gap-2 bg-linear-to-r from-[#f97316] to-[#ea580c] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95">
+            <Plus size={16} /> Add Expiry
+          </button>
+        </div>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -503,6 +522,7 @@ export default function ProjectExpiryPage() {
       </div>
 
       {/* ── Table View ── */}
+      {viewMode === 'table' && (
       <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -600,9 +620,13 @@ export default function ProjectExpiryPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button onClick={() => openAction(record, 'view')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/20 flex items-center justify-center text-white/60 hover:text-blue-400 transition" title="View"><Eye size={14} /></button>
                         <button onClick={() => openEdit(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-orange-500/20 flex items-center justify-center text-white/60 hover:text-orange-400 transition" title="Edit"><Edit size={14} /></button>
-                        <button onClick={() => openAction(record, 'renew')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition" title="Renew"><RefreshCcw size={14} /></button>
-                        <button onClick={() => openAction(record, 'history')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-white/60 hover:text-purple-400 transition" title="History"><History size={14} /></button>
-                        <button onClick={() => handleReminderSend(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-sky-500/20 flex items-center justify-center text-white/60 hover:text-sky-400 transition" title="Send Reminder"><Send size={14} /></button>
+                        
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button onClick={() => openAction(record, 'renew')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition" title="Renew"><RefreshCcw size={14} /></button>
+                          <button onClick={() => openAction(record, 'history')} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-500/20 flex items-center justify-center text-white/60 hover:text-purple-400 transition" title="History"><History size={14} /></button>
+                          <button onClick={() => handleReminderSend(record)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-sky-500/20 flex items-center justify-center text-white/60 hover:text-sky-400 transition" title="Send Reminder"><Send size={14} /></button>
+                        </div>
+
                         <button onClick={() => handleDelete(record.id)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-white/60 hover:text-rose-400 transition" title="Delete"><Trash2 size={14} /></button>
                       </div>
                     </td>
@@ -613,6 +637,87 @@ export default function ProjectExpiryPage() {
           </table>
         </div>
       </div>
+      )}
+
+      {/* ── Card View ── */}
+      {viewMode === 'card' && (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {isLoading ? (
+          <div className="col-span-full py-12 text-center">
+            <div className="flex flex-col items-center justify-center text-white/40">
+              <RefreshCcw size={32} className="animate-spin mb-4 opacity-20" />
+              <p className="text-sm font-medium">Loading expiry records...</p>
+            </div>
+          </div>
+        ) : visibleRecords.length === 0 ? (
+          <div className="col-span-full py-12 text-center">
+            <div className="flex flex-col items-center justify-center text-white/40">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <CalendarClock size={24} />
+              </div>
+              <p className="text-sm font-medium text-white/60">No expiry records found</p>
+              <p className="text-xs mt-1 text-white/40">Try adjusting your filters or search query.</p>
+            </div>
+          </div>
+        ) : visibleRecords.map((record) => {
+          const badge = getDaysBadge(record.days_remaining);
+          return (
+            <div key={record.id} className="bg-white/5 border border-white/8 rounded-2xl p-5 hover:bg-white/[0.08] transition-colors group">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="font-medium text-white/90 text-sm truncate">{record.project_name || `Project #${record.project_id}`}</h3>
+                  <p className="text-xs text-white/40 mt-1">{record.client_name || '—'}</p>
+                  {record.domain_name && <p className="text-[11px] text-primary/70 mt-1 font-medium truncate">{record.domain_name}</p>}
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium whitespace-nowrap ${badge.className}`}>{badge.label}</span>
+              </div>
+              
+              <div className="space-y-3 border-t border-white/10 pt-4 mb-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Provider</span>
+                  <span className="text-white/80 font-medium">{record.provider_name || '—'}</span>
+                </div>
+                {record.plan_name && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/40">Plan</span>
+                    <span className="text-white/80 font-medium">{record.plan_name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Expiry Date</span>
+                  <span className="text-white/80 font-medium">{record.expiry_date ? new Date(record.expiry_date).toLocaleDateString('en-IN') : '—'}</span>
+                </div>
+                {record.renewal_cost && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white/40">Renewal Cost</span>
+                    <span className="text-emerald-400 font-medium">₹{Number(record.renewal_cost).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Payment Status</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                    record.payment_status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                    record.payment_status === 'Failed' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                    'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  }`}>{record.payment_status || 'Pending'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40">Status</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getBadgeClass(record.renewal_status)}`}>{record.renewal_status || 'Active'}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => openAction(record, 'view')} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-blue-500/20 flex items-center justify-center text-white/60 hover:text-blue-400 transition text-xs font-medium" title="View"><Eye size={12} className="mr-1" /> View</button>
+                <button onClick={() => openEdit(record)} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-orange-500/20 flex items-center justify-center text-white/60 hover:text-orange-400 transition text-xs font-medium" title="Edit"><Edit size={12} className="mr-1" /> Edit</button>
+                <button onClick={() => openAction(record, 'renew')} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center text-white/60 hover:text-emerald-400 transition text-xs font-medium" title="Renew"><RefreshCcw size={12} className="mr-1" /> Renew</button>
+                <button onClick={() => handleDelete(record.id)} className="flex-1 px-2 py-2 rounded-lg bg-white/5 hover:bg-rose-500/20 flex items-center justify-center text-white/60 hover:text-rose-400 transition text-xs font-medium" title="Delete"><Trash2 size={12} className="mr-1" /> Delete</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      )}
 
       {/* ── Modals ── */}
       {actionModal && (
