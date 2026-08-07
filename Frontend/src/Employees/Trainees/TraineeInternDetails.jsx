@@ -49,7 +49,7 @@ export default function TraineeInternDetails() {
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/admin/trainees')} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
+        <button onClick={() => navigate('/employee/trainees')} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
           <ArrowLeft size={16} />
         </button>
         <div>
@@ -104,3 +104,4 @@ export default function TraineeInternDetails() {
     </div>
   );
 }
+

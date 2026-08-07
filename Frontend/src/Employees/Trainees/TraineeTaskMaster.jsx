@@ -7,7 +7,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import {
   Users, Activity, GraduationCap, TrendingUp, Search, Plus, 
   Edit2, Trash2, X, UploadCloud, RefreshCw, UserCheck, 
-  ClipboardList, Clock, CheckCircle, Loader, Loader2, Save, Eye, BookOpen
+  ClipboardList, Clock, CheckCircle, Loader, Loader2, Save, Eye, BookOpen, List, LayoutGrid
 } from 'lucide-react';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 import EmployeeTraineeTaskAssign from './TraineeTaskAssign';
@@ -120,6 +120,7 @@ const TraineeTaskMaster = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [taskSearch, setTaskSearch] = useState('');
+  const [viewMode, setViewMode] = useState('table');
 
   // form
   const [showForm, setShowForm]         = useState(false);
@@ -261,7 +262,7 @@ const TraineeTaskMaster = () => {
             <GraduationCap size={22} className="text-orange-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Trainees &amp; Interns</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">All Task</h1>
             <p className="text-white/40 text-xs mt-0.5">
               {hasMemberFilters ? `Showing ${filteredTotalMembers} of ${totalMembers} members` : `${totalMembers} members total`}
             </p>
@@ -303,21 +304,22 @@ const TraineeTaskMaster = () => {
             className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500/50 transition"
           />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {['All','Trainee','Intern'].map(f => (
-            <button key={f} onClick={() => setTypeFilter(f)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition ${typeFilter === f
-                ? 'border-orange-500/50 bg-orange-500/20 text-orange-400'
-                : 'border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10'}`}>
-              {f}
-            </button>
-          ))}
-          {hasMemberFilters && (
-            <button onClick={() => { setSearchTerm(''); setTypeFilter('All'); }}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/60 transition hover:bg-white/10 hover:text-white">
-              Clear filters
-            </button>
-          )}
+        {/* view toggle */}
+        <div className="flex bg-[#111318] border border-white/10 rounded-xl p-1">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`p-1.5 rounded-lg transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
+            title="Table view"
+          >
+            <List size={16} />
+          </button>
+          <button
+            onClick={() => setViewMode('card')}
+            className={`p-1.5 rounded-lg transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}
+            title="Card view"
+          >
+            <LayoutGrid size={16} />
+          </button>
         </div>
       </div>
 
@@ -346,53 +348,96 @@ const TraineeTaskMaster = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-white/[0.03] border-b border-white/8">
-              <tr>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider w-12">#</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Task Name</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Description</th>
-                <th className="px-5 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.05]">
-              {loadingTasks ? (
-                <tr><td colSpan={4} className="py-10 text-center">
-                  <Loader2 size={20} className="mx-auto animate-spin text-white/30" />
-                </td></tr>
-              ) : filteredTasks.length === 0 ? (
-                <tr><td colSpan={4} className="py-10 text-center text-white/30 text-sm">No tasks found</td></tr>
-              ) : filteredTasks.map((task, i) => (
-                <tr key={task.uuid} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-5 py-3.5 text-white/40 text-xs">{i + 1}</td>
-                  <td className="px-5 py-3.5 font-semibold text-white">{task.task_name}</td>
-                  <td className="px-5 py-3.5 text-white/50 max-w-xs">
-                    <div className="truncate">{task.description || '—'}</div>
-                    {task.document_path && (
-                      <a href={getDocUrl(task.document_path)} target="_blank" rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 mt-0.5">
-                        <UploadCloud size={11} /> View Document
-                      </a>
-                    )}
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      <button onClick={() => handleEdit(task)}
-                        className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition" title="Edit">
-                        <Edit2 size={13} />
-                      </button>
-                      <button onClick={() => handleDelete(task.uuid)}
-                        className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition" title="Delete">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
+        {viewMode === 'table' ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-white/[0.03] border-b border-white/8">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider w-12">#</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Task Name</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-white/40 uppercase tracking-wider">Description</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-white/40 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {loadingTasks ? (
+                  <tr><td colSpan={4} className="py-10 text-center">
+                    <Loader2 size={20} className="mx-auto animate-spin text-white/30" />
+                  </td></tr>
+                ) : filteredTasks.length === 0 ? (
+                  <tr><td colSpan={4} className="py-10 text-center text-white/30 text-sm">No tasks found</td></tr>
+                ) : filteredTasks.map((task, i) => (
+                  <tr key={task.uuid} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-5 py-3.5 text-white/40 text-xs">{i + 1}</td>
+                    <td className="px-5 py-3.5 font-semibold text-white">{task.task_name}</td>
+                    <td className="px-5 py-3.5 text-white/50 max-w-xs">
+                      <div className="truncate">{task.description || '—'}</div>
+                      {task.document_path && (
+                        <a href={getDocUrl(task.document_path)} target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 mt-0.5">
+                          <UploadCloud size={11} /> View Document
+                        </a>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex justify-end gap-1.5">
+                        <button onClick={() => handleEdit(task)}
+                          className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition" title="Edit">
+                          <Edit2 size={13} />
+                        </button>
+                        <button onClick={() => handleDelete(task.uuid)}
+                          className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition" title="Delete">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+            {loadingTasks ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-white/30">
+                <Loader2 size={20} className="mx-auto animate-spin" />
+              </div>
+            ) : filteredTasks.length === 0 ? (
+              <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-white/30 text-sm">
+                No tasks found
+              </div>
+            ) : filteredTasks.map((task, i) => (
+              <div key={task.uuid} className="rounded-2xl border border-white/10 bg-[#0f1218] p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">Task #{i + 1}</p>
+                    <h3 className="mt-1 text-base font-semibold text-white">{task.task_name}</h3>
+                  </div>
+                  <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-orange-400">
+                    Task
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-white/60 break-words">{task.description || '—'}</p>
+                {task.document_path && (
+                  <a href={getDocUrl(task.document_path)} target="_blank" rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300">
+                    <UploadCloud size={13} /> View Document
+                  </a>
+                )}
+                <div className="mt-4 flex justify-end gap-1.5">
+                  <button onClick={() => handleEdit(task)}
+                    className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition" title="Edit">
+                    <Edit2 size={13} />
+                  </button>
+                  <button onClick={() => handleDelete(task.uuid)}
+                    className="p-1.5 rounded-lg border border-white/10 bg-white/5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition" title="Delete">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Add / Edit Task Modal ── */}

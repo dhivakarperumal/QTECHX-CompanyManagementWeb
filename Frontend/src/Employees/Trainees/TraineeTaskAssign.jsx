@@ -130,6 +130,8 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(defaultOpenForm);
   const [typeFilter, setTypeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [taskFilter, setTaskFilter] = useState('All');
   const [viewMode, setViewMode] = useState('table');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -264,11 +266,16 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
     const term = searchTerm.trim().toLowerCase();
     return assignments.filter((assignment) => {
       const matchesType = typeFilter === 'All' || assignment.trainee_type === typeFilter;
-      if (!term) return matchesType;
+      const matchesStatus = statusFilter === 'All' || assignment.status === statusFilter;
+      const matchesTask = taskFilter === 'All' || assignment.task_uuid === taskFilter;
+      
+      const isMatch = matchesType && matchesStatus && matchesTask;
+      if (!term) return isMatch;
+      
       const haystack = `${assignment.trainee_name || ''} ${assignment.task_name || ''} ${assignment.status || ''} ${assignment.daily_report || ''}`.toLowerCase();
-      return matchesType && haystack.includes(term);
+      return isMatch && haystack.includes(term);
     });
-  }, [assignments, searchTerm, typeFilter]);
+  }, [assignments, searchTerm, typeFilter, statusFilter, taskFilter]);
 
   return (
     <div className={isModal || defaultOpenForm ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
@@ -434,11 +441,40 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search assignment"
-                  className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
+                  placeholder="Search tasks, projects, assignees..."
+                  className="w-64 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
                 />
               </div>
 
+              <Select
+                options={[
+                  { value: 'All', label: 'All Statuses' },
+                  { value: 'Pending', label: 'Pending' },
+                  { value: 'In Progress', label: 'In Progress' },
+                  { value: 'Review', label: 'Review' },
+                  { value: 'On Hold', label: 'On Hold' },
+                  { value: 'Completed', label: 'Completed' },
+                  { value: 'Cancelled', label: 'Cancelled' }
+                ]}
+                value={{ value: statusFilter, label: statusFilter === 'All' ? 'All Statuses' : statusFilter }}
+                onChange={(option) => setStatusFilter(option ? option.value : 'All')}
+                styles={customSelectStyles}
+                isSearchable={false}
+                className="w-40"
+              />
+
+              <Select
+                options={[
+                  { value: 'All', label: 'All Tasks' },
+                  ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
+                ]}
+                value={{ value: taskFilter, label: taskFilter === 'All' ? 'All Tasks' : (tasks.find(t => t.uuid === taskFilter)?.task_name || 'Unknown') }}
+                onChange={(option) => setTaskFilter(option ? option.value : 'All')}
+                styles={customSelectStyles}
+                isSearchable={true}
+                className="w-48"
+              />
+              
               <Select
                 options={[
                   { value: 'All', label: 'All Types' },
@@ -449,8 +485,9 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
                 onChange={(option) => setTypeFilter(option ? option.value : 'All')}
                 styles={customSelectStyles}
                 isSearchable={false}
-                className="w-40"
+                className="w-36"
               />
+
               {/* Card / Table Toggle */}
               <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
                 <button
