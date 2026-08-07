@@ -149,7 +149,7 @@ const fmtDate = (d) => {
 };
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
-function AssignModal({ onClose, onAssigned }) {
+function AssignModal({ onClose, onAssigned, assignments }) {
   const [projects, setProjects]     = useState([]);
   const [employees, setEmployees]   = useState([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -171,6 +171,16 @@ function AssignModal({ onClose, onAssigned }) {
   }, []);
 
   const filteredEmps = employees.filter(e => {
+    const activeAssignments = (assignments || []).filter(a => 
+      a.employee_id === e.employee_id && 
+      !['Completed', 'Cancelled'].includes(a.current_status || a.status)
+    );
+    const assignedProjectUuids = new Set(activeAssignments.map(a => a.project_uuid));
+    
+    if (assignedProjectUuids.size >= 3) {
+      return false;
+    }
+
     const full = `${e.first_name} ${e.last_name} ${e.designation||''}`.toLowerCase();
     return full.includes(empSearch.toLowerCase());
   });
@@ -482,7 +492,7 @@ export default function ProjectAssignments() {
         </ModalPortal>
       )}
 
-      {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} />}
+      {showAssign && <AssignModal onClose={() => setShowAssign(false)} onAssigned={() => { fetchAssignments(); showToast('Employee assigned successfully!'); }} assignments={assignments} />}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
