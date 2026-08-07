@@ -51,6 +51,7 @@ const PRIORITY_STYLES = {
 const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const v = status.toString().trim();
+    if (['Accepted'].includes(v)) return 'Accepted'; // Preserve Accepted status
   if (['Pending', 'To Do'].includes(v)) return 'Pending';
   if (['In Progress', 'Progress'].includes(v)) return 'In Progress';
   if (['Completed', 'Done'].includes(v)) return 'Completed';

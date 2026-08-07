@@ -54,7 +54,7 @@ const STATUS_STYLES = {
   'Testing':     { pill: 'bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30', dot: 'bg-fuchsia-400' },
 };
 
-const STATUS_OPTIONS = ['Pending', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'Accepted', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
 
 const PRIORITY_STYLES = {
   High:   'text-rose-300',
@@ -65,6 +65,7 @@ const PRIORITY_STYLES = {
 const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const v = status.toString().trim();
+  if (['Accepted'].includes(v)) return 'Accepted';
   if (['Pending', 'To Do'].includes(v)) return 'Pending';
   if (['In Progress', 'Progress'].includes(v)) return 'In Progress';
   if (['Completed', 'Done'].includes(v)) return 'Completed';

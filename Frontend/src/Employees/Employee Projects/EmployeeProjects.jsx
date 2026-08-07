@@ -153,6 +153,7 @@ const EmployeeProjects = () => {
   const [viewMode, setViewMode]       = useState('table');
   const [page, setPage]               = useState(1);
   const [limit, setLimit]             = useState(15);
+  const [progressMap, setProgressMap] = useState({}); // uuid -> progress%
 
   /* ── fetch all assigned projects once ─────────────────────────────── */
   const fetchAssignedProjects = useCallback(async () => {
@@ -188,6 +189,16 @@ const EmployeeProjects = () => {
       // deduplicate
       const unique = Array.from(new Map(mine.map(p => [p.uuid, p])).values());
       setAllProjects(unique);
+
+      // Batch-fetch progress for all assigned projects
+      const progressResults = await Promise.allSettled(
+        unique.map(proj =>
+          api.get(`/projects/${proj.uuid}/progress`).then(res => ({ uuid: proj.uuid, progress: res.data?.progress ?? 0 }))
+        )
+      );
+      const newMap = {};
+      progressResults.forEach(r => { if (r.status === 'fulfilled') newMap[r.value.uuid] = r.value.progress; });
+      setProgressMap(newMap);
     } catch (err) {
       console.error('Failed to load projects', err);
       setError('Unable to load assigned projects. Please try again.');
@@ -388,9 +399,9 @@ const EmployeeProjects = () => {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                          <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${progressMap[p.uuid] ?? 0}%` }} />
                         </div>
-                        <span className="text-white/50 text-xs">{p.overall_progress || 0}%</span>
+                        <span className="text-white/50 text-xs">{progressMap[p.uuid] ?? 0}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-3.5"><span className="text-white/35 text-xs">{fmtDate(p.project_start_date)}</span></td>
@@ -445,10 +456,10 @@ const EmployeeProjects = () => {
 
               <div>
                 <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                  <span>Progress</span><span>{p.overall_progress || 0}%</span>
+                  <span>Progress</span><span>{progressMap[p.uuid] ?? 0}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                  <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${progressMap[p.uuid] ?? 0}%` }} />
                 </div>
               </div>
 

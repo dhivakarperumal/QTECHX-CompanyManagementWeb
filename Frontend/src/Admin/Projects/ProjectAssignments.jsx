@@ -347,6 +347,7 @@ export default function ProjectAssignments() {
   const [deleteProjectTarget, setDeleteProjectTarget] = useState(null);
   const [deletingProject, setDeletingProject] = useState(false);
   const [viewMode, setViewMode] = useState('table');
+  const [progressMap, setProgressMap] = useState({}); // project_uuid -> progress%
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -363,6 +364,17 @@ export default function ProjectAssignments() {
       setAssignments(rows);
       setTotal(data.pagination?.total ?? rows.length);
       setTotalPages(data.pagination?.pages ?? 1);
+
+      // Get unique project UUIDs and batch-fetch progress
+      const uuids = [...new Set(rows.map(r => r.project_uuid).filter(Boolean))];
+      const progressResults = await Promise.allSettled(
+        uuids.map(uuid =>
+          api.get(`/projects/${uuid}/progress`).then(res => ({ uuid, progress: res.data?.progress ?? 0 }))
+        )
+      );
+      const newMap = {};
+      progressResults.forEach(r => { if (r.status === 'fulfilled') newMap[r.value.uuid] = r.value.progress; });
+      setProgressMap(newMap);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load assignments');
     } finally { setLoading(false); }
@@ -658,9 +670,9 @@ export default function ProjectAssignments() {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                          <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${progressMap[p.project_uuid] ?? 0}%` }} />
                         </div>
-                        <span className="text-white/50 text-xs">{p.overall_progress || 0}%</span>
+                        <span className="text-white/50 text-xs">{progressMap[p.project_uuid] ?? 0}%</span>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
@@ -736,10 +748,10 @@ export default function ProjectAssignments() {
               {/* Progress */}
               <div>
                 <div className="flex justify-between text-xs text-white/40 mb-1.5">
-                  <span>Progress</span><span>{p.overall_progress || 0}%</span>
+                  <span>Progress</span><span>{progressMap[p.project_uuid] ?? 0}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${p.overall_progress || 0}%` }} />
+                  <div className="h-full bg-orange-500 rounded-full transition-all duration-700" style={{ width: `${progressMap[p.project_uuid] ?? 0}%` }} />
                 </div>
               </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, Building2, CalendarDays, CheckCircle, FileText, Loader2, User, 
@@ -36,6 +36,14 @@ export default function MyProjectDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [progressData, setProgressData] = useState(null);
+
+  const fetchProgress = useCallback(async (uuid) => {
+    try {
+      const { data } = await api.get(`/projects/${uuid}/progress`);
+      if (data.success) setProgressData(data);
+    } catch (e) { console.error('Failed to fetch progress', e); }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -45,6 +53,7 @@ export default function MyProjectDetails() {
         const projectRes = await api.get(`/projects/${id}`);
         if (!projectRes.data.success) throw new Error(projectRes.data.message || 'Project not found');
         setProject(projectRes.data.data);
+        fetchProgress(id);
 
         // Fetch assigned employees
         try {
@@ -189,21 +198,49 @@ export default function MyProjectDetails() {
                 </div>
               </div>
               
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3">
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp size={16} className="text-emerald-400" />
                   <h3 className="text-base font-semibold">Progress</h3>
                 </div>
                 <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between text-sm text-white/60 mb-1">
-                      <span>Overall</span>
-                      <span>{project.overall_progress || 0}%</span>
+                  {progressData?.total > 0 && progressData?.progress >= 100 ? (
+                    <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-emerald-400 font-bold text-sm">
+                      <CheckCircle size={18} />
+                      ✅ Project Completed (100%)
                     </div>
-                    <div className="h-2 rounded-full bg-white/10">
-                      <div className="h-2 rounded-full bg-orange-500" style={{ width: `${project.overall_progress || 0}%` }} />
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between text-sm text-white/60 mb-1">
+                        <span>Overall</span>
+                        <span className="font-bold" style={{ color: (progressData?.progress ?? 0) >= 70 ? '#22c55e' : (progressData?.progress ?? 0) >= 40 ? '#f97316' : '#ef4444' }}>
+                          {progressData?.progress ?? 0}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-2 rounded-full transition-all duration-1000"
+                          style={{ width: `${progressData?.progress ?? 0}%`, background: 'linear-gradient(90deg, #f97316aa, #f97316)' }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  {(progressData?.total ?? 0) > 0 && (
+                    <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
+                      {[
+                        { label: 'Total',       value: progressData?.total,      cls: 'text-white/70' },
+                        { label: 'Completed',   value: progressData?.completed,  cls: 'text-emerald-400' },
+                        { label: 'Remaining',   value: progressData?.remaining,  cls: 'text-orange-400' },
+                        { label: 'In Progress', value: progressData?.inProgress, cls: 'text-blue-400' },
+                        { label: 'Pending',     value: progressData?.pending,    cls: 'text-yellow-400' },
+                        { label: 'On Hold',     value: progressData?.onHold,     cls: 'text-violet-400' },
+                      ].map(s => (
+                        <div key={s.label} className="flex flex-col items-center rounded-xl border border-white/8 bg-white/[0.02] p-2">
+                          <span className={`font-bold text-sm ${s.cls}`}>{s.value ?? 0}</span>
+                          <span className="text-white/35 text-[9px] uppercase tracking-wide mt-0.5">{s.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <InfoCard title="Cost" value={formatCurrency(project.total_project_cost)} icon={DollarSign} />
                   <InfoCard title="Start Date" value={fmtDate(project.project_start_date)} icon={CalendarDays} />
                   <InfoCard title="Estimated Completion" value={fmtDate(project.estimated_completion_date)} icon={CalendarDays} />

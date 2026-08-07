@@ -101,6 +101,7 @@ function StatusPill({ status }) {
 const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const value = status.toString().trim();
+  if (['Accepted'].includes(value)) return 'Accepted';
   if (['Pending', 'To Do'].includes(value)) return 'Pending';
   if (['In Progress', 'Progress'].includes(value)) return 'In Progress';
   if (['Completed', 'Done'].includes(value)) return 'Completed';
@@ -144,7 +145,7 @@ const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
 });
 
 /* ─── status select dropdown ──────────────────────────────────── */
-const STATUS_OPTIONS = ['Pending', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
+const STATUS_OPTIONS = ['Pending', 'Accepted', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
 
 /* ═══════════════════════════════════════════════════════════════ */
 export default function EmployeeTasks() {
@@ -210,7 +211,7 @@ export default function EmployeeTasks() {
     return tasks.filter(task => {
       const ok = !q || `${task.task_name || ''} ${task.description || ''} ${task.project_name || ''}`.toLowerCase().includes(q);
       if (!ok) return false;
-      if (filterKey === 'pending')    return ['Pending', 'To Do', 'Issue', 'On Hold'].includes(task.status);
+      if (filterKey === 'pending')    return ['Pending', 'Accepted', 'To Do', 'Issue', 'On Hold'].includes(task.status);
       if (filterKey === 'completed')  return task.status === 'Completed';
       if (filterKey === 'today')      return isSameDay(task.assignment_date) || isSameDay(task.created_at);
       if (filterKey === 'processing') return ['In Progress', 'Review', 'Testing'].includes(task.status);
@@ -221,7 +222,7 @@ export default function EmployeeTasks() {
   const counts = useMemo(() => ({
     total:      pagination.total || tasks.length,
     completed:  tasks.filter(t => t.status === 'Completed').length,
-    pending:    tasks.filter(t => ['Pending', 'To Do', 'Issue', 'On Hold'].includes(t.status)).length,
+    pending:    tasks.filter(t => ['Pending', 'Accepted', 'To Do', 'Issue', 'On Hold'].includes(t.status)).length,
     inProgress: tasks.filter(t => ['In Progress', 'Review', 'Testing'].includes(t.status)).length,
   }), [pagination.total, tasks]);
 
@@ -467,7 +468,8 @@ export default function EmployeeTasks() {
                     <tr
                       key={task.uuid}
                       className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group"
-                    >                      <td className="px-5 py-4 text-[13px] text-white/55 whitespace-nowrap">
+                    >
+                      <td className="px-5 py-4 text-[13px] text-white/55 whitespace-nowrap">
                         {(page - 1) * limit + index + 1}
                       </td>                      {/* task name */}
                       <td className="px-5 py-4 min-w-[180px]">

@@ -200,6 +200,7 @@ const EMPTY_TASK_FORM = {
   start_date: '',
   due_date: '',
   estimated_hours: '',
+  progress: 0,
   priority: '',
   attachments: [],
 };
@@ -454,6 +455,7 @@ export default function TasksPage({ initialPageKey = null }) {
           start_date: task.startDate || '',
           due_date: task.dueDate !== '—' ? (task.dueDate || '') : '',
           estimated_hours: task.estimatedHours || '',
+          progress: task.progress || 0,
           priority: task.priority || '',
           attachments: task.attachments || [],
         });
@@ -1325,6 +1327,9 @@ export default function TasksPage({ initialPageKey = null }) {
                 isSearchable={false}
               />
             </FieldBox>
+            <FieldBox label="Progress (%)">
+              <input type="number" min="0" max="100" value={taskUpdateForm.progress} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, progress: e.target.value }))} className={inputCls} placeholder="e.g. 50" />
+            </FieldBox>
             <FieldBox label="Start Date">
               <input type="date" value={taskUpdateForm.start_date} onChange={(e) => setTaskUpdateForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />
             </FieldBox>
@@ -1476,6 +1481,9 @@ export default function TasksPage({ initialPageKey = null }) {
               styles={customSelectStyles}
               isSearchable={false}
             />
+          </FieldBox>
+          <FieldBox label="Progress (%)">
+            <input type="number" min="0" max="100" value={taskForm.progress} onChange={(e) => setTaskForm((p) => ({ ...p, progress: e.target.value }))} className={inputCls} placeholder="e.g. 50" />
           </FieldBox>
           <FieldBox label="Start Date">
             <input type="date" value={taskForm.start_date} onChange={(e) => setTaskForm((p) => ({ ...p, start_date: e.target.value }))} className={inputCls} />

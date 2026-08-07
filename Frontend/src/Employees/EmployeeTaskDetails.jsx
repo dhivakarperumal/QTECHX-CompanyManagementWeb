@@ -26,11 +26,12 @@ const PRIORITY_STYLES = {
   Low:    { text: 'text-emerald-300', bg: 'bg-emerald-500/10 border border-emerald-500/20' },
 };
 
-const STATUS_OPTIONS = ['Pending', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
+const STATUS_OPTIONS = ['Pending', 'Accepted', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled'];
 
 const normalizeStatus = (status) => {
   if (!status) return 'Pending';
   const value = status.toString().trim();
+  if (['Accepted'].includes(value)) return 'Accepted';
   if (['Pending', 'To Do'].includes(value)) return 'Pending';
   if (['In Progress', 'Progress'].includes(value)) return 'In Progress';
   if (['Completed', 'Done'].includes(value)) return 'Completed';

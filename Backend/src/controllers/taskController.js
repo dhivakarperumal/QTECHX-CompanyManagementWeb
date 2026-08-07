@@ -234,7 +234,43 @@ async function updateTaskHandler(req, res) {
     updates.updated_by = req.user?.user_id || 'SYSTEM';
 
     console.log('updateTaskHandler - updating fields:', Object.keys(updates));
+    console.log('updateTaskHandler - incoming status:', req.body.status);
     const updated = await updateTask(req.params.id, updates);
+    console.log('updateTaskHandler - updated status in DB:', updated?.status);
+
+    // Sync the status change into employee_task_assignments task_details JSON
+    if (updates.status && updated) {
+      try {
+        const db = getDB();
+        const taskId = updated.id;
+        const projectId = updated.project_id;
+        if (taskId && projectId) {
+          const [assignRows] = await db.execute(
+            'SELECT id, task_details FROM employee_task_assignments WHERE project_id = ?',
+            [projectId]
+          );
+          for (const row of assignRows) {
+            let tasks = [];
+            try {
+              tasks = typeof row.task_details === 'string' ? JSON.parse(row.task_details) : (row.task_details || []);
+            } catch (e) {}
+            if (!Array.isArray(tasks)) continue;
+            const idx = tasks.findIndex(t => Number(t.task_id) === Number(taskId));
+            if (idx !== -1) {
+              tasks[idx].status = updates.status;
+              await db.execute(
+                'UPDATE employee_task_assignments SET task_details = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [JSON.stringify(tasks), row.id]
+              );
+            }
+          }
+        }
+      } catch (syncErr) {
+        console.error('syncTaskStatusToAssignments error:', syncErr);
+        // non-fatal — don't fail the request
+      }
+    }
+
     return ok(res, { message: 'Task updated successfully', data: updated });
   } catch (err) {
     console.error('updateTaskHandler error:', err.message, err.stack);

@@ -511,6 +511,9 @@ export default function AssignTaskPage() {
         fetchAssignedTitles(assignForm.project_id, assignForm.assigned_to || null);
       }, 1500);
 
+      // After successful assignment, navigate to New Tasks page
+      navigate('/admin/tasks/new');
+
     } catch (err) {
       setAssignError(err?.response?.data?.message || err.message || "Failed to assign task.");
     } finally {
