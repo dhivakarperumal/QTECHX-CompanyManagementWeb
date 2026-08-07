@@ -145,40 +145,8 @@ const AttendanceView = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4">
           <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
-            <div className="flex items-start gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-orange-500/10 p-3 text-orange-300">
-                <UserRoundCheck size={28} />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-white/40">Employee</p>
-                <h3 className="mt-2 text-xl font-semibold">{employee?.first_name} {employee?.last_name}</h3>
-                <p className="mt-1 text-sm text-white/60">{employee?.employee_code || employee?.employee_id}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3 text-sm text-white/70">
-              <div>
-                <p className="text-white/40">Role</p>
-                <p className="mt-1 font-medium text-white">{employee?.role || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-white/40">Designation</p>
-                <p className="mt-1 font-medium text-white">{employee?.designation || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-white/40">Email</p>
-                <p className="mt-1 font-medium text-white">{employee?.personal_email || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-white/40">Phone</p>
-                <p className="mt-1 font-medium text-white">{employee?.mobile_number || "N/A"}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-[#0f172a]/70 p-5 shadow-lg shadow-black/20">
             <div className="grid gap-4 md:grid-cols-3">
               {renderMetricCard("Filter", dateFilter, true)}
               {renderMetricCard("Period", dateFilter === 'Custom Date' ? customDate : (startDate === endDate ? startDate : `${startDate} to ${endDate}`), false)}
@@ -198,7 +166,7 @@ const AttendanceView = () => {
                         </p>
                         <p className="text-sm text-white/60">Status: {item.attendance_status}</p>
                       </div>
-                      <div className="grid gap-3 text-sm md:grid-cols-4">
+                      <div className="grid gap-3 text-sm md:grid-cols-6">
                         <div>
                           <p className="text-white/40">Check In</p>
                           <p>{item.check_in_time || "—"}</p>
@@ -206,6 +174,14 @@ const AttendanceView = () => {
                         <div>
                           <p className="text-white/40">Check Out</p>
                           <p>{item.check_out_time || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40">Break Start</p>
+                          <p>{item.break_start_time || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40">Break End</p>
+                          <p>{item.break_end_time || "—"}</p>
                         </div>
                         <div>
                           <p className="text-white/40">Working Hours</p>
