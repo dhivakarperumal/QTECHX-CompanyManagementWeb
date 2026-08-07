@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import api from '../api';
@@ -410,79 +410,6 @@ const MyCalendar = () => {
   return (
     <div className="flex flex-col xl:flex-row h-full w-full min-h-0 text-white py-4 px-0 gap-6 overflow-hidden font-sans">
 
-      {/* ───── LEFT SIDEBAR ───── */}
-      <div className="w-full xl:w-[260px] flex-shrink-0 flex flex-col gap-5 min-h-0 overflow-y-auto scrollbar-hide pb-4">
-
-        {/* Mini Calendar */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-4 shadow-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-sm">{currentDate.format('MMMM YYYY')}</h3>
-            <div className="flex items-center gap-1">
-              <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/10 rounded-full"><ChevronLeft size={14} /></button>
-              <button onClick={() => navigate(1)} className="p-1 hover:bg-white/10 rounded-full"><ChevronRight size={14} /></button>
-            </div>
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] mb-1 text-white/40 font-medium">
-            {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => <div key={d}>{d}</div>)}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-xs">
-            {miniDays.map((d, i) => {
-              const isCurrentMonth = d.isSame(currentDate, 'month');
-              const isToday = d.isSame(dayjs(), 'day');
-              const isSelected = d.isSame(selectedDate, 'day');
-              return (
-                <button key={i} onClick={() => { setSelectedDate(d); setCurrentDate(d); }}
-                  className={`h-7 w-7 rounded-full flex items-center justify-center transition-all
-                    ${!isCurrentMonth ? 'text-white/20' : 'text-white/70'}
-                    ${isSelected ? 'bg-primary text-white font-bold shadow-md shadow-primary/30' : 'hover:bg-white/10'}
-                    ${isToday && !isSelected ? 'ring-1 ring-primary text-primary' : ''}`}>
-                  {d.format('D')}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div>
-          <h4 className="text-xs font-semibold mb-2 text-white/50 tracking-widest uppercase">Quick Actions</h4>
-          <div className="flex flex-col gap-1.5">
-            {[
-              { icon: CalendarPlus, label: 'Add Event', color: 'text-blue-400', action: () => openNewEventModal() },
-              { icon: Video, label: 'Schedule Meeting', color: 'text-purple-400', action: () => openNewEventModal() },
-              { icon: Briefcase, label: 'Client Call', color: 'text-emerald-400', action: () => openNewEventModal() },
-              { icon: Palmtree, label: 'Apply Leave', color: 'text-amber-400', action: () => openNewEventModal() },
-            ].map(({ icon: Icon, label, color, action }) => (
-              <button key={label} onClick={action} className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium ${color}`}>
-                <Icon size={14} /> {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* My Categories */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-xs font-semibold text-white/50 tracking-widest uppercase">Categories</h4>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {EVENT_TYPES.map(type => {
-              const count = getCategoryCount(type);
-              const dot = CATEGORY_DOT[type] || '#64748b';
-              return (
-                <div key={type} className="flex items-center justify-between px-2 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dot }} />
-                    <span className="text-sm text-white/70">{type}</span>
-                  </div>
-                  <span className="text-xs text-white/40 font-medium">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* ───── CENTER ───── */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-white/5 border border-white/10 rounded-3xl p-5 shadow-xl">
 
@@ -630,6 +557,7 @@ const MyCalendar = () => {
           );
         })()}
       </div>
+
 
       {showModal && (
         <MyCalendarEventModal
