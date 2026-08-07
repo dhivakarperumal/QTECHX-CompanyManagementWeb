@@ -36,8 +36,11 @@ async function findByUserId(userId, includePassword = false, id = null) {
 async function findForLogin(identifier) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT ${publicFields}, password FROM users
-     WHERE (username = ? OR email = ?) AND status = 'Active'
+    `SELECT u.${publicFields.split(', ').map(f => 'u.' + f).join(', u.')}, u.password,
+            e.employee_id AS emp_code, e.employee_code AS emp_code2
+     FROM users u
+     LEFT JOIN employees e ON e.official_email = u.email
+     WHERE (u.username = ? OR u.email = ?) AND u.status = 'Active'
      LIMIT 1`,
     [identifier, identifier]
   );

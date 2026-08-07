@@ -120,6 +120,7 @@ async function login(req, res) {
       {
         user_id: user.user_id,
         employee_id: user.user_id,
+        employee_code: user.emp_code2 || user.emp_code || null,
         id: user.user_id,
         username: user.username,
         role: user.role,

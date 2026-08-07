@@ -135,13 +135,14 @@ const TraineeTaskMaster = () => {
   const [typeFilter, setTypeFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [taskSearch, setTaskSearch] = useState('');
+  const employeeCode = user?.employee_code || '';
 
   const [trainees, setTrainees] = useState([]);
 
   const fetchTrainees = async () => {
     try {
       const params = new URLSearchParams();
-      if (employeeId) params.append('employee_id', employeeId);
+      if (employeeCode) params.append('employee_id', employeeCode);
       const response = await api.get(`/trainee-intern${params.toString() ? `?${params.toString()}` : ''}`);
       setTrainees(response.data.data || response.data);
     } catch (error) {
@@ -165,7 +166,7 @@ const TraineeTaskMaster = () => {
   useEffect(() => {
     fetchTasks();
     fetchTrainees();
-  }, [employeeId]);
+  }, [employeeCode]);
 
   const getDocumentUrl = (documentPath) => {
     if (!documentPath) return null;
