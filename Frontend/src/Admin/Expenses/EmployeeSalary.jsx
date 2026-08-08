@@ -442,33 +442,7 @@ export default function EmployeeSalary() {
   const selectedEmployeeSalaryHistory = useMemo(() => {
     if (!selectedSalaryEmployee) return [];
 
-    const filteredHistory = useMemo(() => {
-      return history.filter((record) => {
-        const employeeName =
-          `${record.first_name || ''} ${record.last_name || ''}`.toLowerCase();
-
-        const employeeCode =
-          (record.employee_code || '').toLowerCase();
-
-        const search = employeeSearch.trim().toLowerCase();
-
-        const matchesEmployee =
-          !search ||
-          employeeName.includes(search) ||
-          employeeCode.includes(search);
-
-        const matchesMonth =
-          historyMonthFilter === 'all' ||
-          Number(record.salary_month) === Number(historyMonthFilter);
-
-        return matchesEmployee && matchesMonth;
-      });
-    }, [history, employeeSearch, historyMonthFilter]);
-
-
-    return history.filter(
-      record => record.employee_id === selectedSalaryEmployee.employee_id
-    );
+    return history.filter((record) => record.employee_id === selectedSalaryEmployee.employee_id);
   }, [history, selectedSalaryEmployee]);
 
   return (
