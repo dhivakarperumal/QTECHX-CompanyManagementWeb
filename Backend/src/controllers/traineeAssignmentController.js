@@ -25,6 +25,13 @@ exports.assignTrainee = async (req, res) => {
       await TraineeAssignmentModel.markPreviousAssignmentsCompleted(assignmentData.trainee_id, userId);
     }
 
+    // Keep every existing task with the employee receiving the trainee.
+    await TraineeAssignmentModel.reassignTaskAssignments(
+      assignmentData.trainee_id,
+      assignmentData.employee_id,
+      userId
+    );
+
     // Create the new assignment
     const insertId = await TraineeAssignmentModel.createAssignment(assignmentData);
 

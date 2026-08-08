@@ -115,12 +115,7 @@ exports.getAssignments = async (req, res) => {
     const conditions = [];
 
     if (employee_id) {
-      query += `
-        JOIN trainee_employee_assignments tea
-          ON tea.trainee_id = tta.trainee_intern_id
-          AND tea.status = 'Active'
-      `;
-      conditions.push(`tea.employee_id = ?`);
+      conditions.push(`tta.employee_id = ?`);
       params.push(employee_id);
     }
 
@@ -165,11 +160,20 @@ exports.assignTask = async (req, res) => {
     }
     const trainee_task_id = taskRows[0].id;
 
+    const [assignmentRows] = await db.execute(
+      `SELECT employee_id
+       FROM trainee_employee_assignments
+       WHERE trainee_id = ? AND status = 'Active'
+       LIMIT 1`,
+      [trainee_intern_uuid]
+    );
+    const employee_id = assignmentRows[0]?.employee_id || null;
+
     await db.execute(
       `INSERT INTO trainee_task_assignments 
-        (uuid, trainee_task_id, trainee_intern_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by, updated_by) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [uuid, trainee_task_id, trainee_intern_uuid, assigned_date, assigned_time, due_date, assignmentDocumentPath, actor, actor]
+        (uuid, trainee_task_id, trainee_intern_id, employee_id, assigned_date, assigned_time, due_date, assignment_document_path, created_by, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [uuid, trainee_task_id, trainee_intern_uuid, employee_id, assigned_date, assigned_time, due_date, assignmentDocumentPath, actor, actor]
     );
 
     res.status(201).json({ message: "Task assigned successfully", uuid });
