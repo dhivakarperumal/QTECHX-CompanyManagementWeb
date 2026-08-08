@@ -105,7 +105,7 @@ async function getDashboardMetrics(req, res) {
       "SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
       [month, year]
     );
-    const currentMonthIncomes = parseFloat(currentIncRows[0]?.total) || 0;
+    const currentMonthIncomes = parseFloat(incomeRows[0]?.total) || 0;
     const currentMonthProjectPayments = parseFloat(currentProjectPaymentRows[0]?.total) || 0;
     const currentMonthIncome = currentMonthIncomes + currentMonthProjectPayments;
 
