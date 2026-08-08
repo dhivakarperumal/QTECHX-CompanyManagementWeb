@@ -281,6 +281,8 @@ const TraineeTaskAssign = () => {
     setShowForm(false);
   };
 
+  const getTraineeUuid = (trainee) => trainee?.uuid || trainee?.id || trainee?.person_id || '';
+
   const filteredTrainees = useMemo(() => {
     const term = traineeSearchTerm.trim().toLowerCase();
     return trainees.filter((trainee) => {
@@ -381,26 +383,35 @@ const TraineeTaskAssign = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTrainees.map((trainee) => (
-                  <tr key={trainee.uuid} onClick={() => navigate(`/admin/trainees/tasks/view/${trainee.uuid}`)} className="border-t border-white/10 hover:bg-white/2 cursor-pointer">
-                    <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.department || '—'}</td>
-                  </tr>
-                ))}
+                {filteredTrainees.map((trainee) => {
+                  const traineeUuid = getTraineeUuid(trainee);
+                  return (
+                    <tr
+                      key={traineeUuid || trainee.person_id || trainee.full_name}
+                      onClick={() => traineeUuid && navigate(`/admin/trainees/tasks/view/${traineeUuid}`)}
+                      className="border-t border-white/10 hover:bg-white/2 cursor-pointer"
+                    >
+                      <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
+                      <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
+                      <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
+                      <td className="px-4 py-3 text-white/70">{trainee.department || '—'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredTrainees.map((trainee) => (
-              <button
-                key={trainee.uuid}
-                type="button"
-                onClick={() => navigate(`/admin/trainees/tasks/view/${trainee.uuid}`)}
-                className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30"
-              >
+            {filteredTrainees.map((trainee) => {
+              const traineeUuid = getTraineeUuid(trainee);
+              return (
+                <button
+                  key={traineeUuid || trainee.person_id || trainee.full_name}
+                  type="button"
+                  onClick={() => traineeUuid && navigate(`/admin/trainees/tasks/view/${traineeUuid}`)}
+                  className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30"
+                >
                 {trainee.profile_photo ? (
                   <img
                     src={`http://localhost:5000/${trainee.profile_photo.replace(/\\/g, '/')}`}
@@ -419,6 +430,7 @@ const TraineeTaskAssign = () => {
               </button>
             ))}
           </div>
+          
         )}
       </div>
 
@@ -651,7 +663,7 @@ const TraineeTaskAssign = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`/admin/trainees/tasks/view/${assignment.uuid}`)
+                                navigate(`/admin/trainees/tasks/view/${assignment.user_id}`)
                               }
                               className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                               title="View Assignment"
@@ -698,7 +710,7 @@ const TraineeTaskAssign = () => {
                   <button
                     type="button"
                     onClick={() =>
-                      navigate(`/admin/trainees/tasks/view/${assignment.uuid}`)
+                      navigate(`/admin/trainees/tasks/view/${assignment.user_id}`)
                     }
                     className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                     title="View Assignment"
