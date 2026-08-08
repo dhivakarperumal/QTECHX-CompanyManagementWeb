@@ -312,10 +312,10 @@ const AttendancePage = () => {
   const isSingleDay = startDate === endDate;
 
   return (
-    <div className="space-y-6 text-white pb-10">
+    <div className="space-y-5 pb-10 text-white min-h-screen">
 
       {/* Header */}
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#111318] p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Attendance Dashboard</h2>
           <p className="mt-1 text-sm text-white/60">Overview of attendance and company metrics.</p>
@@ -371,7 +371,7 @@ const AttendancePage = () => {
         <StatCard icon={<UserCog className="text-indigo-400" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-500/10" />
       </div>
 
-      <div className="bg-[#0f172a]/70 p-6 rounded-3xl shadow-lg border border-white/10">
+      <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
 
@@ -712,8 +712,8 @@ const AttendancePage = () => {
 };
 
 const StatCard = ({ icon, title, value, subtext, bgColor }) => (
-  <div className="bg-[#0f172a]/70 p-5 rounded-2xl border border-white/10 flex items-center gap-4 hover:bg-white/5 transition cursor-default">
-    <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0`}>
+  <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 flex items-center gap-3 hover:bg-white/5 transition cursor-default">
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bgColor}`}>
       {icon}
     </div>
     <div>
