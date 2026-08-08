@@ -64,7 +64,7 @@ const TraineeTaskDetails = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/admin/trainees/tasks" className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+          <Link to="/admin/trainees/tasks/assign" className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
             <ChevronLeft size={18} />
           </Link>
           

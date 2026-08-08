@@ -331,8 +331,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             location.pathname.startsWith("/admin/trainees/attendance/view/")) ||
 
                           // Trainee Tasks
-                          (sub.path === "/admin/trainees/tasks" &&
+                          (sub.path === "/admin/trainees/tasks/assign" &&
                             location.pathname.startsWith("/admin/trainees/tasks/view/"));
+
+
                         return (
                           <NavLink
                             key={sub.path}
