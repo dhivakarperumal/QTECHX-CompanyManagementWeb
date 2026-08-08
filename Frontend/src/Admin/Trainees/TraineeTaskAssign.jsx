@@ -428,7 +428,7 @@ const TraineeTaskAssign = () => {
                   <p className="text-xs text-white/50">{trainee.type || 'Trainee'}</p>
                 </div>
               </button>
-            ))}
+            );})}
           </div>
           
         )}
