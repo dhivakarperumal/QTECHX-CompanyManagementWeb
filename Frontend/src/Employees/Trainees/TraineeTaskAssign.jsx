@@ -125,7 +125,6 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   const [assignments, setAssignments] = useState([]);
-  const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(defaultOpenForm);
@@ -157,18 +156,12 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
       if (employeeId) {
         traineeParams.append('employee_id', employeeId);
         assignmentParams.append('employee_id', employeeId);
-        assignmentParams.append('created_by', employeeId);
       }
-      const taskParams = new URLSearchParams();
-      if (employeeId) taskParams.append('created_by', employeeId);
-
-      const [assignmentsRes, tasksRes, traineesRes] = await Promise.all([
+      const [assignmentsRes, traineesRes] = await Promise.all([
         api.get(`/trainee-task-assignments${assignmentParams.toString() ? `?${assignmentParams.toString()}` : ''}`),
-        api.get(`/trainee-tasks${taskParams.toString() ? `?${taskParams.toString()}` : ''}`),
         api.get(`/trainee-intern${traineeParams.toString() ? `?${traineeParams.toString()}` : ''}`)
       ]);
       setAssignments(assignmentsRes.data);
-      setTasks(tasksRes.data);
       setTrainees(traineesRes.data.data || traineesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -277,6 +270,16 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
     });
   }, [assignments, searchTerm, typeFilter, statusFilter, taskFilter]);
 
+  const assignedTaskOptions = useMemo(() => {
+    const uniqueTasks = new Map();
+    assignments.forEach((assignment) => {
+      if (assignment.task_uuid && assignment.task_name) {
+        uniqueTasks.set(assignment.task_uuid, assignment.task_name);
+      }
+    });
+    return Array.from(uniqueTasks, ([value, label]) => ({ value, label }));
+  }, [assignments]);
+
   return (
     <div className={isModal || defaultOpenForm ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
       <Toaster position="top-right" />
@@ -314,8 +317,8 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
             <div>
               <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
               <Select
-                options={tasks.map(t => ({ value: t.uuid, label: t.task_name }))}
-                value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                options={assignedTaskOptions}
+                value={selectedTask ? assignedTaskOptions.find(task => task.value === selectedTask) || null : null}
                 onChange={(option) => setSelectedTask(option ? option.value : '')}
                 styles={customSelectStyles}
                 isSearchable
@@ -372,8 +375,8 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
                 <Select
-                  options={tasks.map(t => ({ value: t.uuid, label: t.task_name }))}
-                  value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                  options={assignedTaskOptions}
+                  value={selectedTask ? assignedTaskOptions.find(task => task.value === selectedTask) || null : null}
                   onChange={(option) => setSelectedTask(option ? option.value : '')}
                   styles={customSelectStyles}
                   isSearchable
@@ -466,9 +469,9 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
               <Select
                 options={[
                   { value: 'All', label: 'All Tasks' },
-                  ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
+                  ...assignedTaskOptions
                 ]}
-                value={{ value: taskFilter, label: taskFilter === 'All' ? 'All Tasks' : (tasks.find(t => t.uuid === taskFilter)?.task_name || 'Unknown') }}
+                value={{ value: taskFilter, label: taskFilter === 'All' ? 'All Tasks' : (assignedTaskOptions.find(task => task.value === taskFilter)?.label || 'Unknown') }}
                 onChange={(option) => setTaskFilter(option ? option.value : 'All')}
                 styles={customSelectStyles}
                 isSearchable={true}

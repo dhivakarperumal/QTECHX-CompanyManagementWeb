@@ -213,6 +213,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
     }
   };
 
+  const isReassign = Boolean(activeAssignment);
   const drawerContent = (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999]" onClick={onClose} />
@@ -220,7 +221,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#16181f]">
-          <h2 className="text-white font-bold text-lg">Assign Employee</h2>
+          <h2 className="text-white font-bold text-lg">{isReassign ? 'Reassign Employee' : 'Assign Employee'}</h2>
           <button onClick={onClose} className="p-2 text-white/50 hover:text-white bg-white/5 rounded-xl transition">
             <X size={18} />
           </button>
@@ -233,7 +234,11 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
           ) : (
             <Select
               options={people
-                .filter(p => !activeAssignedIds.has(p.uuid) && !activeAssignedIds.has(p.person_id))
+                .filter(p => {
+                  const id = p.uuid || p.person_id || '';
+                  const selectedId = person?.uuid || person?.person_id || '';
+                  return id === selectedId || (!activeAssignedIds.has(p.uuid) && !activeAssignedIds.has(p.person_id));
+                })
                 .map(p => ({
                   value: p.uuid || p.person_id || '',
                   label: `${p.full_name} (${p.person_id || p.uuid}) - ${p.type}`
@@ -297,7 +302,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
                 <div>
                   <p className="text-orange-400 font-semibold mb-1">Active Assignment Exists</p>
                   <p className="text-white/70 text-xs leading-relaxed">
-                    Currently assigned to <span className="text-white font-medium">{activeAssignment.employee_name}</span> ({activeAssignment.employee_code}) since {formatDate(activeAssignment.assigned_date)}. 
+                    Currently assigned to <span className="text-white font-medium">{activeAssignment.employee_name}</span> ({activeAssignment.employee_code}) since {formatDate(activeAssignment.assigned_date)}.
                     Reassigning will mark the current assignment as Completed.
                   </p>
                 </div>
@@ -380,13 +385,13 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white/70 mb-1.5">Notes (Optional)</label>
+                <label className="block text-xs font-medium text-white/70 mb-1.5">Reason / Notes</label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows="2"
                   className="w-full bg-[#0e1118] border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50 resize-none"
-                  placeholder="Any special instructions..."
+                  placeholder="Provide a reason for this assignment or reassignment..."
                 ></textarea>
               </div>
 
@@ -464,7 +469,7 @@ const TraineeAssignmentDrawer = ({ trainee, onClose, onSuccess }) => {
             style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-            Assign Employee
+            {isReassign ? 'Reassign Employee' : 'Assign Employee'}
           </button>
         </div>
       </div>

@@ -506,20 +506,18 @@ export default function AllTraineeInterns() {
                     {/* Actions */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Assign Employee - prominent button */}
+                        {/* Assign or Reassign Employee */}
                         <button
                           onClick={() => {
-                            if (hasActiveAssignment) return;
                             setSelectedTraineeForAssignment(m);
                             setAssignmentDrawerOpen(true);
                           }}
-                          disabled={hasActiveAssignment}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${hasActiveAssignment ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60' : 'text-white bg-orange-500 hover:opacity-90'}`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm shadow-orange-500/20 ${hasActiveAssignment ? 'text-white bg-slate-700 hover:bg-slate-600' : 'text-white bg-orange-500 hover:opacity-90'}`}
                           style={hasActiveAssignment ? {} : { background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-                          title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
+                          title={hasActiveAssignment ? 'Reassign Employee' : 'Assign Employee'}
                         >
-                          <UserRoundPlus size={13} />
-                          {hasActiveAssignment ? 'Assigned' : 'Assign'}
+                          <RefreshCw size={13} />
+                          {hasActiveAssignment ? 'Reassign' : 'Assign'}
                         </button>
                         <button
                           onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}
@@ -628,15 +626,13 @@ export default function AllTraineeInterns() {
                 <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                   <button
                     onClick={() => {
-                      if (hasActiveAssignment) return;
                       setSelectedTraineeForAssignment(m);
                       setAssignmentDrawerOpen(true);
                     }}
-                    disabled={hasActiveAssignment}
-                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${hasActiveAssignment ? 'bg-white/10 border-white/10 text-white/40 cursor-not-allowed opacity-60' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
-                    title={hasActiveAssignment ? 'Already assigned' : 'Assign Employee'}
+                    className={`w-10 py-2 rounded-xl border flex items-center justify-center transition ${hasActiveAssignment ? 'bg-slate-700 border-slate-700 text-white/70 hover:bg-slate-600' : 'bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500/20'}`}
+                    title={hasActiveAssignment ? 'Reassign Employee' : 'Assign Employee'}
                   >
-                    <UserRoundPlus size={14} />
+                    <RefreshCw size={14} />
                   </button>
                   <button
                     onClick={() => navigate(`/admin/trainees/view/${m.uuid}`)}

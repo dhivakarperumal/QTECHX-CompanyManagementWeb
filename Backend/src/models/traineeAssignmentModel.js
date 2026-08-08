@@ -71,6 +71,17 @@ const TraineeAssignmentModel = {
     return result.affectedRows;
   },
 
+  reassignTaskAssignments: async (traineeId, employeeId, updatedBy) => {
+    const db = getDB();
+    const query = `
+      UPDATE trainee_task_assignments
+      SET employee_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE trainee_intern_id = ?
+    `;
+    const [result] = await db.execute(query, [employeeId, updatedBy, traineeId]);
+    return result.affectedRows;
+  },
+
   // Get active assignment for a trainee
   getActiveAssignmentByTraineeId: async (traineeId) => {
     const db = getDB();

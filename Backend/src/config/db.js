@@ -1177,14 +1177,13 @@ async function ensureSchema(pool) {
   );
 
   await pool.execute(`ALTER TABLE trainee_tasks ADD COLUMN IF NOT EXISTS document_path VARCHAR(255) NULL`);
-  await pool.execute(`ALTER TABLE trainee_task_assignments ADD COLUMN IF NOT EXISTS assignment_document_path VARCHAR(255) NULL`);
-
   await pool.execute(
     `CREATE TABLE IF NOT EXISTS trainee_task_assignments (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       uuid VARCHAR(36) NOT NULL,
       trainee_task_id INT UNSIGNED NOT NULL,
       trainee_intern_id VARCHAR(36) NOT NULL,
+      employee_id VARCHAR(36) NULL,
       assigned_date DATE NULL,
       assigned_time TIME NULL,
       due_date DATE NULL,
@@ -1200,10 +1199,14 @@ async function ensureSchema(pool) {
       UNIQUE KEY uq_tta_uuid (uuid),
       INDEX idx_tta_trainee_task_id (trainee_task_id),
       INDEX idx_tta_trainee_intern_id (trainee_intern_id),
+      INDEX idx_tta_employee_id (employee_id),
       CONSTRAINT fk_tta_trainee_task FOREIGN KEY (trainee_task_id) REFERENCES trainee_tasks (id) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT fk_tta_trainee_intern FOREIGN KEY (trainee_intern_id) REFERENCES trainee_intern (uuid) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(`ALTER TABLE trainee_task_assignments ADD COLUMN IF NOT EXISTS employee_id VARCHAR(36) NULL`);
+  await pool.execute(`ALTER TABLE trainee_task_assignments ADD COLUMN IF NOT EXISTS assignment_document_path VARCHAR(255) NULL`);
 }
 
 async function seedDefaultUser(pool) {
@@ -1636,6 +1639,15 @@ async function ensureTraineeEmployeeAssignmentsSchema(pool) {
       await pool.execute(`ALTER TABLE trainee_employee_assignments ${addColumnStatements.join(', ')}`);
     }
   }
+
+  await pool.execute(`
+    UPDATE trainee_task_assignments tta
+    JOIN trainee_employee_assignments tea
+      ON tea.trainee_id = tta.trainee_intern_id
+      AND tea.status = 'Active'
+    SET tta.employee_id = tea.employee_id
+    WHERE tta.employee_id IS NULL
+  `);
 }
 
 async function initDB() {
