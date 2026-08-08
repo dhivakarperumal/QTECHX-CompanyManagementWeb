@@ -693,6 +693,78 @@ const ExpensesPage = () => {
         </div>
       </div>
 
+      {/* ── Table Mode ── */}
+      <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 size={30} className="animate-spin text-primary/70" />
+            <p className="text-sm text-white/40">Loading expenses…</p>
+          </div>
+        ) : expenses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-white/30">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+              <Receipt size={30} className="opacity-40" />
+            </div>
+            <p className="text-base font-semibold text-white/40">No expenses recorded</p>
+            <p className="text-xs mt-1">Add your first expense to track spending.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-175 text-sm">
+              <thead>
+                <tr className="bg-white/3 border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Date</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Expense Details</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Payment Mode</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Amount</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Bill</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredExpenses.map((exp) => (
+                  <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
+                    <td className="px-5 py-4">
+                      <p className="text-white/80 font-medium text-sm">
+                        {new Date(exp.date_of_payment).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-white font-semibold text-sm leading-tight">{exp.expense_type}</p>
+                      <p className="text-white/40 text-xs mt-0.5">Paid to: {exp.paid_to}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white/5 text-white/60 border border-white/10">
+                        {exp.payment_type}
+                      </span>
+                      {exp.invoice_number && (
+                        <p className="text-[10px] text-white/30 mt-1">Inv: {exp.invoice_number}</p>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className={`${isCreditEntry(exp) ? "text-emerald-400" : "text-rose-400"} font-bold text-sm`}>
+                        {isCreditEntry(exp) ? "+" : "-"} ₹ {parseFloat(exp.amount).toFixed(2)}
+                      </p>
+                      <p className="text-[10px] text-white/30 mt-1">{isCreditEntry(exp) ? "Added" : "Spent"}</p>
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {exp.upload_bill ? (
+                        <a href={`http://localhost:5000/uploads/expenses/${exp.upload_bill}`} target="_blank" rel="noreferrer"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition"
+                          title="View Bill">
+                          <Download size={14} />
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-white/20 italic">No bill</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <div className="bg-[#111318] border border-white/10 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -782,77 +854,7 @@ const ExpensesPage = () => {
         </div>
       </div>
 
-      {/* ── Table Mode ── */}
-      <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 size={30} className="animate-spin text-primary/70" />
-            <p className="text-sm text-white/40">Loading expenses…</p>
-          </div>
-        ) : expenses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-white/30">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-              <Receipt size={30} className="opacity-40" />
-            </div>
-            <p className="text-base font-semibold text-white/40">No expenses recorded</p>
-            <p className="text-xs mt-1">Add your first expense to track spending.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-175 text-sm">
-              <thead>
-                <tr className="bg-white/3 border-b border-white/8">
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Date</th>
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Expense Details</th>
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Payment Mode</th>
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Amount</th>
-                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Bill</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredExpenses.map((exp) => (
-                  <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
-                    <td className="px-5 py-4">
-                      <p className="text-white/80 font-medium text-sm">
-                        {new Date(exp.date_of_payment).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="text-white font-semibold text-sm leading-tight">{exp.expense_type}</p>
-                      <p className="text-white/40 text-xs mt-0.5">Paid to: {exp.paid_to}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white/5 text-white/60 border border-white/10">
-                        {exp.payment_type}
-                      </span>
-                      {exp.invoice_number && (
-                        <p className="text-[10px] text-white/30 mt-1">Inv: {exp.invoice_number}</p>
-                      )}
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className={`${isCreditEntry(exp) ? "text-emerald-400" : "text-rose-400"} font-bold text-sm`}>
-                        {isCreditEntry(exp) ? "+" : "-"} ₹ {parseFloat(exp.amount).toFixed(2)}
-                      </p>
-                      <p className="text-[10px] text-white/30 mt-1">{isCreditEntry(exp) ? "Added" : "Spent"}</p>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      {exp.upload_bill ? (
-                        <a href={`http://localhost:5000/uploads/expenses/${exp.upload_bill}`} target="_blank" rel="noreferrer"
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition"
-                          title="View Bill">
-                          <Download size={14} />
-                        </a>
-                      ) : (
-                        <span className="text-[10px] text-white/20 italic">No bill</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+
     </div>
   );
 };
