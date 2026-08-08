@@ -435,4 +435,32 @@ async function employeeAttendance(req, res) {
   }
 }
 
-module.exports = { create, summary, employeeAttendance, clockIn, clockOut, breakStart, breakEnd };
+async function getByEmployeeDate(req, res) {
+  try {
+    const employee_id = req.query.employee_id || req.body.employee_id;
+    let attendanceDate = req.query.date || req.body.date;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "employee_id is required" });
+    }
+
+    // Normalize date to YYYY-MM-DD; default to today if not provided
+    if (!attendanceDate) {
+      const d = new Date();
+      attendanceDate = d.toISOString().slice(0, 10);
+    }
+
+    const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
+    if (!existing) {
+      return res.status(404).json({ message: "No attendance found for the given employee and date" });
+    }
+
+    return res.json({ attendance: existing });
+  } catch (error) {
+    console.error("Get attendance by employee/date error:", error);
+    return res.status(500).json({ message: "Failed to retrieve attendance" });
+  }
+}
+
+module.exports = { create, summary, employeeAttendance, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };
+
