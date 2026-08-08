@@ -153,6 +153,7 @@ export default function EmployeeSalary() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+
   const [formData, setFormData] = useState(BLANK);
   const [employees, setEmployees] = useState([]);
   const [history, setHistory] = useState([]);
@@ -415,10 +416,55 @@ export default function EmployeeSalary() {
     return filteredSalaryHistory.filter((record) => record.employee_id === selectedEmployeeId);
   }, [filteredSalaryHistory, selectedEmployeeId]);
 
+  const filteredHistory = useMemo(() => {
+    return history.filter((record) => {
+      const employeeName =
+        `${record.first_name || ''} ${record.last_name || ''}`.toLowerCase();
 
+      const employeeCode =
+        (record.employee_code || '').toLowerCase();
+
+      const search = employeeSearch.trim().toLowerCase();
+
+      const matchesEmployee =
+        !search ||
+        employeeName.includes(search) ||
+        employeeCode.includes(search);
+
+      const matchesMonth =
+        historyMonthFilter === 'all' ||
+        Number(record.salary_month) === Number(historyMonthFilter);
+
+      return matchesEmployee && matchesMonth;
+    });
+  }, [history, employeeSearch, historyMonthFilter]);
 
   const selectedEmployeeSalaryHistory = useMemo(() => {
     if (!selectedSalaryEmployee) return [];
+
+    const filteredHistory = useMemo(() => {
+      return history.filter((record) => {
+        const employeeName =
+          `${record.first_name || ''} ${record.last_name || ''}`.toLowerCase();
+
+        const employeeCode =
+          (record.employee_code || '').toLowerCase();
+
+        const search = employeeSearch.trim().toLowerCase();
+
+        const matchesEmployee =
+          !search ||
+          employeeName.includes(search) ||
+          employeeCode.includes(search);
+
+        const matchesMonth =
+          historyMonthFilter === 'all' ||
+          Number(record.salary_month) === Number(historyMonthFilter);
+
+        return matchesEmployee && matchesMonth;
+      });
+    }, [history, employeeSearch, historyMonthFilter]);
+
 
     return history.filter(
       record => record.employee_id === selectedSalaryEmployee.employee_id
@@ -819,14 +865,110 @@ export default function EmployeeSalary() {
 
       {/* Salary History Table */}
       <section className={`${sectionClass} mt-10`}>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+          {/* Title */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
-            <h2 className="text-base font-bold text-white">Salary History</h2>
+            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+              <History size={15} className="text-pink-400" />
+            </div>
+
+            <div>
+              <h2 className="text-base font-bold text-white">
+                Salary History
+              </h2>
+
+              <p className="text-xs text-white/40 mt-0.5">
+                View and manage employee salary records
+              </p>
+            </div>
           </div>
-          <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-            <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-            <button onClick={() => setHistoryViewMode('card')} className={`rounded-lg p-2 transition ${historyViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+
+          {/* Filters + View */}
+          <div className="flex flex-wrap items-center gap-2">
+
+            {/* Employee Filter */}
+            <div className="relative">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+              />
+
+              <input
+                type="text"
+                value={employeeSearch}
+                onChange={(e) => setEmployeeSearch(e.target.value)}
+                placeholder="Search employee..."
+                className="w-52 rounded-xl border border-white/10 bg-[#0e1118] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/25"
+              />
+            </div>
+
+            {/* Month Filter */}
+            <Select
+              options={[
+                { value: 'all', label: 'All Months' },
+
+                ...Array.from({ length: 12 }, (_, i) => ({
+                  value: i + 1,
+                  label: new Date(
+                    0,
+                    i
+                  ).toLocaleString('default', {
+                    month: 'long'
+                  })
+                }))
+              ]}
+              value={{
+                value: historyMonthFilter,
+                label:
+                  historyMonthFilter === 'all'
+                    ? 'All Months'
+                    : new Date(
+                      0,
+                      Number(historyMonthFilter) - 1
+                    ).toLocaleString('default', {
+                      month: 'long'
+                    })
+              }}
+              onChange={(option) =>
+                setHistoryMonthFilter(
+                  option ? option.value : 'all'
+                )
+              }
+              styles={customSelectStyles}
+              className="w-40"
+              isSearchable={false}
+            />
+
+            {/* View Toggle */}
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+
+              <button
+                type="button"
+                onClick={() => setHistoryViewMode("table")}
+                className={`rounded-lg p-2 transition ${historyViewMode === "table"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
+                  }`}
+                title="Table view"
+              >
+                <List size={15} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setHistoryViewMode("card")}
+                className={`rounded-lg p-2 transition ${historyViewMode === "card"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
+                  }`}
+                title="Card view"
+              >
+                <LayoutGrid size={15} />
+              </button>
+
+            </div>
+
           </div>
         </div>
 
@@ -834,9 +976,9 @@ export default function EmployeeSalary() {
           <div className="grid gap-3 md:grid-cols-2">
             {historyLoading ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
-            ) : history.length === 0 ? (
+            ) : filteredHistory.length === 0 ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No salary records found.</div>
-            ) : history.map((record) => (
+            ) : filteredHistory.map((record) => (
               <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -885,10 +1027,10 @@ export default function EmployeeSalary() {
               <tbody className="divide-y divide-white/5">
                 {historyLoading ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
-                ) : history.length === 0 ? (
+                ) : filteredHistory.length === 0 ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No salary records found.</td></tr>
                 ) : (
-                  history.map((record) => (
+                  filteredHistory.map((record) => (
                     <tr key={record.id} className="hover:bg-white/2 transition-colors">
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{record.first_name} {record.last_name}</div>
