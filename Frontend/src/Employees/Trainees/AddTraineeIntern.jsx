@@ -134,6 +134,7 @@ export default function AddTraineeIntern() {
   const [success, setSuccess] = useState('');
   const [files, setFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -150,6 +151,17 @@ export default function AddTraineeIntern() {
       }
     })();
   }, [id, isEdit]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/employees?limit=1000');
+        setEmployees(res?.data?.data || []);
+      } catch (err) {
+        console.warn('Failed to load employees for reporting manager select', err);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (isEdit || formData.person_id) return;
@@ -282,7 +294,14 @@ export default function AddTraineeIntern() {
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Reporting Manager</span>
-              <input className={fieldClass} name="reporting_manager" value={formData.reporting_manager} onChange={handleChange} placeholder="Manager name" />
+              <Select
+                value={formData.reporting_manager ? { value: formData.reporting_manager, label: formData.reporting_manager } : null}
+                onChange={(opt) => handleChange({ target: { name: 'reporting_manager', value: opt ? opt.value : '' } })}
+                options={employees.map(emp => ({ value: `${emp.first_name || ''} ${emp.last_name || ''}`.trim(), label: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }))}
+                styles={customSelectStyles}
+                placeholder="Select reporting manager"
+                isSearchable={true}
+              />
             </label>
             <label className="text-sm text-white/60">
               <span className="mb-1.5 block font-medium">Joining Date</span>
