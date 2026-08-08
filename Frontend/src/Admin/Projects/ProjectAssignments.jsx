@@ -643,6 +643,7 @@ export default function ProjectAssignments() {
             <table className="w-full min-w-[820px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S.No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Project</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
                  
@@ -658,6 +659,7 @@ export default function ProjectAssignments() {
                     key={p.project_uuid}
                     className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors"
                   >
+                    <td className="px-5 py-3.5 text-white/50">{i + 1}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={p.project_name} index={i} size={10} />

@@ -789,7 +789,8 @@ export default function ProjectPayment() {
             <table className="w-full text-left text-sm text-white/70">
               <thead className="bg-white/5 text-white/50">
                 <tr>
-                  <th className="px-4 py-3 rounded-l-lg font-medium">Project</th>
+                  <th className="px-4 py-3 rounded-l-lg font-medium">S.No</th>
+                  <th className="px-4 py-3 font-medium">Project</th>
                   <th className="px-4 py-3 font-medium">Client</th>
                   <th className="px-4 py-3 font-medium">Amount (₹)</th>
                   <th className="px-4 py-3 font-medium">Mode</th>
@@ -799,12 +800,13 @@ export default function ProjectPayment() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {historyLoading ? (
-                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
+                  <tr><td colSpan="7" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
                 ) : filteredHistory.length === 0 ? (
-                  <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No payment records found.</td></tr>
+                  <tr><td colSpan="7" className="px-4 py-6 text-center text-white/40">No payment records found.</td></tr>
                 ) : (
-                  filteredHistory.map((record) => (
+                  filteredHistory.map((record, i) => (
                     <tr key={record.id} className="hover:bg-white/2 transition-colors">
+                      <td className="px-4 py-3 text-white/60">{i + 1}</td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{record.project_name}</div>
                         <div className="text-xs opacity-60">{record.uuid}</div>

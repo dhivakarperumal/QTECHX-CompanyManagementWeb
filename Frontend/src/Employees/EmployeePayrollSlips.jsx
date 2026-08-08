@@ -271,7 +271,8 @@ const EmployeePayrollSlips = () => {
               <table className="w-full text-left text-sm text-white/70">
                 <thead className="bg-white/5 text-white/50">
                   <tr>
-                    <th className="px-4 py-3 rounded-l-lg font-medium">Month & Year</th>
+                    <th className="px-4 py-3 rounded-l-lg font-medium">S.No</th>
+                    <th className="px-4 py-3 font-medium">Month & Year</th>
                     <th className="px-4 py-3 font-medium">Basic (₹)</th>
                     <th className="px-4 py-3 font-medium">Net Salary (₹)</th>
                     <th className="px-4 py-3 font-medium">Credited On</th>
@@ -279,8 +280,9 @@ const EmployeePayrollSlips = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredHistory.map((record) => (
+                  {filteredHistory.map((record, i) => (
                     <tr key={record.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-4 py-3 text-white/60">{i + 1}</td>
                       <td className="px-4 py-3 font-medium text-white">
                         {new Date(0, record.salary_month - 1).toLocaleString('default', { month: 'long' })} {record.salary_year}
                       </td>

@@ -380,7 +380,8 @@ const AttendancePage = () => {
           <table className="w-full min-w-[1200px] text-sm text-left table-auto">
             <thead className="bg-white/5 text-white/50 font-medium border-b border-white/10">
               <tr>
-                <th className="py-3 px-4 rounded-tl-lg whitespace-nowrap">Employee</th>
+                <th className="py-3 px-4 rounded-tl-lg whitespace-nowrap">S.No</th>
+                <th className="py-3 px-4 whitespace-nowrap">Employee</th>
                 {isSingleDay ? (
                   <>
                     <th className="py-3 px-4 whitespace-nowrap">Start Time</th>
@@ -405,6 +406,7 @@ const AttendancePage = () => {
             <tbody className="divide-y divide-white/5">
               {summaryData.map((row, i) => (
                 <tr key={i} className="hover:bg-white/5 transition-colors">
+                  <td className="py-3 px-4 text-white/60 whitespace-nowrap">{i + 1}</td>
                   <td className="py-3 px-4 font-medium text-white whitespace-nowrap">
                     <Link to={`/admin/attendance/view/${row.employee_id}`} className="hover:text-orange-400 transition-colors">
                       {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span>

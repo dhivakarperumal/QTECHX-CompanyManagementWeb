@@ -459,6 +459,7 @@ const LeaveHistory = () => {
             <table className="min-w-full mt-5 text-sm">
               <thead className="bg-white/4 text-white/60">
                 <tr>
+                  <th className="px-4 py-3 text-left">S.No</th>
                   <th className="px-4 py-3 text-left">Leave Type</th>
                   <th className="px-4 py-3 text-left">Date Range</th>
                   <th className="px-4 py-3 text-left">Days</th>
@@ -470,15 +471,16 @@ const LeaveHistory = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
+                    <td colSpan="7" className="px-4 py-8 text-center text-white/40"><Loader2 size={18} className="mx-auto animate-spin" /></td>
                   </tr>
                 ) : filteredLeaves.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-white/40">No leave history found.</td>
+                    <td colSpan="7" className="px-4 py-8 text-center text-white/40">No leave history found.</td>
                   </tr>
                 ) : (
-                  filteredLeaves.map((leave) => (
+                  filteredLeaves.map((leave, i) => (
                     <tr key={leave.id} className="border-t border-white/10 hover:bg-white/2">
+                      <td className="px-4 py-3 text-white/70">{i + 1}</td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{leave.leave_type}</div>
                         {leave.day_type === 'Half Day' && (
