@@ -256,14 +256,20 @@ export default function TraineeInternAttendancePage() {
   return (
     <div className="space-y-6 text-white">
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Trainee & Intern Attendance</p>
-          <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
-          {/*   <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p> */}
-        </div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
+              <GraduationCap size={22} className="text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Attendance dashboard</h1>
+              <p className="text-white/40 text-xs mt-0.5">
+                {loading ? 'Loading…' : `${summary.length} attendance records`}
+              </p>
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
               <CalendarDays size={16} className="text-orange-400" />
               <Select
@@ -286,9 +292,6 @@ export default function TraineeInternAttendancePage() {
                 className="flex-1"
               />
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
               <PlusCircle size={16} /> Add Attendance
             </button>
