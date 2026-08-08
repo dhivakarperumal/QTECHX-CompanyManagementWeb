@@ -384,47 +384,6 @@ const TraineeTaskAssign = () => {
                 />
               </div>
 
-              {/* {editingAssignmentUuid && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Status</label>
-                    <Select
-                      options={[
-                        { value: 'Pending', label: 'Pending' },
-                        { value: 'In Progress', label: 'In Progress' },
-                        { value: 'Review', label: 'Review' },
-                        { value: 'On Hold', label: 'On Hold' },
-                        { value: 'Completed', label: 'Completed' },
-                        { value: 'Cancelled', label: 'Cancelled' }
-                      ]}
-                      value={{ value: editStatus, label: editStatus }}
-                      onChange={(option) => setEditStatus(option ? option.value : 'Pending')}
-                      styles={customSelectStyles}
-                      isSearchable={false}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Progress (%)</label>
-                    <input
-                      type="number"
-                      min="0" max="100"
-                      value={editProgress}
-                      onChange={(e) => setEditProgress(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Daily Report</label>
-                    <textarea
-                      value={editDailyReport}
-                      onChange={(e) => setEditDailyReport(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                      rows="3"
-                      placeholder="Enter daily report updates..."
-                    />
-                  </div>
-                </>
-              )} */}
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-white/10">

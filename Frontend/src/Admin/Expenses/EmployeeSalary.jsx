@@ -1,13 +1,29 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Select from 'react-select';
+import { useNavigate } from 'react-router-dom';
+import {
+  FileText, Save, RefreshCw, ArrowLeft, Loader2,
+  AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
+  History, Printer, X, Edit, Trash2, Search, Plus,
+  LayoutGrid, List, Eye
+} from 'lucide-react';
+import api from '../../api';
+import { useAuth } from '../../PrivateRouter/AuthContext';
+import { useReactToPrint } from "react-to-print";
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import PayslipTemplate from '../../Componets/PayslipTemplate';
+
+const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
+const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
+const readOnlyFieldClass = 'w-full rounded-xl border border-white/5 bg-[#0a0c10] px-3 py-2.5 text-sm text-white/70 outline-none cursor-not-allowed';
 
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -86,21 +102,6 @@ const customSelectStyles = {
     padding: '6px',
   }),
 };
-import { useNavigate } from 'react-router-dom';
-import {
-  FileText, Save, RefreshCw, ArrowLeft, Loader2,
-  AlertCircle, CheckCircle, DollarSign, Users, Briefcase,
-  History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
-} from 'lucide-react';
-import api from '../../api';
-import { useAuth } from '../../PrivateRouter/AuthContext';
-import { useReactToPrint } from "react-to-print";
-import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
-import PayslipTemplate from '../../Componets/PayslipTemplate';
-
-const fieldClass = 'w-full rounded-xl border border-white/10 bg-[#0e1118] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/20';
-const sectionClass = 'rounded-2xl border border-white/8 bg-white/[0.03] p-5';
-const readOnlyFieldClass = 'w-full rounded-xl border border-white/5 bg-[#0a0c10] px-3 py-2.5 text-sm text-white/70 outline-none cursor-not-allowed';
 
 const BLANK = {
   employee_id: '',
@@ -152,6 +153,7 @@ export default function EmployeeSalary() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+
   const [formData, setFormData] = useState(BLANK);
   const [employees, setEmployees] = useState([]);
   const [history, setHistory] = useState([]);
@@ -161,6 +163,7 @@ export default function EmployeeSalary() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedSalaryEmployee, setSelectedSalaryEmployee] = useState(null);
 
   const [editId, setEditId] = useState(null);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
@@ -413,6 +416,35 @@ export default function EmployeeSalary() {
     return filteredSalaryHistory.filter((record) => record.employee_id === selectedEmployeeId);
   }, [filteredSalaryHistory, selectedEmployeeId]);
 
+  const filteredHistory = useMemo(() => {
+    return history.filter((record) => {
+      const employeeName =
+        `${record.first_name || ''} ${record.last_name || ''}`.toLowerCase();
+
+      const employeeCode =
+        (record.employee_code || '').toLowerCase();
+
+      const search = employeeSearch.trim().toLowerCase();
+
+      const matchesEmployee =
+        !search ||
+        employeeName.includes(search) ||
+        employeeCode.includes(search);
+
+      const matchesMonth =
+        historyMonthFilter === 'all' ||
+        Number(record.salary_month) === Number(historyMonthFilter);
+
+      return matchesEmployee && matchesMonth;
+    });
+  }, [history, employeeSearch, historyMonthFilter]);
+
+  const selectedEmployeeSalaryHistory = useMemo(() => {
+    if (!selectedSalaryEmployee) return [];
+
+    return history.filter((record) => record.employee_id === selectedSalaryEmployee.employee_id);
+  }, [history, selectedSalaryEmployee]);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -627,7 +659,7 @@ export default function EmployeeSalary() {
         </form>
       </Modal>
 
-      <section className={sectionClass}>
+      {/* <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-400">
@@ -792,7 +824,7 @@ export default function EmployeeSalary() {
             </table>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
@@ -807,14 +839,110 @@ export default function EmployeeSalary() {
 
       {/* Salary History Table */}
       <section className={`${sectionClass} mt-10`}>
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+          {/* Title */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
-            <h2 className="text-base font-bold text-white">Salary History</h2>
+            <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+              <History size={15} className="text-pink-400" />
+            </div>
+
+            <div>
+              <h2 className="text-base font-bold text-white">
+                Salary History
+              </h2>
+
+              <p className="text-xs text-white/40 mt-0.5">
+                View and manage employee salary records
+              </p>
+            </div>
           </div>
-          <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-            <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === "table" ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
-            <button onClick={() => setHistoryViewMode('card')} className={`rounded-lg p-2 transition ${historyViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
+
+          {/* Filters + View */}
+          <div className="flex flex-wrap items-center gap-2">
+
+            {/* Employee Filter */}
+            <div className="relative">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+              />
+
+              <input
+                type="text"
+                value={employeeSearch}
+                onChange={(e) => setEmployeeSearch(e.target.value)}
+                placeholder="Search employee..."
+                className="w-52 rounded-xl border border-white/10 bg-[#0e1118] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/25"
+              />
+            </div>
+
+            {/* Month Filter */}
+            <Select
+              options={[
+                { value: 'all', label: 'All Months' },
+
+                ...Array.from({ length: 12 }, (_, i) => ({
+                  value: i + 1,
+                  label: new Date(
+                    0,
+                    i
+                  ).toLocaleString('default', {
+                    month: 'long'
+                  })
+                }))
+              ]}
+              value={{
+                value: historyMonthFilter,
+                label:
+                  historyMonthFilter === 'all'
+                    ? 'All Months'
+                    : new Date(
+                      0,
+                      Number(historyMonthFilter) - 1
+                    ).toLocaleString('default', {
+                      month: 'long'
+                    })
+              }}
+              onChange={(option) =>
+                setHistoryMonthFilter(
+                  option ? option.value : 'all'
+                )
+              }
+              styles={customSelectStyles}
+              className="w-40"
+              isSearchable={false}
+            />
+
+            {/* View Toggle */}
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+
+              <button
+                type="button"
+                onClick={() => setHistoryViewMode("table")}
+                className={`rounded-lg p-2 transition ${historyViewMode === "table"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
+                  }`}
+                title="Table view"
+              >
+                <List size={15} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setHistoryViewMode("card")}
+                className={`rounded-lg p-2 transition ${historyViewMode === "card"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
+                  }`}
+                title="Card view"
+              >
+                <LayoutGrid size={15} />
+              </button>
+
+            </div>
+
           </div>
         </div>
 
@@ -822,9 +950,9 @@ export default function EmployeeSalary() {
           <div className="grid gap-3 md:grid-cols-2">
             {historyLoading ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
-            ) : history.length === 0 ? (
+            ) : filteredHistory.length === 0 ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No salary records found.</div>
-            ) : history.map((record) => (
+            ) : filteredHistory.map((record) => (
               <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -842,6 +970,14 @@ export default function EmployeeSalary() {
                   <span className="text-white/70">{new Date(record.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSalaryEmployee(record)}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition"
+                    title="View Employee Salary History"
+                  >
+                    <Eye size={14} />
+                  </button>
                   <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
                   <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
                   <button onClick={() => setSelectedPayslip(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> </button>
@@ -865,10 +1001,10 @@ export default function EmployeeSalary() {
               <tbody className="divide-y divide-white/5">
                 {historyLoading ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
-                ) : history.length === 0 ? (
+                ) : filteredHistory.length === 0 ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No salary records found.</td></tr>
                 ) : (
-                  history.map((record) => (
+                  filteredHistory.map((record) => (
                     <tr key={record.id} className="hover:bg-white/2 transition-colors">
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{record.first_name} {record.last_name}</div>
@@ -880,6 +1016,15 @@ export default function EmployeeSalary() {
                       <td className="px-4 py-3">{new Date(record.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSalaryEmployee(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition"
+                            title="View Employee Salary History"
+                          >
+                            <Eye size={14} />
+                          </button>
+
                           <button
                             onClick={() => handleEdit(record)}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
@@ -911,6 +1056,272 @@ export default function EmployeeSalary() {
           </div>
         )}
       </section>
+
+      {/* Employee Full Salary History Modal */}
+      {selectedSalaryEmployee && (
+        <Modal
+          open={!!selectedSalaryEmployee}
+          onClose={() => setSelectedSalaryEmployee(null)}
+          title="Employee Salary History"
+        >
+          <div className="space-y-5">
+
+            {/* Employee Header */}
+            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-5">
+              <div className="flex items-center justify-between gap-4">
+
+                <div>
+                  <p className="text-lg font-bold text-white">
+                    {selectedSalaryEmployee.first_name}{' '}
+                    {selectedSalaryEmployee.last_name}
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/40">
+                    Employee Code:{' '}
+                    {selectedSalaryEmployee.employee_code || 'No Code'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 px-4 py-2 text-right">
+                  <p className="text-[10px] uppercase tracking-widest text-orange-400/70">
+                    Total Pays
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-orange-400">
+                    {selectedEmployeeSalaryHistory.length}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Total Salary Summary */}
+            <div className="grid grid-cols-2 gap-3">
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs text-white/40">
+                  Total Salary Paid
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-emerald-400">
+                  ₹
+                  {selectedEmployeeSalaryHistory
+                    .reduce(
+                      (sum, record) =>
+                        sum + parseFloat(record.total_salary || 0),
+                      0
+                    )
+                    .toLocaleString('en-IN')}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs text-white/40">
+                  Salary Records
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-white">
+                  {selectedEmployeeSalaryHistory.length}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Full Salary History */}
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <div className="flex items-center gap-2">
+
+                  <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+                    <History
+                      size={15}
+                      className="text-pink-400"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Complete Salary History
+                    </h3>
+
+                    <p className="text-xs text-white/40">
+                      All months and years
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="max-h-[420px] overflow-y-auto">
+
+                {selectedEmployeeSalaryHistory.length === 0 ? (
+
+                  <div className="p-8 text-center text-sm text-white/40">
+                    No salary history found for this employee.
+                  </div>
+
+                ) : (
+
+                  <div className="divide-y divide-white/5">
+
+                    {selectedEmployeeSalaryHistory.map((record) => {
+
+                      const monthName = new Date(
+                        0,
+                        Number(record.salary_month) - 1
+                      ).toLocaleString('default', {
+                        month: 'long'
+                      });
+
+                      return (
+                        <div
+                          key={record.id}
+                          className="p-4 hover:bg-white/[0.03] transition"
+                        >
+
+                          {/* Month Header */}
+                          <div className="flex items-center justify-between gap-3 mb-4">
+
+                            <div>
+                              <p className="text-sm font-semibold text-white">
+                                {monthName} {record.salary_year}
+                              </p>
+
+                              <p className="text-xs text-white/40 mt-1">
+                                Paid on{' '}
+                                {record.created_at
+                                  ? new Date(
+                                    record.created_at
+                                  ).toLocaleDateString('en-IN')
+                                  : '-'}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <p className="text-[10px] uppercase tracking-wider text-white/40">
+                                Net Salary
+                              </p>
+
+                              <p className="text-base font-bold text-emerald-400">
+                                ₹
+                                {parseFloat(
+                                  record.total_salary || 0
+                                ).toLocaleString('en-IN')}
+                              </p>
+                            </div>
+
+                          </div>
+
+                          {/* Salary Details */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                            <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                              <p className="text-[10px] text-white/40">
+                                Basic
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                ₹
+                                {parseFloat(
+                                  record.basic_salary || 0
+                                ).toLocaleString('en-IN')}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                              <p className="text-[10px] text-white/40">
+                                Present
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {record.present_days || 0}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                              <p className="text-[10px] text-white/40">
+                                Leave
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {record.leave_days || 0}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                              <p className="text-[10px] text-white/40">
+                                Incentive
+                              </p>
+
+                              <p className="mt-1 text-sm font-semibold text-blue-400">
+                                ₹
+                                {parseFloat(
+                                  record.incentive_amount || 0
+                                ).toLocaleString('en-IN')}
+                              </p>
+                            </div>
+
+                          </div>
+
+                          {/* Deductions */}
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs">
+
+                            <span className="text-white/40">
+                              Leave Deduction:{' '}
+                              <span className="text-red-400">
+                                ₹
+                                {parseFloat(
+                                  record.leave_deduction || 0
+                                ).toLocaleString('en-IN')}
+                              </span>
+                            </span>
+
+                            <span className="text-white/40">
+                              Additional Deduction:{' '}
+                              <span className="text-red-400">
+                                ₹
+                                {parseFloat(
+                                  record.additional_deduction || 0
+                                ).toLocaleString('en-IN')}
+                              </span>
+                            </span>
+
+                            <span className="text-white/40">
+                              Incentive:{' '}
+                              <span className="text-blue-400">
+                                {record.incentive_percentage || 0}%
+                              </span>
+                            </span>
+
+                          </div>
+
+                        </div>
+                      );
+                    })}
+
+                  </div>
+
+                )}
+
+              </div>
+
+            </section>
+
+            {/* Close */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedSalaryEmployee(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </Modal>
+      )}
 
       {/* Payslip Modal */}
       {selectedPayslip && (

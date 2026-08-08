@@ -68,7 +68,7 @@ async function getDashboardMetrics(req, res) {
         DATE_FORMAT(m.m_date, '%b %Y') as name,
         IFNULL(e.emp_count, 0) as employees,
         IFNULL(p.proj_count, 0) as projects,
-        IFNULL(i.inc_amount, 0) as income
+        IFNULL(i.inc_amount, 0) + IFNULL(pp.payment_amount, 0) as income
       FROM (
         SELECT DATE_FORMAT(DATE_SUB(CURRENT_DATE(), INTERVAL n MONTH), '%Y-%m-01') as m_date
         FROM (SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5) n
@@ -86,6 +86,9 @@ async function getDashboardMetrics(req, res) {
           SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as inc_amount FROM project_payments GROUP BY dt
         ) combined GROUP BY dt
       ) i ON i.dt = m.m_date
+      LEFT JOIN (
+        SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as payment_amount FROM project_payments GROUP BY dt
+      ) pp ON pp.dt = m.m_date
       ORDER BY m.m_date ASC
     `);
 
@@ -98,7 +101,13 @@ async function getDashboardMetrics(req, res) {
       `SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
       [month, year]
     );
-    const currentMonthIncome = (incomeRows[0]?.total || 0) + (projectPaymentRows[0]?.total || 0);
+    const [currentProjectPaymentRows] = await db.execute(
+      "SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
+      [month, year]
+    );
+    const currentMonthIncomes = parseFloat(currentIncRows[0]?.total) || 0;
+    const currentMonthProjectPayments = parseFloat(currentProjectPaymentRows[0]?.total) || 0;
+    const currentMonthIncome = currentMonthIncomes + currentMonthProjectPayments;
 
     // New Stats for UI update
     const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");
@@ -134,6 +143,8 @@ async function getDashboardMetrics(req, res) {
       recentActivity: recentRows,
       overviewData: overviewRows,
       currentMonthIncome,
+      currentMonthIncomes,
+      currentMonthProjectPayments,
       clientStats: { total: totalClients, breakdown: clientRows, pendingFollowUps },
       traineeStats: traineeTypeRows,
       projectStats: projectStatusRows,

@@ -152,6 +152,7 @@ const fmtDate = (d) => {
 function AssignModal({ onClose, onAssigned, assignments }) {
   const [projects, setProjects]     = useState([]);
   const [employees, setEmployees]   = useState([]);
+  const [employeeProjectCounts, setEmployeeProjectCounts] = useState({});
   const [loadingData, setLoadingData] = useState(true);
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
@@ -164,9 +165,16 @@ function AssignModal({ onClose, onAssigned, assignments }) {
     Promise.all([
       api.get('/projects?limit=200'),
       api.get('/employees?limit=200'),
-    ]).then(([pRes, eRes]) => {
+      api.get('/projects/assignments/all?limit=1000')
+    ]).then(([pRes, eRes, aRes]) => {
       setProjects(pRes.data.data || []);
       setEmployees(eRes.data.data || []);
+      
+      const counts = {};
+      (aRes.data.data || []).forEach(a => {
+         counts[a.employee_id] = (counts[a.employee_id] || 0) + 1;
+      });
+      setEmployeeProjectCounts(counts);
     }).catch(() => setError('Failed to load data')).finally(() => setLoadingData(false));
   }, []);
 
@@ -295,14 +303,19 @@ function AssignModal({ onClose, onAssigned, assignments }) {
                     <p className="text-center text-white/25 text-xs py-4">No employees found</p>
                   ) : filteredEmps.map((e, i) => {
                     const selected = isSelectedEmployee(e);
+                    const assignedCount = employeeProjectCounts[e.employee_id] || 0;
+                    const isDisabled = assignedCount >= 3;
                     return (
                       <button key={e.employee_id} type="button"
+                        disabled={isDisabled && !selected}
                         onClick={() => toggleEmployeeSelection(e)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-left ${selected ? 'bg-orange-500/20 border border-orange-500/30' : 'hover:bg-white/[0.04] border border-transparent'}`}>
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition text-left ${selected ? 'bg-orange-500/20 border border-orange-500/30' : isDisabled ? 'opacity-50 cursor-not-allowed bg-white/[0.02] border-transparent' : 'hover:bg-white/[0.04] border border-transparent'}`}>
                         <Avatar name={`${e.first_name} ${e.last_name}`} index={i} size={8} />
                         <div className="min-w-0">
                           <p className="text-white text-xs font-semibold truncate">{e.first_name} {e.last_name}</p>
-                          <p className="text-white/35 text-[10px] truncate">{e.designation || 'No designation'}</p>
+                          <p className={`text-[10px] truncate ${isDisabled ? 'text-rose-400 font-medium' : 'text-white/35'}`}>
+                            {assignedCount > 0 ? `Assigned to ${assignedCount} project${assignedCount > 1 ? 's' : ''}` : e.designation || 'No designation'}
+                          </p>
                         </div>
                         {selected && (
                           <CheckCircle size={14} className="ml-auto text-orange-400 shrink-0" />

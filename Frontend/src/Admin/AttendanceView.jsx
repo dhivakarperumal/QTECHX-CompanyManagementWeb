@@ -2,10 +2,82 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Clock3, Eye, Loader2, MapPin, UserRoundCheck, UserRoundX } from "lucide-react";
 import api from "../api";
+import Select from "react-select";
 
 const today = new Date();
 const defaultMonth = today.getMonth() + 1;
 const defaultYear = today.getFullYear();
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: '#1a1d24',
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: 'none',
+    minHeight: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    '&:hover': {
+      border: '1px solid #f97316',
+    },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: '0 12px',
+    fontSize: '13px',
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'rgba(255,255,255,.35)',
+    fontSize: '13px',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    fontSize: '13px',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    background: '#1a1d24',
+    border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 9999,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+    fontSize: '13px',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    fontSize: '13px',
+    padding: '8px 14px',
+    backgroundColor: state.isSelected
+      ? '#f97316'
+      : state.isFocused
+        ? 'rgba(249,115,22,.15)'
+        : '#1a1d24',
+    color: '#fff',
+    cursor: 'pointer',
+    ':active': {
+      backgroundColor: '#ea580c',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: '#888',
+    padding: '6px',
+  }),
+};
 
 const AttendanceView = () => {
   const { id } = useParams();
@@ -42,7 +114,7 @@ const AttendanceView = () => {
       start = new Date(customDate);
       end = new Date(customDate);
     }
-    
+
     if (start && end) {
       const offsetStart = new Date(start.getTime() - (start.getTimezoneOffset() * 60000));
       const offsetEnd = new Date(end.getTime() - (end.getTimezoneOffset() * 60000));
@@ -119,17 +191,21 @@ const AttendanceView = () => {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-white/5 border border-white/10 text-white text-sm rounded-full px-4 py-2 outline-none focus:border-orange-500/50 transition appearance-none"
-              >
-                <option value="Today" className="bg-[#0f172a]">Today</option>
-                <option value="Yesterday" className="bg-[#0f172a]">Yesterday</option>
-                <option value="This Week" className="bg-[#0f172a]">This Week</option>
-                <option value="This Month" className="bg-[#0f172a]">This Month</option>
-                <option value="Custom Date" className="bg-[#0f172a]">Custom Date</option>
-              </select>
+              <div className="min-w-[160px]">
+                <Select
+                  value={{ value: dateFilter, label: dateFilter }}
+                  onChange={(opt) => setDateFilter(opt ? opt.value : "Today")}
+                  options={[
+                    { value: "Today", label: "Today" },
+                    { value: "Yesterday", label: "Yesterday" },
+                    { value: "This Week", label: "This Week" },
+                    { value: "This Month", label: "This Month" },
+                    { value: "Custom Date", label: "Custom Date" },
+                  ]}
+                  styles={customSelectStyles}
+                  isSearchable={false}
+                />
+              </div>
               {dateFilter === 'Custom Date' && (
                 <input
                   type="date"

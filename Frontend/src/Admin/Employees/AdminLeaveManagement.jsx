@@ -4,7 +4,21 @@ import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 import api from '../../api';
 import toast from 'react-hot-toast';
-import { Briefcase, Loader2, RefreshCw, CheckCircle, XCircle, Search, Filter, List, LayoutGrid, CalendarDays, User } from 'lucide-react';
+import {
+  Briefcase,
+  Loader2,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  Search,
+  Filter,
+  List,
+  LayoutGrid,
+  CalendarDays,
+  User,
+  Eye,
+  History
+} from 'lucide-react';
 import Select from 'react-select';
 
 const customSelectStyles = {
@@ -111,6 +125,9 @@ const AdminLeaveManagement = () => {
   const [bulkSelection, setBulkSelection] = useState([]);
   const [bulkReason, setBulkReason] = useState('');
   const [expandedRow, setExpandedRow] = useState(null);
+  const [employeeFilter, setEmployeeFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('All');
+  const [selectedEmployeeHistory, setSelectedEmployeeHistory] = useState(null);
   const navigate = useNavigate();
 
   const pendingLeaves = leaves.filter(l => l.status === 'Pending');
@@ -223,50 +240,123 @@ const AdminLeaveManagement = () => {
 
   const uniqueLeaveTypes = [...new Set(leaves.map(l => l.leave_type).filter(Boolean))];
 
-  const filteredLeaves = leaves.filter(leave => {
-    const fullName = `${leave.first_name || ''} ${leave.last_name || ''}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
-      (leave.employee_code || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || leave.status === statusFilter;
+  const filteredLeaves = leaves.filter((leave) => {
+    const fullName =
+      `${leave.first_name || ''} ${leave.last_name || ''}`.toLowerCase();
 
-    const matchesType = leaveTypeFilter === 'All' || leave.leave_type === leaveTypeFilter;
+    const employeeCode =
+      (leave.employee_code || '').toLowerCase();
 
+    const search =
+      searchQuery.trim().toLowerCase();
+
+    const employeeSearch =
+      employeeFilter.trim().toLowerCase();
+
+    // General search
+    const matchesSearch =
+      !search ||
+      fullName.includes(search) ||
+      employeeCode.includes(search);
+
+    // Employee filter
+    const matchesEmployee =
+      !employeeSearch ||
+      fullName.includes(employeeSearch) ||
+      employeeCode.includes(employeeSearch);
+
+    // Status
+    const matchesStatus =
+      statusFilter === 'All' ||
+      leave.status === statusFilter;
+
+    // Leave type
+    const matchesType =
+      leaveTypeFilter === 'All' ||
+      leave.leave_type === leaveTypeFilter;
+
+    // Month
+    let matchesMonth = true;
+
+    if (monthFilter !== 'All') {
+      const leaveDate = new Date(leave.from_date);
+
+      matchesMonth =
+        leaveDate.getMonth() + 1 === Number(monthFilter);
+    }
+
+    // Existing date filter
     let matchesDate = true;
+
     if (dateFilter !== 'All') {
       const from = new Date(leave.from_date);
       const to = new Date(leave.to_date);
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       if (dateFilter === 'Today') {
-        matchesDate = from <= today && to >= today;
+        matchesDate =
+          from <= today &&
+          to >= today;
+
       } else if (dateFilter === 'Tomorrow') {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        matchesDate = from <= tomorrow && to >= tomorrow;
+
+        matchesDate =
+          from <= tomorrow &&
+          to >= tomorrow;
+
       } else if (dateFilter === 'This Week') {
         const firstDayOfWeek = new Date(today);
-        firstDayOfWeek.setDate(today.getDate() - today.getDay());
+        firstDayOfWeek.setDate(
+          today.getDate() - today.getDay()
+        );
+
         const lastDayOfWeek = new Date(today);
-        lastDayOfWeek.setDate(today.getDate() - today.getDay() + 6);
-        matchesDate = from <= lastDayOfWeek && to >= firstDayOfWeek;
+        lastDayOfWeek.setDate(
+          today.getDate() - today.getDay() + 6
+        );
+
+        matchesDate =
+          from <= lastDayOfWeek &&
+          to >= firstDayOfWeek;
+
       } else if (dateFilter === 'This Month') {
-        matchesDate = from.getMonth() === today.getMonth() && from.getFullYear() === today.getFullYear();
+        matchesDate =
+          from.getMonth() === today.getMonth() &&
+          from.getFullYear() === today.getFullYear();
+
       } else if (dateFilter === 'This Year') {
-        matchesDate = from.getFullYear() === today.getFullYear();
+        matchesDate =
+          from.getFullYear() === today.getFullYear();
+
       } else if (dateFilter === 'Custom') {
         if (customStartDate && customEndDate) {
           const cStart = new Date(customStartDate);
           const cEnd = new Date(customEndDate);
+
           cStart.setHours(0, 0, 0, 0);
           cEnd.setHours(23, 59, 59, 999);
-          matchesDate = from <= cEnd && to >= cStart;
+
+          matchesDate =
+            from <= cEnd &&
+            to >= cStart;
         }
       }
     }
 
-    return matchesSearch && matchesStatus && matchesType && matchesDate;
+    return (
+      matchesSearch &&
+      matchesEmployee &&
+      matchesStatus &&
+      matchesType &&
+      matchesMonth &&
+      matchesDate
+    );
   });
+
   const stats = [
     { label: 'Total Leaves', value: leaves.length, icon: Briefcase, cls: 'text-blue-400', bg: 'bg-blue-500/15' },
     { label: 'Approved', value: leaves.filter(l => l.status === 'Approved').length, icon: CheckCircle, cls: 'text-emerald-400', bg: 'bg-emerald-500/15' },
@@ -274,27 +364,27 @@ const AdminLeaveManagement = () => {
     { label: 'Pending', value: leaves.filter(l => l.status === 'Pending').length, icon: RefreshCw, cls: 'text-orange-400', bg: 'bg-orange-500/15' },
   ];
 
-  const employeeCards = filteredLeaves.reduce((acc, leave) => {
-    const employeeKey = leave.employee_id || leave.user_id || leave.id;
-    const name = `${leave.first_name || ''} ${leave.last_name || ''}`.trim() || 'Unknown Employee';
-    const existing = acc.find((item) => item.id === employeeKey);
+  // const employeeCards = filteredLeaves.reduce((acc, leave) => {
+  //   const employeeKey = leave.employee_id || leave.user_id || leave.id;
+  //   const name = `${leave.first_name || ''} ${leave.last_name || ''}`.trim() || 'Unknown Employee';
+  //   const existing = acc.find((item) => item.id === employeeKey);
 
-    if (existing) {
-      existing.totalCount += 1;
-      if (leave.status === 'Pending') existing.pendingCount += 1;
-      return acc;
-    }
+  //   if (existing) {
+  //     existing.totalCount += 1;
+  //     if (leave.status === 'Pending') existing.pendingCount += 1;
+  //     return acc;
+  //   }
 
-    acc.push({
-      id: employeeKey,
-      name,
-      employeeCode: leave.employee_code || '—',
-      totalCount: 1,
-      pendingCount: leave.status === 'Pending' ? 1 : 0,
-    });
+  //   acc.push({
+  //     id: employeeKey,
+  //     name,
+  //     employeeCode: leave.employee_code || '—',
+  //     totalCount: 1,
+  //     pendingCount: leave.status === 'Pending' ? 1 : 0,
+  //   });
 
-    return acc;
-  }, []);
+  //   return acc;
+  // }, []);
 
   const toggleExpandedRow = (id) => {
     setExpandedRow((prev) => (prev === id ? null : id));
@@ -349,6 +439,66 @@ const AdminLeaveManagement = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-10 pr-4 text-sm text-white outline-none focus:border-orange-500 transition"
+          />
+        </div>
+        <div className="relative min-w-[190px]">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
+          />
+
+          <input
+            type="text"
+            value={employeeFilter}
+            onChange={(e) => setEmployeeFilter(e.target.value)}
+            placeholder="Employee..."
+            className="w-full rounded-xl border border-white/10 bg-[#111318] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500 transition placeholder:text-white/30"
+          />
+        </div>
+        <div className="relative min-w-[150px]">
+          <CalendarDays
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none z-10"
+          />
+
+          <Select
+            options={[
+              { value: 'All', label: 'All Months' },
+              ...Array.from({ length: 12 }, (_, index) => ({
+                value: index + 1,
+                label: new Date(
+                  0,
+                  index
+                ).toLocaleString('default', {
+                  month: 'long'
+                })
+              }))
+            ]}
+            value={{
+              value: monthFilter,
+              label:
+                monthFilter === 'All'
+                  ? 'All Months'
+                  : new Date(
+                    0,
+                    Number(monthFilter) - 1
+                  ).toLocaleString('default', {
+                    month: 'long'
+                  })
+            }}
+            onChange={(option) =>
+              setMonthFilter(
+                option ? option.value : 'All'
+              )
+            }
+            styles={{
+              ...customSelectStyles,
+              control: (base, state) => ({
+                ...customSelectStyles.control(base, state),
+                paddingLeft: '24px'
+              })
+            }}
+            isSearchable={false}
           />
         </div>
         <div className="relative min-w-35">
@@ -456,7 +606,7 @@ const AdminLeaveManagement = () => {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 space-y-4">
-        {employeeCards.length > 0 && (
+        {/* {employeeCards.length > 0 && (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {employeeCards.map((employee) => (
               <div key={employee.id} className="rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/8">
@@ -486,7 +636,7 @@ const AdminLeaveManagement = () => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
 
         {viewMode === 'table' && (
           <div className="overflow-x-auto rounded-2xl border border-white/10">
@@ -543,8 +693,19 @@ const AdminLeaveManagement = () => {
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
 
+                            {/* 👁 View Employee Leave History */}
+                            <button
+                              type="button"
+                               onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
+                              className="rounded-lg border border-orange-500/20 bg-orange-500/10 p-2 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300 transition"
+                              title="View Employee Leave History"
+                            >
+                              <Eye size={14} />
+                            </button>
+
                             {leave.status === 'Pending' ? (
                               <>
+                                {/* Approve */}
                                 <button
                                   onClick={() => handleActionClick(leave, 'Approved')}
                                   className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
@@ -552,6 +713,8 @@ const AdminLeaveManagement = () => {
                                 >
                                   <CheckCircle size={14} />
                                 </button>
+
+                                {/* Reject */}
                                 <button
                                   onClick={() => handleActionClick(leave, 'Rejected')}
                                   className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
@@ -563,6 +726,7 @@ const AdminLeaveManagement = () => {
                             ) : (
                               <span className="text-white/40 text-xs">Processed</span>
                             )}
+
                           </div>
                         </td>
                       </tr>
@@ -638,7 +802,7 @@ const AdminLeaveManagement = () => {
                       onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
                       className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
                     >
-                      View Full History
+                      <Eye size={14} />
                     </button>
                   </div>
 
@@ -680,14 +844,23 @@ const AdminLeaveManagement = () => {
                       >
                         <User size={14} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
                         className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/20 transition"
                       >
                         View Full History
-                      </button>
+                      </button> */}
                       {leave.status === 'Pending' && (
                         <>
+                          {/* View Employee Full History */}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/admin/leave-history/${leave.employee_id || leave.user_id || leave.id}`)}
+                            className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400 hover:bg-emerald-500/20 transition"
+                            title="View Employee Leave History"
+                          >
+                            <Eye size={14} />
+                          </button>
                           <button
                             onClick={() => handleActionClick(leave, 'Approved')}
                             className="rounded-lg border border-white/10 bg-white/5 p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition"
@@ -736,6 +909,356 @@ const AdminLeaveManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Employee Full Leave History Modal */}
+      {selectedEmployeeHistory && (
+        <ModalPortal>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+
+            <div className="rounded-2xl border border-white/10 bg-[#111318] max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+
+              {/* Header */}
+              <div className="flex items-center justify-between gap-4 p-5 border-b border-white/10">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center">
+                    <History
+                      size={18}
+                      className="text-orange-400"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      Employee Leave History
+                    </h3>
+
+                    <p className="text-xs text-white/40 mt-0.5">
+                      Complete leave history
+                    </p>
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedEmployeeHistory(null)
+                  }
+                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
+                >
+                  <XCircle size={18} />
+                </button>
+
+              </div>
+
+              {/* Employee Header */}
+              <div className="p-5">
+
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-5">
+
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+                    <div className="flex items-center gap-3">
+
+                      <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                        <User
+                          size={18}
+                          className="text-white/70"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-lg font-bold text-white">
+                          {selectedEmployeeHistory.first_name}{' '}
+                          {selectedEmployeeHistory.last_name}
+                        </p>
+
+                        <p className="text-xs text-white/40 mt-1">
+                          Employee Code:{' '}
+                          {selectedEmployeeHistory.employee_code || '—'}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-right">
+
+                      <p className="text-[10px] uppercase tracking-widest text-orange-400/70">
+                        Total Requests
+                      </p>
+
+                      <p className="mt-1 text-lg font-bold text-orange-400">
+                        {
+                          leaves.filter(
+                            (item) =>
+                              Number(
+                                item.employee_id ||
+                                item.user_id
+                              ) ===
+                              Number(
+                                selectedEmployeeHistory.employee_id ||
+                                selectedEmployeeHistory.user_id
+                              )
+                          ).length
+                        }
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Summary */}
+              <div className="px-5 pb-5">
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                  {[
+                    {
+                      label: 'Total',
+                      value: leaves.filter(
+                        (item) =>
+                          Number(
+                            item.employee_id ||
+                            item.user_id
+                          ) ===
+                          Number(
+                            selectedEmployeeHistory.employee_id ||
+                            selectedEmployeeHistory.user_id
+                          )
+                      ).length,
+                      cls: 'text-white'
+                    },
+                    {
+                      label: 'Approved',
+                      value: leaves.filter(
+                        (item) =>
+                          Number(
+                            item.employee_id ||
+                            item.user_id
+                          ) ===
+                          Number(
+                            selectedEmployeeHistory.employee_id ||
+                            selectedEmployeeHistory.user_id
+                          ) &&
+                          item.status === 'Approved'
+                      ).length,
+                      cls: 'text-emerald-400'
+                    },
+                    {
+                      label: 'Pending',
+                      value: leaves.filter(
+                        (item) =>
+                          Number(
+                            item.employee_id ||
+                            item.user_id
+                          ) ===
+                          Number(
+                            selectedEmployeeHistory.employee_id ||
+                            selectedEmployeeHistory.user_id
+                          ) &&
+                          item.status === 'Pending'
+                      ).length,
+                      cls: 'text-orange-400'
+                    },
+                    {
+                      label: 'Rejected',
+                      value: leaves.filter(
+                        (item) =>
+                          Number(
+                            item.employee_id ||
+                            item.user_id
+                          ) ===
+                          Number(
+                            selectedEmployeeHistory.employee_id ||
+                            selectedEmployeeHistory.user_id
+                          ) &&
+                          item.status === 'Rejected'
+                      ).length,
+                      cls: 'text-rose-400'
+                    }
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                    >
+                      <p className="text-xs text-white/40">
+                        {item.label}
+                      </p>
+
+                      <p
+                        className={`mt-1 text-xl font-bold ${item.cls}`}
+                      >
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+
+                </div>
+
+              </div>
+
+              {/* Full History */}
+              <div className="flex-1 overflow-y-auto px-5 pb-5">
+
+                <div className="rounded-2xl border border-white/10 overflow-hidden">
+
+                  <div className="px-5 py-4 bg-white/[0.03] border-b border-white/10">
+
+                    <div className="flex items-center gap-2">
+
+                      <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+                        <History
+                          size={15}
+                          className="text-pink-400"
+                        />
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-white">
+                          Complete Leave History
+                        </h4>
+
+                        <p className="text-xs text-white/40">
+                          All leave requests for this employee
+                        </p>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  <div className="divide-y divide-white/5">
+
+                    {leaves
+                      .filter(
+                        (item) =>
+                          Number(
+                            item.employee_id ||
+                            item.user_id
+                          ) ===
+                          Number(
+                            selectedEmployeeHistory.employee_id ||
+                            selectedEmployeeHistory.user_id
+                          )
+                      )
+                      .sort(
+                        (a, b) =>
+                          new Date(b.from_date) -
+                          new Date(a.from_date)
+                      )
+                      .map((leave) => (
+
+                        <div
+                          key={leave.id}
+                          className="p-4 hover:bg-white/[0.03] transition"
+                        >
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+                            <div>
+
+                              <p className="text-sm font-semibold text-white">
+                                {leave.leave_type}
+                              </p>
+
+                              <p className="text-xs text-white/40 mt-1">
+                                {new Date(
+                                  leave.from_date
+                                ).toLocaleDateString()}
+
+                                {leave.from_date !== leave.to_date &&
+                                  ` - ${new Date(
+                                    leave.to_date
+                                  ).toLocaleDateString()}`}
+                              </p>
+
+                            </div>
+
+                            <div className="flex items-center gap-3">
+
+                              <span className="text-sm font-semibold text-white">
+                                {leave.no_of_days}{' '}
+                                {leave.no_of_days === 1
+                                  ? 'day'
+                                  : 'days'}
+                              </span>
+
+                              {getStatusBadge(leave.status)}
+
+                            </div>
+
+                          </div>
+
+                          <div className="mt-3 grid gap-3 md:grid-cols-2">
+
+                            <div className="rounded-xl border border-white/5 bg-[#0f1117] p-3">
+
+                              <p className="text-[10px] uppercase tracking-wider text-white/40">
+                                Reason
+                              </p>
+
+                              <p className="mt-1 text-sm text-white/70">
+                                {leave.reason || '—'}
+                              </p>
+
+                            </div>
+
+                            <div className="rounded-xl border border-white/5 bg-[#0f1117] p-3">
+
+                              <p className="text-[10px] uppercase tracking-wider text-white/40">
+                                Admin Remark
+                              </p>
+
+                              <p className="mt-1 text-sm text-white/70">
+                                {leave.admin_reason || '—'}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                          {leave.day_type === 'Half Day' && (
+                            <p className="mt-2 text-xs text-white/40">
+                              Half Day — {leave.half_day_type}
+                            </p>
+                          )}
+
+                        </div>
+
+                      ))}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end p-5 border-t border-white/10">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedEmployeeHistory(null)
+                  }
+                  className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
+                >
+                  Close
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Action Modal */}
       {actionModal.show && (
