@@ -255,11 +255,48 @@ export default function TraineeInternAttendancePage() {
 
   return (
     <div className="space-y-6 text-white">
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20">
         <div>
           <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Trainee & Intern Attendance</p>
           <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
-          <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p>
+          {/*   <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p> */}
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
+              <CalendarDays size={16} className="text-orange-400" />
+              <Select
+                value={{ value: selectedMonth, label: new Date(2024, selectedMonth - 1).toLocaleString('en', { month: 'long' }) }}
+                onChange={(option) => setSelectedMonth(Number(option.value))}
+                options={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index).toLocaleString('en', { month: 'long' }) }))}
+                styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+                isSearchable={false}
+                className="flex-1"
+              />
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[120px]">
+              <CalendarDays size={16} className="text-orange-400" />
+              <Select
+                value={{ value: selectedYear, label: selectedYear.toString() }}
+                onChange={(option) => setSelectedYear(Number(option.value))}
+                options={[selectedYear - 1, selectedYear, selectedYear + 1].map(year => ({ value: year, label: year.toString() }))}
+                styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+                isSearchable={false}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
+              <PlusCircle size={16} /> Add Attendance
+            </button>
+            <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+              <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
+              <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -282,39 +319,6 @@ export default function TraineeInternAttendancePage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
-            <CalendarDays size={16} className="text-orange-400 ml-2" />
-            <Select
-              value={{ value: selectedMonth, label: new Date(2024, selectedMonth - 1).toLocaleString('en', { month: 'long' }) }}
-              onChange={(option) => setSelectedMonth(Number(option.value))}
-              options={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index).toLocaleString('en', { month: 'long' }) }))}
-              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
-              isSearchable={false}
-              className="flex-1"
-            />
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[120px]">
-            <CalendarDays size={16} className="text-orange-400 ml-2" />
-            <Select
-              value={{ value: selectedYear, label: selectedYear.toString() }}
-              onChange={(option) => setSelectedYear(Number(option.value))}
-              options={[selectedYear - 1, selectedYear, selectedYear + 1].map(year => ({ value: year, label: year.toString() }))}
-              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
-              isSearchable={false}
-              className="flex-1"
-            />
-          </div>
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
-            <PlusCircle size={16} /> Add Attendance
-          </button>
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
-          </div>
-        </div>
-
       <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="relative">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
@@ -334,6 +338,7 @@ export default function TraineeInternAttendancePage() {
               <table className="min-w-full text-sm">
                 <thead className="bg-white/5 text-white/60">
                   <tr>
+                    <th className="px-4 py-3 text-left">S.No</th>
                     <th className="px-4 py-3 text-left">Name</th>
                     <th className="px-4 py-3 text-left">Type</th>
                     <th className="px-4 py-3 text-left">Person ID</th>
@@ -344,9 +349,10 @@ export default function TraineeInternAttendancePage() {
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {cards.length === 0 ? (
-                    <tr><td colSpan="6" className="px-4 py-8 text-center text-white/60">No trainee or intern records found.</td></tr>
-                  ) : cards.map((person) => (
+                    <tr><td colSpan="7" className="px-4 py-8 text-center text-white/60">No trainee or intern records found.</td></tr>
+                  ) : cards.map((person, idx) => (
                     <tr key={person.trainee_intern_id} className="hover:bg-white/5">
+                      <td className="px-4 py-3 text-white/60">{idx + 1}</td>
                       <td className="px-4 py-3 font-semibold text-white">{person.trainee_name || person.full_name}</td>
                       <td className="px-4 py-3 text-white/60">{person.type || 'Trainee / Intern'}</td>
                       <td className="px-4 py-3 text-white/60">{person.person_id || 'TI'}</td>
