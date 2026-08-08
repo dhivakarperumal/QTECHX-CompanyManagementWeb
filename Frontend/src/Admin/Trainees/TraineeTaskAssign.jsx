@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import {
@@ -134,12 +134,13 @@ function Modal({ open, onClose, title, children }) {
 }
 
 const TraineeTaskAssign = () => {
-  const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [assignmentTypeFilter, setAssignmentTypeFilter] = useState('All');
   const [assignmentViewMode, setAssignmentViewMode] = useState('table');
   const [assignmentSearchTerm, setAssignmentSearchTerm] = useState('');
@@ -281,6 +282,16 @@ const TraineeTaskAssign = () => {
     setShowForm(false);
   };
 
+  const openAssignmentDetails = (assignment) => {
+    setSelectedAssignment(assignment);
+    setDetailsOpen(true);
+  };
+
+  const closeAssignmentDetails = () => {
+    setSelectedAssignment(null);
+    setDetailsOpen(false);
+  };
+
   const getTraineeUuid = (trainee) => trainee?.uuid || trainee?.id || trainee?.person_id || '';
 
   const filteredTrainees = useMemo(() => {
@@ -303,6 +314,11 @@ const TraineeTaskAssign = () => {
       return matchesType && haystack.includes(term);
     });
   }, [assignments, assignmentSearchTerm, assignmentTypeFilter]);
+
+  const totalAssignments = assignments.length;
+  const pendingAssignments = assignments.filter((assignment) => assignment.status === 'Pending').length;
+  const inProgressAssignments = assignments.filter((assignment) => assignment.status === 'In Progress').length;
+  const completedAssignments = assignments.filter((assignment) => assignment.status === 'Completed').length;
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -332,7 +348,53 @@ const TraineeTaskAssign = () => {
         </div>
       </div>
 
-     
+      <div className="grid gap-4 xl:grid-cols-4">
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-orange-500/10 p-3 text-orange-400">
+              <UserCheck size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Total Assignments</p>
+              <p className="text-3xl font-semibold text-white">{totalAssignments}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-orange-500/10 p-3 text-orange-400">
+              <span className="text-xl font-bold">P</span>
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Pending</p>
+              <p className="text-3xl font-semibold text-white">{pendingAssignments}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-400">
+              <span className="text-xl font-bold">IP</span>
+            </div>
+            <div>
+              <p className="text-sm text-white/50">In Progress</p>
+              <p className="text-3xl font-semibold text-white">{inProgressAssignments}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-400">
+              <span className="text-xl font-bold">C</span>
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Completed</p>
+              <p className="text-3xl font-semibold text-white">{completedAssignments}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <Modal open={showForm} onClose={resetForm} title={editingAssignmentUuid ? "Edit Task Assignment" : "New Task Assignment"}>
         <form onSubmit={handleAssignSubmit} className="space-y-5">
@@ -502,6 +564,7 @@ const TraineeTaskAssign = () => {
             <table className="min-w-full text-sm">
               <thead className="bg-white/4 text-white/60">
                 <tr>
+                  <th className="px-4 py-4 text-left font-medium">S.No</th>
                   <th className="px-4 py-4 text-left font-medium">Trainee</th>
                   <th className="px-4 py-4 text-left font-medium">Assigned Task</th>
                   <th className="px-4 py-4 text-left font-medium">Due Date</th>
@@ -514,18 +577,19 @@ const TraineeTaskAssign = () => {
               <tbody className="divide-y divide-white/10">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-white/40">
+                    <td colSpan="8" className="px-4 py-8 text-center text-white/40">
                       <Loader2 size={18} className="mx-auto animate-spin" />
                     </td>
                   </tr>
                 ) : filteredAssignments.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
+                    <td colSpan="8" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
                   </tr>
                 ) : (
-                  filteredAssignments.map((assignment) => {
+                  filteredAssignments.map((assignment, index) => {
                     return (
                       <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
+                        <td className="px-4 py-4 text-white/70">{index + 1}</td>
                         <td className="px-4 py-4 font-semibold text-white">
                           {assignment.trainee_name}
                         </td>
@@ -562,9 +626,7 @@ const TraineeTaskAssign = () => {
                             {/* View */}
                             <button
                               type="button"
-                              onClick={() =>
-                              navigate(`/admin/trainees/tasks/view/${assignment.trainee_intern_id}`)
-                              }
+                              onClick={() => openAssignmentDetails(assignment)}
                               className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                               title="View Assignment"
                             >
@@ -609,9 +671,7 @@ const TraineeTaskAssign = () => {
                   {/* View */}
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(`/admin/trainees/tasks/view/${assignment.trainee_intern_id}`)
-                    }
+                    onClick={() => openAssignmentDetails(assignment)}
                     className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                     title="View Assignment"
                   >
@@ -625,6 +685,47 @@ const TraineeTaskAssign = () => {
           </div>
         )}
       </div>
+
+      <Modal open={detailsOpen} onClose={closeAssignmentDetails} title="Task Assignment Details">
+        {selectedAssignment ? (
+          <div className="space-y-4 text-sm text-white/80">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Trainee / Intern</p>
+                <p className="text-white">{selectedAssignment.trainee_name || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Task</p>
+                <p className="text-white">{selectedAssignment.task_name || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Status</p>
+                <p className="text-white">{selectedAssignment.status || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Progress</p>
+                <p className="text-white">{selectedAssignment.progress ?? 0}%</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Assigned Date</p>
+                <p className="text-white">{selectedAssignment.assigned_date ? selectedAssignment.assigned_date.substring(0, 10) : '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Due Date</p>
+                <p className="text-white">{selectedAssignment.due_date ? selectedAssignment.due_date.substring(0, 10) : '—'}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Assignment Notes</p>
+              <p className="text-white/70 whitespace-pre-line">{selectedAssignment.daily_report || 'No report provided.'}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-white/70">Loading details...</p>
+        )}
+      </Modal>
     </div>
   );
 };
