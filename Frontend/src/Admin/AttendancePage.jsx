@@ -221,10 +221,35 @@ const AttendancePage = () => {
             location: existing.location || prev.location,
             notes: existing.notes || prev.notes,
           }));
+        } else if (!cancelled) {
+          // No existing record: clear previously filled attendance times so previous employee's data doesn't persist
+          setForm((prev) => ({
+            ...prev,
+            check_in_time: "",
+            check_out_time: "",
+            break_start_time: "",
+            break_end_time: "",
+            attendance_status: "Present",
+            location: "",
+            notes: "",
+          }));
         }
       } catch (err) {
-        // 404 is okay (no existing attendance); ignore other errors
-        if (err?.response?.status && err.response.status !== 404) {
+        // If 404 or not found, clear fields; log other errors
+        if (err?.response?.status === 404) {
+          if (!cancelled) {
+            setForm((prev) => ({
+              ...prev,
+              check_in_time: "",
+              check_out_time: "",
+              break_start_time: "",
+              break_end_time: "",
+              attendance_status: "Present",
+              location: "",
+              notes: "",
+            }));
+          }
+        } else {
           console.error('Failed to fetch existing attendance', err);
         }
       }
