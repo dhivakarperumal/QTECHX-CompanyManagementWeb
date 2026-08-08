@@ -40,6 +40,7 @@ exports.createExpense = async (req, res) => {
     );
 
     const expense_id = uuidv4();
+    const from_name = "Q-Techx Solutions";
     let upload_bill = null;
     if (req.file) {
       upload_bill = req.file.filename;
@@ -47,8 +48,8 @@ exports.createExpense = async (req, res) => {
 
     await connection.query(
       `INSERT INTO expenses 
-       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, upload_bill)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, from_name, upload_bill)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expense_id,
         expense_type || '',
@@ -60,6 +61,7 @@ exports.createExpense = async (req, res) => {
         paid_to || '',
         description || '',
         invoice_number || '',
+        from_name,
         upload_bill
       ]
     );

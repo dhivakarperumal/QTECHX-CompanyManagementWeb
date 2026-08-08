@@ -1380,6 +1380,7 @@ async function ensureExpenseSchema(pool) {
       paid_to VARCHAR(255) NULL,
       description TEXT NULL,
       invoice_number VARCHAR(100) NULL,
+      from_name VARCHAR(255) NULL,
       upload_bill VARCHAR(255) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1387,6 +1388,8 @@ async function ensureExpenseSchema(pool) {
       UNIQUE KEY uq_expense_id (expense_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS from_name VARCHAR(255) NULL AFTER invoice_number`);
 }
 
 async function ensureSalarySchema(pool) {

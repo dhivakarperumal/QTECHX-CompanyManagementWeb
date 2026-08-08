@@ -133,6 +133,8 @@ const ExpensesPage = () => {
     dateFrom: "",
     dateTo: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Form states
   const [fundAmount, setFundAmount] = useState("");
@@ -397,6 +399,17 @@ const ExpensesPage = () => {
     return dateMatch;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / itemsPerPage));
+  const paginatedExpenses = filteredExpenses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  React.useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, expenses.length]);
+
   const filteredSpendEntries = filteredExpenses.filter((exp) => !isCreditEntry(exp));
   const totalSpent = filteredSpendEntries.reduce((acc, exp) => acc + parseFloat(exp.amount || 0), 0);
   const categoryBreakdown = Object.entries(
@@ -550,6 +563,12 @@ const ExpensesPage = () => {
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
               placeholder="e.g. Amazon Web Services"
               value={expenseData.paid_to} onChange={(e) => setExpenseData({ ...expenseData, paid_to: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">From</label>
+            <input type="text" disabled
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/50 placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              value="Q-Techx Solutions" />
           </div>
           <div>
             <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
@@ -721,7 +740,7 @@ const ExpensesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredExpenses.map((exp) => (
+                {paginatedExpenses.map((exp) => (
                   <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
                     <td className="px-5 py-4">
                       <p className="text-white/80 font-medium text-sm">
@@ -731,6 +750,7 @@ const ExpensesPage = () => {
                     <td className="px-5 py-4">
                       <p className="text-white font-semibold text-sm leading-tight">{exp.expense_type}</p>
                       <p className="text-white/40 text-xs mt-0.5">Paid to: {exp.paid_to}</p>
+                      <p className="text-white/40 text-xs mt-0.5">From: {exp.from_name || "Q-Techx Solutions"}</p>
                     </td>
                     <td className="px-5 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white/5 text-white/60 border border-white/10">
@@ -761,6 +781,30 @@ const ExpensesPage = () => {
                 ))}
               </tbody>
             </table>
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 bg-[#111318] border-t border-white/10 text-white/70 text-sm">
+                <p>{filteredExpenses.length} record{filteredExpenses.length === 1 ? '' : 's'} total</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    className={`px-3 py-2 rounded-lg border ${currentPage === 1 ? 'border-white/10 text-white/30 bg-white/5 cursor-not-allowed' : 'border-white/20 text-white/80 bg-white/5 hover:bg-white/10'}`}
+                  >
+                    Prev
+                  </button>
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    className={`px-3 py-2 rounded-lg border ${currentPage === totalPages ? 'border-white/10 text-white/30 bg-white/5 cursor-not-allowed' : 'border-white/20 text-white/80 bg-white/5 hover:bg-white/10'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
