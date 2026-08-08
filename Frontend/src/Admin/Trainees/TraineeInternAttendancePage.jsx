@@ -4,14 +4,15 @@ import Select from 'react-select';
 import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search, LayoutGrid, List, X } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import { UserCheck, UserX } from "lucide-react";
 
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -302,31 +303,72 @@ export default function TraineeInternAttendancePage() {
           </div>
         </div>
       </div>
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Trainee Present</p>
-          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.traineePresent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Trainee Absent</p>
-          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.traineeAbsent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Intern Present</p>
-          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.internPresent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Intern Absent</p>
-          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.internAbsent}</p>
-        </div>
-      </div>
+        {/* Trainee Present */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15">
+            <UserCheck size={22} className="text-emerald-400" />
+          </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee or intern" className="w-64 rounded-full border border-white/10 bg-white/10 px-9 py-2 text-sm text-white outline-none focus:border-orange-500/70" />
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.traineePresent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Trainee Present
+            </p>
+          </div>
         </div>
+
+        {/* Trainee Absent */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-500/15">
+            <UserX size={22} className="text-rose-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.traineeAbsent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Trainee Absent
+            </p>
+          </div>
+        </div>
+
+        {/* Intern Present */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15">
+            <UserCheck size={22} className="text-emerald-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.internPresent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Intern Present
+            </p>
+          </div>
+        </div>
+
+        {/* Intern Absent */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-500/15">
+            <UserX size={22} className="text-rose-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.internAbsent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Intern Absent
+            </p>
+          </div>
+        </div>
+
       </div>
 
       {loading ? (
@@ -335,7 +377,43 @@ export default function TraineeInternAttendancePage() {
         </div>
       ) : (
         <>
-          {error && <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">{error}</div>}
+          {error && (
+            <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* Table Header + Search */}
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+            {/* Left - Heading */}
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                Attendance Records
+              </h2>
+              <p className="mt-1 text-sm text-white/40">
+                View trainee and intern attendance details
+              </p>
+            </div>
+
+            {/* Right - Search */}
+            <div className="relative w-full sm:w-[320px]">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/30"
+              />
+
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, ID..."
+                className="w-full rounded-xl border border-white/10 bg-[#1a1d24] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-500/60"
+              />
+            </div>
+
+          </div>
+
           {viewMode === 'table' ? (
             <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#0f172a]/70">
               <table className="min-w-full text-sm">
