@@ -530,8 +530,8 @@ const TraineeTaskAssign = () => {
               />
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={assignmentSearchTerm}
+                onChange={(e) => setAssignmentSearchTerm(e.target.value)}
                 placeholder="Search assignment"
                 className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
               />
@@ -543,8 +543,8 @@ const TraineeTaskAssign = () => {
                 { value: 'Trainee', label: 'Trainee' },
                 { value: 'Intern', label: 'Intern' }
               ]}
-              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
-              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
+              value={{ value: assignmentTypeFilter, label: assignmentTypeFilter === 'All' ? 'All Types' : assignmentTypeFilter }}
+              onChange={(option) => setAssignmentTypeFilter(option ? option.value : 'All')}
               styles={customSelectStyles}
               isSearchable={false}
               className="w-40"
@@ -552,8 +552,8 @@ const TraineeTaskAssign = () => {
             {/* Card / Table Toggle */}
             <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
               <button
-                onClick={() => setViewMode("table")}
-                className={`rounded-lg p-2 transition ${viewMode === "table"
+                onClick={() => setAssignmentViewMode("table")}
+                className={`rounded-lg p-2 transition ${assignmentViewMode === "table"
                     ? "bg-orange-500 text-white"
                     : "text-white/50 hover:text-white"
                   }`}
@@ -563,8 +563,8 @@ const TraineeTaskAssign = () => {
               </button>
 
               <button
-                onClick={() => setViewMode("card")}
-                className={`rounded-lg p-2 transition ${viewMode === "card"
+                onClick={() => setAssignmentViewMode("card")}
+                className={`rounded-lg p-2 transition ${assignmentViewMode === "card"
                     ? "bg-orange-500 text-white"
                     : "text-white/50 hover:text-white"
                   }`}
@@ -576,7 +576,7 @@ const TraineeTaskAssign = () => {
           </div>
         </div>
 
-        {viewMode === 'table' ? (
+        {assignmentViewMode === 'table' ? (
           <div className="overflow-x-auto rounded-2xl border border-white/10">
             <table className="min-w-full text-sm">
               <thead className="bg-white/4 text-white/60">
