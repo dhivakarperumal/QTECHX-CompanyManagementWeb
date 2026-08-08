@@ -228,6 +228,31 @@ export default function TraineeInternAttendancePage() {
     });
   }, [summary, members, searchTerm]);
 
+  const aggregateStats = useMemo(() => {
+    const totals = {
+      traineePresent: 0,
+      traineeAbsent: 0,
+      internPresent: 0,
+      internAbsent: 0,
+    };
+
+    summary.forEach((person) => {
+      const type = (person.type || '').toLowerCase();
+      const present = Number(person.present_days || 0);
+      const absent = Number(person.absent_days || 0);
+
+      if (type === 'trainee') {
+        totals.traineePresent += present;
+        totals.traineeAbsent += absent;
+      } else if (type === 'intern') {
+        totals.internPresent += present;
+        totals.internAbsent += absent;
+      }
+    });
+
+    return totals;
+  }, [summary]);
+
   return (
     <div className="space-y-6 text-white">
       <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
@@ -236,7 +261,28 @@ export default function TraineeInternAttendancePage() {
           <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
           <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
+          <p className="text-sm text-white/60">Trainee Present</p>
+          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.traineePresent}</p>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
+          <p className="text-sm text-white/60">Trainee Absent</p>
+          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.traineeAbsent}</p>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
+          <p className="text-sm text-white/60">Intern Present</p>
+          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.internPresent}</p>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
+          <p className="text-sm text-white/60">Intern Absent</p>
+          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.internAbsent}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
 
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
             <CalendarDays size={16} className="text-orange-400 ml-2" />
