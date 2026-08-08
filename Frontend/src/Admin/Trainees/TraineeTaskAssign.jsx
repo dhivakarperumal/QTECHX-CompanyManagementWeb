@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 
 const customSelectStyles = {
@@ -120,6 +121,7 @@ function Modal({ open, onClose, title, children }) {
 }
 
 const TraineeTaskAssign = () => {
+  const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
@@ -367,10 +369,7 @@ const TraineeTaskAssign = () => {
               </thead>
               <tbody>
                 {filteredTrainees.map((trainee) => (
-                  <tr key={trainee.uuid} onClick={() => {
-                    setSelectedTrainee(trainee.uuid);
-                    setShowForm(true);
-                  }} className="border-t border-white/10 hover:bg-white/2 cursor-pointer">
+                  <tr key={trainee.uuid} onClick={() => navigate(`/admin/trainees/tasks/view/${trainee.uuid}`)} className="border-t border-white/10 hover:bg-white/2 cursor-pointer">
                     <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
                     <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
                     <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
@@ -386,10 +385,7 @@ const TraineeTaskAssign = () => {
               <button
                 key={trainee.uuid}
                 type="button"
-                onClick={() => {
-                  setSelectedTrainee(trainee.uuid);
-                  setShowForm(true);
-                }}
+                onClick={() => navigate(`/admin/trainees/tasks/view/${trainee.uuid}`)}
                 className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30"
               >
                 {trainee.profile_photo ? (
