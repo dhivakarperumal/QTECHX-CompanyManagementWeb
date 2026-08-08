@@ -1,14 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
+import api from '../../api';
+import { Toaster, toast } from 'react-hot-toast';
+import {
+  UserCheck,
+  Edit2,
+  Trash2,
+  Eye,
+  Loader2,
+  Save,
+  X,
+  Plus,
+  Search,
+  LayoutGrid,
+  List
+} from 'lucide-react';
+import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+
 
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -87,10 +104,6 @@ const customSelectStyles = {
     padding: '6px',
   }),
 };
-import api from '../../api';
-import { Toaster, toast } from 'react-hot-toast';
-import { UserCheck, Edit2, Trash2, Loader2, Save, X, Plus, Search, LayoutGrid, List } from 'lucide-react';
-import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 function Modal({ open, onClose, title, children }) {
   if (!open) return null;
@@ -176,7 +189,7 @@ const TraineeTaskAssign = () => {
 
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (editingAssignmentUuid) {
       // Update existing assignment
       try {
@@ -231,13 +244,13 @@ const TraineeTaskAssign = () => {
     setEditStatus(assignment.status || 'Pending');
     setEditDailyReport(assignment.daily_report || '');
     setDueDate(assignment.due_date ? assignment.due_date.substring(0, 10) : '');
-    
+
     // For display purposes in the disabled fields
     setSelectedTask(assignment.task_name);
     setSelectedTrainee(assignment.trainee_name);
     setAssignedDate(assignment.assigned_date ? assignment.assigned_date.substring(0, 10) : '');
     setAssignedTime(assignment.assigned_time || '');
-    
+
     setShowForm(true);
   };
 
@@ -410,107 +423,107 @@ const TraineeTaskAssign = () => {
       </div>
 
       <Modal open={showForm} onClose={resetForm} title={editingAssignmentUuid ? "Edit Task Assignment" : "New Task Assignment"}>
-          <form onSubmit={handleAssignSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {editingAssignmentUuid ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Task</label>
-                    <input type="text" value={selectedTask} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Trainee/Intern</label>
-                    <input type="text" value={selectedTrainee} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date</label>
-                    <input type="date" value={assignedDate} disabled style={{ colorScheme: 'dark' }} className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
-                    <Select
-                      options={[
-                        ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
-                      ]}
-                      value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
-                      onChange={(option) => setSelectedTask(option ? option.value : '')}
-                      styles={customSelectStyles}
-                      isSearchable={true}
-                      placeholder="-- Select Task --"
-                    />
-                  </div>
+        <form onSubmit={handleAssignSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {editingAssignmentUuid ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Task</label>
+                  <input type="text" value={selectedTask} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Trainee/Intern</label>
+                  <input type="text" value={selectedTrainee} disabled className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date</label>
+                  <input type="date" value={assignedDate} disabled style={{ colorScheme: 'dark' }} className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white/50 cursor-not-allowed" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
+                  <Select
+                    options={[
+                      ...tasks.map(t => ({ value: t.uuid, label: t.task_name }))
+                    ]}
+                    value={selectedTask ? { value: selectedTask, label: tasks.find(t => t.uuid === selectedTask)?.task_name } : null}
+                    onChange={(option) => setSelectedTask(option ? option.value : '')}
+                    styles={customSelectStyles}
+                    isSearchable={true}
+                    placeholder="-- Select Task --"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
-                    <Select
-                      options={[
-                        ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
-                      ]}
-                      value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
-                      onChange={(option) => setSelectedTrainee(option ? option.value : '')}
-                      styles={customSelectStyles}
-                      isSearchable={true}
-                      placeholder="-- Select Trainee --"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Select Trainee/Intern *</label>
+                  <Select
+                    options={[
+                      ...trainees.map(t => ({ value: t.uuid, label: `${t.full_name} (${t.type})` }))
+                    ]}
+                    value={selectedTrainee ? { value: selectedTrainee, label: trainees.find(t => t.uuid === selectedTrainee) ? `${trainees.find(t => t.uuid === selectedTrainee).full_name} (${trainees.find(t => t.uuid === selectedTrainee).type})` : '' } : null}
+                    onChange={(option) => setSelectedTrainee(option ? option.value : '')}
+                    styles={customSelectStyles}
+                    isSearchable={true}
+                    placeholder="-- Select Trainee --"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
-                    <input
-                      type="date"
-                      value={assignedDate}
-                      onChange={(e) => setAssignedDate(e.target.value)}
-                      style={{ colorScheme: 'dark' }}
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Date *</label>
+                  <input
+                    type="date"
+                    value={assignedDate}
+                    onChange={(e) => setAssignedDate(e.target.value)}
+                    style={{ colorScheme: 'dark' }}
+                    className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
-                    <input
-                      type="time"
-                      value={assignedTime}
-                      onChange={(e) => setAssignedTime(e.target.value)}
-                      style={{ colorScheme: 'dark' }}
-                      className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                    />
-                  </div>
-                </>
-              )}
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Assigned Time</label>
+                  <input
+                    type="time"
+                    value={assignedTime}
+                    onChange={(e) => setAssignedTime(e.target.value)}
+                    style={{ colorScheme: 'dark' }}
+                    className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+                  />
+                </div>
+              </>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Due Date</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  style={{ colorScheme: 'dark' }}
-                  className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-                />
-              </div>
-
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1.5">Due Date</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                style={{ colorScheme: 'dark' }}
+                className="w-full rounded-xl border border-white/10 bg-white/4 px-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
+              />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-              <button
-                type="button"
-                onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
-              >
-                <Save size={15} /> {editingAssignmentUuid ? 'Update Assignment' : 'Assign Task'}
-              </button>
-            </div>
-          </form>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
+              style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
+            >
+              <Save size={15} /> {editingAssignmentUuid ? 'Update Assignment' : 'Assign Task'}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* Assignments Table */}
@@ -550,8 +563,8 @@ const TraineeTaskAssign = () => {
               <button
                 onClick={() => setAssignmentViewMode("table")}
                 className={`rounded-lg p-2 transition ${assignmentViewMode === "table"
-                    ? "bg-orange-500 text-white"
-                    : "text-white/50 hover:text-white"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
                   }`}
                 title="Table View"
               >
@@ -561,8 +574,8 @@ const TraineeTaskAssign = () => {
               <button
                 onClick={() => setAssignmentViewMode("card")}
                 className={`rounded-lg p-2 transition ${assignmentViewMode === "card"
-                    ? "bg-orange-500 text-white"
-                    : "text-white/50 hover:text-white"
+                  ? "bg-orange-500 text-white"
+                  : "text-white/50 hover:text-white"
                   }`}
                 title="Card View"
               >
@@ -612,35 +625,46 @@ const TraineeTaskAssign = () => {
                           {assignment.due_date ? assignment.due_date.substring(0, 10) : '—'}
                         </td>
                         <td className="px-4 py-4">
-                            <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
+                          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase 
                               ${assignment.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' :
-                                assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
-                                  'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>
-                              {assignment.status}
-                            </span>
+                              assignment.status === 'In Progress' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
+                                'bg-orange-500/15 text-orange-400 border-orange-500/25'}`}>
+                            {assignment.status}
+                          </span>
                         </td>
                         <td className="px-4 py-4 min-w-30">
-                            <div className="w-full">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs text-white/50">{assignment.progress}%</span>
-                              </div>
-                              <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                                <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
-                              </div>
+                          <div className="w-full">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-white/50">{assignment.progress}%</span>
                             </div>
+                            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${assignment.progress}%` }}></div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-white/70 max-w-50">
-                            <div className="truncate" title={assignment.daily_report}>{assignment.daily_report || '—'}</div>
+                          <div className="truncate" title={assignment.daily_report}>{assignment.daily_report || '—'}</div>
                         </td>
                         <td className="px-4 py-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
-                                <Edit2 size={14} />
-                              </button>
-                              <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition">
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
+                          <div className="flex justify-end gap-2">
+                            {/* View */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(`/admin/trainees/tasks/view/${assignment.uuid}`)
+                              }
+                              className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
+                              title="View Assignment"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -670,6 +694,17 @@ const TraineeTaskAssign = () => {
                   <p>{assignment.daily_report || '—'}</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
+                  {/* View */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/admin/trainees/tasks/view/${assignment.uuid}`)
+                    }
+                    className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
+                    title="View Assignment"
+                  >
+                    <Eye size={14} />
+                  </button>
                   <button onClick={() => handleEditClick(assignment)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10"><Edit2 size={14} /></button>
                   <button onClick={() => handleDelete(assignment.uuid)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
                 </div>
