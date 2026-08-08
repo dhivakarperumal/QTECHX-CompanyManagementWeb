@@ -281,13 +281,44 @@ async function summary(req, res) {
         } else {
            row.today_status = todayRecord.attendance_status || 'Present';
            row.check_in_time = todayRecord.check_in_time;
-           row.check_out_time = todayRecord.check_out_time;
-           row.break_start_time = todayRecord.break_start_time;
-           row.break_end_time = todayRecord.break_end_time;
-           row.working_hours = todayRecord.working_hours;
-           row.late_entry = todayRecord.late_entry;
-           row.early_exit = todayRecord.early_exit;
-           row.overtime = todayRecord.overtime;
+
+           // Build effective times: prefer recorded values, but infer when check-in exists
+           const effective = {
+             check_in_time: todayRecord.check_in_time,
+             check_out_time: todayRecord.check_out_time,
+             break_start_time: todayRecord.break_start_time,
+             break_end_time: todayRecord.break_end_time,
+           };
+
+           // Only apply inference when check-in was provided
+           if (todayRecord.check_in_time) {
+             // If break not marked at all and it's past 4:00 PM, assume break was 14:00-15:00
+             if (!todayRecord.break_start_time && !todayRecord.break_end_time && timeInMinutes >= (16 * 60)) {
+               effective.break_start_time = '14:00';
+               effective.break_end_time = '15:00';
+             }
+
+             // If checkout not marked and it's past 7:00 PM, assume checkout was 18:00
+             if (!todayRecord.check_out_time && timeInMinutes >= (19 * 60)) {
+               effective.check_out_time = '18:00';
+             }
+           }
+
+           // Compute metrics using effective times so working hours/late/overtime reflect inferred values
+           const computedToday = calculateAttendanceMetrics({
+             check_in_time: effective.check_in_time,
+             check_out_time: effective.check_out_time,
+             break_start_time: effective.break_start_time,
+             break_end_time: effective.break_end_time,
+           });
+
+           row.check_out_time = todayRecord.check_out_time || effective.check_out_time || null;
+           row.break_start_time = todayRecord.break_start_time || effective.break_start_time || null;
+           row.break_end_time = todayRecord.break_end_time || effective.break_end_time || null;
+           row.working_hours = todayRecord.working_hours || computedToday.working_hours;
+           row.late_entry = todayRecord.late_entry || computedToday.late_entry;
+           row.early_exit = todayRecord.early_exit || computedToday.early_exit;
+           row.overtime = todayRecord.overtime || computedToday.overtime;
         }
       }
     }
