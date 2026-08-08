@@ -201,6 +201,39 @@ const AttendancePage = () => {
     }
   };
 
+  // Prefill form when employee or date changes
+  useEffect(() => {
+    let cancelled = false;
+    const fetchExisting = async () => {
+      if (!form.employee_id || !form.date) return;
+      try {
+        const res = await api.get(`/attendance/by-employee?employee_id=${form.employee_id}&date=${form.date}`);
+        const existing = res?.data?.attendance;
+        if (existing && !cancelled) {
+          setForm((prev) => ({
+            ...prev,
+            // Only prefill fields if they exist in the returned record
+            check_in_time: existing.check_in_time || prev.check_in_time,
+            check_out_time: existing.check_out_time || prev.check_out_time,
+            break_start_time: existing.break_start_time || prev.break_start_time,
+            break_end_time: existing.break_end_time || prev.break_end_time,
+            attendance_status: existing.attendance_status || prev.attendance_status,
+            location: existing.location || prev.location,
+            notes: existing.notes || prev.notes,
+          }));
+        }
+      } catch (err) {
+        // 404 is okay (no existing attendance); ignore other errors
+        if (err?.response?.status && err.response.status !== 404) {
+          console.error('Failed to fetch existing attendance', err);
+        }
+      }
+    };
+
+    fetchExisting();
+    return () => { cancelled = true; };
+  }, [form.employee_id, form.date]);
+
   // Metrics Calculation
   const totalEmployees = employeeData.length;
   const presentToday = summaryData.filter(s => s.today_status === 'Present').length;
