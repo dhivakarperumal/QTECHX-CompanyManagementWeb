@@ -1,21 +1,28 @@
 import { useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
-import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
 import {
+  ClipboardList,
+  CalendarDays,
+  UserRound,
+  Clock3,
   UserCheck,
-  Edit2,
+  Plus ,
+  Save ,
+  Search ,
+  List ,
+   X,
+   LayoutGrid ,
+   Edit2,
   Trash2,
   Eye,
+  FileText,
+  ExternalLink,
+  MessageSquareText,
+  CheckCircle2,
   Loader2,
-  Save,
-  X,
-  Plus,
-  Search,
-  LayoutGrid,
-  List
-} from 'lucide-react';
+} from "lucide-react";
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 
@@ -280,6 +287,14 @@ const TraineeTaskAssign = () => {
     setEditStatus('Pending');
     setEditDailyReport('');
     setShowForm(false);
+  };
+
+  const getDocumentUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const rawBase = import.meta.env.VITE_API_URL || '';
+    const baseUrl = rawBase.startsWith('http') ? rawBase.replace(/\/api\/?$/, '') : 'http://localhost:5000';
+    return `${baseUrl}${path}`;
   };
 
   const openAssignmentDetails = (assignment) => {
@@ -686,46 +701,260 @@ const TraineeTaskAssign = () => {
         )}
       </div>
 
-      <Modal open={detailsOpen} onClose={closeAssignmentDetails} title="Task Assignment Details">
-        {selectedAssignment ? (
-          <div className="space-y-4 text-sm text-white/80">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Trainee / Intern</p>
-                <p className="text-white">{selectedAssignment.trainee_name || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Task</p>
-                <p className="text-white">{selectedAssignment.task_name || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Status</p>
-                <p className="text-white">{selectedAssignment.status || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Progress</p>
-                <p className="text-white">{selectedAssignment.progress ?? 0}%</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Assigned Date</p>
-                <p className="text-white">{selectedAssignment.assigned_date ? selectedAssignment.assigned_date.substring(0, 10) : '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Due Date</p>
-                <p className="text-white">{selectedAssignment.due_date ? selectedAssignment.due_date.substring(0, 10) : '—'}</p>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-white/50 uppercase tracking-[0.2em] mb-2">Assignment Notes</p>
-              <p className="text-white/70 whitespace-pre-line">{selectedAssignment.daily_report || 'No report provided.'}</p>
+      <Modal
+  open={detailsOpen}
+  onClose={closeAssignmentDetails}
+  title="Task Assignment Details"
+>
+  {selectedAssignment ? (
+    <div className="space-y-5">
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex items-center gap-3 min-w-0">
+
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500/15">
+            <ClipboardList
+              size={22}
+              className="text-orange-400"
+            />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.18em] text-white/40">
+              Assigned Task
+            </p>
+
+            <h3 className="mt-1 truncate text-lg font-semibold text-white">
+              {selectedAssignment.task_name || "Untitled Task"}
+            </h3>
+
+            <div className="mt-1 flex items-center gap-2 text-xs text-white/50">
+              <UserRound size={13} />
+
+              <span>
+                {selectedAssignment.trainee_name || "Trainee / Intern"}
+              </span>
             </div>
           </div>
-        ) : (
-          <p className="text-sm text-white/70">Loading details...</p>
-        )}
-      </Modal>
+        </div>
+
+        {/* Status */}
+        <div
+          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium
+            ${
+              selectedAssignment.status?.toLowerCase() === "completed"
+                ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-400"
+                : selectedAssignment.status?.toLowerCase() === "pending"
+                  ? "border-amber-400/20 bg-amber-500/10 text-amber-400"
+                  : "border-orange-400/20 bg-orange-500/10 text-orange-400"
+            }`}
+        >
+          {selectedAssignment.status || "—"}
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2
+              size={16}
+              className="text-emerald-400"
+            />
+
+            <span className="text-sm font-medium text-white">
+              Task Progress
+            </span>
+          </div>
+
+          <span className="text-sm font-semibold text-orange-400">
+            {selectedAssignment.progress ?? 0}%
+          </span>
+        </div>
+
+        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all"
+            style={{
+              width: `${Math.min(
+                100,
+                Math.max(0, Number(selectedAssignment.progress) || 0)
+              )}%`,
+            }}
+          />
+        </div>
+
+      </div>
+
+      {/* Assignment Information */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+        {/* Trainee / Intern */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-2 text-white/40">
+            <UserRound size={15} />
+            <span className="text-xs uppercase tracking-[0.15em]">
+              Trainee / Intern
+            </span>
+          </div>
+
+          <p className="mt-2 text-sm font-medium text-white">
+            {selectedAssignment.trainee_name || "—"}
+          </p>
+        </div>
+
+        {/* Status */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-2 text-white/40">
+            <Clock3 size={15} />
+            <span className="text-xs uppercase tracking-[0.15em]">
+              Status
+            </span>
+          </div>
+
+          <p className="mt-2 text-sm font-medium text-white">
+            {selectedAssignment.status || "—"}
+          </p>
+        </div>
+
+        {/* Assigned Date */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-2 text-white/40">
+            <CalendarDays size={15} />
+            <span className="text-xs uppercase tracking-[0.15em]">
+              Assigned Date
+            </span>
+          </div>
+
+          <p className="mt-2 text-sm font-medium text-white">
+            {selectedAssignment.assigned_date
+              ? selectedAssignment.assigned_date.substring(0, 10)
+              : "—"}
+          </p>
+        </div>
+
+        {/* Due Date */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-2 text-white/40">
+            <CalendarDays size={15} />
+            <span className="text-xs uppercase tracking-[0.15em]">
+              Due Date
+            </span>
+          </div>
+
+          <p className="mt-2 text-sm font-medium text-white">
+            {selectedAssignment.due_date
+              ? selectedAssignment.due_date.substring(0, 10)
+              : "—"}
+          </p>
+        </div>
+
+      </div>
+
+      {/* Task Description */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+
+        <div className="mb-3 flex items-center gap-2">
+          <FileText
+            size={16}
+            className="text-orange-400"
+          />
+
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">
+            Task Description
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/5 bg-black/10 p-3">
+          <p className="whitespace-pre-line text-sm leading-6 text-white/70">
+            {selectedAssignment.description ||
+              "No description provided."}
+          </p>
+        </div>
+
+      </div>
+
+      {/* Document */}
+      {selectedAssignment.task_document_path && (
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-orange-400/10 bg-orange-500/[0.05] p-4">
+
+          <div className="flex items-center gap-3">
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10">
+              <FileText
+                size={18}
+                className="text-orange-400"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-white">
+                Task Document
+              </p>
+
+              <p className="mt-0.5 text-xs text-white/40">
+                Attached document for this assignment
+              </p>
+            </div>
+
+          </div>
+
+          <a
+            href={getDocumentUrl(
+              selectedAssignment.task_document_path
+            )}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-orange-400/20 bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400 transition hover:bg-orange-500/20"
+          >
+            Open
+            <ExternalLink size={14} />
+          </a>
+
+        </div>
+      )}
+
+      {/* Assignment Notes */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+
+        <div className="mb-3 flex items-center gap-2">
+          <MessageSquareText
+            size={16}
+            className="text-blue-400"
+          />
+
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/50">
+            Assignment Notes
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/5 bg-black/10 p-3">
+          <p className="whitespace-pre-line text-sm leading-6 text-white/70">
+            {selectedAssignment.daily_report ||
+              "No report provided."}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  ) : (
+    <div className="flex items-center justify-center py-10">
+      <div className="text-center">
+        <Loader2
+          size={28}
+          className="mx-auto animate-spin text-orange-400"
+        />
+
+        <p className="mt-3 text-sm text-white/50">
+          Loading details...
+        </p>
+      </div>
+    </div>
+  )}
+</Modal>
     </div>
   );
 };
