@@ -596,6 +596,7 @@ export default function Incomes() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-[#0e1118] text-white/40">
                 <tr>
+                    <th className="px-4 py-3 font-medium">S.No</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Invoice No</th>
                   <th className="px-4 py-3 font-medium">Type</th>
@@ -609,17 +610,18 @@ export default function Incomes() {
             <tbody className="divide-y divide-white/5 text-white/70">
               {historyLoading ? (
                 <tr>
-                  <td colSpan="7" className="py-10 text-center">
+                  <td colSpan="8" className="py-10 text-center">
                     <Loader2 size={20} className="animate-spin text-white/40 mx-auto" />
                   </td>
                 </tr>
               ) : filteredHistory.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-10 text-center text-white/40">No income history found</td>
+                  <td colSpan="8" className="py-10 text-center text-white/40">No income history found</td>
                 </tr>
               ) : (
                 filteredHistory.map((h, i) => (
                   <tr key={h.id || i} className="hover:bg-white/2 transition">
+                    <td className="px-4 py-3 text-white/60">{i + 1}</td>
                     <td className="px-4 py-3">{new Date(h.date_of_payment).toLocaleDateString()}</td>
                     <td className="px-4 py-3 font-mono text-xs">{h.invoice_number || '—'}</td>
                     <td className="px-4 py-3">

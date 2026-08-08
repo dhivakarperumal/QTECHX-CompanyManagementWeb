@@ -732,6 +732,7 @@ const ExpensesPage = () => {
             <table className="w-full min-w-175 text-sm">
               <thead>
                 <tr className="bg-white/3 border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S.No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Date</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Expense Details</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Payment Mode</th>
@@ -740,8 +741,9 @@ const ExpensesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedExpenses.map((exp) => (
+                {paginatedExpenses.map((exp, i) => (
                   <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
+                    <td className="px-5 py-4 text-white/60">{(currentPage - 1) * itemsPerPage + i + 1}</td>
                     <td className="px-5 py-4">
                       <p className="text-white/80 font-medium text-sm">
                         {new Date(exp.date_of_payment).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}

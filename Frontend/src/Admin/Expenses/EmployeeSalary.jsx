@@ -719,6 +719,7 @@ export default function EmployeeSalary() {
             <table className="min-w-full text-sm">
               <thead className="bg-white/5 text-white/40">
                 <tr>
+                  <th className="px-3 py-2 text-left">S.No</th>
                   <th className="px-3 py-2 text-left">Employee</th>
                   <th className="px-3 py-2 text-left">Code</th>
                   <th className="px-3 py-2 text-left">Pays</th>
@@ -727,8 +728,8 @@ export default function EmployeeSalary() {
               </thead>
               <tbody className="divide-y divide-white/10 text-white/70">
                 {filteredEmployees.length === 0 ? (
-                  <tr><td colSpan="4" className="px-3 py-4 text-center text-white/40">No employees match this search.</td></tr>
-                ) : filteredEmployees.map((emp) => {
+                  <tr><td colSpan="5" className="px-3 py-4 text-center text-white/40">No employees match this search.</td></tr>
+                ) : filteredEmployees.map((emp, i) => {
                   const employeeName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
                   const employeeHistory = history.filter((item) => item.employee_id === emp.employee_id);
                   const totalPaid = employeeHistory.reduce((sum, item) => sum + parseFloat(item.total_salary || 0), 0);
@@ -741,6 +742,7 @@ export default function EmployeeSalary() {
                           : "hover:bg-white/5"
                         }`}
                     >
+                      <td className="px-3 py-2 text-white/60">{i + 1}</td>
                       <td className="px-3 py-2 font-medium text-white">{employeeName || emp.employee_code || 'Unnamed Employee'}</td>
                       <td className="px-3 py-2">{emp.employee_code || 'No code'}</td>
                       <td className="px-3 py-2">{employeeHistory.length}</td>

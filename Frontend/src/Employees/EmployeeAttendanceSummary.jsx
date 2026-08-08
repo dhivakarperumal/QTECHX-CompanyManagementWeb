@@ -599,6 +599,7 @@ const EmployeeAttendanceSummary = () => {
                 <table className="w-full text-left text-sm text-white/70">
                   <thead className="bg-white/5 text-white/50">
                     <tr>
+                      <th className="px-5 py-4 font-medium">S.No</th>
                       <th className="px-5 py-4 font-medium">Date</th>
                       <th className="px-5 py-4 font-medium">Status</th>
                       <th className="px-5 py-4 font-medium">Check-In</th>
@@ -610,6 +611,7 @@ const EmployeeAttendanceSummary = () => {
                   <tbody className="divide-y divide-white/5">
                     {history.map((record, i) => (
                       <tr key={record.id || i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-5 py-4 text-white/60">{i + 1}</td>
                         <td className="px-5 py-4 font-medium text-white">
                           {formatDateSafe(record.date || record.attendance_date)}
                         </td>

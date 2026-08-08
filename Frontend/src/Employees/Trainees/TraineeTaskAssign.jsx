@@ -523,6 +523,7 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
               <table className="min-w-full text-sm">
                 <thead className="bg-white/4 text-white/60">
                   <tr>
+                    <th className="px-4 py-4 text-left font-medium">S.No</th>
                     <th className="px-4 py-4 text-left font-medium">Trainee</th>
                     <th className="px-4 py-4 text-left font-medium">Assigned Task</th>
                     <th className="px-4 py-4 text-left font-medium">Due Date</th>
@@ -535,19 +536,20 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
                 <tbody className="divide-y divide-white/10">
                   {loading ? (
                     <tr>
-                      <td colSpan="7" className="px-4 py-8 text-center text-white/40">
+                      <td colSpan="8" className="px-4 py-8 text-center text-white/40">
                         <Loader2 size={18} className="mx-auto animate-spin" />
                       </td>
                     </tr>
                   ) : filteredAssignments.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
+                      <td colSpan="8" className="px-4 py-8 text-center text-white/40">No task assignments found matching this filter.</td>
                     </tr>
                   ) : (
-                    filteredAssignments.map((assignment) => {
+                    filteredAssignments.map((assignment, i) => {
                       const isEditing = editingAssignmentUuid === assignment.uuid;
                       return (
                         <tr key={assignment.uuid} className="hover:bg-white/2 transition-colors">
+                          <td className="px-4 py-4 text-white/60">{i + 1}</td>
                           <td className="px-4 py-4 font-semibold text-white">
                             {assignment.trainee_name}
                           </td>
