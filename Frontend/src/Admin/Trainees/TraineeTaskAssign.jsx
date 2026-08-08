@@ -663,7 +663,7 @@ const TraineeTaskAssign = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`/admin/trainees/tasks/view/${assignment.user_id}`)
+                              navigate(`/admin/trainees/tasks/view/${assignment.trainee_intern_id}`)
                               }
                               className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                               title="View Assignment"
@@ -710,7 +710,7 @@ const TraineeTaskAssign = () => {
                   <button
                     type="button"
                     onClick={() =>
-                      navigate(`/admin/trainees/tasks/view/${assignment.user_id}`)
+                      navigate(`/admin/trainees/tasks/view/${assignment.trainee_intern_id}`)
                     }
                     className="rounded-lg border border-white/10 bg-white/5 p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition"
                     title="View Assignment"
