@@ -166,7 +166,6 @@ const TraineeTaskMaster = () => {
       const params = new URLSearchParams();
       if (employeeId) {
         params.append('employee_id', employeeId);
-        params.append('created_by', employeeId);
       }
       const res = await api.get(`/trainee-task-assignments${params.toString() ? `?${params}` : ''}`);
       setAssignments(Array.isArray(res.data) ? res.data : []);
