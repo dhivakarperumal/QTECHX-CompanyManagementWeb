@@ -314,7 +314,6 @@ export default function TraineeInternAttendancePage() {
             <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
           </div>
         </div>
-      </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="relative">
