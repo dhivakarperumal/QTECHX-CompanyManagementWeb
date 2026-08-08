@@ -128,22 +128,8 @@ const TraineeTaskMaster = () => {
   const [taskDocument, setTaskDocument] = useState(null);
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('card');
   const [taskSearch, setTaskSearch] = useState('');
   const [taskViewMode, setTaskViewMode] = useState("table");
-
-  const [trainees, setTrainees] = useState([]);
-
-  const fetchTrainees = async () => {
-    try {
-      const response = await api.get('/trainee-intern');
-      setTrainees(response.data.data || response.data);
-    } catch (error) {
-      console.error('Error fetching trainees:', error);
-    }
-  };
 
   const fetchTasks = async () => {
     try {
@@ -160,7 +146,6 @@ const TraineeTaskMaster = () => {
 
   useEffect(() => {
     fetchTasks();
-    fetchTrainees();
   }, []);
 
   const getDocumentUrl = (documentPath) => {
@@ -233,15 +218,6 @@ const TraineeTaskMaster = () => {
     setShowForm(false);
   };
 
-  const filteredTrainees = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    return trainees.filter((trainee) => {
-      if (!term) return true;
-      const haystack = `${trainee.full_name || ''} ${trainee.type || ''} ${trainee.person_id || ''}`.toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [trainees, searchTerm]);
-
   const filteredTasks = useMemo(() => {
     const term = taskSearch.trim().toLowerCase();
     return tasks.filter((task) => {
@@ -275,106 +251,6 @@ const TraineeTaskMaster = () => {
         </button>
       </div>
     </div>
-
-      {/* Trainee Cards Section */}
-      <div className="mb-8 mt-2">
-        <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="text-lg font-semibold text-white">Trainees & Interns</h2>
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
-                />
-
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search trainee"
-                  className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50"
-                />
-              </div>
-
-
-
-            </div>
-            <Select
-              options={[
-                { value: 'All', label: 'All Types' },
-                { value: 'Trainee', label: 'Trainee' },
-                { value: 'Intern', label: 'Intern' }
-              ]}
-              value={{ value: typeFilter, label: typeFilter === 'All' ? 'All Types' : typeFilter }}
-              onChange={(option) => setTypeFilter(option ? option.value : 'All')}
-              styles={customSelectStyles}
-              isSearchable={false}
-              className="w-40"
-            />
-            <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
-              <button onClick={() => setViewMode('table')} className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={14} /></button>
-              <button onClick={() => setViewMode('card')} className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={14} /></button>
-            </div>
-          </div>
-        </div>
-
-        {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).length === 0 ? (
-          <div className="text-white/40 text-sm">No trainees found matching this filter.</div>
-        ) : viewMode === 'table' ? (
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
-            <table className="min-w-full text-sm">
-              <thead className="bg-white/4 text-white/60">
-                <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Type</th>
-                  <th className="px-4 py-3 text-left">Person ID</th>
-                  <th className="px-4 py-3 text-left">Department</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
-                  <tr key={trainee.uuid} onClick={() =>
-                    (window.location.hash = `/admin/trainees/tasks/view/${trainee.uuid}`)
-                  } className="border-t border-white/10 hover:bg-white/2">
-                    <td className="px-4 py-3 font-semibold text-white">{trainee.full_name}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.type || 'Trainee'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.person_id || '—'}</td>
-                    <td className="px-4 py-3 text-white/70">{trainee.department || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredTrainees.filter(t => typeFilter === 'All' || t.type === typeFilter).map(trainee => (
-              <a
-                key={trainee.uuid}
-                href={`#/admin/trainees/tasks/view/${trainee.uuid}`}
-                className="group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-[#111318] hover:bg-white/5 transition-all hover:border-orange-500/30 cursor-pointer"
-              >
-                {trainee.profile_photo ? (
-                  <img
-                    src={`http://localhost:5000/${trainee.profile_photo.replace(/\\/g, '/')}`}
-                    alt={trainee.full_name}
-                    className="w-12 h-12 rounded-full object-cover border border-white/10 group-hover:border-orange-500/50 transition-colors"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-sm font-semibold text-white/70 group-hover:border-orange-500/50 transition-colors">
-                    {trainee.full_name?.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="overflow-hidden">
-                  <h3 className="font-semibold text-white truncate group-hover:text-orange-400 transition-colors">{trainee.full_name}</h3>
-                  <p className="text-xs text-white/50">{trainee.type || 'Trainee'}</p>
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
