@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, CheckCircle, FolderKanban,
-  DollarSign, History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List
+  DollarSign, History, Printer, X, Edit, Trash2, Search, Plus, LayoutGrid, List, Eye
 } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -15,8 +15,8 @@ const customSelectStyles = {
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -164,6 +164,11 @@ export default function ProjectPayment() {
   const [projectViewMode, setProjectViewMode] = useState("card");
   const [historyViewMode, setHistoryViewMode] = useState("table");
   const receiptRef = useRef();
+  const [selectedProjectPaymentHistory, setSelectedProjectPaymentHistory] = useState(null);
+
+  const [historyProjectSearch, setHistoryProjectSearch] = useState('');
+  const [historyClientSearch, setHistoryClientSearch] = useState('');
+  const [historyMonthFilter, setHistoryMonthFilter] = useState('All');
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -349,6 +354,41 @@ export default function ProjectPayment() {
     }, {});
   }, [history]);
 
+  const filteredHistory = useMemo(() => {
+    const projectTerm = historyProjectSearch.trim().toLowerCase();
+    const clientTerm = historyClientSearch.trim().toLowerCase();
+
+    return history.filter((record) => {
+      const projectName = (record.project_name || '').toLowerCase();
+      const projectCode = (record.project_code || '').toLowerCase();
+      const clientName = (record.client_name || '').toLowerCase();
+
+      const matchesProject =
+        !projectTerm ||
+        projectName.includes(projectTerm) ||
+        projectCode.includes(projectTerm);
+
+      const matchesClient =
+        !clientTerm ||
+        clientName.includes(clientTerm);
+
+      const paymentMonth = record.date_of_payment
+        ? new Date(record.date_of_payment).getMonth() + 1
+        : null;
+
+      const matchesMonth =
+        historyMonthFilter === 'All' ||
+        Number(paymentMonth) === Number(historyMonthFilter);
+
+      return matchesProject && matchesClient && matchesMonth;
+    });
+  }, [
+    history,
+    historyProjectSearch,
+    historyClientSearch,
+    historyMonthFilter
+  ]);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -413,9 +453,9 @@ export default function ProjectPayment() {
                   name="project_id"
                   value={formData.project_id ? {
                     value: formData.project_id,
-                    label: projects.find(p => String(p.id) === String(formData.project_id)) 
-                           ? `${projects.find(p => String(p.id) === String(formData.project_id)).project_name} (${projects.find(p => String(p.id) === String(formData.project_id)).project_code})` 
-                           : formData.project_id
+                    label: projects.find(p => String(p.id) === String(formData.project_id))
+                      ? `${projects.find(p => String(p.id) === String(formData.project_id)).project_name} (${projects.find(p => String(p.id) === String(formData.project_id)).project_code})`
+                      : formData.project_id
                   } : null}
                   onChange={(option) => handleChange({ target: { name: 'project_id', value: option ? option.value : '' } })}
                   options={projects.map(proj => ({ value: proj.id, label: `${proj.project_name} (${proj.project_code})` }))}
@@ -538,7 +578,7 @@ export default function ProjectPayment() {
         </form>
       </Modal>
 
-      <section className={sectionClass}>
+      {/* <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-400">
@@ -584,7 +624,7 @@ export default function ProjectPayment() {
               />
             </div>
             <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
-              <button onClick={() => setProjectViewMode("table")} className={`rounded-lg p-2 transition ${projectViewMode  === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
+              <button onClick={() => setProjectViewMode("table")} className={`rounded-lg p-2 transition ${projectViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
               <button onClick={() => setProjectViewMode('card')} className={`rounded-lg p-2 transition ${projectViewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Card view"><LayoutGrid size={15} /></button>
             </div>
           </div>
@@ -689,7 +729,7 @@ export default function ProjectPayment() {
             </table>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
@@ -707,7 +747,122 @@ export default function ProjectPayment() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center"><History size={15} className="text-pink-400" /></div>
-            <h2 className="text-base font-bold text-white">Payment History</h2>
+            <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+                  <History size={15} className="text-pink-400" />
+                </div>
+
+                <div>
+                  <h2 className="text-base font-bold text-white">
+                    Payment History
+                  </h2>
+
+                  <p className="text-xs text-white/40">
+                    View and manage all project payments
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+
+                {/* Project */}
+                <div className="relative">
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+                  />
+
+                  <input
+                    type="text"
+                    value={historyProjectSearch}
+                    onChange={(e) => setHistoryProjectSearch(e.target.value)}
+                    placeholder="Search project..."
+                    className="w-48 rounded-xl border border-white/10 bg-[#0e1118] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/25"
+                  />
+                </div>
+
+                {/* Client */}
+                <div className="relative">
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
+                  />
+
+                  <input
+                    type="text"
+                    value={historyClientSearch}
+                    onChange={(e) => setHistoryClientSearch(e.target.value)}
+                    placeholder="Search client..."
+                    className="w-44 rounded-xl border border-white/10 bg-[#0e1118] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/70 transition placeholder:text-white/25"
+                  />
+                </div>
+
+                {/* Month */}
+                <div className="w-40">
+                  <Select
+                    styles={customSelectStyles}
+                    value={{
+                      value: historyMonthFilter,
+                      label:
+                        historyMonthFilter === 'All'
+                          ? 'All Months'
+                          : new Date(
+                            0,
+                            Number(historyMonthFilter) - 1
+                          ).toLocaleString('default', {
+                            month: 'long'
+                          })
+                    }}
+                    onChange={(option) =>
+                      setHistoryMonthFilter(
+                        option ? option.value : 'All'
+                      )
+                    }
+                    options={[
+                      { value: 'All', label: 'All Months' },
+                      ...Array.from({ length: 12 }, (_, i) => ({
+                        value: i + 1,
+                        label: new Date(
+                          0,
+                          i
+                        ).toLocaleString('default', {
+                          month: 'long'
+                        })
+                      }))
+                    ]}
+                    isSearchable={false}
+                  />
+                </div>
+
+                {/* View */}
+                <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryViewMode("table")}
+                    className={`rounded-lg p-2 transition ${historyViewMode === 'table'
+                        ? 'bg-orange-500 text-white'
+                        : 'text-white/50 hover:text-white'
+                      }`}
+                  >
+                    <List size={15} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHistoryViewMode("card")}
+                    className={`rounded-lg p-2 transition ${historyViewMode === 'card'
+                        ? 'bg-orange-500 text-white'
+                        : 'text-white/50 hover:text-white'
+                      }`}
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                </div>
+
+              </div>
+            </div>
           </div>
           <div className="flex items-center rounded-xl border border-white/10 bg-[#0e1118] p-1">
             <button onClick={() => setHistoryViewMode("table")} className={`rounded-lg p-2 transition ${historyViewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/50 hover:text-white'}`} title="Table view"><List size={15} /></button>
@@ -721,7 +876,7 @@ export default function ProjectPayment() {
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">Loading history...</div>
             ) : history.length === 0 ? (
               <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/40">No payment records found.</div>
-            ) : history.map((record) => (
+            ) : filteredHistory.map((record) => (
               <div key={record.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -739,6 +894,14 @@ export default function ProjectPayment() {
                   <span className="text-white/70">{new Date(record.date_of_payment).toLocaleDateString()}</span>
                 </div>
                 <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjectPaymentHistory(record)}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition"
+                    title="View Project Payment History"
+                  >
+                    <Eye size={14} />
+                  </button>
                   <button onClick={() => handleEdit(record)} className="rounded-lg bg-blue-500/10 p-2 text-blue-400"> <Edit size={14} /> </button>
                   <button onClick={() => handleDelete(record)} className="rounded-lg bg-red-500/10 p-2 text-red-400"> <Trash2 size={14} /> </button>
                   <button onClick={() => setSelectedReceipt(record)} className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-400"> <Printer size={13} /> </button>
@@ -762,10 +925,10 @@ export default function ProjectPayment() {
               <tbody className="divide-y divide-white/5">
                 {historyLoading ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">Loading history...</td></tr>
-                ) : history.length === 0 ? (
+                ) : filteredHistory.length === 0 ? (
                   <tr><td colSpan="6" className="px-4 py-6 text-center text-white/40">No payment records found.</td></tr>
                 ) : (
-                  history.map((record) => (
+                  filteredHistory.map((record) => (
                     <tr key={record.id} className="hover:bg-white/2 transition-colors">
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{record.project_name}</div>
@@ -777,6 +940,14 @@ export default function ProjectPayment() {
                       <td className="px-4 py-3">{new Date(record.date_of_payment).toLocaleDateString()} {record.time_of_payment}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProjectPaymentHistory(record)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition"
+                            title="View Project Payment History"
+                          >
+                            <Eye size={14} />
+                          </button>
                           <button
                             onClick={() => handleEdit(record)}
                             className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition"
@@ -808,6 +979,209 @@ export default function ProjectPayment() {
           </div>
         )}
       </section>
+
+      {selectedProjectPaymentHistory && (
+        <Modal
+          open={!!selectedProjectPaymentHistory}
+          onClose={() => setSelectedProjectPaymentHistory(null)}
+          title="Project Payment History"
+        >
+          <div className="space-y-5">
+
+            {/* Project Header */}
+            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-5">
+              <div className="flex items-center justify-between gap-4">
+
+                <div>
+                  <p className="text-lg font-bold text-white">
+                    {selectedProjectPaymentHistory.project_name}
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/40">
+                    Project Code:{' '}
+                    {selectedProjectPaymentHistory.project_code || 'No Code'}
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/40">
+                    Client:{' '}
+                    {selectedProjectPaymentHistory.client_name || 'N/A'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-right">
+                  <p className="text-[10px] uppercase tracking-widest text-orange-400/70">
+                    Total Payments
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-orange-400">
+                    {
+                      history.filter(
+                        item =>
+                          Number(item.project_id) ===
+                          Number(selectedProjectPaymentHistory.project_id)
+                      ).length
+                    }
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Total Paid */}
+            <div className="grid grid-cols-2 gap-3">
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs text-white/40">
+                  Total Amount Paid
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-emerald-400">
+                  ₹
+                  {history
+                    .filter(
+                      item =>
+                        Number(item.project_id) ===
+                        Number(selectedProjectPaymentHistory.project_id)
+                    )
+                    .reduce(
+                      (sum, item) =>
+                        sum + parseFloat(item.amount_paid || 0),
+                      0
+                    )
+                    .toLocaleString('en-IN')}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs text-white/40">
+                  Payment Records
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-white">
+                  {
+                    history.filter(
+                      item =>
+                        Number(item.project_id) ===
+                        Number(selectedProjectPaymentHistory.project_id)
+                    ).length
+                  }
+                </p>
+              </div>
+
+            </div>
+
+            {/* Complete History */}
+            <section className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-pink-500/15 flex items-center justify-center">
+                  <History size={15} className="text-pink-400" />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Complete Payment History
+                  </h3>
+
+                  <p className="text-xs text-white/40">
+                    All payments for this project
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-[420px] overflow-y-auto">
+
+                {history
+                  .filter(
+                    item =>
+                      Number(item.project_id) ===
+                      Number(selectedProjectPaymentHistory.project_id)
+                  )
+                  .map((record) => (
+
+                    <div
+                      key={record.id}
+                      className="p-4 border-b border-white/5 hover:bg-white/[0.03] transition"
+                    >
+
+                      <div className="flex items-center justify-between gap-4">
+
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {record.reason_for_payment || 'Project Payment'}
+                          </p>
+
+                          <p className="text-xs text-white/40 mt-1">
+                            {record.date_of_payment
+                              ? new Date(
+                                record.date_of_payment
+                              ).toLocaleDateString('en-IN')
+                              : '-'}
+                            {' '}
+                            {record.time_of_payment || ''}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-base font-bold text-emerald-400">
+                            ₹
+                            {parseFloat(
+                              record.amount_paid || 0
+                            ).toLocaleString('en-IN')}
+                          </p>
+
+                          <span className="text-[10px] uppercase tracking-wider text-white/40">
+                            {record.payment_mode || '-'}
+                          </span>
+                        </div>
+
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+
+                        <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                          <p className="text-[10px] text-white/40">
+                            Payment Mode
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {record.payment_mode || '-'}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-[#0e1118] border border-white/5 p-3">
+                          <p className="text-[10px] text-white/40">
+                            Paid To
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {record.paid_to || 'Admin'}
+                          </p>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  ))}
+
+              </div>
+
+            </section>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedProjectPaymentHistory(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </Modal>
+      )}
 
       {/* Receipt Modal */}
       {selectedReceipt && (
