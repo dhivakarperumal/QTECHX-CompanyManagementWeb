@@ -88,7 +88,7 @@ const customSelectStyles = {
 };
 import api from '../../api';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud, LayoutGrid, List } from 'lucide-react';
+import { CheckSquare, Plus, Edit2, Trash2, Loader2, Save, X, Search, UploadCloud, LayoutGrid, List, UserCheck } from 'lucide-react';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
 function Modal({ open, onClose, title, children }) {
@@ -121,6 +121,7 @@ function Modal({ open, onClose, title, children }) {
 
 const TraineeTaskMaster = () => {
   const [tasks, setTasks] = useState([]);
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [taskName, setTaskName] = useState('');
@@ -129,13 +130,18 @@ const TraineeTaskMaster = () => {
   const [editingUuid, setEditingUuid] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [taskSearch, setTaskSearch] = useState('');
+  const [taskAssignmentFilter, setTaskAssignmentFilter] = useState('all');
   const [taskViewMode, setTaskViewMode] = useState("table");
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/trainee-tasks');
-      setTasks(response.data);
+      const [tasksResponse, assignmentsResponse] = await Promise.all([
+        api.get('/trainee-tasks'),
+        api.get('/trainee-task-assignments'),
+      ]);
+      setTasks(tasksResponse.data);
+      setAssignments(assignmentsResponse.data || []);
     } catch (error) {
       console.error('Error fetching trainee tasks:', error);
       toast.error('Failed to load tasks');
@@ -218,14 +224,28 @@ const TraineeTaskMaster = () => {
     setShowForm(false);
   };
 
+  const assignedTaskUuids = useMemo(() => {
+    return new Set(assignments.map((assignment) => assignment.task_uuid).filter(Boolean));
+  }, [assignments]);
+
+  const totalTasks = tasks.length;
+  const assignedTaskCount = tasks.filter((task) => assignedTaskUuids.has(task.uuid)).length;
+  const unassignedTaskCount = totalTasks - assignedTaskCount;
+
   const filteredTasks = useMemo(() => {
     const term = taskSearch.trim().toLowerCase();
     return tasks.filter((task) => {
+      if (taskAssignmentFilter === 'assigned' && !assignedTaskUuids.has(task.uuid)) {
+        return false;
+      }
+      if (taskAssignmentFilter === 'unassigned' && assignedTaskUuids.has(task.uuid)) {
+        return false;
+      }
       if (!term) return true;
       const haystack = `${task.task_name || ''} ${task.description || ''}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [tasks, taskSearch]);
+  }, [tasks, taskSearch, taskAssignmentFilter, assignedTaskUuids]);
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -252,32 +272,86 @@ const TraineeTaskMaster = () => {
       </div>
     </div>
 
-      <div className="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-56 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-orange-500/10 p-3 text-orange-400">
+              <UserCheck size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Total Tasks</p>
+              <p className="text-3xl font-semibold text-white">{totalTasks}</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
-          <button
-            onClick={() => setTaskViewMode("table")}
-            className={`rounded-lg p-2 transition ${taskViewMode === "table"
-              ? "bg-orange-500 text-white"
-              : "text-white/50 hover:text-white"
-              }`}
-          >
-            <List size={15} />
-          </button>
 
-          <button
-            onClick={() => setTaskViewMode("card")}
-            className={`rounded-lg p-2 transition ${taskViewMode === "card"
-              ? "bg-orange-500 text-white"
-              : "text-white/50 hover:text-white"
-              }`}
-          >
-            <LayoutGrid size={15} />
-          </button>
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-400">
+              <CheckSquare size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Assigned Tasks</p>
+              <p className="text-3xl font-semibold text-white">{assignedTaskCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-[#111318] p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-rose-500/10 p-3 text-rose-400">
+              <Trash2 size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-white/50">Unassigned Tasks</p>
+              <p className="text-3xl font-semibold text-white">{unassignedTaskCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mt-4">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Predefined Tasks</h2>
+          <p className="text-white/40 text-sm mt-1">Search, filter, and manage trainee task definitions.</p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <input type="text" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} placeholder="Search task" className="w-64 rounded-xl border border-white/10 bg-white/4 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-500/50" />
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-2 py-2">
+            {['all', 'assigned', 'unassigned'].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setTaskAssignmentFilter(filter)}
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${taskAssignmentFilter === filter ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              >
+                {filter === 'all' ? 'All' : filter === 'assigned' ? 'Assigned' : 'Unassigned'}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center rounded-xl border border-white/10 bg-white/4 p-1">
+            <button
+              onClick={() => setTaskViewMode("table")}
+              className={`rounded-lg p-2 transition ${taskViewMode === "table"
+                ? "bg-orange-500 text-white"
+                : "text-white/50 hover:text-white"
+                }`}
+            >
+              <List size={15} />
+            </button>
+
+            <button
+              onClick={() => setTaskViewMode("card")}
+              className={`rounded-lg p-2 transition ${taskViewMode === "card"
+                ? "bg-orange-500 text-white"
+                : "text-white/50 hover:text-white"
+                }`}
+            >
+              <LayoutGrid size={15} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -342,60 +416,69 @@ const TraineeTaskMaster = () => {
                   <th className="px-4 py-4 text-left font-medium">S.No</th>
                   <th className="px-4 py-4 text-left font-medium">Task Name</th>
                   <th className="px-4 py-4 text-left font-medium">Description</th>
+                  <th className="px-4 py-4 text-left font-medium">Status</th>
                   <th className="px-4 py-4 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
                 {loading ? (
                   <tr>
-                    <td colSpan="4" className="px-4 py-8 text-center text-white/40">
+                    <td colSpan="5" className="px-4 py-8 text-center text-white/40">
                       <Loader2 size={18} className="mx-auto animate-spin" />
                     </td>
                   </tr>
                 ) : filteredTasks.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-4 py-8 text-center text-white/40">No tasks found</td>
+                    <td colSpan="5" className="px-4 py-8 text-center text-white/40">No tasks found</td>
                   </tr>
                 ) : (
-                  filteredTasks.map((task, index) => (
-                    <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
-                      <td className="px-4 py-4 text-white/70">{index + 1}</td>
-                      <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
-                      <td className="px-4 py-4 text-white/50">
-                        <div className="space-y-1">
-                          <div>{task.description || "—"}</div>
-                          {task.document_path ? (
-                            <a
-                              href={getDocumentUrl(task.document_path)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
+                  filteredTasks.map((task, index) => {
+                    const isAssigned = assignedTaskUuids.has(task.uuid);
+                    return (
+                      <tr key={task.uuid} className="hover:bg-white/2 transition-colors">
+                        <td className="px-4 py-4 text-white/70">{index + 1}</td>
+                        <td className="px-4 py-4 font-semibold text-white">{task.task_name}</td>
+                        <td className="px-4 py-4 text-white/50">
+                          <div className="space-y-1">
+                            <div>{task.description || "—"}</div>
+                            {task.document_path ? (
+                              <a
+                                href={getDocumentUrl(task.document_path)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-orange-400 hover:text-orange-300"
+                              >
+                                <UploadCloud size={13} /> View Document
+                              </a>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${isAssigned ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
+                            {isAssigned ? 'Assigned' : 'Unassigned'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(task)}
+                              className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
+                              title="Edit Task"
                             >
-                              <UploadCloud size={13} /> View Document
-                            </a>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(task)}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10 transition"
-                            title="Edit Task"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(task.uuid)}
-                            className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
-                            title="Delete Task"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(task.uuid)}
+                              className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                              title="Delete Task"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
