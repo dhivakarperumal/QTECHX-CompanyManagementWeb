@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../PrivateRouter/AuthContext';
-import { ArrowLeft, FileText, Loader2, ExternalLink, UserCircle2, ClipboardList, Clock, CheckCircle, Loader } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2, ExternalLink, UserCircle2, ClipboardList } from 'lucide-react';
 import api from '../../api';
 
 function buildUploadUrl(filePath) {
@@ -16,8 +15,6 @@ function buildUploadUrl(filePath) {
 export default function TraineeInternDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const employeeId = user?.employee_id || user?.id || user?.uuid;
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,7 +27,7 @@ export default function TraineeInternDetails() {
       try {
         const [memberRes, assignmentsRes] = await Promise.all([
           api.get(`/trainee-intern/${id}`),
-          api.get(`/trainee-task-assignments?trainee_id=${id}${employeeId ? `&created_by=${employeeId}` : ''}`)
+          api.get(`/trainee-task-assignments?trainee_id=${id}`)
         ]);
         
         if (!memberRes.data.success) throw new Error(memberRes.data.message || 'Failed');
