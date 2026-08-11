@@ -65,7 +65,7 @@ async function getAllTasksHandler(req, res) {
       const [employeeRows] = await getDB().execute(
         `SELECT e.employee_id
            FROM employees e
-           LEFT JOIN users u ON u.email = e.official_email
+           LEFT JOIN users u ON u.email COLLATE utf8mb4_unicode_ci = e.official_email COLLATE utf8mb4_unicode_ci
           WHERE e.employee_id = ? OR u.user_id = ?
           LIMIT 1`,
         [assigned_to, assigned_to],
