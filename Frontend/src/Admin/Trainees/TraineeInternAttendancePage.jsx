@@ -4,14 +4,15 @@ import Select from 'react-select';
 import { CalendarDays, PlusCircle, Loader2, Eye, UserRoundCheck, UserRoundX, GraduationCap, Search, LayoutGrid, List, X } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
+import { UserCheck, UserX } from "lucide-react";
 
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -255,71 +256,119 @@ export default function TraineeInternAttendancePage() {
 
   return (
     <div className="space-y-6 text-white">
-      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Trainee & Intern Attendance</p>
-          <h2 className="text-2xl font-semibold">Attendance dashboard</h2>
-          <p className="mt-2 text-sm text-white/60">Track day-to-day attendance and review monthly reports for trainees and interns.</p>
+      <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-2xl shadow-black/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
+              <GraduationCap size={22} className="text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Attendance dashboard</h1>
+              <p className="text-white/40 text-xs mt-0.5">
+                {loading ? 'Loading…' : `${summary.length} attendance records`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
+              <CalendarDays size={16} className="text-orange-400" />
+              <Select
+                value={{ value: selectedMonth, label: new Date(2024, selectedMonth - 1).toLocaleString('en', { month: 'long' }) }}
+                onChange={(option) => setSelectedMonth(Number(option.value))}
+                options={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index).toLocaleString('en', { month: 'long' }) }))}
+                styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+                isSearchable={false}
+                className="flex-1"
+              />
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[120px]">
+              <CalendarDays size={16} className="text-orange-400" />
+              <Select
+                value={{ value: selectedYear, label: selectedYear.toString() }}
+                onChange={(option) => setSelectedYear(Number(option.value))}
+                options={[selectedYear - 1, selectedYear, selectedYear + 1].map(year => ({ value: year, label: year.toString() }))}
+                styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
+                isSearchable={false}
+                className="flex-1"
+              />
+            </div>
+            <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
+              <PlusCircle size={16} /> Add Attendance
+            </button>
+            <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
+              <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
+              <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
+            </div>
+          </div>
         </div>
       </div>
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Trainee Present</p>
-          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.traineePresent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Trainee Absent</p>
-          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.traineeAbsent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Intern Present</p>
-          <p className="mt-3 text-3xl font-semibold text-emerald-400">{aggregateStats.internPresent}</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-[#0f172a]/80 p-5 shadow-sm shadow-black/10">
-          <p className="text-sm text-white/60">Intern Absent</p>
-          <p className="mt-3 text-3xl font-semibold text-rose-400">{aggregateStats.internAbsent}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[160px]">
-            <CalendarDays size={16} className="text-orange-400 ml-2" />
-            <Select
-              value={{ value: selectedMonth, label: new Date(2024, selectedMonth - 1).toLocaleString('en', { month: 'long' }) }}
-              onChange={(option) => setSelectedMonth(Number(option.value))}
-              options={Array.from({ length: 12 }, (_, index) => ({ value: index + 1, label: new Date(2024, index).toLocaleString('en', { month: 'long' }) }))}
-              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
-              isSearchable={false}
-              className="flex-1"
-            />
+        {/* Trainee Present */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15">
+            <UserCheck size={22} className="text-emerald-400" />
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm min-w-[120px]">
-            <CalendarDays size={16} className="text-orange-400 ml-2" />
-            <Select
-              value={{ value: selectedYear, label: selectedYear.toString() }}
-              onChange={(option) => setSelectedYear(Number(option.value))}
-              options={[selectedYear - 1, selectedYear, selectedYear + 1].map(year => ({ value: year, label: year.toString() }))}
-              styles={{ ...customSelectStyles, control: (base, state) => ({ ...customSelectStyles.control(base, state), minHeight: '38px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', cursor: 'pointer' }) }}
-              isSearchable={false}
-              className="flex-1"
-            />
-          </div>
-          <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600">
-            <PlusCircle size={16} /> Add Attendance
-          </button>
-          <div className="flex items-center rounded-full border border-white/10 bg-white/10 p-1">
-            <button onClick={() => setViewMode('table')} className={`rounded-full p-2 transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Table view"><List size={16} /></button>
-            <button onClick={() => setViewMode('card')} className={`rounded-full p-2 transition ${viewMode === 'card' ? 'bg-orange-500 text-white' : 'text-white/60 hover:text-white'}`} title="Card view"><LayoutGrid size={16} /></button>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.traineePresent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Trainee Present
+            </p>
           </div>
         </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search trainee or intern" className="w-64 rounded-full border border-white/10 bg-white/10 px-9 py-2 text-sm text-white outline-none focus:border-orange-500/70" />
+        {/* Trainee Absent */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-500/15">
+            <UserX size={22} className="text-rose-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.traineeAbsent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Trainee Absent
+            </p>
+          </div>
         </div>
+
+        {/* Intern Present */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15">
+            <UserCheck size={22} className="text-emerald-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.internPresent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Intern Present
+            </p>
+          </div>
+        </div>
+
+        {/* Intern Absent */}
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1b1a1d] p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-500/15">
+            <UserX size={22} className="text-rose-400" />
+          </div>
+
+          <div>
+            <p className="text-2xl font-semibold leading-none text-white">
+              {aggregateStats.internAbsent}
+            </p>
+            <p className="mt-1 text-sm text-white/50">
+              Intern Absent
+            </p>
+          </div>
+        </div>
+
       </div>
 
       {loading ? (
@@ -328,12 +377,49 @@ export default function TraineeInternAttendancePage() {
         </div>
       ) : (
         <>
-          {error && <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">{error}</div>}
+          {error && (
+            <div className="rounded-2xl border border-red-500/40 bg-red-900/20 p-4 text-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* Table Header + Search */}
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+            {/* Left - Heading */}
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                Attendance Records
+              </h2>
+              <p className="mt-1 text-sm text-white/40">
+                View trainee and intern attendance details
+              </p>
+            </div>
+
+            {/* Right - Search */}
+            <div className="relative w-full sm:w-[320px]">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/30"
+              />
+
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, ID..."
+                className="w-full rounded-xl border border-white/10 bg-[#1a1d24] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-500/60"
+              />
+            </div>
+
+          </div>
+
           {viewMode === 'table' ? (
             <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#0f172a]/70">
               <table className="min-w-full text-sm">
                 <thead className="bg-white/5 text-white/60">
                   <tr>
+                    <th className="px-4 py-3 text-left">S.No</th>
                     <th className="px-4 py-3 text-left">Name</th>
                     <th className="px-4 py-3 text-left">Type</th>
                     <th className="px-4 py-3 text-left">Person ID</th>
@@ -344,9 +430,10 @@ export default function TraineeInternAttendancePage() {
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {cards.length === 0 ? (
-                    <tr><td colSpan="6" className="px-4 py-8 text-center text-white/60">No trainee or intern records found.</td></tr>
-                  ) : cards.map((person) => (
+                    <tr><td colSpan="7" className="px-4 py-8 text-center text-white/60">No trainee or intern records found.</td></tr>
+                  ) : cards.map((person, idx) => (
                     <tr key={person.trainee_intern_id} className="hover:bg-white/5">
+                      <td className="px-4 py-3 text-white/60">{idx + 1}</td>
                       <td className="px-4 py-3 font-semibold text-white">{person.trainee_name || person.full_name}</td>
                       <td className="px-4 py-3 text-white/60">{person.type || 'Trainee / Intern'}</td>
                       <td className="px-4 py-3 text-white/60">{person.person_id || 'TI'}</td>
