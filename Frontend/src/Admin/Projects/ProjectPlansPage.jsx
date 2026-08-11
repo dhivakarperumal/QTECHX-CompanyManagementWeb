@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import api from '../../api';
 import dayjs from 'dayjs';
@@ -26,6 +27,7 @@ import {
   Upload,
   X,
   Grid3x3,
+  FolderKanban,
 } from 'lucide-react';
 
 const pageSize = 8;
@@ -248,6 +250,7 @@ const featuredBadges = ['Popular', 'Recommended', 'Best Seller', 'Premium', 'Ent
 
 const initialPlans = [];
 function ProjectPlansPage() {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState(initialPlans);
   const [backendAvailable, setBackendAvailable] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -407,6 +410,18 @@ function ProjectPlansPage() {
     }));
     setDrawerOpen(true);
   };
+
+  const openAddProject = (plan = null) => {
+    const params = new URLSearchParams();
+    if (plan?.projectId) params.set('project_id', plan.projectId);
+    if (plan?.planId || plan?.id) params.set('plan_id', plan.planId || plan.id);
+    navigate(`/admin/projects/add${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const getProjectForPlan = (plan) => projectsList.find(
+    (project) => String(project.uuid) === String(plan.projectId)
+      || String(project.id) === String(plan.projectId)
+  );
 
   const openEditDrawer = (plan) => {
     setMode('edit');
@@ -1110,10 +1125,10 @@ function ProjectPlansPage() {
                   <select name="projectId" value={formData.projectId || ''} onChange={handleFieldChange} className={selectClasses} disabled={mode === 'view'}>
                     <option value="">None</option>
                     {projectsList
-                      .filter((project) => {
-                        const isAssigned = plans.some((p) => String(p.projectId) === String(project.uuid) && p.id !== currentPlan?.id);
-                        return isAssigned;
-                      })
+                      .filter((project) => !plans.some((p) => (
+                        String(p.projectId) === String(project.uuid)
+                        || String(p.projectId) === String(project.id)
+                      ) && p.id !== currentPlan?.id))
                       .map((project) => (
                       <option key={project.uuid} value={project.uuid}>
                         {project.project_code || 'PRJ'} - {project.project_name}

@@ -55,8 +55,23 @@ async function getAllTasksHandler(req, res) {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const { search, status, assigned_to } = req.query;
+    const { search, status } = req.query;
+    let { assigned_to } = req.query;
     let { project_id } = req.query;
+
+    // Older tokens contain the users.user_id value in employee_id. Resolve it
+    // to the employees.employee_id value used by tasks.assigned_to.
+    if (assigned_to) {
+      const [employeeRows] = await getDB().execute(
+        `SELECT e.employee_id
+           FROM employees e
+           LEFT JOIN users u ON u.email = e.official_email
+          WHERE e.employee_id = ? OR u.user_id = ?
+          LIMIT 1`,
+        [assigned_to, assigned_to],
+      );
+      assigned_to = employeeRows[0]?.employee_id || assigned_to;
+    }
 
     if (project_id && typeof project_id === 'string' && project_id.length === 36) {
       const project = await findProjectByUUID(project_id);
