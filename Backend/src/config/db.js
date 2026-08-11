@@ -326,30 +326,37 @@ async function ensureProjectAssignmentsSchema(pool) {
       }
     }
 
-    try {
-      await pool.execute('ALTER TABLE project_assignments DROP FOREIGN KEY fk_project_assignments_employee');
-    } catch (error) {
-      // Ignore if the legacy foreign key is already absent.
+    const [employeeForeignKeys] = await pool.execute(
+      `SELECT DISTINCT CONSTRAINT_NAME
+         FROM information_schema.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'project_assignments'
+          AND COLUMN_NAME = 'employee_id'
+          AND REFERENCED_TABLE_NAME = 'employees'`
+    );
+    for (const foreignKey of employeeForeignKeys) {
+      await pool.execute(
+        `ALTER TABLE project_assignments DROP FOREIGN KEY \`${foreignKey.CONSTRAINT_NAME}\``
+      );
     }
 
-    try {
-      await pool.execute('ALTER TABLE project_assignments DROP INDEX idx_project_assignments_employee');
-    } catch (error) {
-      // Ignore if the legacy index is already absent.
+    const [employeeIndexes] = await pool.execute('SHOW INDEX FROM project_assignments');
+    const indexNames = [...new Set(
+      employeeIndexes
+        .filter((index) => index.Column_name === 'employee_id' && index.Key_name !== 'PRIMARY')
+        .map((index) => index.Key_name)
+    )];
+    for (const indexName of indexNames) {
+      await pool.execute(`ALTER TABLE project_assignments DROP INDEX \`${indexName}\``);
     }
 
-    try {
-      await pool.execute('ALTER TABLE project_assignments DROP COLUMN employee_id');
-    } catch (error) {
-      // Ignore if the legacy column is already absent.
-    }
+    await pool.execute('ALTER TABLE project_assignments DROP COLUMN employee_id');
   }
 
   const [indexes] = await pool.execute('SHOW INDEX FROM project_assignments');
   const hasLegacyUniqueIndex = indexes.some((index) => index.Key_name === 'uq_project_assignments_project_employee');
   const hasProjectUniqueIndex = indexes.some((index) => index.Key_name === 'uq_project_assignments_project');
   const hasProjectIndex = indexes.some((index) => index.Key_name === 'idx_project_assignments_project');
-  const hasEmployeeIndex = indexes.some((index) => index.Key_name === 'idx_project_assignments_employee');
 
   if (hasLegacyUniqueIndex) {
     await pool.execute('ALTER TABLE project_assignments DROP INDEX uq_project_assignments_project_employee');
@@ -396,9 +403,6 @@ async function ensureProjectAssignmentsSchema(pool) {
   }
   if (!hasProjectIndex) {
     await pool.execute('ALTER TABLE project_assignments ADD INDEX idx_project_assignments_project (project_id)');
-  }
-  if (!hasEmployeeIndex && columnNames.has('employee_id')) {
-    await pool.execute('ALTER TABLE project_assignments ADD INDEX idx_project_assignments_employee (employee_id)');
   }
 }
 

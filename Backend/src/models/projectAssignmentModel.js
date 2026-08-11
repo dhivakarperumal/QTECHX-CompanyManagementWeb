@@ -95,7 +95,8 @@ async function getActiveProjectCountForEmployee(employeeId, excludeProjectId = n
     `SELECT COUNT(DISTINCT pa.project_id) AS active_project_count
      FROM project_assignments pa
      JOIN projects p ON p.id = pa.project_id
-     WHERE JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(? AS CHAR)), '$')
+     WHERE JSON_VALID(pa.employee_ids)
+       AND JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(? AS CHAR)), '$')
        AND p.current_status NOT IN ('Completed','Cancelled','Inactive')
        ${excludeSql}`,
     params
@@ -463,7 +464,8 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
         (SELECT COUNT(DISTINCT pa.project_id)
          FROM project_assignments pa
          JOIN projects p ON p.id = pa.project_id
-         WHERE JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
+         WHERE JSON_VALID(pa.employee_ids)
+           AND JSON_CONTAINS(pa.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
            AND p.current_status NOT IN ('Completed','Cancelled','Inactive')
         ), 0
       ) AS active_project_count
@@ -483,7 +485,8 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
          SELECT COUNT(DISTINCT pa2.project_id)
          FROM project_assignments pa2
          JOIN projects p2 ON p2.id = pa2.project_id
-         WHERE JSON_CONTAINS(pa2.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
+         WHERE JSON_VALID(pa2.employee_ids)
+           AND JSON_CONTAINS(pa2.employee_ids, JSON_OBJECT('employee_id', CAST(e.employee_id AS CHAR)), '$')
            AND p2.current_status NOT IN ('Completed','Cancelled','Inactive')
        ) < 3
      ORDER BY e.first_name, e.last_name
