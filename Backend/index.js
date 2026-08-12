@@ -97,17 +97,6 @@ app.use("/api/trainee-assignments", traineeAssignmentRouter);
 // Health check (must be before the catch-all /api/* 404 handler)
 app.get("/api/health", (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));
 
-// ── Stub routes for features not yet implemented in this backend ──────────────
-// These prevent 404 noise from the StoreContext (cart/wishlist from e-commerce build)
-app.get("/api/cart/:userId", (req, res) => res.json({ success: true, data: [] }));
-app.get("/api/wishlist/:userId", (req, res) => res.json({ success: true, data: [] }));
-app.post("/api/cart", (req, res) => res.status(501).json({ success: false, message: "Cart not implemented" }));
-app.post("/api/wishlist", (req, res) => res.status(501).json({ success: false, message: "Wishlist not implemented" }));
-app.delete("/api/cart/:id", (req, res) => res.json({ success: true }));
-app.put("/api/cart/:id", (req, res) => res.json({ success: true }));
-app.delete("/api/cart/clear/:userId", (req, res) => res.json({ success: true }));
-app.delete("/api/wishlist/:uid/:pid", (req, res) => res.json({ success: true }));
-
 // Explicit API 404 to prevent API paths from being handled by frontend fallback
 // ⚠️ This MUST be the LAST /api route — anything registered after this will never be reached
 app.use("/api/*", (req, res) => {
