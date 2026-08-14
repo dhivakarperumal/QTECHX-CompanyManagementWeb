@@ -153,7 +153,6 @@ const TraineeTaskMaster = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
-
   const getDocumentUrl = (documentPath) => {
     if (!documentPath) return null;
     if (documentPath.startsWith('http://') || documentPath.startsWith('https://')) return documentPath;
@@ -395,6 +394,7 @@ const TraineeTaskMaster = () => {
               >
                 Cancel
               </button>
+              
               <button
                 type="submit"
                 className="inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition hover:opacity-90"
