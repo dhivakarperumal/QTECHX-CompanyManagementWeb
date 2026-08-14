@@ -50,13 +50,46 @@ function mergeAttachments(existingJson, newEntry) {
   return list.length ? JSON.stringify(list) : null;
 }
 
+async function resolveEmployeeId(value) {
+  if (value === undefined || value === null || value === '') return null;
+
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT e.employee_id
+       FROM employees e
+       LEFT JOIN users u ON u.email COLLATE utf8mb4_unicode_ci = e.official_email COLLATE utf8mb4_unicode_ci
+      WHERE e.employee_id = ?
+         OR CAST(e.id AS CHAR) = ?
+         OR u.user_id = ?
+      LIMIT 1`,
+    [value, value, value],
+  );
+
+  return rows[0]?.employee_id || null;
+}
+
 /* ─── GET ALL ─── */
 async function getAllTasksHandler(req, res) {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const { search, status, assigned_to } = req.query;
+    const { search, status } = req.query;
+    let { assigned_to } = req.query;
     let { project_id } = req.query;
+
+    // Older tokens contain the users.user_id value in employee_id. Resolve it
+    // to the employees.employee_id value used by tasks.assigned_to.
+    if (assigned_to) {
+      const [employeeRows] = await getDB().execute(
+        `SELECT e.employee_id
+           FROM employees e
+           LEFT JOIN users u ON u.email COLLATE utf8mb4_unicode_ci = e.official_email COLLATE utf8mb4_unicode_ci
+          WHERE e.employee_id = ? OR u.user_id = ?
+          LIMIT 1`,
+        [assigned_to, assigned_to],
+      );
+      assigned_to = employeeRows[0]?.employee_id || assigned_to;
+    }
 
     if (project_id && typeof project_id === 'string' && project_id.length === 36) {
       const project = await findProjectByUUID(project_id);
@@ -114,6 +147,8 @@ async function createTaskHandler(req, res) {
     if (!project) return fail(res, 'Project not found', 404);
 
     const fileEntry = saveBase64File(attachmentBase64, attachmentName, attachmentType);
+    const resolvedAssignedTo = assigned_to ? await resolveEmployeeId(assigned_to) : null;
+    const resolvedAssignedBy = assigned_by ? await resolveEmployeeId(assigned_by) : null;
 
     const task = await createTask({
       uuid: uuidv4(),
@@ -123,8 +158,8 @@ async function createTaskHandler(req, res) {
       description: description || null,
       category: category || null,
       parent_task_uuid: parent_task_uuid || null,
-      assigned_to: assigned_to || null,
-      assigned_by: assigned_by || null,
+      assigned_to: resolvedAssignedTo,
+      assigned_by: resolvedAssignedBy,
       team: team || null,
       assignment_date: assignment_date || null,
       start_date: start_date || null,
@@ -186,6 +221,9 @@ async function updateTaskHandler(req, res) {
         // Convert empty strings to null for nullable fields
         if (NULLABLE_FIELDS.includes(field) && (val === '' || val === undefined)) {
           val = null;
+        }
+        if (field === 'assigned_to' || field === 'assigned_by') {
+          val = val ? await resolveEmployeeId(val) : null;
         }
         updates[field] = val;
       }

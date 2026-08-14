@@ -152,16 +152,16 @@ const TaskStatusCard = ({ data, onViewAll }) => (
           <YAxis stroke="rgba(255,255,255,0.45)" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderRadius: 10 }} itemStyle={{ color: '#fff' }} />
           <Bar dataKey="count" radius={[12, 12, 0, 0]}>
-            {data.map((entry) => (
-              <Cell key={entry.status} fill={CARD_COLORS[entry.status] || '#7c3aed'} />
+            {data.map((entry, index) => (
+              <Cell key={`${entry.status || 'unknown'}-${index}`} fill={CARD_COLORS[entry.status] || '#7c3aed'} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
     <div className="grid grid-cols-2 gap-3 mt-5">
-      {data.map((item) => (
-        <div key={item.status} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10">
+      {data.map((item, index) => (
+        <div key={`${item.status || 'unknown'}-${index}`} className="rounded-2xl bg-slate-950/80 p-3 border border-white/10">
           <p className="text-xs text-white/50">{item.status}</p>
           <p className="text-2xl font-semibold text-white">{item.count}</p>
         </div>
