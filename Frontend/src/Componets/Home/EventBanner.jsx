@@ -164,7 +164,7 @@ const EventBanner = () => {
                 hover:shadow-[0_8px_25px_rgba(255,106,0,0.35)]
                 active:scale-95
                 sm:px-7
-                sm:py-3.5
+                sm:py-2
               "
               >
                 <span>
