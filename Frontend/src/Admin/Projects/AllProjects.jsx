@@ -675,6 +675,7 @@ export default function AllProjects() {
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S.No</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Image</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Project</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Manager</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
@@ -693,6 +694,31 @@ export default function AllProjects() {
                     title="Double click to update project status"
                   >
                     <td className="px-5 py-3.5 text-white/50">{i + 1}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex-shrink-0">
+                        {p.project_images ? (
+                          (() => {
+                            try {
+                              const images = typeof p.project_images === 'string' ? JSON.parse(p.project_images) : p.project_images;
+                              const firstImage = Array.isArray(images) ? images[0] : images;
+                              const imagePath = firstImage?.file_path || firstImage;
+                              return (
+                                <img 
+                                  src={imagePath} 
+                                  alt={p.project_name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.target.src = '/images/default-project.jpg'; }}
+                                />
+                              );
+                            } catch {
+                              return <img src="/images/default-project.jpg" alt={p.project_name} className="w-full h-full object-cover" />;
+                            }
+                          })()
+                        ) : (
+                          <img src="/images/default-project.jpg" alt={p.project_name} className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={p.project_name} index={i} />

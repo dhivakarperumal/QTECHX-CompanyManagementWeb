@@ -36,15 +36,34 @@ const ProjectPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Transform API response to match ProjectCard format
-  const transformedProjects = projects.map((proj) => ({
-    id: proj.uuid || proj.id,
-    title: proj.project_name || proj.title || 'Untitled',
-    image: proj.project_images ? (Array.isArray(proj.project_images) ? proj.project_images[0] : proj.project_images) : '/images/default-project.jpg',
-    link: proj.github_link || '#',
-    category: proj.project_category || 'General',
-    description: proj.description || '',
-    features: proj.frontend_tech ? (proj.frontend_tech.split(',').map(f => f.trim()).slice(0, 3)) : [],
-  }));
+  const transformedProjects = projects.map((proj) => {
+    let imageUrl = '/images/default-project.jpg';
+    
+    if (proj.project_images) {
+      try {
+        const images = typeof proj.project_images === 'string' 
+          ? JSON.parse(proj.project_images) 
+          : proj.project_images;
+        const firstImage = Array.isArray(images) ? images[0] : images;
+        if (firstImage) {
+          imageUrl = firstImage.file_path || firstImage;
+        }
+      } catch (e) {
+        console.error('Error parsing project images:', e);
+        imageUrl = proj.project_images;
+      }
+    }
+    
+    return {
+      id: proj.uuid || proj.id,
+      title: proj.project_name || proj.title || 'Untitled',
+      image: imageUrl,
+      link: proj.github_link || '#',
+      category: proj.project_category || 'General',
+      description: proj.description || '',
+      features: proj.frontend_tech ? (proj.frontend_tech.split(',').map(f => f.trim()).slice(0, 3)) : [],
+    };
+  });
 
   const categories = ["All", "E-Commerce", "Education", "Website", "Web Application"];
 

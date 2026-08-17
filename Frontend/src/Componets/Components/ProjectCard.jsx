@@ -1,7 +1,13 @@
 // src/components/ProjectCard.jsx
-import React from "react";
+import React, { useState } from "react";
 
 const ProjectCard = ({ project, aosDelay = 0 }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <div
       data-aos="flip-left"
@@ -9,11 +15,20 @@ const ProjectCard = ({ project, aosDelay = 0 }) => {
       className="bg-white shadow-lg rounded overflow-hidden hover:shadow-2xl transition duration-300"
     >
       <a href={project.link} target="_blank" rel="noopener noreferrer">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="w-full h-50 p-2 shadow-md object-cover"
-        />
+        <div className="w-full h-50 p-2 shadow-md bg-gray-200 flex items-center justify-center overflow-hidden">
+          {!imageError ? (
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-full object-cover"
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+              <span className="text-gray-500 text-sm">No Image</span>
+            </div>
+          )}
+        </div>
       </a>
 
       {/* Content wrapper with padding */}
