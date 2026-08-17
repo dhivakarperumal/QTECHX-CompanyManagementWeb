@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Clock, IndianRupee } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -11,6 +12,7 @@ import emailjs from "@emailjs/browser";
 import api from "../../api";
 
 const CareerDetail = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -66,13 +68,8 @@ const CareerDetail = () => {
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState(false);
 
-  const handleApplyJob = (jobTitle) => {
-    setForm((prev) => ({ ...prev, position: jobTitle || "" }));
-    setErrors((prev) => ({ ...prev, position: "" }));
-    document.getElementById("career-application-form")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+  const handleApplyJob = (jobId) => {
+    navigate(`/apply/${jobId}`);
   };
 
   const handleChange = (e) => {
@@ -473,7 +470,7 @@ const CareerDetail = () => {
 
                   <button
                     type="button"
-                    onClick={() => handleApplyJob(job.title)}
+                    onClick={() => handleApplyJob(job.id)}
                     className="mt-5 w-full bg-primary text-white font-semibold rounded-xl py-3 hover:bg-primary/90 transition duration-200"
                   >
                     Apply

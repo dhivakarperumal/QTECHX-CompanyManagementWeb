@@ -33,6 +33,7 @@ import WhoWeWorkWith from "./Componets/WhyChooseUs/WhoWeWorkWith.jsx";
 import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
 import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
 import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
+import JobApply from "./Admin/JobApply/JobApply.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
@@ -128,6 +129,7 @@ const router = createHashRouter([
       { path: "/whatwedo", element: <WhatWeDo /> },
       { path: "/achievements", element: <OurAchievements /> },
       { path: "/career", element: <CareerDetail /> },
+      { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       {
         path: 'login',

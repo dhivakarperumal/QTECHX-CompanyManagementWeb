@@ -2293,6 +2293,121 @@ async function ensureTraineeEmployeeAssignmentsSchema(pool) {
   `);
 }
 
+async function ensureJobApplicationsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'job_applications'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS job_applications (
+        id VARCHAR(36) NOT NULL,
+        job_id INT NOT NULL,
+        applicant_id VARCHAR(36) NULL,
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        alternate_phone VARCHAR(20) NULL,
+        date_of_birth DATE NULL,
+        gender VARCHAR(50) NULL,
+        address TEXT NULL,
+        city VARCHAR(150) NULL,
+        state VARCHAR(150) NULL,
+        pincode VARCHAR(20) NULL,
+        current_location VARCHAR(255) NULL,
+        current_job_title VARCHAR(255) NULL,
+        current_company VARCHAR(255) NULL,
+        total_experience VARCHAR(100) NULL,
+        relevant_experience VARCHAR(100) NULL,
+        employment_status VARCHAR(100) NULL,
+        current_salary DECIMAL(12,2) NULL,
+        expected_salary DECIMAL(12,2) NULL,
+        notice_period VARCHAR(100) NULL,
+        joining_date DATE NULL,
+        willing_to_relocate ENUM('Yes','No') DEFAULT 'No',
+        preferred_work_mode VARCHAR(100) NULL,
+        education JSON NULL,
+        skills JSON NULL,
+        certifications VARCHAR(500) NULL,
+        linkedin_url VARCHAR(500) NULL,
+        github_url VARCHAR(500) NULL,
+        portfolio_url VARCHAR(500) NULL,
+        resume VARCHAR(500) NULL,
+        cover_letter VARCHAR(500) NULL,
+        portfolio_file VARCHAR(500) NULL,
+        certificates VARCHAR(500) NULL,
+        screening_answers JSON NULL,
+        additional_information LONGTEXT NULL,
+        application_status ENUM('Applied','Under Review','Shortlisted','Interview','Selected','Rejected') NOT NULL DEFAULT 'Applied',
+        recruiter_notes TEXT NULL,
+        applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        FOREIGN KEY (job_id) REFERENCES job_posts(id) ON DELETE CASCADE,
+        INDEX idx_job_id (job_id),
+        INDEX idx_applicant_id (applicant_id),
+        INDEX idx_email (email),
+        INDEX idx_application_status (application_status),
+        INDEX idx_applied_at (applied_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM job_applications");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('job_id', 'INT NOT NULL');
+  addColumn('applicant_id', 'VARCHAR(36) NULL');
+  addColumn('full_name', 'VARCHAR(255) NOT NULL');
+  addColumn('email', 'VARCHAR(255) NOT NULL');
+  addColumn('phone', 'VARCHAR(20) NOT NULL');
+  addColumn('alternate_phone', 'VARCHAR(20) NULL');
+  addColumn('date_of_birth', 'DATE NULL');
+  addColumn('gender', 'VARCHAR(50) NULL');
+  addColumn('address', 'TEXT NULL');
+  addColumn('city', 'VARCHAR(150) NULL');
+  addColumn('state', 'VARCHAR(150) NULL');
+  addColumn('pincode', 'VARCHAR(20) NULL');
+  addColumn('current_location', 'VARCHAR(255) NULL');
+  addColumn('current_job_title', 'VARCHAR(255) NULL');
+  addColumn('current_company', 'VARCHAR(255) NULL');
+  addColumn('total_experience', 'VARCHAR(100) NULL');
+  addColumn('relevant_experience', 'VARCHAR(100) NULL');
+  addColumn('employment_status', 'VARCHAR(100) NULL');
+  addColumn('current_salary', 'DECIMAL(12,2) NULL');
+  addColumn('expected_salary', 'DECIMAL(12,2) NULL');
+  addColumn('notice_period', 'VARCHAR(100) NULL');
+  addColumn('joining_date', 'DATE NULL');
+  addColumn('willing_to_relocate', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('preferred_work_mode', 'VARCHAR(100) NULL');
+  addColumn('education', 'JSON NULL');
+  addColumn('skills', 'JSON NULL');
+  addColumn('certifications', 'VARCHAR(500) NULL');
+  addColumn('linkedin_url', 'VARCHAR(500) NULL');
+  addColumn('github_url', 'VARCHAR(500) NULL');
+  addColumn('portfolio_url', 'VARCHAR(500) NULL');
+  addColumn('resume', 'VARCHAR(500) NULL');
+  addColumn('cover_letter', 'VARCHAR(500) NULL');
+  addColumn('portfolio_file', 'VARCHAR(500) NULL');
+  addColumn('certificates', 'VARCHAR(500) NULL');
+  addColumn('screening_answers', 'JSON NULL');
+  addColumn('additional_information', 'LONGTEXT NULL');
+  addColumn('application_status', "ENUM('Applied','Under Review','Shortlisted','Interview','Selected','Rejected') NOT NULL DEFAULT 'Applied'");
+  addColumn('recruiter_notes', 'TEXT NULL');
+  addColumn('applied_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE job_applications ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2308,6 +2423,7 @@ async function initDB() {
     await ensurePricingSchema(pool);
     await ensureReviewsSchema(pool);
     await ensureJobsSchema(pool);
+    await ensureJobApplicationsSchema(pool);
     await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);
