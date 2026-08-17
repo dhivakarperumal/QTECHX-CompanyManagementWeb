@@ -2,6 +2,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
+import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import api from "../../api";
 import {
   FaCode,
@@ -307,13 +308,40 @@ const Navbar = () => {
             </div>
 
             <button
-              type="button"
-              aria-label="Open navigation menu"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/3 text-xl text-white md:hidden"
-              onClick={() => setMobileMenu(true)}
-            >
-              <FiMenu />
-            </button>
+  type="button"
+  aria-label="Open navigation menu"
+  onClick={() => setMobileMenu(true)}
+  className="
+    group relative flex h-12 w-12
+    items-center justify-center
+    overflow-hidden rounded-2xl
+    border border-white/10
+    bg-white/[0.04]
+    backdrop-blur-xl
+    transition-all duration-300
+    hover:border-[#FF6A00]/50
+    hover:bg-[#FF6A00]/10
+    active:scale-90
+    md:hidden
+  "
+>
+  {/* Orange glow */}
+  <span
+    className="
+      absolute h-8 w-8 rounded-full
+      bg-[#FF6A00]/20
+      blur-xl
+      transition-all duration-500
+      group-hover:bg-[#FF6A00]/40
+    "
+  />
+
+  <span className="relative flex flex-col gap-[5px]">
+    <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-6" />
+    <span className="h-[2px] w-4 self-end rounded-full bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#FF6A00]" />
+    <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-4" />
+  </span>
+</button>
           </div>
         </PageContainer>
 
