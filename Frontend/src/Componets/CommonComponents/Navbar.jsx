@@ -92,7 +92,7 @@ const Navbar = () => {
   };
 
   const desktopLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-white/80 hover:text-primary"
+    `text-base font-bold  transition-colors ${isActive ? "text-primary" : "text-white hover:text-primary"
     }`;
 
   const mobileLinkClass = ({ isActive }) =>
@@ -103,7 +103,7 @@ const Navbar = () => {
     <>
       <nav className="fixed left-0 top-0 z-50 w-full border-b border-orange-500/20 bg-[#070b12]/95 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
         <PageContainer>
-          <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between ">
             <Link to="/" className="flex items-center gap-3">
               <img src="/images/logo.png" alt="Q-Techx logo" className="h-10 w-auto sm:h-12" />
               <div className="leading-none">
@@ -112,7 +112,7 @@ const Navbar = () => {
               </div>
             </Link>
 
-            <ul className="hidden items-center gap-8 md:flex" ref={dropdownRef}>
+            <ul className=" hidden items-center gap-8 md:flex" ref={dropdownRef}>
               <li><NavLink to="/" className={desktopLinkClass}>Home</NavLink></li>
               <li><NavLink to="/about" className={desktopLinkClass}>About</NavLink></li>
 
@@ -120,7 +120,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("services")}
-                  className="group flex items-center gap-1 text-sm font-medium text-white/80 transition-all duration-300 hover:text-[#FF6A00]"
+                  className="group flex items-center gap-1 text-base font-bold text-white transition-all duration-300 hover:text-[#FF6A00]"
                 >
                   Services
 
@@ -212,7 +212,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("whoWeAre")}
-                  className="group flex items-center gap-1 text-sm font-medium text-white/80 transition-all duration-300 hover:text-[#FF6A00]"
+                  className="group flex items-center gap-1 text-base font-bold text-white transition-all duration-300 hover:text-[#FF6A00]"
                 >
                   Who We Are?
 
