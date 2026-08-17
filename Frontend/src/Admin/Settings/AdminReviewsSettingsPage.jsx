@@ -277,6 +277,14 @@ const AdminReviewsSettingsPage = () => {
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/admin/settings')}
+            className="w-11 h-11 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition"
+            title="Back to settings"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
             <MessageSquareQuote size={22} className="text-primary" />
           </div>
