@@ -308,10 +308,10 @@ const Navbar = () => {
             </div>
 
             <button
-  type="button"
-  aria-label="Open navigation menu"
-  onClick={() => setMobileMenu(true)}
-  className="
+              type="button"
+              aria-label="Open navigation menu"
+              onClick={() => setMobileMenu(true)}
+              className="
     group relative flex h-12 w-12
     items-center justify-center
     overflow-hidden rounded-2xl
@@ -324,27 +324,28 @@ const Navbar = () => {
     active:scale-90
     md:hidden
   "
->
-  {/* Orange glow */}
-  <span
-    className="
+            >
+              {/* Orange glow */}
+              <span
+                className="
       absolute h-8 w-8 rounded-full
       bg-[#FF6A00]/20
       blur-xl
       transition-all duration-500
       group-hover:bg-[#FF6A00]/40
     "
-  />
+              />
 
-  <span className="relative flex flex-col gap-[5px]">
-    <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-6" />
-    <span className="h-[2px] w-4 self-end rounded-full bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#FF6A00]" />
-    <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-4" />
-  </span>
-</button>
+              <span className="relative flex flex-col gap-[5px]">
+                <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-6" />
+                <span className="h-[2px] w-4 self-end rounded-full bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#FF6A00]" />
+                <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-4" />
+              </span>
+            </button>
           </div>
         </PageContainer>
-
+        {/* Orange separator line */}
+        <div className="h-px w-full bg-[#FF6A00]/70 shadow-[0_0_8px_rgba(255,106,0,0.25)]" />
 
       </nav>
 
@@ -388,8 +389,8 @@ const Navbar = () => {
 
           <div
             className={`space-y-2 transition-all duration-500 delay-150 ${mobileMenu
-                ? "translate-y-0 opacity-100"
-                : "translate-y-3 opacity-0"
+              ? "translate-y-0 opacity-100"
+              : "translate-y-3 opacity-0"
               }`}
           >
             <NavLink to="/" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
