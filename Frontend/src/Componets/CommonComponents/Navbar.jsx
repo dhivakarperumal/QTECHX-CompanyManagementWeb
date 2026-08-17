@@ -15,6 +15,7 @@ import {
   FaChalkboardTeacher,
   FaBullhorn,
 } from "react-icons/fa";
+import PageContainer from "./PageContainer";
 
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState(null);
@@ -90,134 +91,132 @@ const Navbar = () => {
   };
 
   const desktopLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors ${
-      isActive ? "text-primary" : "text-white/80 hover:text-primary"
+    `text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-white/80 hover:text-primary"
     }`;
 
   const mobileLinkClass = ({ isActive }) =>
-    `flex items-center justify-between rounded-xl px-3 py-3 text-base font-medium transition ${
-      isActive ? "bg-primary/10 text-primary" : "text-white/80 hover:bg-white/5 hover:text-white"
+    `flex items-center justify-between rounded-xl px-3 py-3 text-base font-medium transition ${isActive ? "bg-primary/10 text-primary" : "text-white/80 hover:bg-white/5 hover:text-white"
     }`;
 
   return (
     <nav className="fixed left-0 top-0 z-50 w-full border-b border-orange-500/20 bg-[#070b12]/95 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-      <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <img src="/images/logo.png" alt="Q-Techx logo" className="h-10 w-auto sm:h-12" />
-          <div className="leading-none">
-            <div className="text-[18px] font-black tracking-tight text-white sm:text-[20px]">Q-TECHX</div>
-            <div className="mt-0.5 text-[8px] font-semibold tracking-[0.32em] text-orange-300/90 sm:text-[9px]">SOLUTIONS</div>
-          </div>
-        </Link>
-
-        <ul className="hidden items-center gap-8 md:flex" ref={dropdownRef}>
-          <li><NavLink to="/" className={desktopLinkClass}>Home</NavLink></li>
-          <li><NavLink to="/about" className={desktopLinkClass}>About</NavLink></li>
-
-          <li className="relative">
-            <button
-              type="button"
-              onClick={() => toggleMenu("services")}
-              className="flex items-center gap-1 text-sm font-medium text-white/80 transition hover:text-primary"
-            >
-              Services
-              <FiChevronDown className={`text-xs transition ${openMenu === "services" ? "rotate-180" : ""}`} />
-            </button>
-
-            {openMenu === "services" && (
-              <div className="absolute left-1/2 top-full z-50 mt-3 w-[26rem] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0d1320] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-                <div className="grid grid-cols-2 gap-2">
-                  {services.length > 0 ? (
-                    services.map((srv) => {
-                      const Icon = iconMap[srv.icon] || FaCode;
-                      return (
-                        <NavLink
-                          key={srv.id}
-                          to={`/services/${srv.id}`}
-                          className={({ isActive }) =>
-                            `flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${
-                              isActive
-                                ? "border-primary/40 bg-primary/10 text-primary"
-                                : "border-transparent bg-white/3 text-white/80 hover:border-primary/20 hover:bg-white/5 hover:text-white"
-                            }`
-                          }
-                        >
-                          <Icon className="text-base text-primary" />
-                          <span className="truncate">{srv.title}</span>
-                        </NavLink>
-                      );
-                    })
-                  ) : (
-                    <p className="col-span-2 py-3 text-sm text-white/50">Loading services...</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </li>
-
-          <li><NavLink to="/projects" className={desktopLinkClass}>Projects</NavLink></li>
-          <li><NavLink to="/prices" className={desktopLinkClass}>Prices</NavLink></li>
-
-          <li className="relative">
-            <button
-              type="button"
-              onClick={() => toggleMenu("whoWeAre")}
-              className="flex items-center gap-1 text-sm font-medium text-white/80 transition hover:text-primary"
-            >
-              Who We Are?
-              <FiChevronDown className={`text-xs transition ${openMenu === "whoWeAre" ? "rotate-180" : ""}`} />
-            </button>
-
-            {openMenu === "whoWeAre" && (
-              <div className="absolute left-1/2 top-full z-50 mt-3 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0d1320] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-                {whoWeAreLinks.map((item) => (
-                  <NavLink
-                    key={item.id}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `block rounded-xl px-3 py-2.5 text-sm transition ${
-                        isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
-                      }`
-                    }
-                  >
-                    {item.title}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </li>
-
-          <li><NavLink to="/career" className={desktopLinkClass}>Career</NavLink></li>
-        </ul>
-
-        <div className="hidden items-center gap-3 md:flex">
-          <Link
-            to="/contact"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-strong px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(248,116,14,0.35)] hover:scale-[1.02]"
-          >
-            Let&apos;s Talk
-            <FiArrowRight className="text-base" />
+      <PageContainer>
+        <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/images/logo.png" alt="Q-Techx logo" className="h-10 w-auto sm:h-12" />
+            <div className="leading-none">
+              <div className="text-[18px] font-black tracking-tight text-white sm:text-[20px]">Q-TECHX</div>
+              <div className="mt-0.5 text-[8px] font-semibold tracking-[0.32em] text-orange-300/90 sm:text-[9px]">SOLUTIONS</div>
+            </div>
           </Link>
 
-          {user && (
-            <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/20"
-            >
-              <FiLogOut /> Logout
-            </button>
-          )}
-        </div>
+          <ul className="hidden items-center gap-8 md:flex" ref={dropdownRef}>
+            <li><NavLink to="/" className={desktopLinkClass}>Home</NavLink></li>
+            <li><NavLink to="/about" className={desktopLinkClass}>About</NavLink></li>
 
-        <button
-          type="button"
-          aria-label="Open navigation menu"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/3 text-xl text-white md:hidden"
-          onClick={() => setMobileMenu(true)}
-        >
-          <FiMenu />
-        </button>
-      </div>
+            <li className="relative">
+              <button
+                type="button"
+                onClick={() => toggleMenu("services")}
+                className="flex items-center gap-1 text-sm font-medium text-white/80 transition hover:text-primary"
+              >
+                Services
+                <FiChevronDown className={`text-xs transition ${openMenu === "services" ? "rotate-180" : ""}`} />
+              </button>
+
+              {openMenu === "services" && (
+                <div className="absolute left-1/2 top-full z-50 mt-3 w-[26rem] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0d1320] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+                  <div className="grid grid-cols-2 gap-2">
+                    {services.length > 0 ? (
+                      services.map((srv) => {
+                        const Icon = iconMap[srv.icon] || FaCode;
+                        return (
+                          <NavLink
+                            key={srv.id}
+                            to={`/services/${srv.id}`}
+                            className={({ isActive }) =>
+                              `flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${isActive
+                                ? "border-primary/40 bg-primary/10 text-primary"
+                                : "border-transparent bg-white/3 text-white/80 hover:border-primary/20 hover:bg-white/5 hover:text-white"
+                              }`
+                            }
+                          >
+                            <Icon className="text-base text-primary" />
+                            <span className="truncate">{srv.title}</span>
+                          </NavLink>
+                        );
+                      })
+                    ) : (
+                      <p className="col-span-2 py-3 text-sm text-white/50">Loading services...</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </li>
+
+            <li><NavLink to="/projects" className={desktopLinkClass}>Projects</NavLink></li>
+            <li><NavLink to="/prices" className={desktopLinkClass}>Prices</NavLink></li>
+
+            <li className="relative">
+              <button
+                type="button"
+                onClick={() => toggleMenu("whoWeAre")}
+                className="flex items-center gap-1 text-sm font-medium text-white/80 transition hover:text-primary"
+              >
+                Who We Are?
+                <FiChevronDown className={`text-xs transition ${openMenu === "whoWeAre" ? "rotate-180" : ""}`} />
+              </button>
+
+              {openMenu === "whoWeAre" && (
+                <div className="absolute left-1/2 top-full z-50 mt-3 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0d1320] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+                  {whoWeAreLinks.map((item) => (
+                    <NavLink
+                      key={item.id}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `block rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                        }`
+                      }
+                    >
+                      {item.title}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </li>
+
+            <li><NavLink to="/career" className={desktopLinkClass}>Career</NavLink></li>
+          </ul>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-strong px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(248,116,14,0.35)] hover:scale-[1.02]"
+            >
+              Let&apos;s Talk
+              <FiArrowRight className="text-base" />
+            </Link>
+
+            {user && (
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/20"
+              >
+                <FiLogOut /> Logout
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            aria-label="Open navigation menu"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/3 text-xl text-white md:hidden"
+            onClick={() => setMobileMenu(true)}
+          >
+            <FiMenu />
+          </button>
+        </div>
+      </PageContainer>
 
       {mobileMenu && (
         <div className="fixed inset-0 z-[60] md:hidden">
@@ -268,8 +267,7 @@ const Navbar = () => {
                           setMobileSubMenu(null);
                         }}
                         className={({ isActive }) =>
-                          `block rounded-lg px-3 py-2.5 text-sm ${
-                            isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                          `block rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
                           }`
                         }
                       >
@@ -310,8 +308,7 @@ const Navbar = () => {
                         setMobileSubMenu(null);
                       }}
                       className={({ isActive }) =>
-                        `block rounded-lg px-3 py-2.5 text-sm ${
-                          isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                        `block rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
                         }`
                       }
                     >
