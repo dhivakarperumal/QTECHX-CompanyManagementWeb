@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import checkTokenStatus from './utils/tokenDebugger.js'
 import Home from './Componets/Home/Home.jsx'
 import Login from './Componets/Auth/Login.jsx'
 import Register from './Componets/Components/Register.jsx'
@@ -101,6 +102,7 @@ import AdminServicesSettingsPage from './Admin/Settings/AdminServicesSettingsPag
 import AdminPricingSettingsPage from './Admin/Settings/AdminPricingSettingsPage.jsx';
 import AdminReviewsSettingsPage from './Admin/Settings/AdminReviewsSettingsPage.jsx';
 import AdminJobsSettingsPage from './Admin/Settings/AdminJobsSettingsPage.jsx';
+import AdminJobApplicationsPage from './Admin/Settings/AdminJobApplicationsPage.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -361,6 +363,10 @@ const router = createHashRouter([
             element: <AdminJobsSettingsPage />,
           },
           {
+            path: 'settings/job-applications',
+            element: <AdminJobApplicationsPage />,
+          },
+          {
             path: 'settings/profile',
             element: <AdminProfile />,
           },
@@ -542,3 +548,8 @@ createRoot(document.getElementById('root')).render(
     </AuthProvider>
   </StrictMode>,
 )
+
+// Make token debugger available globally in browser console
+if (import.meta.env.DEV) {
+  console.log("🔐 Token debugger available. Run checkTokenStatus() in console to debug authentication.");
+}

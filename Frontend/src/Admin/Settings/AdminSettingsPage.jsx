@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -38,6 +38,13 @@ const AdminSettingsPage = () => {
       icon: BriefcaseBusiness,
       path: '/admin/settings/jobs',
       accent: 'from-amber-500/20 to-orange-600/10',
+    },
+    {
+      title: 'Job Applications',
+      description: 'View and manage all job applications, change applicant status, and download resumes.',
+      icon: FileText,
+      path: '/admin/settings/job-applications',
+      accent: 'from-blue-500/20 to-cyan-600/10',
     },
   ];
 

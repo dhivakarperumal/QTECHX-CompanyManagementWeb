@@ -410,6 +410,31 @@ class JobApplicationController {
       });
     }
   }
+
+  // Get all applications (admin only)
+  static async getAllApplications(req, res) {
+    try {
+      const { job_id, status, search } = req.query;
+      
+      const filter = {};
+      if (job_id) filter.job_id = parseInt(job_id);
+      if (status) filter.application_status = status;
+      if (search) filter.search = search;
+
+      const applications = await JobApplicationModel.getAllApplications(filter);
+      
+      res.json({ 
+        data: applications,
+        count: applications.length 
+      });
+    } catch (error) {
+      console.error("Error fetching all applications:", error);
+      res.status(500).json({
+        message: "Failed to fetch applications",
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = JobApplicationController;

@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const JobApplicationController = require("../controllers/jobApplicationController");
-const { authorize } = require("../security/authMiddleware");
+const { authenticate, authorize } = require("../security/authMiddleware");
 
 const router = express.Router();
 
@@ -64,6 +64,31 @@ router.get("/:job_id/form-data", async (req, res) => {
   }
 });
 
+// Admin/Recruiter routes - MUST BE BEFORE /:id routes
+// Get all applications
+router.get(
+  "/admin/all",
+  authenticate,
+  authorize("admin", "recruiter"),
+  JobApplicationController.getAllApplications
+);
+
+// Admin/Recruiter routes - Get application statistics
+router.get(
+  "/job/:job_id/stats",
+  authenticate,
+  authorize("admin", "recruiter"),
+  JobApplicationController.getApplicationStats
+);
+
+// Admin/Recruiter routes - Get all applications for a job
+router.get(
+  "/job/:job_id/list",
+  authenticate,
+  authorize("admin", "recruiter"),
+  JobApplicationController.getApplicationsByJob
+);
+
 // Public route - Submit application
 router.post(
   "/:job_id/submit",
@@ -77,43 +102,31 @@ router.post(
 );
 
 // Protected routes - Get my applications (logged-in user)
-router.get("/my-applications/list", authorize(), JobApplicationController.getMyApplications);
+router.get("/my-applications/list", authenticate, authorize(), JobApplicationController.getMyApplications);
 
 // Protected routes - Get application by ID
-router.get("/:id/view", JobApplicationController.getApplication);
+router.get("/:id/view", authenticate, JobApplicationController.getApplication);
 
 // Protected routes - Update application (applicant only)
-router.put("/:id/update", authorize(), JobApplicationController.updateApplication);
+router.put("/:id/update", authenticate, authorize(), JobApplicationController.updateApplication);
 
 // Protected routes - Download file from application
 router.get("/:id/download/:fileType", JobApplicationController.downloadFile);
 
-// Admin/Recruiter routes - Get all applications for a job
-router.get(
-  "/job/:job_id/list",
-  authorize(["admin", "recruiter"]),
-  JobApplicationController.getApplicationsByJob
-);
-
 // Admin/Recruiter routes - Update application status
 router.put(
   "/:id/status",
-  authorize(["admin", "recruiter"]),
+  authenticate,
+  authorize("admin", "recruiter"),
   JobApplicationController.updateApplicationStatus
 );
 
 // Admin/Recruiter routes - Delete application
 router.delete(
   "/:id/delete",
-  authorize(["admin", "recruiter"]),
+  authenticate,
+  authorize("admin", "recruiter"),
   JobApplicationController.deleteApplication
-);
-
-// Admin/Recruiter routes - Get application statistics
-router.get(
-  "/job/:job_id/stats",
-  authorize(["admin", "recruiter"]),
-  JobApplicationController.getApplicationStats
 );
 
 module.exports = router;

@@ -301,8 +301,8 @@ class JobApplicationModel {
       joining_date: row.joining_date,
       willing_to_relocate: row.willing_to_relocate,
       preferred_work_mode: row.preferred_work_mode,
-      education: row.education ? JSON.parse(row.education) : [],
-      skills: row.skills ? JSON.parse(row.skills) : [],
+      education_details: row.education ? JSON.parse(row.education) : [],
+      skills_details: row.skills ? JSON.parse(row.skills) : [],
       certifications: row.certifications,
       linkedin_url: row.linkedin_url,
       github_url: row.github_url,
@@ -313,6 +313,7 @@ class JobApplicationModel {
       certificates: row.certificates,
       screening_answers: row.screening_answers ? JSON.parse(row.screening_answers) : {},
       additional_information: row.additional_information,
+      status: row.application_status,
       application_status: row.application_status,
       recruiter_notes: row.recruiter_notes,
       applied_at: row.applied_at,
@@ -320,6 +321,8 @@ class JobApplicationModel {
       // Include job details if they exist
       job_title: row.job_title,
       company_name: row.company_name,
+      job_category: row.job_category,
+      employment_type: row.employment_type,
     };
   }
 
@@ -342,6 +345,53 @@ class JobApplicationModel {
       return rows[0] || { total: 0 };
     } catch (error) {
       throw new Error(`Failed to get application count: ${error.message}`);
+    }
+  }
+ 
+  // Get all applications with optional filtering
+  static async getAllApplications(filters = {}) {
+    const pool = getDB();
+    try {
+      let query = `
+        SELECT 
+          ja.*,
+          jp.job_title,
+          jp.company_name,
+          jp.job_category,
+          jp.employment_type,
+          jp.city,
+          jp.state,
+          jp.country,
+          jp.work_mode
+        FROM job_applications ja
+        LEFT JOIN job_posts jp ON ja.job_id = jp.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (filters.job_id) {
+        query += " AND ja.job_id = ?";
+        params.push(filters.job_id);
+      }
+
+      if (filters.application_status) {
+        query += " AND ja.application_status = ?";
+        params.push(filters.application_status);
+      }
+
+      if (filters.search) {
+        query += " AND (ja.full_name LIKE ? OR ja.email LIKE ? OR ja.phone LIKE ?)";
+        const searchTerm = `%${filters.search}%`;
+        params.push(searchTerm, searchTerm, searchTerm);
+      }
+
+      query += " ORDER BY ja.applied_at DESC";
+
+      const [rows] = await pool.execute(query, params);
+      
+      return rows.map((row) => this.normalizeApplicationRow(row));
+    } catch (error) {
+      throw new Error(`Failed to get applications: ${error.message}`);
     }
   }
 }
