@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from "react";
+import React, { useEffect,useState, useCallback } from "react";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -7,39 +7,51 @@ import { Link } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
 import ProjectCard from "../Components/ProjectCard";
+import api from "../../api";
 
 const ProjectPage = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetch("/Project.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        return res.json();
-      })
-      .then((data) => {
-        setProjects(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-      
-    AOS.init({ duration: 1200, easing: "ease-in-out", once: true });
+  const fetchProjects = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.get('/projects?limit=100&page=1');
+      const projectList = data.data || [];
+      setProjects(projectList);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchProjects();
+    AOS.init({ duration: 1200, easing: "ease-in-out", once: true });
+  }, [fetchProjects]);
 
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const categories = ["All", "E-Commerce", "Education", "Website", "Web Application"];
+  // Transform API response to match ProjectCard format
+  const transformedProjects = projects.map((proj) => ({
+    id: proj.uuid || proj.id,
+    title: proj.project_name || proj.title || 'Untitled',
+    image: proj.project_images ? (Array.isArray(proj.project_images) ? proj.project_images[0] : proj.project_images) : '/images/default-project.jpg',
+    link: proj.github_link || '#',
+    category: proj.project_category || 'General',
+    description: proj.description || '',
+    features: proj.frontend_tech ? (proj.frontend_tech.split(',').map(f => f.trim()).slice(0, 3)) : [],
+  }));
 
+  const categories = ["All", "E-Commerce", "Education", "Website", "Web Application"];
 
   const filteredProjects =
   selectedCategory === "All"
-    ? projects
-    : projects.filter((p) => p.category === selectedCategory);
+    ? transformedProjects
+    : transformedProjects.filter((p) => p.category === selectedCategory);
 
 
   if (loading) {
