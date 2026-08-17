@@ -11,7 +11,17 @@ function getUploadedCompanyLogo(req) {
 
 async function listJobs(req, res) {
   try {
-    const jobs = await jobModel.getAllJobs();
+    let jobs = await jobModel.getAllJobs();
+    const status = String(req.query.status || '').toLowerCase();
+
+    if (status === 'active') {
+      jobs = jobs.filter((job) => String(job.job_status || '').toLowerCase() === 'active');
+    }
+
+    if (req.query.public === 'true') {
+      jobs = jobs.filter((job) => String(job.visibility || 'Public').toLowerCase() === 'public');
+    }
+
     return res.status(200).json({ success: true, data: jobs });
   } catch (error) {
     console.error('Error fetching jobs:', error);

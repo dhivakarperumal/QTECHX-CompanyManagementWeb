@@ -8,6 +8,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import SocialMedia from "../Home/SocialMedia";
 import emailjs from "@emailjs/browser";
+import api from "../../api";
 
 const CareerDetail = () => {
   useEffect(() => {
@@ -27,14 +28,24 @@ const CareerDetail = () => {
   useEffect(() => {
     const fetchJobsData = async () => {
       try {
-        const response = await fetch("/Jobs.json");
-        if (!response.ok) {
-          throw new Error("Failed to fetch jobs");
-        }
-        const data = await response.json();
-        setJobs(data);
+        const { data: result } = await api.get("/jobs", {
+          params: { status: "active", public: true },
+        });
+
+        const data = Array.isArray(result?.data) ? result.data : [];
+        setJobs(data.map((job) => ({
+          id: job.id,
+          title: job.job_title || "Untitled Role",
+          desc: job.short_description || job.full_job_description || "Job description not available yet.",
+          type: job.employment_type || job.work_mode || "Full-time",
+          salary: job.minimum_salary && job.maximum_salary
+            ? `${job.currency || 'INR'} ${job.minimum_salary} - ${job.maximum_salary}`
+            : (job.minimum_salary ? `${job.currency || 'INR'} ${job.minimum_salary}` : "Competitive"),
+          company: job.company_name || "Q Techx",
+          location: job.city || job.state || job.country || "Remote",
+        })));
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || "Failed to fetch jobs");
       } finally {
         setLoading(false);
       }
@@ -306,7 +317,7 @@ const CareerDetail = () => {
                   >
                     <option value="">Select a position</option>
                     {jobs.map((job, i) => (
-                      <option key={i} value={job.title}>
+                      <option key={job.id ?? i} value={job.title}>
                         {job.title}
                       </option>
                     ))}
@@ -426,23 +437,28 @@ const CareerDetail = () => {
                 <div
                   data-aos="zoom-in-up"
                   data-aos-delay={i * 150}
-                  key={i}
+                  key={job.id ?? i}
                   className="bg-white shadow rounded-lg p-4 md:p-8 hover:shadow-lg transition"
                 >
-                  <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">
-                    {job.title}
-                  </h3>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-lg md:text-xl font-semibold text-primary mb-0">
+                      {job.title}
+                    </h3>
+                    <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                      {job.company}
+                    </span>
+                  </div>
                   <p className="text-gray-500 text-sm md:text-base mb-3">
                     {job.desc}
                   </p>
-                  <div className="flex items-center mt-6 gap-4 text-sm md:text-base text-gray-700">
+                  <div className="flex flex-wrap items-center mt-6 gap-3 text-sm md:text-base text-gray-700">
                     <span className="flex items-center gap-1 text-gray-900">
                       <Clock size={16} className="text-primary" /> {job.type}
                     </span>
                     <span className="flex items-center gap-1 text-gray-900">
-                      <IndianRupee size={16} className="text-primary" />{" "}
-                      {job.salary}
+                      <IndianRupee size={16} className="text-primary" /> {job.salary}
                     </span>
+                    <span className="text-gray-500 text-xs md:text-sm">{job.location}</span>
                   </div>
                 </div>
               ))}
