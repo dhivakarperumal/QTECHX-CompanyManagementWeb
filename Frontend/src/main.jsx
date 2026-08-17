@@ -96,6 +96,7 @@ import ReportsPage from './Admin/ReportsPage.jsx';
 import AdminProfile from './Admin/Settings/AdminProfile.jsx';
 import AdminSettingsPage from './Admin/Settings/AdminSettingsPage.jsx';
 import AdminLeaveSettingsPage from './Admin/Settings/AdminLeaveSettingsPage.jsx';
+import AdminServicesSettingsPage from './Admin/Settings/AdminServicesSettingsPage.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -337,6 +338,10 @@ const router = createHashRouter([
           {
             path: 'settings/leave',
             element: <AdminLeaveSettingsPage />,
+          },
+          {
+            path: 'settings/services',
+            element: <AdminServicesSettingsPage />,
           },
           {
             path: 'settings/profile',

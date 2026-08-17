@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -10,6 +10,13 @@ const AdminSettingsPage = () => {
       icon: CalendarDays,
       path: '/admin/settings/leave',
       accent: 'from-orange-500/20 to-orange-600/10',
+    },
+    {
+      title: 'Services',
+      description: 'Create and review all web and business service offerings.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/services',
+      accent: 'from-cyan-500/20 to-cyan-600/10',
     },
   ];
 

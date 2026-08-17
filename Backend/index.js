@@ -14,6 +14,7 @@ console.table({
 });
 
 const { initDB } = require("./src/config/db");
+const { upload } = require("./src/config/multerConfig");
 const usersRouter = require("./src/routers/usersRouter");
 const employeesRouter = require("./src/routers/employeesRouter");
 const attendanceRouter = require("./src/routers/attendanceRouter");
@@ -37,6 +38,7 @@ const dashboardRouter = require("./src/routers/dashboardRouter");
 const employeeLeaveRouter = require("./src/routers/employeeLeaveRouter");
 const leaveSettingsRouter = require("./src/routers/leaveSettingsRouter");
 const traineeAssignmentRouter = require("./src/routers/traineeAssignmentRouter");
+const serviceRouter = require("./src/routers/serviceRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -92,7 +94,32 @@ app.use("/api/myevents", myEventRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/employee-leaves", employeeLeaveRouter);
 app.use("/api/leave-settings", leaveSettingsRouter);
+app.use("/api/services", serviceRouter);
 app.use("/api/trainee-assignments", traineeAssignmentRouter);
+
+app.post("/api/upload", upload.any(), (req, res) => {
+  const files = Array.isArray(req.files) ? req.files : [];
+
+  if (!files.length) {
+    return res.status(400).json({
+      success: false,
+      message: "No file uploaded",
+    });
+  }
+
+  const urls = files.map((file) => {
+    const relativePath = path.relative(__dirname, file.path).replace(/\\/g, "/");
+    return `/${relativePath}`;
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "File uploaded successfully",
+    url: urls[0],
+    urls,
+    data: urls,
+  });
+});
 
 // Health check (must be before the catch-all /api/* 404 handler)
 app.get("/api/health", (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'development' }));

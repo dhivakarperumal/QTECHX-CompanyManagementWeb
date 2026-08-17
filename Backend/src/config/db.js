@@ -1497,6 +1497,94 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensureServicesSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'services'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS services (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        service_code VARCHAR(100) NOT NULL UNIQUE,
+        icon VARCHAR(255) NULL,
+        icon1 VARCHAR(255) NULL,
+        image VARCHAR(255) NULL,
+        singlepageimage JSON NULL,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(150) NULL,
+        subcategory VARCHAR(200) NULL,
+        tagline VARCHAR(255) NULL,
+        short_description TEXT NULL,
+        description TEXT NULL,
+        detailed_description LONGTEXT NULL,
+        what_we_offer JSON NULL,
+        key_features JSON NULL,
+        why_choose_us JSON NULL,
+        technologies_we_use JSON NULL,
+        service_process JSON NULL,
+        industries JSON NULL,
+        project_type JSON NULL,
+        pricing JSON NULL,
+        duration JSON NULL,
+        cta_button VARCHAR(200) NULL,
+        cta_link VARCHAR(255) NULL,
+        seo JSON NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        featured TINYINT(1) NOT NULL DEFAULT 0,
+        display_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by INT NULL,
+        updated_by INT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM services");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('service_code', 'VARCHAR(100) NOT NULL UNIQUE');
+  addColumn('icon', 'VARCHAR(255) NULL');
+  addColumn('icon1', 'VARCHAR(255) NULL');
+  addColumn('image', 'VARCHAR(255) NULL');
+  addColumn('singlepageimage', 'JSON NULL');
+  addColumn('title', 'VARCHAR(255) NOT NULL');
+  addColumn('category', 'VARCHAR(150) NULL');
+  addColumn('subcategory', 'VARCHAR(200) NULL');
+  addColumn('tagline', 'VARCHAR(255) NULL');
+  addColumn('short_description', 'TEXT NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('detailed_description', 'LONGTEXT NULL');
+  addColumn('what_we_offer', 'JSON NULL');
+  addColumn('key_features', 'JSON NULL');
+  addColumn('why_choose_us', 'JSON NULL');
+  addColumn('technologies_we_use', 'JSON NULL');
+  addColumn('service_process', 'JSON NULL');
+  addColumn('industries', 'JSON NULL');
+  addColumn('project_type', 'JSON NULL');
+  addColumn('pricing', 'JSON NULL');
+  addColumn('duration', 'JSON NULL');
+  addColumn('cta_button', 'VARCHAR(200) NULL');
+  addColumn('cta_link', 'VARCHAR(255) NULL');
+  addColumn('seo', 'JSON NULL');
+  addColumn('status', "VARCHAR(50) NOT NULL DEFAULT 'active'");
+  addColumn('featured', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('display_order', 'INT NOT NULL DEFAULT 0');
+  addColumn('created_by', 'INT NULL');
+  addColumn('updated_by', 'INT NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE services ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureLeaveSettingsSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'employee_leave_settings'");
 
@@ -1665,6 +1753,7 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
+    await ensureServicesSchema(pool);
     await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);
