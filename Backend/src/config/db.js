@@ -1497,6 +1497,54 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensurePricingSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'pricing_plans'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS pricing_plans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        plan_title VARCHAR(255) NOT NULL,
+        price VARCHAR(255) NULL,
+        audience VARCHAR(255) NULL,
+        description TEXT NULL,
+        features JSON NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        display_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM pricing_plans");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('plan_title', 'VARCHAR(255) NOT NULL');
+  addColumn('price', 'VARCHAR(255) NULL');
+  addColumn('audience', 'VARCHAR(255) NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('features', 'JSON NULL');
+  addColumn('status', "VARCHAR(50) NOT NULL DEFAULT 'active'");
+  addColumn('display_order', 'INT NOT NULL DEFAULT 0');
+  addColumn('created_by', 'VARCHAR(36) NULL');
+  addColumn('updated_by', 'VARCHAR(36) NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE pricing_plans ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureServicesSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'services'");
 
@@ -1754,6 +1802,7 @@ async function initDB() {
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
+    await ensurePricingSchema(pool);
     await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);

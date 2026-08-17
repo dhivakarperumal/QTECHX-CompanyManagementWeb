@@ -18,6 +18,13 @@ const AdminSettingsPage = () => {
       path: '/admin/settings/services',
       accent: 'from-cyan-500/20 to-cyan-600/10',
     },
+    {
+      title: 'Pricing',
+      description: 'Manage pricing plans and their included features.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/pricing',
+      accent: 'from-emerald-500/20 to-emerald-600/10',
+    },
   ];
 
   return (
