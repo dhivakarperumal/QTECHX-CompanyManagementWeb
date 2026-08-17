@@ -32,6 +32,9 @@ const uploadFields = upload.fields([
 ]);
 
 // ─── Project CRUD ──────────────────────────────────────────────────────────────
+// Public endpoint - no authentication required
+router.get(   '/public/all', getAllProjectsHandler);
+
 router.post(  '/',    authenticate, managers, uploadFields, createProjectHandler);
 router.get(   '/next-code', authenticate, managers, getNextProjectCodeHandler);
 router.get(   '/',    authenticate, allStaff, getAllProjectsHandler);

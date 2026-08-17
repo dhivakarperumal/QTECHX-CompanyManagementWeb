@@ -18,7 +18,7 @@ const ProjectPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get('/projects?limit=100&page=1');
+      const { data } = await api.get('/projects/public/all?limit=100&page=1');
       const projectList = data.data || [];
       setProjects(projectList);
     } catch (err) {
