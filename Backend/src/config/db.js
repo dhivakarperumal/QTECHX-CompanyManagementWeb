@@ -1497,6 +1497,56 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensureReviewsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'reviews'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        customer_name VARCHAR(255) NOT NULL,
+        product_name VARCHAR(255) NULL,
+        rating INT NOT NULL DEFAULT 5,
+        review_title VARCHAR(255) NULL,
+        review TEXT NOT NULL,
+        admin_reply TEXT NULL,
+        status ENUM('Pending', 'Approved', 'Rejected', 'Reported') NOT NULL DEFAULT 'Pending',
+        featured TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM reviews");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('customer_name', 'VARCHAR(255) NOT NULL');
+  addColumn('product_name', 'VARCHAR(255) NULL');
+  addColumn('rating', 'INT NOT NULL DEFAULT 5');
+  addColumn('review_title', 'VARCHAR(255) NULL');
+  addColumn('review', 'TEXT NOT NULL');
+  addColumn('admin_reply', 'TEXT NULL');
+  addColumn('status', "ENUM('Pending', 'Approved', 'Rejected', 'Reported') NOT NULL DEFAULT 'Pending'");
+  addColumn('featured', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('created_by', 'VARCHAR(36) NULL');
+  addColumn('updated_by', 'VARCHAR(36) NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE reviews ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensurePricingSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'pricing_plans'");
 
@@ -1803,6 +1853,7 @@ async function initDB() {
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
     await ensurePricingSchema(pool);
+    await ensureReviewsSchema(pool);
     await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);

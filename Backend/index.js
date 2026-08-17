@@ -42,6 +42,7 @@ const leaveSettingsRouter = require("./src/routers/leaveSettingsRouter");
 const traineeAssignmentRouter = require("./src/routers/traineeAssignmentRouter");
 const serviceRouter = require("./src/routers/serviceRouter");
 const pricingRouter = require("./src/routers/pricingRouter");
+const reviewRouter = require("./src/routers/reviewRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -99,6 +100,7 @@ app.use("/api/employee-leaves", employeeLeaveRouter);
 app.use("/api/leave-settings", leaveSettingsRouter);
 app.use("/api/services", serviceRouter);
 app.use("/api/pricing", pricingRouter);
+app.use("/api/reviews", reviewRouter);
 app.use("/api/trainee-assignments", traineeAssignmentRouter);
 
 app.post("/api/upload", upload.any(), (req, res) => {

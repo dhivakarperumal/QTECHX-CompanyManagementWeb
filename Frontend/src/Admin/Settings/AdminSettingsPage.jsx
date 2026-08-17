@@ -25,6 +25,13 @@ const AdminSettingsPage = () => {
       path: '/admin/settings/pricing',
       accent: 'from-emerald-500/20 to-emerald-600/10',
     },
+    {
+      title: 'Reviews',
+      description: 'Manage customer testimonials, ratings, status, and admin replies.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/reviews',
+      accent: 'from-violet-500/20 to-violet-600/10',
+    },
   ];
 
   return (
