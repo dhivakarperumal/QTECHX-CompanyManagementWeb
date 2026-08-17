@@ -5,6 +5,7 @@ import { FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import ProjectCard from "../Components/ProjectCard";
+import api from "../../api";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
@@ -17,19 +18,49 @@ const Projects = () => {
   const [slidesToShow, setSlidesToShow] = useState(3);
 
   useEffect(() => {
-    fetch("/Project.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        return res.json();
-      })
-      .then((data) => {
-        setItems(data);
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.get('/projects/public/all?limit=100&page=1');
+        if (data.success && Array.isArray(data.data)) {
+          // Transform API data to match ProjectCard format
+          const transformedProjects = data.data.map((project) => {
+            let projectImages = [];
+            if (project.project_images) {
+              if (typeof project.project_images === 'string') {
+                try {
+                  projectImages = JSON.parse(project.project_images);
+                } catch {
+                  projectImages = [];
+                }
+              } else if (Array.isArray(project.project_images)) {
+                projectImages = project.project_images;
+              }
+            }
+
+            const features = project.frontend_tech
+              ? project.frontend_tech.split(',').map(tech => tech.trim())
+              : [];
+
+            return {
+              id: project.id,
+              title: project.project_name || '',
+              image: projectImages[0] || '/images/default-project.jpg',
+              category: project.project_category || 'General',
+              description: project.project_description || '',
+              features: features,
+              link: project.github_link || '#',
+            };
+          });
+          setItems(transformedProjects);
+        }
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
+      } catch (err) {
+        setError(err.message || 'Failed to fetch projects');
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProjects();
   }, []);
 
   useEffect(() => {
