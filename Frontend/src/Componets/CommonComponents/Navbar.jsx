@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import Button from "../Components/Button";
+import api from "../../api";
 import {
   FaCode,
   FaLaptopCode,
@@ -21,6 +22,7 @@ const Navbar = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mobileSubMenu, setMobileSubMenu] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [services, setServices] = useState([]);
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,12 +34,20 @@ const Navbar = () => {
     navigate("/login", { replace: true });
   };
 
-  const services = [
-    { id: 1, title: "Web Development", path: "/services/1", icon: "FaLaptopCode" },
-    { id: 5, title: "Mobile App Development", path: "/services/5", icon: "FaMobileAlt" },
-    { id: 3, title: "UI/UX Design", path: "/services/3", icon: "FaPaintBrush" },
-    { id: 10, title: "Digital Marketing", path: "/services/10", icon: "FaBullhorn" },
-  ];
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data } = await api.get('/services/public/all');
+        if (data.success && Array.isArray(data.data)) {
+          setServices(data.data);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch services for navbar:', err?.message);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const whoWeAreLinks = [
     { id: 1, title: "Why Choose Us", path: "/whychooseus" },
@@ -121,23 +131,27 @@ const Navbar = () => {
           </div>
           {openMenu === "services" && (
             <div className="absolute left-[-2.5rem] top-full mt-2 grid w-[24rem] grid-cols-2 gap-2 rounded-md bg-white p-4 shadow-lg z-50">
-              {services.map((srv) => {
-                const Icon = iconMap[srv.icon] || FaCode;
-                return (
-                  <NavLink
-                    key={srv.id}
-                    to={srv.path}
-                    className={({ isActive }) =>
-                      isActive
-                        ? "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary"
-                        : "flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-                    }
-                  >
-                    <Icon className="text-xl text-primary" />
-                    {srv.title}
-                  </NavLink>
-                );
-              })}
+              {services.length > 0 ? (
+                services.map((srv) => {
+                  const Icon = iconMap[srv.icon] || FaCode;
+                  return (
+                    <NavLink
+                      key={srv.id}
+                      to={`/services/${srv.id}`}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary"
+                          : "flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                      }
+                    >
+                      <Icon className="text-xl text-primary" />
+                      {srv.title}
+                    </NavLink>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-500">Loading services...</p>
+              )}
             </div>
           )}
         </li>
@@ -341,25 +355,29 @@ const Navbar = () => {
             </div>
 
             {mobileSubMenu === "services" &&
-              services.map((srv) => {
-                const Icon = iconMap[srv.icon] || FaCode;
-                return (
-                  <NavLink
-                    key={srv.id}
-                    to={srv.path}
-                    onClick={() => {
-                      setMobileMenu(false);
-                      setMobileSubMenu(null);
-                    }}
-                    className={({ isActive }) =>
-                      isActive ? "flex items-center gap-2 py-2 font-medium text-primary" : "flex items-center gap-2 py-2 text-gray-900 hover:text-primary"
-                    }
-                  >
-                    <Icon className="text-xl text-primary" />
-                    {srv.title}
-                  </NavLink>
-                );
-              })}
+              (services.length > 0 ? (
+                services.map((srv) => {
+                  const Icon = iconMap[srv.icon] || FaCode;
+                  return (
+                    <NavLink
+                      key={srv.id}
+                      to={`/services/${srv.id}`}
+                      onClick={() => {
+                        setMobileMenu(false);
+                        setMobileSubMenu(null);
+                      }}
+                      className={({ isActive }) =>
+                        isActive ? "flex items-center gap-2 py-2 font-medium text-primary" : "flex items-center gap-2 py-2 text-gray-900 hover:text-primary"
+                      }
+                    >
+                      <Icon className="text-xl text-primary" />
+                      {srv.title}
+                    </NavLink>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-500">Loading services...</p>
+              ))}
 
             {mobileSubMenu === "whoWeAre" &&
               whoWeAreLinks.map((item) => (
