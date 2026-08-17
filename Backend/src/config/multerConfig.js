@@ -11,6 +11,7 @@ const expenseUploadDir = path.join(uploadDir, "expenses");
 const taskUploadDir = path.join(uploadDir, "tasks");
 const myEventUploadDir = path.join(uploadDir, "myevents");
 const serviceUploadDir = path.join(uploadDir, "services");
+const jobUploadDir = path.join(uploadDir, "jobs");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -38,6 +39,9 @@ if (!fs.existsSync(myEventUploadDir)) {
 }
 if (!fs.existsSync(serviceUploadDir)) {
   fs.mkdirSync(serviceUploadDir, { recursive: true });
+}
+if (!fs.existsSync(jobUploadDir)) {
+  fs.mkdirSync(jobUploadDir, { recursive: true });
 }
 
 const projectImagesDir = path.join(projectUploadDir, "images");
@@ -87,6 +91,8 @@ const storage = multer.diskStorage({
       destinationDir = expenseUploadDir;
     } else if (req.baseUrl?.includes("/services")) {
       destinationDir = serviceUploadDir;
+    } else if (req.baseUrl?.includes("/jobs")) {
+      destinationDir = jobUploadDir;
     } else {
       destinationDir = employeeUploadDir;
     }

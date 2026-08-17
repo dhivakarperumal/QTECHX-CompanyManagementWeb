@@ -2048,14 +2048,12 @@ async function ensureJobsSchema(pool) {
   }
 }
 
-async function ensureJobsSchema(pool) {
-  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'job_posts'");
+async function ensureServicesSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'services'");
+
   if (!existingTables.length) {
-    await pool.execute(`CREATE TABLE IF NOT EXISTS job_posts (...)`);
-    return;
-  }
-  // compatibility block intentionally left empty
-}
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS services (
         id INT AUTO_INCREMENT PRIMARY KEY,
         service_code VARCHAR(100) NOT NULL UNIQUE,
         icon VARCHAR(255) NULL,

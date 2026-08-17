@@ -150,15 +150,26 @@ const statusStyles = {
 
 const sortJobs = (jobs) => [...jobs].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-const Section = ({ title, icon: Icon, children }) => (
+const Section = ({ title, icon: Icon, children, collapsible = false, isOpen = true, onToggle }) => (
   <section className="rounded-3xl border border-white/10 bg-[#111827]/80 p-5 shadow-lg shadow-black/10">
-    <div className="mb-5 flex items-center gap-3 border-b border-white/10 pb-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
-        <Icon size={16} />
+    <div className="mb-5 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
+          <Icon size={16} />
+        </div>
+        <h3 className="text-base font-semibold text-white">{title}</h3>
       </div>
-      <h3 className="text-base font-semibold text-white">{title}</h3>
+      {collapsible && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-200 hover:bg-white/10"
+        >
+          {isOpen ? 'Hide' : 'Show'}
+        </button>
+      )}
     </div>
-    <div className="space-y-5">{children}</div>
+    {(!collapsible || isOpen) && <div className="space-y-5">{children}</div>}
   </section>
 );
 
@@ -231,6 +242,11 @@ const AdminJobsSettingsPage = () => {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [companyLogoFile, setCompanyLogoFile] = useState(null);
+  const [companyLogoPreview, setCompanyLogoPreview] = useState('');
+  const [showSeoSettings, setShowSeoSettings] = useState(false);
+  const [showSystemInfo, setShowSystemInfo] = useState(false);
+  const [showTracking, setShowTracking] = useState(false);
   const [formData, setFormData] = useState(normalizeJob(blankJob));
 
   const fetchJobs = async () => {
@@ -285,7 +301,18 @@ const AdminJobsSettingsPage = () => {
   const closeDrawer = () => {
     setIsDrawerOpen(false);
     setEditingId(null);
+    setCompanyLogoFile(null);
+    setCompanyLogoPreview('');
     setFormData(normalizeJob(blankJob));
+  };
+
+  const handleCompanyLogoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCompanyLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setCompanyLogoPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const updateField = (field, value) => {
@@ -419,11 +446,28 @@ const AdminJobsSettingsPage = () => {
 
     try {
       setSaving(true);
+
+      const formToSubmit = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        if (Array.isArray(value) || typeof value === 'object') {
+          formToSubmit.append(key, JSON.stringify(value));
+          return;
+        }
+        formToSubmit.append(key, String(value));
+      });
+
+      if (companyLogoFile) {
+        formToSubmit.append('company_logo', companyLogoFile);
+      } else if (formData.company_logo) {
+        formToSubmit.append('company_logo', formData.company_logo);
+      }
+
       if (editingId) {
-        await api.put(`/jobs/${editingId}`, payload);
+        await api.put(`/jobs/${editingId}`, formToSubmit);
         toast.success('Job updated successfully');
       } else {
-        await api.post('/jobs', payload);
+        await api.post('/jobs', formToSubmit);
         toast.success('Job created successfully');
       }
       await fetchJobs();
@@ -610,7 +654,15 @@ const AdminJobsSettingsPage = () => {
                     <input value={formData.company_name} onChange={(e) => updateField('company_name', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" placeholder="Q Techx" />
                   </FormField>
                   <FormField label="Company Logo">
-                    <input value={formData.company_logo} onChange={(e) => updateField('company_logo', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" placeholder="https://.../logo.png" />
+                    <div className="space-y-3">
+                      <input type="file" accept="image/*" onChange={handleCompanyLogoChange} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-orange-500 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white" />
+                      {(companyLogoPreview || formData.company_logo) && (
+                        <div className="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-950/80 p-2">
+                          <img src={companyLogoPreview || formData.company_logo} alt="Company logo preview" className="h-14 w-14 rounded-xl object-cover" />
+                          <span className="text-xs text-slate-300">{companyLogoFile ? companyLogoFile.name : 'Current logo'}</span>
+                        </div>
+                      )}
+                    </div>
                   </FormField>
                   <FormField label="Company Website">
                     <input value={formData.company_website} onChange={(e) => updateField('company_website', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" placeholder="https://qtechx.com" />
@@ -941,7 +993,13 @@ const AdminJobsSettingsPage = () => {
                 </div>
               </Section>
 
-              <Section title="SEO & Social Sharing" icon={ImageIcon}>
+              <Section
+                title="SEO & Social Sharing"
+                icon={ImageIcon}
+                collapsible
+                isOpen={showSeoSettings}
+                onToggle={() => setShowSeoSettings((prev) => !prev)}
+              >
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   <FormField label="URL Slug">
                     <input value={formData.url_slug} onChange={(e) => updateField('url_slug', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" placeholder="senior-product-designer" />
@@ -971,7 +1029,13 @@ const AdminJobsSettingsPage = () => {
                 </div>
               </Section>
 
-              <Section title="Recruitment Tracking" icon={ChevronRight}>
+              <Section
+                title="Recruitment Tracking"
+                icon={ChevronRight}
+                collapsible
+                isOpen={showTracking}
+                onToggle={() => setShowTracking((prev) => !prev)}
+              >
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                   {[
                     ['Total Applications', 'total_applications'],
@@ -990,7 +1054,13 @@ const AdminJobsSettingsPage = () => {
                 </div>
               </Section>
 
-              <Section title="System Information" icon={FileText}>
+              <Section
+                title="System Information"
+                icon={FileText}
+                collapsible
+                isOpen={showSystemInfo}
+                onToggle={() => setShowSystemInfo((prev) => !prev)}
+              >
                 <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                   <FormField label="Created By"><input value={formData.created_by} onChange={(e) => updateField('created_by', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" /></FormField>
                   <FormField label="Updated By"><input value={formData.updated_by} onChange={(e) => updateField('updated_by', e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-orange-400 focus:outline-none" /></FormField>

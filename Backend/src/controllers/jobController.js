@@ -1,4 +1,13 @@
+const path = require('path');
 const jobModel = require('../models/jobModel');
+
+function getUploadedCompanyLogo(req) {
+  const file = req.file;
+  if (!file) return req.body.company_logo || null;
+  const uploadRoot = path.join(__dirname, '../../uploads');
+  const relativePath = path.relative(uploadRoot, file.path).split(path.sep).join('/');
+  return `/uploads/${relativePath}`;
+}
 
 async function listJobs(req, res) {
   try {
@@ -29,6 +38,7 @@ async function createJob(req, res) {
     const actor = req.user?.employee_id || req.user?.id || req.user?.user_id || null;
     const job = await jobModel.createJob({
       ...req.body,
+      company_logo: getUploadedCompanyLogo(req),
       created_by: actor,
       updated_by: actor,
     });
@@ -45,6 +55,7 @@ async function updateJob(req, res) {
     const actor = req.user?.employee_id || req.user?.id || req.user?.user_id || null;
     const job = await jobModel.updateJob(id, {
       ...req.body,
+      company_logo: getUploadedCompanyLogo(req),
       updated_by: actor,
     });
     return res.status(200).json({ success: true, message: 'Job updated successfully', data: job });
