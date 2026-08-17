@@ -31,7 +31,6 @@ const EventBanner = () => {
         backgroundImage: "url('/images/student event.png')",
       }}
     >
-      {/* ================= CONTENT ================= */}
       {/* Light background blur */}
       <div className="absolute inset-0 bg-black/5 backdrop-blur-[0.5px]" />
 
