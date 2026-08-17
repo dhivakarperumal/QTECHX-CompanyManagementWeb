@@ -336,7 +336,7 @@ const AdminServicesSettingsPage = () => {
         for (const file of draft.singlepageImageFiles) {
           const formData = new FormData();
           formData.append("file", file);
-          const uploadRes = await api.post("/api/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+          const uploadRes = await api.post("upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
           payload.singlepageimage.push(uploadRes.data.url || uploadRes.data.urls?.[0]);
         }
       }
@@ -728,14 +728,6 @@ const AdminServicesSettingsPage = () => {
               <div>
                 <label className="mb-2 block text-sm text-white/60">Image</label>
                 <input value={draft.image} onChange={(e) => updateField('image', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="FaCode" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/60">CTA Button</label>
-                <input value={draft.cta_button} onChange={(e) => updateField('cta_button', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="Get in Touch" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/60">CTA Link</label>
-                <input value={draft.cta_link} onChange={(e) => updateField('cta_link', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="/contact" />
               </div>
             </div>
 

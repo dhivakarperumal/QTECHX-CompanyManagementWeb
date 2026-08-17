@@ -15,6 +15,8 @@ console.table({
 
 const { initDB } = require("./src/config/db");
 const { upload } = require("./src/config/multerConfig");
+const cartStore = new Map();
+const wishlistStore = new Map();
 const usersRouter = require("./src/routers/usersRouter");
 const employeesRouter = require("./src/routers/employeesRouter");
 const attendanceRouter = require("./src/routers/attendanceRouter");
@@ -119,6 +121,86 @@ app.post("/api/upload", upload.any(), (req, res) => {
     urls,
     data: urls,
   });
+});
+
+app.get("/api/cart/:userId", (req, res) => {
+  const cart = cartStore.get(req.params.userId) || [];
+  res.json({ success: true, data: cart });
+});
+
+app.post("/api/cart", (req, res) => {
+  const userId = req.body.user_id;
+  if (!userId) return res.status(400).json({ success: false, message: "user_id is required" });
+
+  const current = cartStore.get(userId) || [];
+  const item = { ...req.body, id: req.body.id || Date.now().toString(), created_at: new Date().toISOString() };
+  const next = [...current, item];
+  cartStore.set(userId, next);
+  res.status(201).json({ success: true, data: item, cart: next });
+});
+
+app.put("/api/cart/:cartItemId", (req, res) => {
+  let found = null;
+  for (const [userId, items] of cartStore.entries()) {
+    const idx = items.findIndex((item) => String(item.id) === String(req.params.cartItemId));
+    if (idx >= 0) {
+      items[idx] = { ...items[idx], ...req.body, updated_at: new Date().toISOString() };
+      found = items[idx];
+      cartStore.set(userId, items);
+      break;
+    }
+  }
+
+  if (!found) return res.status(404).json({ success: false, message: "Cart item not found" });
+  res.json({ success: true, data: found });
+});
+
+app.delete("/api/cart/:cartItemId", (req, res) => {
+  let removed = false;
+  for (const [userId, items] of cartStore.entries()) {
+    const next = items.filter((item) => String(item.id) !== String(req.params.cartItemId));
+    if (next.length !== items.length) {
+      cartStore.set(userId, next);
+      removed = true;
+      break;
+    }
+  }
+
+  if (!removed) return res.status(404).json({ success: false, message: "Cart item not found" });
+  res.json({ success: true, message: "Removed from cart" });
+});
+
+app.delete("/api/cart/clear/:userId", (req, res) => {
+  cartStore.set(req.params.userId, []);
+  res.json({ success: true, message: "Cart cleared" });
+});
+
+app.get("/api/wishlist/:userId", (req, res) => {
+  const wishlist = wishlistStore.get(req.params.userId) || [];
+  res.json({ success: true, data: wishlist });
+});
+
+app.post("/api/wishlist", (req, res) => {
+  const userId = req.body.user_id;
+  if (!userId) return res.status(400).json({ success: false, message: "user_id is required" });
+
+  const current = wishlistStore.get(userId) || [];
+  const exists = current.some((item) => String(item.product_id) === String(req.body.product_id));
+  if (exists) {
+    return res.status(200).json({ success: true, data: current, wishlist: current });
+  }
+
+  const item = { ...req.body, id: req.body.id || Date.now().toString(), created_at: new Date().toISOString() };
+  const next = [...current, item];
+  wishlistStore.set(userId, next);
+  res.status(201).json({ success: true, data: item, wishlist: next });
+});
+
+app.delete("/api/wishlist/:userId/:productId", (req, res) => {
+  const current = wishlistStore.get(req.params.userId) || [];
+  const next = current.filter((item) => String(item.product_id) !== String(req.params.productId));
+  wishlistStore.set(req.params.userId, next);
+  res.json({ success: true, data: next, wishlist: next });
 });
 
 // Health check (must be before the catch-all /api/* 404 handler)
