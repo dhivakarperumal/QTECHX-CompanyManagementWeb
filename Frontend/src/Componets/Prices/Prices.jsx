@@ -4,6 +4,7 @@ import Head from "../Components/Head";
 import { Link } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
+import api from "../../api";
 
 const Prices = () => {
   const [items, setItems] = useState([]);
@@ -13,14 +14,14 @@ const Prices = () => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await fetch("/Price.json");
-        if (!response.ok) {
-          throw new Error("Failed to fetch prices");
+        const { data } = await api.get('/pricing/public/all');
+        if (data.success && Array.isArray(data.data)) {
+          setItems(data.data);
+        } else {
+          setError('No pricing plans found');
         }
-        const data = await response.json();
-        setItems(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to fetch pricing plans');
       } finally {
         setLoading(false);
       }
