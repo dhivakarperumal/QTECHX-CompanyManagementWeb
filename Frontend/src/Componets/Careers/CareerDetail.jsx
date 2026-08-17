@@ -66,6 +66,15 @@ const CareerDetail = () => {
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState(false);
 
+  const handleApplyJob = (jobTitle) => {
+    setForm((prev) => ({ ...prev, position: jobTitle || "" }));
+    setErrors((prev) => ({ ...prev, position: "" }));
+    document.getElementById("career-application-form")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -193,6 +202,7 @@ const CareerDetail = () => {
             {/* Form */}
             <div className="md:w-1/2 w-full p-4 md:p-8">
               <form
+                id="career-application-form"
                 onSubmit={handleSubmit}
                 className="grid grid-cols-1 md:grid-cols-2 gap-6 relative"
               >
@@ -460,6 +470,14 @@ const CareerDetail = () => {
                     </span>
                     <span className="text-gray-500 text-xs md:text-sm">{job.location}</span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleApplyJob(job.title)}
+                    className="mt-5 w-full bg-primary text-white font-semibold rounded-xl py-3 hover:bg-primary/90 transition duration-200"
+                  >
+                    Apply
+                  </button>
                 </div>
               ))}
             </div>
