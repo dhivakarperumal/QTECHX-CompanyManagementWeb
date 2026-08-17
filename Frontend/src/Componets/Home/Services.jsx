@@ -65,8 +65,8 @@ function Services() {
       } catch (err) {
         setError(
           err?.response?.data?.message ||
-            err.message ||
-            "Failed to load services"
+          err.message ||
+          "Failed to load services"
         );
 
         setServices([]);
@@ -92,9 +92,9 @@ function Services() {
         className="pointer-events-none absolute inset-0 opacity-[0.025]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(255,106,0,0.8) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,106,0,0.8) 1px, transparent 1px)
-          `,
+              linear-gradient(rgba(255,106,0,0.8) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,106,0,0.8) 1px, transparent 1px)
+            `,
           backgroundSize: "70px 70px",
         }}
       />
@@ -175,181 +175,221 @@ function Services() {
                   >
                     <article
                       className="
-                        relative
-                        flex
-                        min-h-[320px]
-                        flex-col
-                        overflow-hidden
-                        rounded-2xl
-                        border
-                        border-white/10
-                        bg-[#0b0f12]
-                        p-6
-                        transition-all
-                        duration-500
-                        hover:-translate-y-2
-                        hover:border-[#FF6A00]/40
-                        hover:bg-[#0e1215]
-                        hover:shadow-[0_20px_50px_rgba(255,106,0,0.12)]
-                      "
+    group
+    relative
+    flex
+    min-h-[330px]
+    flex-col
+    overflow-hidden
+    rounded-[20px]
+    border
+    border-white/[0.08]
+    bg-[#11161b]
+    p-6
+    transition-all
+    duration-500
+    hover:-translate-y-2
+    hover:border-[#FF6A00]/50
+    hover:bg-[#0b0e12]
+    hover:shadow-[0_20px_60px_rgba(255,106,0,0.15)]
+  "
                     >
+                      {/* ================= ORANGE GLOW ================= */}
 
-                      {/* Orange corner glow */}
                       <div
                         className="
-                          pointer-events-none
-                          absolute
-                          -right-16
-                          -top-16
-                          h-40
-                          w-40
-                          rounded-full
-                          bg-[#FF6A00]/10
-                          blur-3xl
-                          transition-all
-                          duration-500
-                          group-hover:bg-[#FF6A00]/20
-                        "
+      pointer-events-none
+      absolute
+      -right-20
+      -top-20
+      h-44
+      w-44
+      rounded-full
+      bg-[#FF6A00]/10
+      blur-[70px]
+      transition-all
+      duration-500
+      group-hover:bg-[#FF6A00]/25
+    "
                       />
 
-                      {/* Orange top line */}
+                      {/* ================= TOP ACCENT ================= */}
+
                       <div
                         className="
-                          absolute
-                          left-6
-                          right-6
-                          top-0
-                          h-px
-                          bg-gradient-to-r
-                          from-transparent
-                          via-[#FF6A00]/0
-                          to-transparent
-                          transition-all
-                          duration-500
-                          group-hover:via-[#FF6A00]
-                        "
+      absolute
+      left-0
+      top-0
+      h-[2px]
+      w-0
+      bg-[#FF6A00]
+      transition-all
+      duration-500
+      group-hover:w-full
+    "
                       />
 
-                      {/* Icon */}
+                      {/* ================= CARD NUMBER ================= */}
+
+                      <span
+                        className="
+      absolute
+      right-5
+      top-5
+      text-xs
+      font-bold
+      tracking-[0.15em]
+      text-white/10
+      transition-colors
+      duration-300
+      group-hover:text-[#FF6A00]/30
+    "
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+
+                      {/* ================= ICON ================= */}
+
                       <div className="relative z-10 mb-7">
 
                         <div
                           className="
-                            flex
-                            h-14
-                            w-14
-                            items-center
-                            justify-center
-                            rounded-2xl
-                            border
-                            border-[#FF6A00]/20
-                            bg-[#FF6A00]/10
-                            transition-all
-                            duration-500
-                            group-hover:border-[#FF6A00]
-                            group-hover:bg-[#FF6A00]
-                            group-hover:shadow-[0_0_25px_rgba(255,106,0,0.25)]
-                          "
+        flex
+        h-16
+        w-16
+        items-center
+        justify-center
+        rounded-2xl
+        border
+        border-[#FF6A00]/25
+        bg-[#FF6A00]/10
+        transition-all
+        duration-500
+        group-hover:border-[#FF6A00]
+        group-hover:bg-[#FF6A00]
+        group-hover:shadow-[0_0_30px_rgba(255,106,0,0.25)]
+      "
                         >
                           {Icon ? (
                             <Icon
                               className="
-                                text-xl
-                                text-[#FF6A00]
-                                transition-colors
-                                duration-300
-                                group-hover:text-black
-                              "
+            text-2xl
+            text-[#FF6A00]
+            transition-all
+            duration-300
+            group-hover:scale-110
+            group-hover:text-black
+          "
                             />
                           ) : service.singlepageimage &&
                             service.singlepageimage.length > 0 ? (
                             <img
                               src={
-                                Array.isArray(
-                                  service.singlepageimage
-                                )
+                                Array.isArray(service.singlepageimage)
                                   ? service.singlepageimage[0]
                                   : service.singlepageimage
                               }
                               alt={service.title}
-                              className="h-8 w-8 object-contain"
+                              className="h-9 w-9 object-contain"
                             />
                           ) : (
-                            <FaLaptopCode className="text-xl text-[#FF6A00]" />
+                            <FaLaptopCode className="text-2xl text-[#FF6A00]" />
                           )}
                         </div>
 
                       </div>
 
-                      {/* Content */}
+                      {/* ================= CONTENT ================= */}
+
                       <div className="relative z-10 flex flex-1 flex-col">
 
                         <h3
                           className="
-                            mb-3
-                            text-lg
-                            font-bold
-                            uppercase
-                            leading-tight
-                            text-white
-                            transition-colors
-                            duration-300
-                            group-hover:text-[#FF6A00]
-                          "
+        mb-3
+        max-w-[90%]
+        text-lg
+        font-bold
+        uppercase
+        leading-tight
+        tracking-wide
+        text-white
+        transition-all
+        duration-300
+        group-hover:text-[#FF6A00]
+      "
                         >
                           {service.title}
                         </h3>
 
                         <p
                           className="
-                            line-clamp-5
-                            text-sm
-                            leading-6
-                            text-white/50
-                            transition-colors
-                            duration-300
-                            group-hover:text-white/65
-                          "
+        line-clamp-5
+        text-sm
+        leading-6
+        text-white/45
+        transition-colors
+        duration-300
+        group-hover:text-white/65
+      "
                         >
                           {service.description ||
                             service.short_description ||
                             ""}
                         </p>
 
-                        {/* Bottom link */}
-                        <div className="mt-auto flex items-center justify-between pt-6">
+                        {/* ================= BOTTOM ================= */}
 
-                          <span className="text-xs font-bold uppercase tracking-wider text-white/30 transition-colors duration-300 group-hover:text-white/60">
+                        <div
+                          className="
+        mt-auto
+        flex
+        items-center
+        justify-between
+        border-t
+        border-white/[0.06]
+        pt-5
+      "
+                        >
+                          <span
+                            className="
+          text-[11px]
+          font-bold
+          uppercase
+          tracking-[0.12em]
+          text-white/30
+          transition-colors
+          duration-300
+          group-hover:text-[#FF6A00]
+        "
+                          >
                             Explore Service
                           </span>
 
                           <span
                             className="
-                              flex
-                              h-9
-                              w-9
-                              items-center
-                              justify-center
-                              rounded-full
-                              border
-                              border-white/10
-                              text-sm
-                              text-[#FF6A00]
-                              transition-all
-                              duration-300
-                              group-hover:translate-x-1
-                              group-hover:border-[#FF6A00]
-                              group-hover:bg-[#FF6A00]
-                              group-hover:text-black
-                            "
+          flex
+          h-9
+          w-9
+          items-center
+          justify-center
+          rounded-full
+          border
+          border-white/10
+          text-sm
+          text-[#FF6A00]
+          transition-all
+          duration-300
+          group-hover:translate-x-1
+          group-hover:border-[#FF6A00]
+          group-hover:bg-[#FF6A00]
+          group-hover:text-black
+        "
                           >
                             →
                           </span>
-
                         </div>
 
                       </div>
-
                     </article>
                   </Link>
                 );
