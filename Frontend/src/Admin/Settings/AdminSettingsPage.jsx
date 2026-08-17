@@ -32,6 +32,13 @@ const AdminSettingsPage = () => {
       path: '/admin/settings/reviews',
       accent: 'from-violet-500/20 to-violet-600/10',
     },
+    {
+      title: 'Post Jobs',
+      description: 'Create, update, publish, and manage recruitment job postings with application tracking.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/jobs',
+      accent: 'from-amber-500/20 to-orange-600/10',
+    },
   ];
 
   return (
