@@ -120,7 +120,7 @@ const BLANK = {
   ui_progress: '0', frontend_progress: '0', backend_progress: '0',
   testing_progress: '0', deployment_progress: '0',
   proposal_doc: '', quotation_doc: '', agreement_doc: '', nda_doc: '',
-  api_documentation: '', database_schema: '', source_code_backup: '',
+  api_documentation: '', database_schema: '', source_code_backup: '', project_images: '',
 };
 
 const toForm = (p) => ({
@@ -153,7 +153,7 @@ const toForm = (p) => ({
   proposal_doc: p.proposal_doc || '', quotation_doc: p.quotation_doc || '',
   agreement_doc: p.agreement_doc || '', nda_doc: p.nda_doc || '',
   api_documentation: p.api_documentation || '', database_schema: p.database_schema || '',
-  source_code_backup: p.source_code_backup || '',
+  source_code_backup: p.source_code_backup || '', project_images: p.project_images || '',
 });
 
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
@@ -190,6 +190,8 @@ export default function AddProject() {
   const [clientFilter, setClientFilter] = useState('');
   const [selectedClientUuid, setSelectedClientUuid] = useState('');
   const [documentFiles, setDocumentFiles] = useState({});
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [success, setSuccess]           = useState('');
@@ -200,6 +202,8 @@ export default function AddProject() {
     if (!isEdit) {
       setFormData(BLANK);
       setDocumentFiles({});
+      setImageFiles([]);
+      setImagePreviewUrls([]);
     } else {
       (async () => {
         setFetchLoading(true);
@@ -283,6 +287,27 @@ export default function AddProject() {
     }
   };
 
+  const handleImageFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setImageFiles(files);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviewUrls(previews);
+  };
+
+  const removeImageFile = (index) => {
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviewUrls.filter((_, i) => i !== index);
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+    setImageFiles(newFiles);
+    setImagePreviewUrls(newPreviews);
+  };
+
+  useEffect(() => {
+    return () => {
+      imagePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const handleTeamChange = (name, value) => setFormData(prev => ({ ...prev, [name]: value }));
 
   const handleSave = async (e) => {
@@ -318,6 +343,9 @@ export default function AddProject() {
         if (documentFiles[field]) {
           form.append(field, documentFiles[field]);
         }
+      });
+      imageFiles.forEach((file) => {
+        form.append('project_images', file);
       });
       const res = isEdit
         ? await api.put(`/projects/${id}`, form)
@@ -652,9 +680,62 @@ export default function AddProject() {
         <section className={sectionClass}>
           <div className="mb-5 flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center"><FileText size={15} className="text-amber-400" /></div>
-            <h2 className="text-base font-bold text-white">Documents & Links</h2>
+            <h2 className="text-base font-bold text-white">Documents & Images</h2>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-white/60 md:col-span-2">
+              <span className="mb-1.5 block font-medium">Project Images</span>
+              <input 
+                className={fieldClass} 
+                type="file" 
+                name="project_images" 
+                multiple
+                accept="image/*"
+                onChange={handleImageFilesChange}
+              />
+              <p className="mt-2 text-xs text-white/40">Upload one or more project images (PNG, JPG, etc.)</p>
+              
+              {/* Image Previews */}
+              {(imagePreviewUrls.length > 0 || (formData.project_images && isEdit)) && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                  {imagePreviewUrls.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={url} alt={`Preview ${idx}`} className="w-full h-24 object-cover rounded-lg border border-white/10" />
+                      <button
+                        type="button"
+                        onClick={() => removeImageFile(idx)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X size={18} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {isEdit && formData.project_images && !(imagePreviewUrls.length > 0) && (
+                    (() => {
+                      try {
+                        const images = typeof formData.project_images === 'string' 
+                          ? JSON.parse(formData.project_images) 
+                          : formData.project_images;
+                        return (
+                          Array.isArray(images) ? images : [images]
+                        ).map((img, idx) => (
+                          <div key={`existing-${idx}`} className="relative">
+                            <img 
+                              src={img.file_path || img} 
+                              alt={`Existing ${idx}`} 
+                              className="w-full h-24 object-cover rounded-lg border border-white/10" 
+                            />
+                            <p className="mt-1 text-xs text-white/40 truncate">Current image</p>
+                          </div>
+                        ));
+                      } catch (e) {
+                        return null;
+                      }
+                    })()
+                  )}
+                </div>
+              )}
+            </label>
             <label className="text-sm text-white/60 md:col-span-2">
               <span className="mb-1.5 block font-medium">Upload Agreement</span>
               <input className={fieldClass} type="file" name="agreement_doc" onChange={(e) => handleFileChange('agreement_doc', e.target.files?.[0] || null)} />
