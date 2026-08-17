@@ -10,6 +10,18 @@ async function listReviews(req, res) {
   }
 }
 
+async function getApprovedReviews(req, res) {
+  try {
+    const reviews = await reviewModel.getAllReviews();
+    // Filter for approved reviews only
+    const approvedReviews = reviews.filter(review => review.status === 'Approved');
+    res.status(200).json({ success: true, data: approvedReviews });
+  } catch (error) {
+    console.error('Error fetching approved reviews:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch approved reviews', error: error.message });
+  }
+}
+
 async function getReview(req, res) {
   try {
     const { id } = req.params;
@@ -64,4 +76,5 @@ module.exports = {
   createReview,
   updateReview,
   deleteReview,
+  getApprovedReviews,
 };
