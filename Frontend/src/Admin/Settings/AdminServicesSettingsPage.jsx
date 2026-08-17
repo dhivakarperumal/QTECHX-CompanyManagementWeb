@@ -33,19 +33,16 @@ import {
 } from 'lucide-react';
 import api from '../../api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../PrivateRouter/AuthContext';
 
 const emptyService = {
   id: 1,
   service_code: '',
-  icon: '/images/update.gif',
-  icon1: '/images/update (1).gif',
-  image: 'FaCode',
   singlepageimage: [],
   title: '',
   category: '',
   subcategory: '',
   tagline: '',
-  short_description: '',
   description: '',
   detailed_description: '',
   what_we_offer: [],
@@ -64,8 +61,6 @@ const emptyService = {
     estimated_time: '4-8 Weeks',
     delivery_type: 'Project Based',
   },
-  cta_button: 'Get in Touch',
-  cta_link: '/contact',
   seo: {
     meta_title: '',
     meta_description: '',
@@ -151,6 +146,7 @@ const StatusPill = ({ status }) => {
 
 const AdminServicesSettingsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -215,12 +211,15 @@ const AdminServicesSettingsPage = () => {
 
   const openNewService = () => {
     const nextId = services.length ? Math.max(...services.map((item) => Number(item.id || 0))) + 1 : 1;
+    const currentUserId = user?.user_id || user?.id || user?.uuid || user?.employee_id || user?.employeeId || 1;
     setEditingId(null);
     setDraft({
       ...emptyService,
       id: nextId,
       display_order: services.length + 1,
       service_code: `SRV-${String(nextId).padStart(3, "0")}`,
+      created_by: currentUserId,
+      updated_by: currentUserId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -228,8 +227,13 @@ const AdminServicesSettingsPage = () => {
   };
 
   const openEditService = (service) => {
+    const currentUserId = user?.user_id || user?.id || user?.uuid || user?.employee_id || user?.employeeId || service?.updated_by || service?.created_by || 1;
     setEditingId(service.id);
-    setDraft(normalizeServiceFormValue(service));
+    setDraft({
+      ...normalizeServiceFormValue(service),
+      created_by: service.created_by || currentUserId,
+      updated_by: currentUserId,
+    });
     setShowForm(true);
   };
 
@@ -318,9 +322,13 @@ const AdminServicesSettingsPage = () => {
     const title = draft.title.trim();
     if (!title) return toast.error("Please enter a service title");
 
+    const currentUserId = user?.user_id || user?.id || user?.uuid || user?.employee_id || user?.employeeId || draft.updated_by || draft.created_by || 1;
+
     try {
       const payload = {
         ...draft,
+        created_by: currentUserId,
+        updated_by: currentUserId,
         singlepageimage: draft.singlepageImageFiles?.length ? draft.singlepageimage : parseList(draft.singlepageimage),
         what_we_offer: parseList(draft.what_we_offer),
         key_features: parseList(draft.key_features),
@@ -717,18 +725,6 @@ const AdminServicesSettingsPage = () => {
                   <option value="draft" className="bg-[#101218]">Draft</option>
                 </select>
               </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/60">Icon</label>
-                <input value={draft.icon} onChange={(e) => updateField('icon', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="/images/update.gif" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/60">Icon Alternate</label>
-                <input value={draft.icon1} onChange={(e) => updateField('icon1', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="/images/update (1).gif" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-white/60">Image</label>
-                <input value={draft.image} onChange={(e) => updateField('image', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="FaCode" />
-              </div>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -737,10 +733,6 @@ const AdminServicesSettingsPage = () => {
                 <div>
                   <label className="mb-2 block text-sm text-white/60">Tagline</label>
                   <input value={draft.tagline} onChange={(e) => updateField('tagline', e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" placeholder="Custom, Scalable..." />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm text-white/60">Short Description</label>
-                  <textarea value={draft.short_description} onChange={(e) => updateField('short_description', e.target.value)} rows={3} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm text-white/60">Description</label>
@@ -768,12 +760,7 @@ const AdminServicesSettingsPage = () => {
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-white/40">Or paste comma-separated URLs below (if not uploading files)</p>
                 </div>
-              </div>
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm text-white/60">Service Images URLs (comma separated)</label>
-                <textarea value={formatCommaList(draft.singlepageimage)} onChange={(e) => updateField('singlepageimage', e.target.value)} rows={3} className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-primary/50" disabled={draft.singlepageImageFiles?.length > 0} />
               </div>
               <div>
                 <label className="mb-2 flex items-center justify-between text-sm text-white/60">
