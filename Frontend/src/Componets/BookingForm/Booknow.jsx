@@ -135,6 +135,9 @@ export default function Booknow() {
   const [files, setFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [employees, setEmployees] = useState([]);
+  const [academicEntries, setAcademicEntries] = useState([
+    { college_university: '', course: '', academic_department: '', year_semester: '', college_id_number: '', guide_name: '' }
+  ]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -205,6 +208,30 @@ export default function Booknow() {
     setFiles((prev) => ({ ...prev, [name]: selectedFiles[0] }));
   };
 
+  const addAcademicEntry = () => {
+    setAcademicEntries((prev) => [
+      ...prev,
+      { college_university: '', course: '', academic_department: '', year_semester: '', college_id_number: '', guide_name: '' }
+    ]);
+  };
+
+  const removeAcademicEntry = (index) => {
+    if (academicEntries.length === 1) return;
+    setAcademicEntries((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateAcademicEntry = (index, field, value) => {
+    setAcademicEntries((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+
+    if (index === 0) {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.full_name?.trim()) {
@@ -219,6 +246,11 @@ export default function Booknow() {
         if (key === 'profile_photo' || key === 'resume' || key === 'college_id_doc' || key === 'offer_letter' || key === 'internship_letter') return;
         form.append(key, value);
       });
+
+      const validAcademicEntries = academicEntries.filter((entry) => Object.values(entry).some((val) => String(val ?? '').trim()));
+      if (validAcademicEntries.length > 0) {
+        form.append('academic_entries', JSON.stringify(validAcademicEntries));
+      }
 
       Object.entries(files).forEach(([key, file]) => {
         if (file) form.append(key, file);
@@ -236,22 +268,9 @@ export default function Booknow() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05070b] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#05070b] px-4 mt-15 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6 text-white">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-[#121822] via-[#0f1723] to-[#0c0f14] p-5 shadow-2xl shadow-black/30 sm:p-6">
-          <div className="flex items-start gap-4">
-            <button onClick={() => navigate('/admin/trainees')} className="mt-1 h-10 w-10 shrink-0 rounded-xl border border-white/10 bg-white/5 text-white/40 transition hover:bg-white/10 hover:text-white">
-              <ArrowLeft size={16} className="mx-auto" />
-            </button>
-            <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-orange-400">
-                <FileText size={11} /> {isEdit ? 'Edit Member' : 'New Member'}
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{isEdit ? 'Edit Trainee / Intern' : 'Add Trainee / Intern'}</h1>
-              <p className="mt-1 text-sm text-white/45">Create a member profile with contact details, documents, and academic info.</p>
-            </div>
-          </div>
-        </div>
+       
 
         {success && <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl"><CheckCircle size={16} /> {success}</div>}
         {error && <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl"><AlertCircle size={16} /> {error}</div>}
@@ -367,17 +386,42 @@ export default function Booknow() {
         </section>
 
         <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Academic Information</h2>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Academic Information</h2>
+            </div>
+            <button type="button" onClick={addAcademicEntry} className="inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-[11px] font-semibold text-orange-300 transition hover:bg-orange-500/20">
+              + Add More
+            </button>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} name="college_university" value={formData.college_university} onChange={handleChange} placeholder="College or university name" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} name="course" value={formData.course} onChange={handleChange} placeholder="Course or program" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} name="academic_department" value={formData.academic_department} onChange={handleChange} placeholder="Academic department" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} name="year_semester" value={formData.year_semester} onChange={handleChange} placeholder="Year / semester" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} name="college_id_number" value={formData.college_id_number} onChange={handleChange} placeholder="College ID number" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} name="guide_name" value={formData.guide_name} onChange={handleChange} placeholder="Guide or faculty name" /></label>
+
+          <div className="space-y-4">
+            {academicEntries.map((entry, index) => (
+              <div key={`academic-${index}`} className="rounded-2xl border border-white/10 bg-[#0d1117] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">Academic Entry {index + 1}</span>
+                  {academicEntries.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAcademicEntry(index)}
+                      className="text-xs text-rose-400 transition hover:text-rose-300"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} value={entry.college_university} onChange={(e) => updateAcademicEntry(index, 'college_university', e.target.value)} placeholder="College or university name" /></label>
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} value={entry.course} onChange={(e) => updateAcademicEntry(index, 'course', e.target.value)} placeholder="Course or program" /></label>
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} value={entry.academic_department} onChange={(e) => updateAcademicEntry(index, 'academic_department', e.target.value)} placeholder="Academic department" /></label>
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} value={entry.year_semester} onChange={(e) => updateAcademicEntry(index, 'year_semester', e.target.value)} placeholder="Year / semester" /></label>
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} value={entry.college_id_number} onChange={(e) => updateAcademicEntry(index, 'college_id_number', e.target.value)} placeholder="College ID number" /></label>
+                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} value={entry.guide_name} onChange={(e) => updateAcademicEntry(index, 'guide_name', e.target.value)} placeholder="Guide or faculty name" /></label>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
