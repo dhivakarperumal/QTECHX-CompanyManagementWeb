@@ -22,6 +22,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import PageContainer from "../CommonComponents/PageContainer";
 import SocialMedia from "../Home/SocialMedia";
 import aboutImg from "/images/about4.webp";
+import Head from "../Components/Head";
 
 // Animated Counter Component with IntersectionObserver
 const Counter = ({ end, suffix = "", label, icon: Icon }) => {
@@ -243,88 +244,20 @@ const About = () => {
   return (
     <div className="w-full bg-[#03070a] text-white">
 
-      {/* =====================================================
-          1. HERO / PAGE HEADER BANNER
-      ====================================================== */}
-      <section className="relative mt-[72px] w-full overflow-hidden bg-[#03070a] py-14 sm:py-16 md:py-20 lg:py-24">
-        {/* Background glow effects */}
-        <div className="pointer-events-none absolute -left-36 top-0 h-80 w-80 rounded-full bg-[#FF6A00]/15 blur-[140px]" />
-        <div className="pointer-events-none absolute -right-36 bottom-0 h-96 w-96 rounded-full bg-[#FF6A00]/10 blur-[150px]" />
-
-        {/* Tech Grid Background */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,106,0,0.8) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,106,0,0.8) 1px, transparent 1px)
-            `,
-            backgroundSize: "60px 60px",
-          }}
-        />
-
-        {/* Decorative Orange Dots */}
-        <div className="pointer-events-none absolute right-8 top-10 hidden grid-cols-4 gap-2 opacity-70 md:grid">
-          {Array.from({ length: 24 }).map((_, index) => (
-            <span
-              key={index}
-              className="h-[3px] w-[3px] rounded-full bg-[#FF6A00]"
-            />
-          ))}
-        </div>
-
-        <PageContainer className="relative z-10 text-center">
-          {/* Badge */}
-          <div
-            data-aos="fade-down"
-            className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#FF6A00] shadow-[0_0_15px_rgba(255,106,0,0.15)]"
-          >
-            <FiZap className="animate-pulse text-[#FF6A00]" />
-            <span>DISCOVER OUR STORY</span>
-          </div>
-
-          {/* Title */}
-          <h1
-            data-aos="zoom-in"
-            className="hero-font mx-auto max-w-4xl text-3xl font-bold uppercase leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[3.8rem]"
-          >
-            ABOUT <span className="text-[#FF6A00]">Q-TECHX</span> SOLUTIONS
-          </h1>
-
-          {/* Divider line */}
-          <div
-            data-aos="fade-up"
-            className="mx-auto mt-4 h-[2px] w-20 bg-[#FF6A00] shadow-[0_0_12px_rgba(255,106,0,0.6)]"
-          />
-
-          {/* Subtitle */}
-          <p
-            data-aos="fade-up"
-            data-aos-delay="150"
-            className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base md:text-lg"
-          >
-            We engineer next-generation digital solutions, powering businesses
-            with high-performance software, modern applications, and visionary
-            technology consulting.
-          </p>
-
-          {/* Breadcrumb */}
-          <div
-            data-aos="fade-up"
-            data-aos-delay="250"
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2 text-xs font-medium text-white/80 backdrop-blur-md sm:text-sm"
-          >
-            <Link to="/" className="transition-colors hover:text-[#FF6A00]">
+       <Head
+        title="About Us"
+        subtitle={
+          <>
+            <Link className="text-lg font-semibold text-white" to="/">
               Home
             </Link>
-            <IoIosArrowForward className="text-[#FF6A00]" />
-            <span className="text-[#FF6A00]">About Us</span>
-          </div>
-        </PageContainer>
-
-        {/* Bottom neon accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-[#FF6A00]/40 shadow-[0_0_8px_rgba(255,106,0,0.25)]" />
-      </section>
+            <IoIosArrowForward className="mx-1 text-lg font-bold text-white" />
+            <Link className="text-lg font-semibold text-white" to="/career">
+              About Us
+            </Link>
+          </>
+        }
+      />
 
       {/* =====================================================
           2. WHO WE ARE & COMPANY OVERVIEW
