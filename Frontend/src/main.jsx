@@ -1,6 +1,6 @@
 import { StrictMode, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createHashRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import checkTokenStatus from './utils/tokenDebugger.js'
@@ -114,7 +114,7 @@ const Incomes = lazy(() => import('./Admin/Expenses/Incomes.jsx'))
 
 
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,

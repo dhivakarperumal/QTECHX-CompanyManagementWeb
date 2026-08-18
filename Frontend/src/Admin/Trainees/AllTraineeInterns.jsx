@@ -14,6 +14,7 @@ const STATUS_OPTIONS = ['Pending', 'Active', 'Completed', 'On Leave', 'Inactive'
 const TYPE_OPTIONS = ['Trainee', 'Intern'];
 
 const STATUS_STYLES = {
+  Pending:   { pill: 'bg-orange-500/15 text-orange-400 border border-orange-500/25', dot: 'bg-orange-400' },
   Active:    { pill: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25', dot: 'bg-emerald-400' },
   Completed: { pill: 'bg-purple-500/15 text-purple-400 border border-purple-500/25',   dot: 'bg-purple-400' },
   'On Leave':{ pill: 'bg-amber-500/15 text-amber-400 border border-amber-500/25',     dot: 'bg-amber-400' },
