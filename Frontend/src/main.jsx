@@ -75,6 +75,7 @@ import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
 import AdminCompletedTasksPage from './Admin/Tasks/AdminCompletedTasksPage.jsx'
 import AdminCancelledTasksPage from './Admin/Tasks/AdminCancelledTasksPage.jsx'
 import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
+import PendingTraineeInterns from './Admin/Trainees/PendingTraineeInterns.jsx'
 import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
@@ -287,6 +288,10 @@ const router = createHashRouter([
           {
             path: 'trainees',
             element: <AllTraineeInterns />,
+          },
+          {
+            path: 'trainees/pending',
+            element: <PendingTraineeInterns />,
           },
           {
             path: 'internships',
