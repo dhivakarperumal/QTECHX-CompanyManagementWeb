@@ -120,7 +120,7 @@ const EventBanner = () => {
               max-w-[480px]
               text-sm
               leading-6
-              text-white/75
+              text-white/80
               sm:text-base
               sm:leading-7
               md:mx-0

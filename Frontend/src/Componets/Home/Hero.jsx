@@ -90,7 +90,7 @@ const Hero = () => {
               text-sm
               font-normal
               leading-7
-              text-white/70
+              text-white/80
               sm:text-base
               lg:mx-0
               lg:text-[17px]

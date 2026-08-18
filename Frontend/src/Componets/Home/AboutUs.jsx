@@ -216,7 +216,7 @@ const AboutUs = () => {
                 text-sm
                 font-normal
                 leading-6
-                text-white/65
+                text-white/80
                 sm:text-base
                 sm:leading-7
                 md:mx-0
@@ -242,7 +242,7 @@ const AboutUs = () => {
                 text-sm
                 font-normal
                 leading-6
-                text-white/65
+                text-white/80
                 sm:text-base
                 sm:leading-7
                 md:mx-0
