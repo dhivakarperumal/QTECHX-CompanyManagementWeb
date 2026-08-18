@@ -7,6 +7,7 @@ import Button from "../Components/Button";
 import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import SocialMedia from "../Home/SocialMedia";
+import api from "../../api";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -23,42 +24,73 @@ const ServiceDetails = () => {
   }, []);
 
   const { id } = useParams();
-  const [items, setItems] = useState([]);
+  const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/Service.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch services");
-        return res.json();
-      })
-      .then((data) => {
-        setItems(data);
+    const fetchService = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await api.get(`/services/public/${id}`);
+        if (!data.success) throw new Error(data.message || 'Failed to fetch service');
+        
+        let serviceData = data.data;
+        
+        // Parse singlepageimage if it's stored as JSON string
+        if (serviceData.singlepageimage) {
+          if (typeof serviceData.singlepageimage === 'string') {
+            try {
+              serviceData.singlepageimage = JSON.parse(serviceData.singlepageimage);
+            } catch (e) {
+              // If parsing fails, ensure it's an array
+              serviceData.singlepageimage = [serviceData.singlepageimage];
+            }
+          }
+          if (!Array.isArray(serviceData.singlepageimage)) {
+            serviceData.singlepageimage = [serviceData.singlepageimage];
+          }
+        } else {
+          serviceData.singlepageimage = [];
+        }
+        
+        // Parse other array fields if they're stored as JSON strings
+        const arrayFields = ['what_we_offer', 'key_features', 'technologies_we_use', 'service_process', 'industries', 'project_type'];
+        arrayFields.forEach(field => {
+          if (serviceData[field] && typeof serviceData[field] === 'string') {
+            try {
+              serviceData[field] = JSON.parse(serviceData[field]);
+            } catch (e) {
+              serviceData[field] = [];
+            }
+          }
+        });
+        
+        setService(serviceData);
+      } catch (err) {
+        setError(err?.response?.data?.message || err.message || 'Failed to load service');
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+      }
+    };
+    
+    fetchService();
+  }, [id]);
 
-  if (loading) return <p>Loading service details...</p>;
-  if (error) return <p>Error: {error}</p>;
-
-  const service = items.find((s) => s.id === parseInt(id));
-
-  if (!service) return <p>Service not found</p>;
+  if (loading) return <p className="text-center py-10">Loading service details...</p>;
+  if (error) return <p className="text-center py-10 text-red-500">Error: {error}</p>;
+  if (!service) return <p className="text-center py-10">Service not found</p>;
 
   const settings = {
-    dots: false, // show navigation dots
-    infinite: true, // infinite loop
-    speed: 500, // slide transition speed in ms
-    slidesToShow: 1, // how many slides to show
-    slidesToScroll: 1, // how many slides to scroll
-    arrows: true, // show arrows
-    autoplay: true, // auto play
-    autoplaySpeed: 3000, // delay between auto slides
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: true,
+    autoplay: true,
+    autoplaySpeed: 3000,
   };
 
   return (
@@ -91,10 +123,12 @@ const ServiceDetails = () => {
         <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Left: Animated Slider */}
           <div data-aos="zoom-in-up">
-            {service.singlepageimage && service.singlepageimage.length > 0 ? (
+            {service.singlepageimage && Array.isArray(service.singlepageimage) && service.singlepageimage.length > 0 ? (
               <ServiceSlider images={service.singlepageimage} />
             ) : (
-              <p>No images available</p>
+              <div className="w-full h-[240px] md:h-[400px] bg-gray-200 rounded-xl flex items-center justify-center">
+                <p className="text-gray-500">No images available</p>
+              </div>
             )}
           </div>
 

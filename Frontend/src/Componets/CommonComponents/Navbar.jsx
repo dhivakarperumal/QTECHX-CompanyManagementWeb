@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import { FiChevronDown, FiMenu, FiX, FiLogOut } from "react-icons/fi";
-import Button from "../Components/Button";
+import { FiChevronDown, FiMenu, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
+import { HiOutlineMenuAlt3 } from "react-icons/hi";
+import api from "../../api";
 import {
   FaCode,
   FaLaptopCode,
@@ -15,12 +16,14 @@ import {
   FaChalkboardTeacher,
   FaBullhorn,
 } from "react-icons/fa";
+import PageContainer from "./PageContainer";
 
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [mobileSubMenu, setMobileSubMenu] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [services, setServices] = useState([]);
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,12 +35,20 @@ const Navbar = () => {
     navigate("/login", { replace: true });
   };
 
-  const services = [
-    { id: 1, title: "Web Development", path: "/services/1", icon: "FaLaptopCode" },
-    { id: 5, title: "Mobile App Development", path: "/services/5", icon: "FaMobileAlt" },
-    { id: 3, title: "UI/UX Design", path: "/services/3", icon: "FaPaintBrush" },
-    { id: 10, title: "Digital Marketing", path: "/services/10", icon: "FaBullhorn" },
-  ];
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data } = await api.get("/services/public/all");
+        if (data.success && Array.isArray(data.data)) {
+          setServices(data.data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch services for navbar:", err?.message);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const whoWeAreLinks = [
     { id: 1, title: "Why Choose Us", path: "/whychooseus" },
@@ -80,226 +91,402 @@ const Navbar = () => {
     setOpenMenu((current) => (current === menu ? null : menu));
   };
 
+  const desktopLinkClass = ({ isActive }) =>
+    `text-base font-semibold  transition-colors ${isActive ? "text-primary" : "text-white hover:text-primary"
+    }`;
+
+  const mobileLinkClass = ({ isActive }) =>
+    `flex items-center justify-between rounded-xl px-3 py-3 text-base font-medium transition ${isActive ? "bg-primary/10 text-primary" : "text-white/80 hover:bg-white/5 hover:text-white"
+    }`;
+
   return (
-    <nav className="fixed left-0 top-0 z-50 flex h-18 w-full items-center justify-between bg-white px-6 py-2 shadow-md md:px-15">
-      <Link to="/" className="flex items-center gap-0.5">
-        <img src="/images/logo.png" alt="logo" className="h-12 w-auto" />
-        <div className="flex flex-col leading-tight">
-          <span className="text-base font-bold text-gray-900 md:text-lg">Q-Techx</span>
-          <span className="text-center text-xs text-gray-800 md:text-sm">Solutions</span>
-        </div>
-      </Link>
+    <>
+      <nav className="fixed left-0 top-0 z-50 w-full border-b border-orange-500/20 bg-[#070b12]/95 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+        <PageContainer>
+          <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between ">
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/images/logo.png" alt="Q-Techx logo" className="h-10 w-auto sm:h-12" />
+              <div className="leading-none">
+                <div className="text-[18px] font-black tracking-tight text-white sm:text-[20px]">Q-TECHX</div>
+                <div className="mt-0.5 text-[8px] font-semibold tracking-[0.32em] text-orange-300/90 sm:text-[9px]">SOLUTIONS</div>
+              </div>
+            </Link>
 
-      <ul className="hidden items-center justify-center gap-8 font-medium md:flex" ref={dropdownRef}>
-        <li>
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
-            }
-          >
-            Home
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/about"
-            className={({ isActive }) =>
-              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
-            }
-          >
-            About
-          </NavLink>
-        </li>
+            <ul className=" hidden items-center gap-8 md:flex" ref={dropdownRef}>
+              <li><NavLink to="/" className={desktopLinkClass}>Home</NavLink></li>
+              <li><NavLink to="/about" className={desktopLinkClass}>About</NavLink></li>
 
-        <li className="relative">
-          <div
-            onClick={() => toggleMenu("services")}
-            className="flex cursor-pointer items-center gap-1"
-          >
-            Services <FiChevronDown />
+              <li className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu("services")}
+                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                >
+                  Services
+
+                  <FiChevronDown
+                    className={`text-xs transition-all duration-300 ${openMenu === "services"
+                      ? "rotate-180 text-[#FF6A00]"
+                      : "rotate-0"
+                      }`}
+                  />
+                </button>
+
+                {/* Animated Dropdown */}
+                <div
+                  className={`absolute left-1/2 top-full z-50 mt-4 w-[26rem] -translate-x-1/2
+      transition-all duration-300 ease-out
+      ${openMenu === "services"
+                      ? "visible translate-y-0 scale-100 opacity-100"
+                      : "invisible -translate-y-3 scale-95 opacity-0 pointer-events-none"
+                    }`}
+                >
+                  <div className="relative overflow-hidden rounded-2xl border border-[#FF6A00]/20 bg-[#0d0d0d]/95 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+
+                    {/* Orange glow */}
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-[#FF6A00]/10 blur-3xl" />
+
+                    {/* Top orange line */}
+                    <div className="absolute left-6 right-6 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6A00] to-transparent" />
+
+                    <div className="mb-3 px-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FF6A00]">
+                        What We Do
+                      </p>
+
+                      <h3 className="mt-1 text-sm font-bold text-white">
+                        Our Services
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {services.length > 0 ? (
+                        services.map((srv, index) => {
+                          const Icon = iconMap[srv.icon] || FaCode;
+
+                          return (
+                            <NavLink
+                              key={srv.id}
+                              to={`/services/${srv.id}`}
+                              className={({ isActive }) =>
+                                `group/service flex items-center gap-2 rounded-xl border
+                  px-3 py-2.5 text-sm
+                  transition-all duration-300
+                  hover:-translate-y-0.5
+                  ${isActive
+                                  ? "border-[#FF6A00]/40 bg-[#FF6A00]/10 text-[#FF6A00]"
+                                  : "border-white/5 bg-white/[0.03] text-white/70 hover:border-[#FF6A00]/30 hover:bg-[#FF6A00]/5 hover:text-white"
+                                }`
+                              }
+                              style={{
+                                transitionDelay:
+                                  openMenu === "services"
+                                    ? `${index * 35}ms`
+                                    : "0ms",
+                              }}
+                            >
+                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#FF6A00]/10 transition-all duration-300 group-hover/service:bg-[#FF6A00]">
+                                <Icon className="text-sm text-[#FF6A00] transition-colors duration-300 group-hover/service:text-black" />
+                              </span>
+
+                              <span className="truncate">
+                                {srv.title}
+                              </span>
+                            </NavLink>
+                          );
+                        })
+                      ) : (
+                        <p className="col-span-2 py-3 text-sm text-white/50">
+                          Loading services...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <li><NavLink to="/projects" className={desktopLinkClass}>Projects</NavLink></li>
+              <li><NavLink to="/prices" className={desktopLinkClass}>Prices</NavLink></li>
+
+              <li className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu("whoWeAre")}
+                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                >
+                  Who We Are?
+
+                  <FiChevronDown
+                    className={`text-xs transition-all duration-300 ${openMenu === "whoWeAre"
+                      ? "rotate-180 text-[#FF6A00]"
+                      : "rotate-0"
+                      }`}
+                  />
+                </button>
+
+                {/* Animated Dropdown */}
+                <div
+                  className={`absolute left-1/2 top-full z-50 mt-4 w-72 -translate-x-1/2
+      transition-all duration-300 ease-out
+      ${openMenu === "whoWeAre"
+                      ? "visible translate-y-0 scale-100 opacity-100"
+                      : "invisible -translate-y-3 scale-95 opacity-0 pointer-events-none"
+                    }`}
+                >
+                  <div className="relative overflow-hidden rounded-2xl border border-[#FF6A00]/20 bg-[#0d0d0d]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+
+                    {/* Glow */}
+                    <div className="pointer-events-none absolute -left-16 -top-16 h-32 w-32 rounded-full bg-[#FF6A00]/10 blur-3xl" />
+
+                    {/* Orange top line */}
+                    <div className="absolute left-6 right-6 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6A00] to-transparent" />
+
+                    <div className="mb-2 px-2 py-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FF6A00]">
+                        Discover Q-Techx
+                      </p>
+
+                      <h3 className="mt-1 text-sm font-bold text-white">
+                        Who We Are
+                      </h3>
+                    </div>
+
+                    <div className="space-y-1">
+                      {whoWeAreLinks.map((item, index) => (
+                        <NavLink
+                          key={item.id}
+                          to={item.path}
+                          className={({ isActive }) =>
+                            `group/who flex items-center justify-between rounded-xl
+              px-3 py-3 text-sm
+              transition-all duration-300
+              hover:translate-x-1
+              ${isActive
+                              ? "bg-[#FF6A00]/10 text-[#FF6A00]"
+                              : "text-white/70 hover:bg-white/[0.04] hover:text-white"
+                            }`
+                          }
+                          style={{
+                            transitionDelay:
+                              openMenu === "whoWeAre"
+                                ? `${index * 60}ms`
+                                : "0ms",
+                          }}
+                        >
+                          <span>{item.title}</span>
+
+                          <FiArrowRight
+                            className="text-sm text-[#FF6A00] opacity-0 transition-all duration-300 group-hover/who:translate-x-1 group-hover/who:opacity-100"
+                          />
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </li>
+
+              <li><NavLink to="/career" className={desktopLinkClass}>Career</NavLink></li>
+            </ul>
+
+            <div className="hidden items-center gap-3 md:flex">
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-strong px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(248,116,14,0.35)] hover:scale-[1.02]"
+              >
+                Let&apos;s Talk
+                <FiArrowRight className="text-base" />
+              </Link>
+
+              {user && (
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/20"
+                >
+                  <FiLogOut /> Logout
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              aria-label="Open navigation menu"
+              onClick={() => setMobileMenu(true)}
+              className="
+    group relative flex h-12 w-12
+    items-center justify-center
+    overflow-hidden rounded-2xl
+    border border-white/10
+    bg-white/[0.04]
+    backdrop-blur-xl
+    transition-all duration-300
+    hover:border-[#FF6A00]/50
+    hover:bg-[#FF6A00]/10
+    active:scale-90
+    md:hidden
+  "
+            >
+              {/* Orange glow */}
+              <span
+                className="
+      absolute h-8 w-8 rounded-full
+      bg-[#FF6A00]/20
+      blur-xl
+      transition-all duration-500
+      group-hover:bg-[#FF6A00]/40
+    "
+              />
+
+              <span className="relative flex flex-col gap-[5px]">
+                <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-6" />
+                <span className="h-[2px] w-4 self-end rounded-full bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#FF6A00]" />
+                <span className="h-[2px] w-5 rounded-full bg-[#FF6A00] transition-all duration-300 group-hover:w-4" />
+              </span>
+            </button>
           </div>
-          {openMenu === "services" && (
-            <div className="absolute left-[-2.5rem] top-full mt-2 grid w-[24rem] grid-cols-2 gap-2 rounded-md bg-white p-4 shadow-lg z-50">
-              {services.map((srv) => {
-                const Icon = iconMap[srv.icon] || FaCode;
-                return (
+        </PageContainer>
+        {/* Orange separator line */}
+        <div className="h-px w-full bg-[#FF6A00]/70 shadow-[0_0_8px_rgba(255,106,0,0.25)]" />
+
+      </nav>
+
+      {/* mobile menu */}
+      <div
+        className={`fixed inset-0 z-[9999] md:hidden transition-opacity duration-300 ${mobileMenu
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+          }`}
+      >
+        <div
+          className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${mobileMenu ? "opacity-100" : "opacity-0"
+            }`}
+          onClick={() => setMobileMenu(false)}
+        />
+
+        <div
+          className={`absolute right-0 top-0 h-full w-[88%] max-w-sm overflow-y-auto
+    border-l border-[#FF6A00]/20 bg-[#080808] p-4
+    shadow-[-20px_0_60px_rgba(0,0,0,0.65)]
+    transition-transform duration-500
+    ease-[cubic-bezier(0.22,1,0.36,1)]
+    ${mobileMenu
+              ? "translate-x-0"
+              : "translate-x-full"
+            }`}
+        >
+          <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <img src="/images/logo.png" alt="Q-Techx logo" className="h-8 w-auto" />
+              <div className="leading-none">
+                <div className="text-base font-black tracking-tight text-white">Q-TECHX</div>
+                <div className="mt-1 text-[7px] font-semibold tracking-[0.28em] text-orange-300">SOLUTIONS</div>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setMobileMenu(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-xl text-white">
+              <FiX />
+            </button>
+          </div>
+
+          <div
+            className={`space-y-2 transition-all duration-500 delay-150 ${mobileMenu
+              ? "translate-y-0 opacity-100"
+              : "translate-y-3 opacity-0"
+              }`}
+          >
+            <NavLink to="/" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+              <span>Home</span>
+            </NavLink>
+
+            <NavLink to="/about" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+              <span>About</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setMobileSubMenu((prev) => (prev === "services" ? null : "services"))}
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-3 text-left text-base font-medium text-white/80"
+            >
+              <span>Services</span>
+              <FiChevronDown className={`text-sm transition ${mobileSubMenu === "services" ? "rotate-180" : ""}`} />
+            </button>
+
+            {mobileSubMenu === "services" && (
+              <div className="space-y-1 rounded-xl border border-white/10 bg-white/3 p-2">
+                {services.length > 0 ? (
+                  services.map((srv) => (
+                    <NavLink
+                      key={srv.id}
+                      to={`/services/${srv.id}`}
+                      onClick={() => {
+                        setMobileMenu(false);
+                        setMobileSubMenu(null);
+                      }}
+                      className={({ isActive }) =>
+                        `block rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                        }`
+                      }
+                    >
+                      {srv.title}
+                    </NavLink>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-white/40">Loading services...</p>
+                )}
+              </div>
+            )}
+
+            <NavLink to="/projects" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+              <span>Projects</span>
+            </NavLink>
+
+            <NavLink to="/prices" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+              <span>Prices</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={() => setMobileSubMenu((prev) => (prev === "whoWeAre" ? null : "whoWeAre"))}
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-3 text-left text-base font-medium text-white/80"
+            >
+              <span>Who We Are?</span>
+              <FiChevronDown className={`text-sm transition ${mobileSubMenu === "whoWeAre" ? "rotate-180" : ""}`} />
+            </button>
+
+            {mobileSubMenu === "whoWeAre" && (
+              <div className="space-y-1 rounded-xl border border-white/10 bg-white/3 p-2">
+                {whoWeAreLinks.map((item) => (
                   <NavLink
-                    key={srv.id}
-                    to={srv.path}
+                    key={item.id}
+                    to={item.path}
+                    onClick={() => {
+                      setMobileMenu(false);
+                      setMobileSubMenu(null);
+                    }}
                     className={({ isActive }) =>
-                      isActive
-                        ? "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-primary"
-                        : "flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                      `block rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`
                     }
                   >
-                    <Icon className="text-xl text-primary" />
-                    {srv.title}
+                    {item.title}
                   </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </li>
+                ))}
+              </div>
+            )}
 
-        <li>
-          <NavLink
-            to="/projects"
-            className={({ isActive }) =>
-              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
-            }
-          >
-            Projects
-          </NavLink>
-        </li>
-
-        <li>
-          <NavLink
-            to="/prices"
-            className={({ isActive }) =>
-              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
-            }
-          >
-            Prices
-          </NavLink>
-        </li>
-
-        <li className="relative">
-          <div
-            onClick={() => toggleMenu("whoWeAre")}
-            className="flex cursor-pointer items-center gap-1"
-          >
-            Who We Are? <FiChevronDown />
+            <NavLink to="/career" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+              <span>Career</span>
+            </NavLink>
           </div>
-          {openMenu === "whoWeAre" && (
-            <div className="absolute top-full mt-2 w-60 rounded-md bg-white p-2 shadow-lg z-50">
-              {whoWeAreLinks.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "block rounded-md px-3 py-2 text-sm font-medium text-primary"
-                      : "block rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-                  }
-                >
-                  {item.title}
-                </NavLink>
-              ))}
-            </div>
-          )}
-        </li>
 
-        <li>
-          <NavLink
-            to="/career"
-            className={({ isActive }) =>
-              isActive ? "text-primary font-medium" : "text-gray-900 hover:text-primary"
-            }
-          >
-            Career
-          </NavLink>
-        </li>
-      </ul>
-
-      <div className="hidden items-center gap-4 md:flex">
-        <Link to="/contact">
-          <Button>Contact</Button>
-        </Link>
-        {user && (
-          <button 
-            onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center gap-2 rounded-md border border-red-500 px-4 py-2 font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-          >
-            <FiLogOut /> Logout
-          </button>
-        )}
-      </div>
-
-      <button className="text-2xl md:hidden" onClick={() => setMobileMenu(true)}>
-        <FiMenu />
-      </button>
-
-      {mobileMenu && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="flex-1 bg-black/40" onClick={() => setMobileMenu(false)}></div>
-
-          <div className="h-full w-full overflow-y-auto bg-white p-4 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <button onClick={() => setMobileMenu(false)}>
-                <FiX className="text-2xl" />
-              </button>
-            </div>
-
-            <NavLink
-              to="/"
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-              }
-            >
-              Home
-            </NavLink>
-            <NavLink
-              to="/about"
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-              }
-            >
-              About
-            </NavLink>
-
-            <button onClick={() => setMobileSubMenu("services")} className="block w-full py-2 text-left">
-              Services →
-            </button>
-
-            <NavLink
-              to="/projects"
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-              }
-            >
-              Projects
-            </NavLink>
-
-            <NavLink
-              to="/prices"
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-              }
-            >
-              Prices
-            </NavLink>
-
-            <button onClick={() => setMobileSubMenu("whoWeAre")} className="block w-full py-2 text-left">
-              Who We Are →
-            </button>
-
-            <NavLink
-              to="/career"
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-              }
-            >
-              Career
-            </NavLink>
-
-            <NavLink
+          <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
+            <Link
               to="/contact"
               onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                isActive
-                  ? "mt-4 block rounded-full border border-primary py-2 text-center font-medium text-primary"
-                  : "mt-4 block rounded-full border border-primary py-2 text-center text-gray-900 hover:text-primary"
-              }
+              className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-strong px-4 py-3 text-sm font-semibold text-white"
             >
-              Contact
-            </NavLink>
+              Let&apos;s Talk
+              <FiArrowRight />
+            </Link>
 
             {user && (
               <button
@@ -307,80 +494,17 @@ const Navbar = () => {
                   setMobileMenu(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-red-500 py-2 font-medium text-red-500 transition-colors hover:bg-red-50"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300"
               >
                 <FiLogOut /> Logout
               </button>
             )}
-
-            {user && (
-              <button
-                onClick={() => {
-                  logout();
-                  setMobileMenu(false);
-                  navigate('/login');
-                }}
-                className="mt-4 w-full rounded-full border border-red-400 py-2 text-center text-red-600 hover:bg-red-50"
-              >
-                Logout
-              </button>
-            )}
           </div>
         </div>
-      )}
+      </div>
 
-      {mobileSubMenu && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="flex-1 bg-black/40" onClick={() => setMobileSubMenu(null)}></div>
-          <div className="h-full w-full overflow-y-auto bg-white p-4 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{mobileSubMenu === "services" ? "Services" : "Who We Are"}</h2>
-              <button onClick={() => setMobileSubMenu(null)}>
-                <FiX className="text-2xl" />
-              </button>
-            </div>
-
-            {mobileSubMenu === "services" &&
-              services.map((srv) => {
-                const Icon = iconMap[srv.icon] || FaCode;
-                return (
-                  <NavLink
-                    key={srv.id}
-                    to={srv.path}
-                    onClick={() => {
-                      setMobileMenu(false);
-                      setMobileSubMenu(null);
-                    }}
-                    className={({ isActive }) =>
-                      isActive ? "flex items-center gap-2 py-2 font-medium text-primary" : "flex items-center gap-2 py-2 text-gray-900 hover:text-primary"
-                    }
-                  >
-                    <Icon className="text-xl text-primary" />
-                    {srv.title}
-                  </NavLink>
-                );
-              })}
-
-            {mobileSubMenu === "whoWeAre" &&
-              whoWeAreLinks.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.path}
-                  onClick={() => setMobileMenu(false)}
-                  className={({ isActive }) =>
-                    isActive ? "block py-2 font-medium text-primary" : "block py-2 text-gray-900 hover:text-primary"
-                  }
-                >
-                  {item.title}
-                </NavLink>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* Logout Confirmation Popup */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity px-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-center text-red-500">
               <FiLogOut className="h-12 w-12" />
@@ -398,15 +522,15 @@ const Navbar = () => {
               </button>
               <button
                 onClick={handleConfirmLogout}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 font-medium text-white transition-colors hover:bg-red-700 shadow-sm shadow-red-200"
+                className="flex-1 rounded-xl bg-red-600 py-2.5 font-medium text-white transition-colors hover:bg-red-700"
               >
-                Log Out
+                Logout
               </button>
             </div>
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 };
 

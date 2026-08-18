@@ -1,124 +1,586 @@
 import React from "react";
-import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaEnvelope,
+} from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
-import  Buttons from './Buttons'
+import Buttons from "./Buttons";
+import PageContainer from "../CommonComponents/PageContainer";
 
 const Footer = () => {
+  const quickLinks = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Products", path: "/products" },
+    { name: "Career", path: "/career" },
+    { name: "Contact", path: "/contact" },
+  ];
+
+  const featureLinks = [
+    { name: "Why Choose Us", path: "/why-choose-us" },
+    { name: "Who We Work", path: "/who-we-work" },
+    { name: "What We Do", path: "/what-we-do" },
+    { name: "Our Achievements", path: "/achievements" },
+    { name: "Terms Of Services", path: "/terms" },
+    { name: "Privacy Policy", path: "/privacy-policy" },
+  ];
+
   return (
-    <footer className="bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 md:px-18 py-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
-        
-       {/* Left Section - Company Info */}
-<div className="flex flex-col items-start ">
-{/* Company Logo */}
-  <div className="flex items-center gap-0.5 mb-6">
-  <img
-    src="/images/logo.png" 
-    alt="Q-TechX Solutions"
-    className="w-14"
-  />
-  <div className="flex flex-col leading-tight">
-    <span className="text-base md:text-lg font-bold text-gray-900">Q-Techx</span>
-    <span className="text-xs md:text-sm text-center text-gray-600">Solutions</span>
-  </div>
-</div>
-  {/* Address & Contact */}
-  <div className="space-y-3 text-gray-700 text-sm leading-relaxed">
-    <p className="flex items-start gap-2">
-      <FaMapMarkerAlt className="text-primary mt-1 shrink-0" />
-      <span>Tirupattur, Tamil Nadu, India, 635 653.</span>
-    </p>
-    <p className="flex items-center gap-2">
-      <FaPhoneAlt className="text-primary shrink-0" /> 
-      <span>+91 91235 89879</span>
-    </p>
-    <p className="flex items-center gap-2">
-      <FaEnvelope className="text-primary shrink-0" /> 
-      <span>info@qtechx.com</span>
-    </p>
-  </div>
-</div>
+    <footer
+      className="
+        relative
+        w-full
+        overflow-hidden
+        bg-[#020507]
+        text-white
+      "
+    >
 
+      {/* =====================================================
+          ORANGE GLOW
+      ====================================================== */}
 
-       
-{/* Quick Links */}
-<div>
-  <h2 className="text-lg font-bold mb-5 text-gray-900">Quick Links</h2>
-  <ul className="space-y-3 text-gray-700 text-sm">
-    {[
-      { name: "Home", path: "/" },
-      { name: "About", path: "/about" },
-      { name: "Services", path: "/services" },
-      { name: "Products", path: "/products" },
-      { name: "Career", path: "/career" },
-      { name: "Contact", path: "/contact" },
-    ].map((link, idx) => (
-      <li key={idx}>
-        <Link
-          to={link.path}
-          className="flex items-center gap-2 hover:text-primary transition-colors"
+      <div
+        className="
+          pointer-events-none
+          absolute
+          -left-40
+          bottom-0
+          h-80
+          w-80
+          rounded-full
+          bg-[#FF6A00]/10
+          blur-[140px]
+        "
+      />
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          -right-40
+          top-0
+          h-80
+          w-80
+          rounded-full
+          bg-[#FF6A00]/10
+          blur-[140px]
+        "
+      />
+
+      {/* =====================================================
+          GRID BACKGROUND
+      ====================================================== */}
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          opacity-[0.025]
+        "
+        style={{
+          backgroundImage: `
+            linear-gradient(
+              rgba(255,106,0,0.8) 1px,
+              transparent 1px
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255,106,0,0.8) 1px,
+              transparent 1px
+            )
+          `,
+          backgroundSize: "70px 70px",
+        }}
+      />
+
+      {/* =====================================================
+          TOP ORANGE LINE
+      ====================================================== */}
+
+      <div
+        className="
+          absolute
+          left-0
+          right-0
+          top-0
+          h-px
+          bg-[#FF6A00]/70
+          shadow-[0_0_10px_rgba(255,106,0,0.3)]
+        "
+      />
+
+      {/* =====================================================
+          MAIN FOOTER CONTENT
+      ====================================================== */}
+
+      <PageContainer className="relative z-10">
+        <div
+          className="
+      grid
+      grid-cols-1
+      gap-10
+      py-12
+      sm:grid-cols-2
+      lg:grid-cols-4
+      lg:gap-12
+    "
         >
-          <MdOutlineArrowForwardIos  className="text-primary text-xs"/>
-          {link.name}
-        </Link>
-      </li>
-    ))}
-  </ul>
-</div>
-       {/* Features */}
-<div>
-  <h2 className="text-lg font-bold mb-5 text-gray-900">Our Features</h2>
-  <ul className="space-y-3 text-gray-700 text-sm">
-    {[
-      { name: "Why Choose Us", path: "/why-choose-us" },
-      { name: "Who We Work", path: "/who-we-work" },
-      { name: "What We Do", path: "/what-we-do" },
-      { name: "Our Achievements", path: "/achievements" },
-      { name: "Terms Of Services", path: "/terms" },
-      { name: "Privacy Policy", path: "/privacy-policy" },
-    ].map((item, idx) => (
-      <li
-        key={idx}
-        className="flex items-center  gap-2 justify-between hover:text-primary cursor-pointer transition-colors"
-      >
-        <MdOutlineArrowForwardIos className="ml-2 text-primary  group-hover:text-primary transition" />
 
-        <Link to={item.path} className="flex-1">
-          {item.name}
-        </Link>
-      </li>
-    ))}
-  </ul>
-</div>
+          {/* ===================================================
+            COMPANY INFO
+        ==================================================== */}
 
-        {/* Newsletter */}
-        <div>
-          <h2 className="text-lg font-bold mb-5 text-gray-900">Get Newsletter</h2>
-          <p className="text-sm text-gray-600 mb-5 leading-relaxed">
-            Subscribe to get promotional updates & latest business news.
-          </p>
-          <div className="flex items-center justify-center bg-white shadow-md rounded-full overflow-hidden mb-4">
-            <input
-              type="email"
-              placeholder="example@gmail.com"
-              className="flex-1 px-4 py-3 text-center text-sm outline-none"
-            />
-            <button className="bg-primary text-white px-5 py-4 cursor-pointer transition">
-              <FaEnvelope />
-            </button>
+          <div className="flex flex-col items-start">
+
+            {/* Logo */}
+
+            <div className="mb-5 flex items-center gap-2">
+
+              <div
+                className="
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-[#FF6A00]/30
+                bg-[#11171c]
+                shadow-[0_8px_25px_rgba(0,0,0,0.6)]
+              "
+              >
+                <img
+                  src="/images/logo.png"
+                  alt="Q-TechX Solutions"
+                  className="
+                  h-10
+                  w-10
+                  object-contain
+                "
+                />
+              </div>
+
+              <div className="flex flex-col leading-tight">
+
+                <span
+                  className="
+                  text-lg
+                  font-bold
+                  text-white
+                "
+                >
+                  Q-Techx
+                </span>
+
+                <span
+                  className="
+                  text-xs
+                  text-[#FF6A00]
+                "
+                >
+                  Solutions
+                </span>
+
+              </div>
+
+            </div>
+
+            {/* Small description */}
+
+            <p
+              className="
+              mb-5
+              max-w-xs
+              text-base
+              leading-6
+              text-white/80
+            "
+            >
+              Building powerful digital solutions that
+              help businesses innovate, grow, and stay
+              ahead in the digital world.
+            </p>
+
+            {/* Contact */}
+
+            <div
+              className="
+              space-y-3
+              text-sm
+              leading-relaxed
+              text-white/80
+            "
+            >
+
+              {/* Address */}
+
+              <p className="flex items-start gap-3">
+
+                <FaMapMarkerAlt
+                  className="
+                  mt-1
+                  shrink-0
+                  text-[#FF6A00]
+                "
+                />
+
+                <span>
+                  Tirupattur, Tamil Nadu,
+                  India, 635 653.
+                </span>
+
+              </p>
+
+              {/* Phone */}
+
+              <p className="flex items-center gap-3">
+
+                <FaPhoneAlt
+                  className="
+                  shrink-0
+                  text-[#FF6A00]
+                "
+                />
+
+                <span>
+                  +91 91235 89879
+                </span>
+
+              </p>
+
+              {/* Email */}
+
+              <p className="flex items-center gap-3">
+
+                <FaEnvelope
+                  className="
+                  shrink-0
+                  text-[#FF6A00]
+                "
+                />
+
+                <span>
+                  info@qtechx.com
+                </span>
+
+              </p>
+
+            </div>
+
           </div>
-          <Buttons>
-            Subscribe Now 
-          </Buttons>
-        </div>
-      </div>
 
-      {/* Copyright */}
-      <div className="border-t border-purple-200 text-center py-5 text-sm text-gray-600">
-        © {new Date().getFullYear()}{" "}
-        <span className="font-semibold text-primary">Q-Techx Solutions</span> — All Rights Reserved.
-      </div>
+
+          {/* ===================================================
+            QUICK LINKS
+        ==================================================== */}
+
+          <div>
+
+            <h2
+              className="
+              mb-5
+              text-base
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-white
+            "
+            >
+              Quick Links
+            </h2>
+
+            {/* Orange underline */}
+
+            <div
+              className="
+              mb-5
+              h-[2px]
+              w-10
+              bg-[#FF6A00]
+            "
+            />
+
+            <ul className="space-y-3">
+
+              {quickLinks.map((link, idx) => (
+
+                <li key={idx}>
+
+                  <Link
+                    to={link.path}
+                    className="
+                    group
+                    flex
+                    items-center
+                    gap-2
+                    text-base
+                    text-white/80
+                    transition-all
+                    duration-300
+                    hover:translate-x-1
+                    hover:text-[#FF6A00]
+                  "
+                  >
+
+                    <MdOutlineArrowForwardIos
+                      className="
+                      text-[10px]
+                      text-[#FF6A00]
+                      transition-transform
+                      duration-300
+                      group-hover:translate-x-1
+                    "
+                    />
+
+                    {link.name}
+
+                  </Link>
+
+                </li>
+
+              ))}
+
+            </ul>
+
+          </div>
+
+
+          {/* ===================================================
+            FEATURES
+        ==================================================== */}
+
+          <div>
+
+            <h2
+              className="
+              mb-5
+              text-base
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-white
+            "
+            >
+              Our Features
+            </h2>
+
+            <div
+              className="
+              mb-5
+              h-[2px]
+              w-10
+              bg-[#FF6A00]
+            "
+            />
+
+            <ul className="space-y-3">
+
+              {featureLinks.map(
+                (item, idx) => (
+
+                  <li key={idx}>
+
+                    <Link
+                      to={item.path}
+                      className="
+                      group
+                      flex
+                      items-center
+                      gap-2
+                      text-base
+                      text-white/80
+                      transition-all
+                      duration-300
+                      hover:translate-x-1
+                      hover:text-[#FF6A00]
+                    "
+                    >
+
+                      <MdOutlineArrowForwardIos
+                        className="
+                        text-[10px]
+                        text-[#FF6A00]
+                        transition-transform
+                        duration-300
+                        group-hover:translate-x-1
+                      "
+                      />
+
+                      {item.name}
+
+                    </Link>
+
+                  </li>
+
+                )
+              )}
+
+            </ul>
+
+          </div>
+
+
+          {/* ===================================================
+            NEWSLETTER
+        ==================================================== */}
+
+          <div>
+
+            <h2
+              className="
+              mb-5
+              text-base
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-white
+            "
+            >
+              Get Newsletter
+            </h2>
+
+            <div
+              className="
+              mb-5
+              h-[2px]
+              w-10
+              bg-[#FF6A00]
+            "
+            />
+
+            <p
+              className="
+              mb-5
+              text-base
+              leading-6
+              text-white/80
+            "
+            >
+              Subscribe to get promotional updates &
+              latest business news.
+            </p>
+
+            {/* Email input */}
+
+            <div
+              className="
+              mb-4
+              flex
+              items-center
+              overflow-hidden
+              rounded-xl
+              border
+              border-white/10
+              bg-[#11171c]
+              shadow-[0_8px_25px_rgba(0,0,0,0.5)]
+              focus-within:border-[#FF6A00]/60
+            "
+            >
+
+              <input
+                type="email"
+                placeholder="example@gmail.com"
+                className="
+                min-w-0
+                flex-1
+                bg-transparent
+                px-4
+                py-3
+                text-sm
+                text-white
+                outline-none
+                placeholder:text-white/25
+              "
+              />
+
+              <button
+                className="
+                flex
+                h-11
+                w-12
+                shrink-0
+                items-center
+                justify-center
+                bg-[#FF6A00]
+                text-white
+                transition-all
+                duration-300
+                hover:bg-[#ff7515]
+              "
+              >
+                <FaEnvelope />
+              </button>
+
+            </div>
+
+            {/* Subscribe button */}
+
+            <Buttons>
+              Subscribe Now
+            </Buttons>
+
+          </div>
+
+        </div>
+      </PageContainer>
+
+
+        {/* =====================================================
+          COPYRIGHT
+      ====================================================== */}
+
+        <div
+          className="
+          relative
+          z-10
+          border-t
+          border-white/[0.07]
+          bg-[#020507]/80
+          px-6
+          py-5
+          text-center
+          text-xs
+          text-white/35
+        "
+        >
+
+          © {new Date().getFullYear()}{" "}
+
+          <span
+            className="
+            font-semibold
+            text-[#FF6A00]
+          "
+          >
+            Q-Techx Solutions
+          </span>
+
+          {" "}— All Rights Reserved.
+
+        </div>
+
+
+        {/* =====================================================
+          BOTTOM ORANGE LINE
+      ====================================================== */}
+
+        <div
+          className="
+          relative
+          z-10
+          h-px
+          w-full
+          bg-[#FF6A00]/70
+          shadow-[0_0_10px_rgba(255,106,0,0.3)]
+        "
+        />
+
     </footer>
   );
 };

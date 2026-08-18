@@ -1,14 +1,63 @@
 
-
-@import url('https://fonts.googleapis.com/css2?family=Inika:wght@400;700&family=League+Gothic&family=Lexend:wght@100..900&family=Meie+Script&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Rubik+Mono+One&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,400..900;1,400..900&display=swap'); */
 @import "tailwindcss";
 
-@theme{
-    --color-primary:#F8740E;
+@theme {
+  --color-primary: #f8740e;
+  --color-primary-strong: #ea580c;
+  --color-primary-soft: #ffb066;
+  --color-brand-bg: #070b12;
+  --color-brand-surface: #0d1320;
+  --color-brand-surface-strong: #111827;
+  --color-brand-text: #f8fafc;
+  --color-brand-muted: #a1a1aa;
+  --color-brand-border: rgba(248, 116, 14, 0.2);
+}
+
+:root {
+  --primary: #f8740e;
+  --primary-strong: #ea580c;
+  --primary-soft: #ffb066;
+  --bg-dark: #070b12;
+  --bg-surface: #0d1320;
+  --bg-card: #111827;
+  --text-primary: #f8fafc;
+  --text-muted: #a1a1aa;
+  --border-soft: rgba(248, 116, 14, 0.18);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: "Poppins", sans-serif;
+  margin: 0;
+  font-family: "Josefin Sans", sans-serif;
+  /* font-family: "Cormorant Garamond", serif; */
+  /* font-family: "Vollkorn", serif; */
+  background: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+#root {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a,
+button {
+  transition: all 0.2s ease;
+}
+
+img {
+  max-width: 100%;
+  display: block;
 }
 
 /* ═══════════════════════════════════════════

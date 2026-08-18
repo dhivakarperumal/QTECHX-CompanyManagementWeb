@@ -10,12 +10,17 @@ const uploadFields = upload.fields([
   { name: 'singlepageimage', maxCount: 10 },
 ]);
 
+// Public endpoints - no authentication required
+router.get('/public/all', serviceController.listServices);
+router.get('/public/:id', serviceController.getService);
+
+// Protected endpoints
 router.use(authenticate);
 
 router.get('/', serviceController.listServices);
-router.get('/:id', serviceController.getService);
 router.post('/', authorize('Admin', 'Super Admin'), uploadFields, serviceController.createService);
 router.put('/:id', authorize('Admin', 'Super Admin'), uploadFields, serviceController.updateService);
 router.delete('/:id', authorize('Admin', 'Super Admin'), serviceController.deleteService);
+router.get('/:id', serviceController.getService);
 
 module.exports = router;
