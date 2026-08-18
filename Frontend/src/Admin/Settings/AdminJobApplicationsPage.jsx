@@ -103,6 +103,8 @@ const AdminJobApplicationsPage = () => {
   const [statusUpdating, setStatusUpdating] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   /* ── Fetch all applications ── */
   const fetchApplications = async () => {
@@ -233,7 +235,23 @@ const AdminJobApplicationsPage = () => {
   const selectedCnt = applications.filter(a => (a.status || a.application_status) === 'Selected').length;
 
   const hasFilters = selectedJob !== 'all' || selectedStatus !== 'all' || !!search;
-  const clearFilters = () => { setSearch(''); setSelectedJob('all'); setSelectedStatus('all'); };
+  const clearFilters = () => { setSearch(''); setSelectedJob('all'); setSelectedStatus('all'); setCurrentPage(1); };
+
+  /* ── Pagination Logic ── */
+  const totalApplications = filteredApplications.length;
+  const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(totalApplications / itemsPerPage);
+  const startIndex = itemsPerPage === 'all' ? 0 : (currentPage - 1) * itemsPerPage;
+  const endIndex = itemsPerPage === 'all' ? totalApplications : startIndex + itemsPerPage;
+  const paginatedApplications = filteredApplications.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
 
   /* ─────────────────────────────── DETAIL MODAL ─────────────────────────────── */
   const DetailModal = ({ application, onClose }) => {
@@ -481,6 +499,15 @@ const AdminJobApplicationsPage = () => {
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+            title="Back"
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
             <Briefcase size={22} className="text-primary" />
           </div>
@@ -528,7 +555,7 @@ const AdminJobApplicationsPage = () => {
             type="text"
             placeholder="Search by name, email, or phone..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
           />
           {search && (
@@ -580,10 +607,10 @@ const AdminJobApplicationsPage = () => {
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-2">Filter by Job</p>
               <select
                 value={selectedJob}
-                onChange={(e) => setSelectedJob(e.target.value)}
+                onChange={(e) => { setSelectedJob(e.target.value); setCurrentPage(1); }}
                 className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-[#0a0b10] text-white text-sm focus:outline-none focus:border-primary/50 transition"
               >
-                <option value="all">All Jobs</option>
+                <option value="all">All</option>
                 {jobs.map((job) => (
                   <option key={job.id} value={job.id}>{job.job_title}</option>
                 ))}
@@ -593,7 +620,7 @@ const AdminJobApplicationsPage = () => {
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-2">Application Status</p>
               <div className="flex flex-wrap gap-1.5">
                 <button
-                  onClick={() => setSelectedStatus('all')}
+                  onClick={() => { setSelectedStatus('all'); setCurrentPage(1); }}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${selectedStatus === 'all' ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}
                 >
                   All
@@ -601,7 +628,7 @@ const AdminJobApplicationsPage = () => {
                 {STATUS_OPTIONS.map(s => (
                   <button
                     key={s.value}
-                    onClick={() => setSelectedStatus(s.value)}
+                    onClick={() => { setSelectedStatus(s.value); setCurrentPage(1); }}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition ${selectedStatus === s.value ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}
                   >
                     {s.label}
@@ -646,6 +673,7 @@ const AdminJobApplicationsPage = () => {
             <table className="w-full min-w-[750px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-center text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5 w-12">S No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Applicant</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Contact</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Experience</th>
@@ -655,9 +683,10 @@ const AdminJobApplicationsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.map((app, i) => (
-                  <tr key={app.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer" onClick={() => { setSelectedApplication(app); setShowDetailModal(true); }}>
-                    <td className="px-5 py-3.5">
+                {paginatedApplications.map((app, i) => (
+                  <tr key={app.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer" onClick={() => { setSelectedApplication(app); setShowDetailModal(true); }}>                    <td className="px-4 py-3.5 text-center">
+                      <span className="text-white/60 text-xs font-medium">{startIndex + i + 1}</span>
+                    </td>                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={app.full_name} index={i} />
                         <div>
@@ -702,6 +731,61 @@ const AdminJobApplicationsPage = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Pagination Controls ── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/8 bg-white/[0.02] px-6 py-4">
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-white/50">Items per page:</p>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#0a0b10] text-white text-xs focus:outline-none focus:border-primary/50 transition"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value="all">All</option>
+              </select>
+              <p className="text-xs text-white/50 ml-2">
+                {itemsPerPage === 'all' ? `Showing all ${totalApplications} records` : `Showing ${startIndex + 1}-${Math.min(endIndex, totalApplications)} of ${totalApplications}`}
+              </p>
+            </div>
+
+            {itemsPerPage !== 'all' && totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white/70 text-xs font-semibold hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  ← Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition ${
+                        currentPage === page
+                          ? 'bg-primary text-white'
+                          : 'border border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white/70 text-xs font-semibold hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
