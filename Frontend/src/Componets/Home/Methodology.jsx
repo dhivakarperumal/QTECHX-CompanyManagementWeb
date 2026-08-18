@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { FaPenNib, FaBullhorn, FaCode } from "react-icons/fa";
 
 import PageContainer from "../CommonComponents/PageContainer";
 
@@ -15,21 +16,21 @@ const Methodology = () => {
 
   const items = [
     {
-      image: "/images/branding.png",
+      icon: FaPenNib,
       number: "01",
       title: "Branding",
       description:
         "At Q-Techx Solutions, we build brands that stand out. From logos to complete strategies, we craft identities that connect with your audience and inspire lasting trust.",
     },
     {
-      image: "/images/marketing.png",
+      icon: FaBullhorn,
       number: "02",
       title: "Marketing",
       description:
         "We blend creativity with data to grow your business. From SEO to social media, our campaigns drive visibility, engagement, and real results.",
     },
     {
-      image: "/images/development.png",
+      icon: FaCode,
       number: "03",
       title: "Development",
       description:
@@ -414,20 +415,59 @@ const Methodology = () => {
                     "
                   />
 
-                  <img
-                    src={item.image}
-                    alt={item.title}
+                  <div
                     className="
-                      relative
-                      z-10
-                      h-24
-                      w-24
-                      object-contain
-                      transition-transform
-                      duration-500
-                      group-hover:scale-110
-                    "
-                  />
+    relative
+    mx-auto
+    mb-5
+    mt-4
+    flex
+    h-32
+    w-32
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-[#FF6A00]/60
+    bg-gradient-to-br
+    from-[#171d21]
+    to-[#090d10]
+    shadow-[0_0_25px_rgba(255,106,0,0.15)]
+    transition-all
+    duration-500
+    group-hover:border-[#FF6A00]
+    group-hover:shadow-[0_0_40px_rgba(255,106,0,0.30)]
+  "
+                  >
+                    {/* Inner glow */}
+                    <div
+                      className="
+      absolute
+      inset-3
+      rounded-full
+      bg-[#FF6A00]/10
+      blur-xl
+      transition-all
+      duration-500
+      group-hover:bg-[#FF6A00]/20
+    "
+                    />
+
+                    {/* Icon */}
+                    <item.icon
+                      className="
+      relative
+      z-10
+      text-6xl
+      text-[#FF6A00]
+      drop-shadow-[0_0_10px_rgba(255,106,0,0.55)]
+      transition-all
+      duration-500
+      group-hover:scale-110
+      group-hover:drop-shadow-[0_0_18px_rgba(255,106,0,0.8)]
+    "
+                    />
+                  </div>
 
                 </div>
 
