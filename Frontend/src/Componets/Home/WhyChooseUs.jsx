@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BsArrowRight } from "react-icons/bs";
 
-import aboutImg from "/images/Contactimg.svg";
+import aboutImg from "/images/whychooseus.png";
 import Logo from "/images/logo.png";
 
 import Button from "../Components/Button";
@@ -35,7 +35,6 @@ const WhyChooseUs = () => {
         text-white
       "
     >
-
       {/* =====================================================
           BACKGROUND GLOW
       ====================================================== */}
@@ -68,7 +67,6 @@ const WhyChooseUs = () => {
         "
       />
 
-
       {/* =====================================================
           GRID BACKGROUND
       ====================================================== */}
@@ -96,7 +94,6 @@ const WhyChooseUs = () => {
         }}
       />
 
-
       {/* =====================================================
           TOP ORANGE LINE
       ====================================================== */}
@@ -113,9 +110,8 @@ const WhyChooseUs = () => {
         "
       />
 
-
       {/* =====================================================
-          DECORATIVE DOTS
+          LEFT DECORATIVE DOTS
       ====================================================== */}
 
       <div
@@ -144,6 +140,9 @@ const WhyChooseUs = () => {
         ))}
       </div>
 
+      {/* =====================================================
+          RIGHT DECORATIVE DOTS
+      ====================================================== */}
 
       <div
         className="
@@ -171,23 +170,21 @@ const WhyChooseUs = () => {
         ))}
       </div>
 
-
       {/* =====================================================
           PAGE CONTAINER
       ====================================================== */}
 
       <PageContainer className="relative z-10">
-
         <div
           className="
             grid
             items-center
-            gap-8
-            py-8
-            sm:py-10
+            gap-3
+            py-4
+            sm:py-8
             md:grid-cols-[1fr_1fr]
-            lg:gap-12
-            lg:py-12
+            lg:gap-4
+            lg:py-10
           "
         >
 
@@ -209,32 +206,65 @@ const WhyChooseUs = () => {
 
             <div
               className="
-  relative
-  overflow-hidden
-  rounded-2xl
-  bg-gradient-to-br
-  from-[#11171c]
-  via-[#0b1014]
-  to-[#080b0e]
-  p-6
-  shadow-[0_12px_40px_rgba(0,0,0,0.45),0_0_25px_rgba(255,106,0,0.07)]
-  transition-all
-  duration-500
-  hover:bg-gradient-to-br
-  hover:from-[#151b20]
-  hover:via-[#0e1419]
-  hover:to-[#090d11]
-  hover:shadow-[0_18px_50px_rgba(0,0,0,0.55),0_0_35px_rgba(255,106,0,0.14)]
-  sm:p-8
-  lg:p-9
-"
+                relative
+                overflow-hidden
+                rounded-2xl
+                bg-gradient-to-br
+                from-[#11171c]
+                via-[#0b1014]
+                to-[#080b0e]
+                p-5
+                shadow-[0_12px_40px_rgba(0,0,0,0.45),0_0_25px_rgba(255,106,0,0.07)]
+                transition-all
+                duration-500
+                hover:bg-gradient-to-br
+                hover:from-[#151b20]
+                hover:via-[#0e1419]
+                hover:to-[#090d11]
+                hover:shadow-[0_18px_50px_rgba(0,0,0,0.55),0_0_35px_rgba(255,106,0,0.14)]
+                sm:p-7
+                lg:p-8
+              "
             >
 
+              {/* Subtle orange glow */}
+
+              <div
+                className="
+                  pointer-events-none
+                  absolute
+                  -left-20
+                  -top-20
+                  h-48
+                  w-48
+                  rounded-full
+                  bg-[#FF6A00]/5
+                  blur-[60px]
+                "
+              />
+
+              {/* Background Logo */}
+
+              <img
+                src={Logo}
+                alt=""
+                className="
+                  pointer-events-none
+                  absolute
+                  -bottom-8
+                  -right-8
+                  w-32
+                  opacity-[0.035]
+                  sm:w-40
+                "
+              />
 
               {/* Small Heading */}
 
               <p
                 className="
+                  relative
+                  z-10
                   mb-2
                   text-[10px]
                   font-bold
@@ -248,12 +278,13 @@ const WhyChooseUs = () => {
                 WHY CHOOSE US
               </p>
 
-
               {/* Main Heading */}
 
               <h2
                 className="
                   hero-font
+                  relative
+                  z-10
                   text-[2.2rem]
                   font-bold
                   uppercase
@@ -273,11 +304,12 @@ const WhyChooseUs = () => {
                 SOLUTIONS
               </h2>
 
-
               {/* Orange underline */}
 
               <div
                 className="
+                  relative
+                  z-10
                   mt-3
                   h-[2px]
                   w-14
@@ -286,11 +318,12 @@ const WhyChooseUs = () => {
                 "
               />
 
-
               {/* Description */}
 
               <p
                 className="
+                  relative
+                  z-10
                   mt-5
                   text-sm
                   leading-6
@@ -309,6 +342,8 @@ const WhyChooseUs = () => {
 
               <p
                 className="
+                  relative
+                  z-10
                   mt-3
                   text-sm
                   leading-6
@@ -320,10 +355,9 @@ const WhyChooseUs = () => {
                 "
               >
                 Our team delivers reliable technology, creative strategies,
-                and expert support to keep your business ahead in today’s
+                and expert support to keep your business ahead in today's
                 competitive digital world.
               </p>
-
 
               {/* =================================================
                   FEATURES
@@ -331,14 +365,15 @@ const WhyChooseUs = () => {
 
               <div
                 className="
-                  mt-6
+                  relative
+                  z-10
+                  mt-5
                   grid
                   grid-cols-1
                   gap-2
                   sm:grid-cols-3
                 "
               >
-
                 {features.map((feature, index) => (
                   <div
                     key={index}
@@ -358,7 +393,6 @@ const WhyChooseUs = () => {
                       hover:bg-[#10161b]
                     "
                   >
-
                     <span
                       className="
                         flex
@@ -387,17 +421,18 @@ const WhyChooseUs = () => {
                     >
                       {feature}
                     </span>
-
                   </div>
                 ))}
-
               </div>
-
 
               {/* Button */}
 
               <div
-                className="mt-7"
+                className="
+                  relative
+                  z-10
+                  mt-6
+                "
                 data-aos="fade-up"
                 data-aos-delay="400"
               >
@@ -418,27 +453,8 @@ const WhyChooseUs = () => {
                 </Button>
               </div>
 
-
-              {/* Background Logo */}
-
-              <img
-                src={Logo}
-                alt=""
-                className="
-                  pointer-events-none
-                  absolute
-                  -bottom-8
-                  -right-8
-                  w-32
-                  opacity-[0.035]
-                  sm:w-40
-                "
-              />
-
             </div>
-
           </div>
-
 
           {/* =================================================
               RIGHT IMAGE
@@ -455,11 +471,11 @@ const WhyChooseUs = () => {
               justify-center
               md:order-2
               md:min-h-[420px]
-              md:justify-end
+              md:justify-center
             "
           >
 
-            {/* Large orange glow */}
+            {/* Large Orange Glow */}
 
             <div
               className="
@@ -480,15 +496,16 @@ const WhyChooseUs = () => {
               "
             />
 
-
-            {/* Image Card */}
+            {/* =================================================
+                IMAGE CARD - INCREASED WIDTH
+            ================================================== */}
 
             <div
               className="
                 group
                 relative
                 w-full
-                max-w-[400px]
+                max-w-[480px]
                 rounded-2xl
                 border
                 border-[#FF6A00]/40
@@ -502,8 +519,8 @@ const WhyChooseUs = () => {
                 duration-500
                 hover:border-[#FF6A00]/80
                 hover:shadow-[0_20px_55px_rgba(0,0,0,0.55),0_0_35px_rgba(255,106,0,0.18)]
-                sm:max-w-[450px]
-                lg:max-w-[500px]
+                sm:max-w-[540px]
+                lg:max-w-[600px]
               "
             >
 
@@ -517,27 +534,26 @@ const WhyChooseUs = () => {
                   bg-[#080d11]
                 "
               >
-
                 <img
                   src={aboutImg}
                   alt="Why Choose Q-TechX Solutions"
                   className="
                     relative
                     z-10
-                    h-[280px]
+                    h-[300px]
                     w-full
                     object-contain
-                    p-5
+                    p-4
                     transition-transform
                     duration-700
                     group-hover:scale-[1.03]
-                    sm:h-[340px]
-                    md:h-[380px]
-                    lg:h-[420px]
+                    sm:h-[360px]
+                    md:h-[400px]
+                    lg:h-[440px]
                   "
                 />
 
-                {/* Image overlay */}
+                {/* Image Overlay */}
 
                 <div
                   className="
@@ -551,9 +567,7 @@ const WhyChooseUs = () => {
                     to-[#FF6A00]/5
                   "
                 />
-
               </div>
-
 
               {/* Orange Corner */}
 
@@ -568,13 +582,16 @@ const WhyChooseUs = () => {
                   rounded-full
                   bg-[#FF6A00]
                   shadow-[0_0_25px_rgba(255,106,0,0.3)]
+                  transition-all
+                  duration-500
+                  group-hover:scale-105
+                  group-hover:shadow-[0_0_35px_rgba(255,106,0,0.4)]
                   sm:h-20
                   sm:w-20
                 "
               />
 
-
-              {/* Orange corner glow */}
+              {/* Orange Corner Glow */}
 
               <div
                 className="
@@ -591,16 +608,12 @@ const WhyChooseUs = () => {
               />
 
             </div>
-
           </div>
-
         </div>
-
       </PageContainer>
 
-
       {/* =====================================================
-          BOTTOM LINE
+          BOTTOM ORANGE LINE
       ====================================================== */}
 
       <div
@@ -611,7 +624,6 @@ const WhyChooseUs = () => {
           shadow-[0_0_8px_rgba(255,106,0,0.25)]
         "
       />
-
     </section>
   );
 };
