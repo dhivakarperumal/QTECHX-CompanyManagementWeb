@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
-import { Clock, IndianRupee } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Clock, IndianRupee, Calendar, Users } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Head from "../Components/Head";
@@ -8,8 +9,31 @@ import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import SocialMedia from "../Home/SocialMedia";
 import emailjs from "@emailjs/browser";
+import api from "../../api";
+
+const getAppliedJobs = () => {
+  try {
+    const raw = localStorage.getItem("applied_jobs");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Not specified";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  } catch {
+    return "Invalid date";
+  }
+};
 
 const CareerDetail = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -27,14 +51,39 @@ const CareerDetail = () => {
   useEffect(() => {
     const fetchJobsData = async () => {
       try {
-        const response = await fetch("/Jobs.json");
-        if (!response.ok) {
-          throw new Error("Failed to fetch jobs");
-        }
-        const data = await response.json();
-        setJobs(data);
+        const { data: result } = await api.get("/jobs", {
+          params: { status: "active", public: true },
+        });
+
+        const data = Array.isArray(result?.data) ? result.data : [];
+        const appliedJobs = getAppliedJobs();
+
+        setJobs(data.map((job) => {
+          const totalVacancies = Number(job.vacancies || 1);
+          const totalApplications = Number(job.total_applications || 0);
+          const remainingVacancies = Math.max(0, totalVacancies - totalApplications);
+          const alreadyApplied = appliedJobs.includes(String(job.id));
+
+          return {
+            id: job.id,
+            title: job.job_title || "Untitled Role",
+            desc: job.short_description || job.full_job_description || "Job description not available yet.",
+            type: job.employment_type || job.work_mode || "Full-time",
+            salary: job.minimum_salary && job.maximum_salary
+              ? `${job.currency || 'INR'} ${job.minimum_salary} - ${job.maximum_salary}`
+              : (job.minimum_salary ? `${job.currency || 'INR'} ${job.minimum_salary}` : "Competitive"),
+            company: job.company_name || "Q Techx",
+            location: job.city || job.state || job.country || "Remote",
+            vacancies: totalVacancies,
+            totalApplications,
+            remainingVacancies,
+            alreadyApplied,
+            applicationStartDate: job.application_start_date,
+            applicationDeadline: job.application_deadline,
+          };
+        }));
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || "Failed to fetch jobs");
       } finally {
         setLoading(false);
       }
@@ -54,6 +103,10 @@ const CareerDetail = () => {
 
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState(false);
+
+  const handleApplyJob = (jobId) => {
+    navigate(`/apply/${jobId}`);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -182,6 +235,7 @@ const CareerDetail = () => {
             {/* Form */}
             <div className="md:w-1/2 w-full p-4 md:p-8">
               <form
+                id="career-application-form"
                 onSubmit={handleSubmit}
                 className="grid grid-cols-1 md:grid-cols-2 gap-6 relative"
               >
@@ -306,7 +360,7 @@ const CareerDetail = () => {
                   >
                     <option value="">Select a position</option>
                     {jobs.map((job, i) => (
-                      <option key={i} value={job.title}>
+                      <option key={job.id ?? i} value={job.title}>
                         {job.title}
                       </option>
                     ))}
@@ -426,24 +480,52 @@ const CareerDetail = () => {
                 <div
                   data-aos="zoom-in-up"
                   data-aos-delay={i * 150}
-                  key={i}
+                  key={job.id ?? i}
                   className="bg-white shadow rounded-lg p-4 md:p-8 hover:shadow-lg transition"
                 >
-                  <h3 className="text-lg md:text-xl font-semibold text-primary mb-2">
-                    {job.title}
-                  </h3>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-lg md:text-xl font-semibold text-primary mb-0">
+                      {job.title}
+                    </h3>
+                    <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                      {job.company}
+                    </span>
+                  </div>
                   <p className="text-gray-500 text-sm md:text-base mb-3">
                     {job.desc}
                   </p>
-                  <div className="flex items-center mt-6 gap-4 text-sm md:text-base text-gray-700">
+                  <div className="flex flex-wrap items-center mt-6 gap-3 text-sm md:text-base text-gray-700">
                     <span className="flex items-center gap-1 text-gray-900">
                       <Clock size={16} className="text-primary" /> {job.type}
                     </span>
                     <span className="flex items-center gap-1 text-gray-900">
-                      <IndianRupee size={16} className="text-primary" />{" "}
-                      {job.salary}
+                      <IndianRupee size={16} className="text-primary" /> {job.salary}
+                    </span>
+                    <span className="text-gray-500 text-xs md:text-sm">{job.location}</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center mt-4 gap-3 text-sm text-gray-600 border-t border-gray-300 pt-4">
+                    <span className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded">
+                      <Calendar size={14} className="text-blue-600" /> 
+                      <span className="text-xs text-blue-900">Start: <strong>{formatDate(job.applicationStartDate)}</strong></span>
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded">
+                      <Calendar size={14} className="text-red-600" /> 
+                      <span className="text-xs text-red-900">Deadline: <strong>{formatDate(job.applicationDeadline)}</strong></span>
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded ml-auto">
+                      <Users size={14} className="text-green-600" /> 
+                      <span className="text-xs text-green-900"><strong>{job.vacancies}</strong> vacancies</span>
                     </span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleApplyJob(job.id)}
+                    className="mt-5 w-full bg-primary text-white font-semibold rounded-xl py-3 hover:bg-primary/90 transition duration-200"
+                  >
+                    Apply
+                  </button>
                 </div>
               ))}
             </div>

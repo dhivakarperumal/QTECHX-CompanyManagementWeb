@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import checkTokenStatus from './utils/tokenDebugger.js'
 import Home from './Componets/Home/Home.jsx'
 import Login from './Componets/Auth/Login.jsx'
 import Register from './Componets/Components/Register.jsx'
@@ -33,6 +34,7 @@ import WhoWeWorkWith from "./Componets/WhyChooseUs/WhoWeWorkWith.jsx";
 import WhatWeDo from "./Componets/WhyChooseUs/WhatWeDo.jsx";
 import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
 import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
+import JobApply from "./Admin/JobApply/JobApply.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
@@ -96,6 +98,11 @@ import ReportsPage from './Admin/ReportsPage.jsx';
 import AdminProfile from './Admin/Settings/AdminProfile.jsx';
 import AdminSettingsPage from './Admin/Settings/AdminSettingsPage.jsx';
 import AdminLeaveSettingsPage from './Admin/Settings/AdminLeaveSettingsPage.jsx';
+import AdminServicesSettingsPage from './Admin/Settings/AdminServicesSettingsPage.jsx';
+import AdminPricingSettingsPage from './Admin/Settings/AdminPricingSettingsPage.jsx';
+import AdminReviewsSettingsPage from './Admin/Settings/AdminReviewsSettingsPage.jsx';
+import AdminJobsSettingsPage from './Admin/Settings/AdminJobsSettingsPage.jsx';
+import AdminJobApplicationsPage from './Admin/Settings/AdminJobApplicationsPage.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -124,6 +131,7 @@ const router = createHashRouter([
       { path: "/whatwedo", element: <WhatWeDo /> },
       { path: "/achievements", element: <OurAchievements /> },
       { path: "/career", element: <CareerDetail /> },
+      { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       {
         path: 'login',
@@ -339,6 +347,26 @@ const router = createHashRouter([
             element: <AdminLeaveSettingsPage />,
           },
           {
+            path: 'settings/services',
+            element: <AdminServicesSettingsPage />,
+          },
+          {
+            path: 'settings/pricing',
+            element: <AdminPricingSettingsPage />,
+          },
+          {
+            path: 'settings/reviews',
+            element: <AdminReviewsSettingsPage />,
+          },
+          {
+            path: 'settings/jobs',
+            element: <AdminJobsSettingsPage />,
+          },
+          {
+            path: 'settings/job-applications',
+            element: <AdminJobApplicationsPage />,
+          },
+          {
             path: 'settings/profile',
             element: <AdminProfile />,
           },
@@ -520,3 +548,8 @@ createRoot(document.getElementById('root')).render(
     </AuthProvider>
   </StrictMode>,
 )
+
+// Make token debugger available globally in browser console
+if (import.meta.env.DEV) {
+  console.log("🔐 Token debugger available. Run checkTokenStatus() in console to debug authentication.");
+}

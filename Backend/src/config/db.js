@@ -1497,6 +1497,645 @@ async function ensureIncomesSchema(pool) {
   }
 }
 
+async function ensureReviewsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'reviews'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        customer_name VARCHAR(255) NOT NULL,
+        product_name VARCHAR(255) NULL,
+        rating INT NOT NULL DEFAULT 5,
+        review_title VARCHAR(255) NULL,
+        review TEXT NOT NULL,
+        admin_reply TEXT NULL,
+        status ENUM('Pending', 'Approved', 'Rejected', 'Reported') NOT NULL DEFAULT 'Pending',
+        featured TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM reviews");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('customer_name', 'VARCHAR(255) NOT NULL');
+  addColumn('product_name', 'VARCHAR(255) NULL');
+  addColumn('rating', 'INT NOT NULL DEFAULT 5');
+  addColumn('review_title', 'VARCHAR(255) NULL');
+  addColumn('review', 'TEXT NOT NULL');
+  addColumn('admin_reply', 'TEXT NULL');
+  addColumn('status', "ENUM('Pending', 'Approved', 'Rejected', 'Reported') NOT NULL DEFAULT 'Pending'");
+  addColumn('featured', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('created_by', 'VARCHAR(36) NULL');
+  addColumn('updated_by', 'VARCHAR(36) NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE reviews ${addColumnStatements.join(', ')}`);
+  }
+}
+
+async function ensurePricingSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'pricing_plans'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS pricing_plans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        plan_title VARCHAR(255) NOT NULL,
+        price VARCHAR(255) NULL,
+        audience VARCHAR(255) NULL,
+        description TEXT NULL,
+        features JSON NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        display_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM pricing_plans");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('plan_title', 'VARCHAR(255) NOT NULL');
+  addColumn('price', 'VARCHAR(255) NULL');
+  addColumn('audience', 'VARCHAR(255) NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('features', 'JSON NULL');
+  addColumn('status', "VARCHAR(50) NOT NULL DEFAULT 'active'");
+  addColumn('display_order', 'INT NOT NULL DEFAULT 0');
+  addColumn('created_by', 'VARCHAR(36) NULL');
+  addColumn('updated_by', 'VARCHAR(36) NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE pricing_plans ${addColumnStatements.join(', ')}`);
+  }
+}
+
+async function ensureJobsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'job_posts'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS job_posts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        job_title VARCHAR(255) NOT NULL,
+        job_id VARCHAR(100) NULL,
+        job_code VARCHAR(100) NULL,
+        job_category VARCHAR(150) NULL,
+        job_subcategory VARCHAR(150) NULL,
+        department VARCHAR(150) NULL,
+        employment_type VARCHAR(100) NULL,
+        job_level VARCHAR(100) NULL,
+        vacancies INT NULL,
+        company_name VARCHAR(255) NULL,
+        company_logo VARCHAR(500) NULL,
+        company_description TEXT NULL,
+        company_website VARCHAR(500) NULL,
+        industry VARCHAR(150) NULL,
+        company_email VARCHAR(255) NULL,
+        company_phone VARCHAR(100) NULL,
+        country VARCHAR(150) NULL,
+        state VARCHAR(150) NULL,
+        city VARCHAR(150) NULL,
+        area VARCHAR(150) NULL,
+        full_address TEXT NULL,
+        pincode VARCHAR(20) NULL,
+        work_mode VARCHAR(50) NULL,
+        willing_to_relocate ENUM('Yes','No') DEFAULT 'No',
+        travel_required ENUM('Yes','No') DEFAULT 'No',
+        short_description TEXT NULL,
+        full_job_description LONGTEXT NULL,
+        key_responsibilities LONGTEXT NULL,
+        daily_duties LONGTEXT NULL,
+        required_qualifications LONGTEXT NULL,
+        preferred_qualifications LONGTEXT NULL,
+        required_skills JSON NULL,
+        preferred_skills JSON NULL,
+        technical_skills JSON NULL,
+        soft_skills JSON NULL,
+        education VARCHAR(255) NULL,
+        minimum_experience VARCHAR(50) NULL,
+        maximum_experience VARCHAR(50) NULL,
+        certifications VARCHAR(255) NULL,
+        languages_required JSON NULL,
+        salary_type VARCHAR(50) NULL,
+        minimum_salary DECIMAL(12,2) NULL,
+        maximum_salary DECIMAL(12,2) NULL,
+        currency VARCHAR(20) NULL,
+        salary_negotiable ENUM('Yes','No') DEFAULT 'No',
+        performance_bonus VARCHAR(100) NULL,
+        joining_bonus VARCHAR(100) NULL,
+        benefits JSON NULL,
+        other_compensation TEXT NULL,
+        working_days JSON NULL,
+        working_hours VARCHAR(100) NULL,
+        shift_type VARCHAR(100) NULL,
+        shift_start_time VARCHAR(50) NULL,
+        shift_end_time VARCHAR(50) NULL,
+        weekly_off VARCHAR(100) NULL,
+        probation_period VARCHAR(100) NULL,
+        notice_period_required VARCHAR(100) NULL,
+        expected_joining_date DATE NULL,
+        immediate_joiner ENUM('Yes','No') DEFAULT 'No',
+        application_start_date DATE NULL,
+        application_deadline DATE NULL,
+        application_email VARCHAR(255) NULL,
+        application_phone VARCHAR(100) NULL,
+        application_url VARCHAR(500) NULL,
+        resume_required ENUM('Yes','No') DEFAULT 'No',
+        cover_letter_required ENUM('Yes','No') DEFAULT 'No',
+        required_documents JSON NULL,
+        application_instructions LONGTEXT NULL,
+        hiring_contact_person VARCHAR(255) NULL,
+        screening_questions JSON NULL,
+        job_status ENUM('Draft','Active','Paused','Closed','Expired') NOT NULL DEFAULT 'Draft',
+        visibility ENUM('Public','Private') NOT NULL DEFAULT 'Public',
+        featured_job ENUM('Yes','No') DEFAULT 'No',
+        urgent_hiring ENUM('Yes','No') DEFAULT 'No',
+        allow_applications ENUM('Yes','No') DEFAULT 'Yes',
+        auto_expire ENUM('Yes','No') DEFAULT 'No',
+        publish_date DATETIME NULL,
+        expiry_date DATETIME NULL,
+        url_slug VARCHAR(255) NULL,
+        meta_title VARCHAR(255) NULL,
+        meta_description TEXT NULL,
+        seo_keywords JSON NULL,
+        social_share_image VARCHAR(500) NULL,
+        social_sharing ENUM('Yes','No') DEFAULT 'Yes',
+        total_applications INT NOT NULL DEFAULT 0,
+        new_applications INT NOT NULL DEFAULT 0,
+        shortlisted INT NOT NULL DEFAULT 0,
+        interview_scheduled INT NOT NULL DEFAULT 0,
+        interview_completed INT NOT NULL DEFAULT 0,
+        selected INT NOT NULL DEFAULT 0,
+        rejected INT NOT NULL DEFAULT 0,
+        hired INT NOT NULL DEFAULT 0,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        published_at DATETIME NULL,
+        closed_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        view_count INT NOT NULL DEFAULT 0,
+        application_count INT NOT NULL DEFAULT 0
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM job_posts");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      return `ADD COLUMN ${name} ${definition}`;
+    }
+    return null;
+  };
+
+  const statements = [
+    addColumn('job_title', 'VARCHAR(255) NOT NULL'),
+    addColumn('job_id', 'VARCHAR(100) NULL'),
+    addColumn('job_code', 'VARCHAR(100) NULL'),
+    addColumn('job_category', 'VARCHAR(150) NULL'),
+    addColumn('job_subcategory', 'VARCHAR(150) NULL'),
+    addColumn('department', 'VARCHAR(150) NULL'),
+    addColumn('employment_type', 'VARCHAR(100) NULL'),
+    addColumn('job_level', 'VARCHAR(100) NULL'),
+    addColumn('vacancies', 'INT NULL'),
+    addColumn('company_name', 'VARCHAR(255) NULL'),
+    addColumn('company_logo', 'VARCHAR(500) NULL'),
+    addColumn('company_description', 'TEXT NULL'),
+    addColumn('company_website', 'VARCHAR(500) NULL'),
+    addColumn('industry', 'VARCHAR(150) NULL'),
+    addColumn('company_email', 'VARCHAR(255) NULL'),
+    addColumn('company_phone', 'VARCHAR(100) NULL'),
+    addColumn('country', 'VARCHAR(150) NULL'),
+    addColumn('state', 'VARCHAR(150) NULL'),
+    addColumn('city', 'VARCHAR(150) NULL'),
+    addColumn('area', 'VARCHAR(150) NULL'),
+    addColumn('full_address', 'TEXT NULL'),
+    addColumn('pincode', 'VARCHAR(20) NULL'),
+    addColumn('work_mode', 'VARCHAR(50) NULL'),
+    addColumn('willing_to_relocate', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('travel_required', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('short_description', 'TEXT NULL'),
+    addColumn('full_job_description', 'LONGTEXT NULL'),
+    addColumn('key_responsibilities', 'LONGTEXT NULL'),
+    addColumn('daily_duties', 'LONGTEXT NULL'),
+    addColumn('required_qualifications', 'LONGTEXT NULL'),
+    addColumn('preferred_qualifications', 'LONGTEXT NULL'),
+    addColumn('required_skills', 'JSON NULL'),
+    addColumn('preferred_skills', 'JSON NULL'),
+    addColumn('technical_skills', 'JSON NULL'),
+    addColumn('soft_skills', 'JSON NULL'),
+    addColumn('education', 'VARCHAR(255) NULL'),
+    addColumn('minimum_experience', 'VARCHAR(50) NULL'),
+    addColumn('maximum_experience', 'VARCHAR(50) NULL'),
+    addColumn('certifications', 'VARCHAR(255) NULL'),
+    addColumn('languages_required', 'JSON NULL'),
+    addColumn('salary_type', 'VARCHAR(50) NULL'),
+    addColumn('minimum_salary', 'DECIMAL(12,2) NULL'),
+    addColumn('maximum_salary', 'DECIMAL(12,2) NULL'),
+    addColumn('currency', 'VARCHAR(20) NULL'),
+    addColumn('salary_negotiable', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('performance_bonus', 'VARCHAR(100) NULL'),
+    addColumn('joining_bonus', 'VARCHAR(100) NULL'),
+    addColumn('benefits', 'JSON NULL'),
+    addColumn('other_compensation', 'TEXT NULL'),
+    addColumn('working_days', 'JSON NULL'),
+    addColumn('working_hours', 'VARCHAR(100) NULL'),
+    addColumn('shift_type', 'VARCHAR(100) NULL'),
+    addColumn('shift_start_time', 'VARCHAR(50) NULL'),
+    addColumn('shift_end_time', 'VARCHAR(50) NULL'),
+    addColumn('weekly_off', 'VARCHAR(100) NULL'),
+    addColumn('probation_period', 'VARCHAR(100) NULL'),
+    addColumn('notice_period_required', 'VARCHAR(100) NULL'),
+    addColumn('expected_joining_date', 'DATE NULL'),
+    addColumn('immediate_joiner', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('application_start_date', 'DATE NULL'),
+    addColumn('application_deadline', 'DATE NULL'),
+    addColumn('application_email', 'VARCHAR(255) NULL'),
+    addColumn('application_phone', 'VARCHAR(100) NULL'),
+    addColumn('application_url', 'VARCHAR(500) NULL'),
+    addColumn('resume_required', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('cover_letter_required', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('required_documents', 'JSON NULL'),
+    addColumn('application_instructions', 'LONGTEXT NULL'),
+    addColumn('hiring_contact_person', 'VARCHAR(255) NULL'),
+    addColumn('screening_questions', 'JSON NULL'),
+    addColumn('job_status', "ENUM('Draft','Active','Paused','Closed','Expired') NOT NULL DEFAULT 'Draft'"),
+    addColumn('visibility', "ENUM('Public','Private') NOT NULL DEFAULT 'Public'"),
+    addColumn('featured_job', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('urgent_hiring', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('allow_applications', "ENUM('Yes','No') DEFAULT 'Yes'"),
+    addColumn('auto_expire', "ENUM('Yes','No') DEFAULT 'No'"),
+    addColumn('publish_date', 'DATETIME NULL'),
+    addColumn('expiry_date', 'DATETIME NULL'),
+    addColumn('url_slug', 'VARCHAR(255) NULL'),
+    addColumn('meta_title', 'VARCHAR(255) NULL'),
+    addColumn('meta_description', 'TEXT NULL'),
+    addColumn('seo_keywords', 'JSON NULL'),
+    addColumn('social_share_image', 'VARCHAR(500) NULL'),
+    addColumn('social_sharing', "ENUM('Yes','No') DEFAULT 'Yes'"),
+    addColumn('total_applications', 'INT NOT NULL DEFAULT 0'),
+    addColumn('new_applications', 'INT NOT NULL DEFAULT 0'),
+    addColumn('shortlisted', 'INT NOT NULL DEFAULT 0'),
+    addColumn('interview_scheduled', 'INT NOT NULL DEFAULT 0'),
+    addColumn('interview_completed', 'INT NOT NULL DEFAULT 0'),
+    addColumn('selected', 'INT NOT NULL DEFAULT 0'),
+    addColumn('rejected', 'INT NOT NULL DEFAULT 0'),
+    addColumn('hired', 'INT NOT NULL DEFAULT 0'),
+    addColumn('created_by', 'VARCHAR(36) NULL'),
+    addColumn('updated_by', 'VARCHAR(36) NULL'),
+    addColumn('published_at', 'DATETIME NULL'),
+    addColumn('closed_at', 'DATETIME NULL'),
+    addColumn('view_count', 'INT NOT NULL DEFAULT 0'),
+    addColumn('application_count', 'INT NOT NULL DEFAULT 0')
+  ].filter(Boolean);
+
+  if (statements.length) {
+    await pool.execute(`ALTER TABLE job_posts ${statements.join(', ')}`);
+  }
+}
+
+async function ensureJobsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'job_posts'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS job_posts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        job_title VARCHAR(255) NOT NULL,
+        job_id VARCHAR(100) NULL,
+        job_code VARCHAR(100) NULL,
+        job_category VARCHAR(150) NULL,
+        job_subcategory VARCHAR(150) NULL,
+        department VARCHAR(150) NULL,
+        employment_type VARCHAR(100) NULL,
+        job_level VARCHAR(100) NULL,
+        vacancies INT NULL,
+        company_name VARCHAR(255) NULL,
+        company_logo VARCHAR(500) NULL,
+        company_description TEXT NULL,
+        company_website VARCHAR(500) NULL,
+        industry VARCHAR(150) NULL,
+        company_email VARCHAR(255) NULL,
+        company_phone VARCHAR(100) NULL,
+        country VARCHAR(150) NULL,
+        state VARCHAR(150) NULL,
+        city VARCHAR(150) NULL,
+        area VARCHAR(150) NULL,
+        full_address TEXT NULL,
+        pincode VARCHAR(20) NULL,
+        work_mode VARCHAR(50) NULL,
+        willing_to_relocate ENUM('Yes','No') DEFAULT 'No',
+        travel_required ENUM('Yes','No') DEFAULT 'No',
+        short_description TEXT NULL,
+        full_job_description LONGTEXT NULL,
+        key_responsibilities LONGTEXT NULL,
+        daily_duties LONGTEXT NULL,
+        required_qualifications LONGTEXT NULL,
+        preferred_qualifications LONGTEXT NULL,
+        required_skills JSON NULL,
+        preferred_skills JSON NULL,
+        technical_skills JSON NULL,
+        soft_skills JSON NULL,
+        education VARCHAR(255) NULL,
+        minimum_experience VARCHAR(50) NULL,
+        maximum_experience VARCHAR(50) NULL,
+        certifications VARCHAR(255) NULL,
+        languages_required JSON NULL,
+        salary_type VARCHAR(50) NULL,
+        minimum_salary DECIMAL(12,2) NULL,
+        maximum_salary DECIMAL(12,2) NULL,
+        currency VARCHAR(20) NULL,
+        salary_negotiable ENUM('Yes','No') DEFAULT 'No',
+        performance_bonus VARCHAR(100) NULL,
+        joining_bonus VARCHAR(100) NULL,
+        benefits JSON NULL,
+        other_compensation TEXT NULL,
+        working_days JSON NULL,
+        working_hours VARCHAR(100) NULL,
+        shift_type VARCHAR(100) NULL,
+        shift_start_time VARCHAR(50) NULL,
+        shift_end_time VARCHAR(50) NULL,
+        weekly_off VARCHAR(100) NULL,
+        probation_period VARCHAR(100) NULL,
+        notice_period_required VARCHAR(100) NULL,
+        expected_joining_date DATE NULL,
+        immediate_joiner ENUM('Yes','No') DEFAULT 'No',
+        application_start_date DATE NULL,
+        application_deadline DATE NULL,
+        application_email VARCHAR(255) NULL,
+        application_phone VARCHAR(100) NULL,
+        application_url VARCHAR(500) NULL,
+        resume_required ENUM('Yes','No') DEFAULT 'No',
+        cover_letter_required ENUM('Yes','No') DEFAULT 'No',
+        required_documents JSON NULL,
+        application_instructions LONGTEXT NULL,
+        hiring_contact_person VARCHAR(255) NULL,
+        screening_questions JSON NULL,
+        job_status ENUM('Draft','Active','Paused','Closed','Expired') NOT NULL DEFAULT 'Draft',
+        visibility ENUM('Public','Private') NOT NULL DEFAULT 'Public',
+        featured_job ENUM('Yes','No') DEFAULT 'No',
+        urgent_hiring ENUM('Yes','No') DEFAULT 'No',
+        allow_applications ENUM('Yes','No') DEFAULT 'Yes',
+        auto_expire ENUM('Yes','No') DEFAULT 'No',
+        publish_date DATETIME NULL,
+        expiry_date DATETIME NULL,
+        url_slug VARCHAR(255) NULL,
+        meta_title VARCHAR(255) NULL,
+        meta_description TEXT NULL,
+        seo_keywords JSON NULL,
+        social_share_image VARCHAR(500) NULL,
+        social_sharing ENUM('Yes','No') DEFAULT 'Yes',
+        total_applications INT NOT NULL DEFAULT 0,
+        new_applications INT NOT NULL DEFAULT 0,
+        shortlisted INT NOT NULL DEFAULT 0,
+        interview_scheduled INT NOT NULL DEFAULT 0,
+        interview_completed INT NOT NULL DEFAULT 0,
+        selected INT NOT NULL DEFAULT 0,
+        rejected INT NOT NULL DEFAULT 0,
+        hired INT NOT NULL DEFAULT 0,
+        created_by VARCHAR(36) NULL,
+        updated_by VARCHAR(36) NULL,
+        published_at DATETIME NULL,
+        closed_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        view_count INT NOT NULL DEFAULT 0,
+        application_count INT NOT NULL DEFAULT 0
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM job_posts");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('job_title', 'VARCHAR(255) NOT NULL');
+  addColumn('job_id', 'VARCHAR(100) NULL');
+  addColumn('job_code', 'VARCHAR(100) NULL');
+  addColumn('job_category', 'VARCHAR(150) NULL');
+  addColumn('job_subcategory', 'VARCHAR(150) NULL');
+  addColumn('department', 'VARCHAR(150) NULL');
+  addColumn('employment_type', 'VARCHAR(100) NULL');
+  addColumn('job_level', 'VARCHAR(100) NULL');
+  addColumn('vacancies', 'INT NULL');
+  addColumn('company_name', 'VARCHAR(255) NULL');
+  addColumn('company_logo', 'VARCHAR(500) NULL');
+  addColumn('company_description', 'TEXT NULL');
+  addColumn('company_website', 'VARCHAR(500) NULL');
+  addColumn('industry', 'VARCHAR(150) NULL');
+  addColumn('company_email', 'VARCHAR(255) NULL');
+  addColumn('company_phone', 'VARCHAR(100) NULL');
+  addColumn('country', 'VARCHAR(150) NULL');
+  addColumn('state', 'VARCHAR(150) NULL');
+  addColumn('city', 'VARCHAR(150) NULL');
+  addColumn('area', 'VARCHAR(150) NULL');
+  addColumn('full_address', 'TEXT NULL');
+  addColumn('pincode', 'VARCHAR(20) NULL');
+  addColumn('work_mode', 'VARCHAR(50) NULL');
+  addColumn('willing_to_relocate', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('travel_required', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('short_description', 'TEXT NULL');
+  addColumn('full_job_description', 'LONGTEXT NULL');
+  addColumn('key_responsibilities', 'LONGTEXT NULL');
+  addColumn('daily_duties', 'LONGTEXT NULL');
+  addColumn('required_qualifications', 'LONGTEXT NULL');
+  addColumn('preferred_qualifications', 'LONGTEXT NULL');
+  addColumn('required_skills', 'JSON NULL');
+  addColumn('preferred_skills', 'JSON NULL');
+  addColumn('technical_skills', 'JSON NULL');
+  addColumn('soft_skills', 'JSON NULL');
+  addColumn('education', 'VARCHAR(255) NULL');
+  addColumn('minimum_experience', 'VARCHAR(50) NULL');
+  addColumn('maximum_experience', 'VARCHAR(50) NULL');
+  addColumn('certifications', 'VARCHAR(255) NULL');
+  addColumn('languages_required', 'JSON NULL');
+  addColumn('salary_type', 'VARCHAR(50) NULL');
+  addColumn('minimum_salary', 'DECIMAL(12,2) NULL');
+  addColumn('maximum_salary', 'DECIMAL(12,2) NULL');
+  addColumn('currency', 'VARCHAR(20) NULL');
+  addColumn('salary_negotiable', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('performance_bonus', 'VARCHAR(100) NULL');
+  addColumn('joining_bonus', 'VARCHAR(100) NULL');
+  addColumn('benefits', 'JSON NULL');
+  addColumn('other_compensation', 'TEXT NULL');
+  addColumn('working_days', 'JSON NULL');
+  addColumn('working_hours', 'VARCHAR(100) NULL');
+  addColumn('shift_type', 'VARCHAR(100) NULL');
+  addColumn('shift_start_time', 'VARCHAR(50) NULL');
+  addColumn('shift_end_time', 'VARCHAR(50) NULL');
+  addColumn('weekly_off', 'VARCHAR(100) NULL');
+  addColumn('probation_period', 'VARCHAR(100) NULL');
+  addColumn('notice_period_required', 'VARCHAR(100) NULL');
+  addColumn('expected_joining_date', 'DATE NULL');
+  addColumn('immediate_joiner', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('application_start_date', 'DATE NULL');
+  addColumn('application_deadline', 'DATE NULL');
+  addColumn('application_email', 'VARCHAR(255) NULL');
+  addColumn('application_phone', 'VARCHAR(100) NULL');
+  addColumn('application_url', 'VARCHAR(500) NULL');
+  addColumn('resume_required', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('cover_letter_required', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('required_documents', 'JSON NULL');
+  addColumn('application_instructions', 'LONGTEXT NULL');
+  addColumn('hiring_contact_person', 'VARCHAR(255) NULL');
+  addColumn('screening_questions', 'JSON NULL');
+  addColumn('job_status', "ENUM('Draft','Active','Paused','Closed','Expired') NOT NULL DEFAULT 'Draft'");
+  addColumn('visibility', "ENUM('Public','Private') NOT NULL DEFAULT 'Public'");
+  addColumn('featured_job', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('urgent_hiring', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('allow_applications', "ENUM('Yes','No') DEFAULT 'Yes'");
+  addColumn('auto_expire', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('publish_date', 'DATETIME NULL');
+  addColumn('expiry_date', 'DATETIME NULL');
+  addColumn('url_slug', 'VARCHAR(255) NULL');
+  addColumn('meta_title', 'VARCHAR(255) NULL');
+  addColumn('meta_description', 'TEXT NULL');
+  addColumn('seo_keywords', 'JSON NULL');
+  addColumn('social_share_image', 'VARCHAR(500) NULL');
+  addColumn('social_sharing', "ENUM('Yes','No') DEFAULT 'Yes'");
+  addColumn('total_applications', 'INT NOT NULL DEFAULT 0');
+  addColumn('new_applications', 'INT NOT NULL DEFAULT 0');
+  addColumn('shortlisted', 'INT NOT NULL DEFAULT 0');
+  addColumn('interview_scheduled', 'INT NOT NULL DEFAULT 0');
+  addColumn('interview_completed', 'INT NOT NULL DEFAULT 0');
+  addColumn('selected', 'INT NOT NULL DEFAULT 0');
+  addColumn('rejected', 'INT NOT NULL DEFAULT 0');
+  addColumn('hired', 'INT NOT NULL DEFAULT 0');
+  addColumn('created_by', 'VARCHAR(36) NULL');
+  addColumn('updated_by', 'VARCHAR(36) NULL');
+  addColumn('published_at', 'DATETIME NULL');
+  addColumn('closed_at', 'DATETIME NULL');
+  addColumn('view_count', 'INT NOT NULL DEFAULT 0');
+  addColumn('application_count', 'INT NOT NULL DEFAULT 0');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE job_posts ${addColumnStatements.join(', ')}`);
+  }
+}
+
+async function ensureServicesSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'services'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS services (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        service_code VARCHAR(100) NOT NULL UNIQUE,
+        icon VARCHAR(255) NULL,
+        icon1 VARCHAR(255) NULL,
+        image VARCHAR(255) NULL,
+        singlepageimage JSON NULL,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(150) NULL,
+        subcategory VARCHAR(200) NULL,
+        tagline VARCHAR(255) NULL,
+        short_description TEXT NULL,
+        description TEXT NULL,
+        detailed_description LONGTEXT NULL,
+        what_we_offer JSON NULL,
+        key_features JSON NULL,
+        why_choose_us JSON NULL,
+        technologies_we_use JSON NULL,
+        service_process JSON NULL,
+        industries JSON NULL,
+        project_type JSON NULL,
+        pricing JSON NULL,
+        duration JSON NULL,
+        cta_button VARCHAR(200) NULL,
+        cta_link VARCHAR(255) NULL,
+        seo JSON NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'active',
+        featured TINYINT(1) NOT NULL DEFAULT 0,
+        display_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by INT NULL,
+        updated_by INT NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM services");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('service_code', 'VARCHAR(100) NOT NULL UNIQUE');
+  addColumn('icon', 'VARCHAR(255) NULL');
+  addColumn('icon1', 'VARCHAR(255) NULL');
+  addColumn('image', 'VARCHAR(255) NULL');
+  addColumn('singlepageimage', 'JSON NULL');
+  addColumn('title', 'VARCHAR(255) NOT NULL');
+  addColumn('category', 'VARCHAR(150) NULL');
+  addColumn('subcategory', 'VARCHAR(200) NULL');
+  addColumn('tagline', 'VARCHAR(255) NULL');
+  addColumn('short_description', 'TEXT NULL');
+  addColumn('description', 'TEXT NULL');
+  addColumn('detailed_description', 'LONGTEXT NULL');
+  addColumn('what_we_offer', 'JSON NULL');
+  addColumn('key_features', 'JSON NULL');
+  addColumn('why_choose_us', 'JSON NULL');
+  addColumn('technologies_we_use', 'JSON NULL');
+  addColumn('service_process', 'JSON NULL');
+  addColumn('industries', 'JSON NULL');
+  addColumn('project_type', 'JSON NULL');
+  addColumn('pricing', 'JSON NULL');
+  addColumn('duration', 'JSON NULL');
+  addColumn('cta_button', 'VARCHAR(200) NULL');
+  addColumn('cta_link', 'VARCHAR(255) NULL');
+  addColumn('seo', 'JSON NULL');
+  addColumn('status', "VARCHAR(50) NOT NULL DEFAULT 'active'");
+  addColumn('featured', 'TINYINT(1) NOT NULL DEFAULT 0');
+  addColumn('display_order', 'INT NOT NULL DEFAULT 0');
+  addColumn('created_by', 'INT NULL');
+  addColumn('updated_by', 'INT NULL');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE services ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function ensureLeaveSettingsSchema(pool) {
   const [existingTables] = await pool.execute("SHOW TABLES LIKE 'employee_leave_settings'");
 
@@ -1654,6 +2293,121 @@ async function ensureTraineeEmployeeAssignmentsSchema(pool) {
   `);
 }
 
+async function ensureJobApplicationsSchema(pool) {
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'job_applications'");
+
+  if (!existingTables.length) {
+    await pool.execute(
+      `CREATE TABLE IF NOT EXISTS job_applications (
+        id VARCHAR(36) NOT NULL,
+        job_id INT NOT NULL,
+        applicant_id VARCHAR(36) NULL,
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        alternate_phone VARCHAR(20) NULL,
+        date_of_birth DATE NULL,
+        gender VARCHAR(50) NULL,
+        address TEXT NULL,
+        city VARCHAR(150) NULL,
+        state VARCHAR(150) NULL,
+        pincode VARCHAR(20) NULL,
+        current_location VARCHAR(255) NULL,
+        current_job_title VARCHAR(255) NULL,
+        current_company VARCHAR(255) NULL,
+        total_experience VARCHAR(100) NULL,
+        relevant_experience VARCHAR(100) NULL,
+        employment_status VARCHAR(100) NULL,
+        current_salary DECIMAL(12,2) NULL,
+        expected_salary DECIMAL(12,2) NULL,
+        notice_period VARCHAR(100) NULL,
+        joining_date DATE NULL,
+        willing_to_relocate ENUM('Yes','No') DEFAULT 'No',
+        preferred_work_mode VARCHAR(100) NULL,
+        education JSON NULL,
+        skills JSON NULL,
+        certifications VARCHAR(500) NULL,
+        linkedin_url VARCHAR(500) NULL,
+        github_url VARCHAR(500) NULL,
+        portfolio_url VARCHAR(500) NULL,
+        resume VARCHAR(500) NULL,
+        cover_letter VARCHAR(500) NULL,
+        portfolio_file VARCHAR(500) NULL,
+        certificates VARCHAR(500) NULL,
+        screening_answers JSON NULL,
+        additional_information LONGTEXT NULL,
+        application_status ENUM('Applied','Under Review','Shortlisted','Interview','Selected','Rejected') NOT NULL DEFAULT 'Applied',
+        recruiter_notes TEXT NULL,
+        applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        FOREIGN KEY (job_id) REFERENCES job_posts(id) ON DELETE CASCADE,
+        INDEX idx_job_id (job_id),
+        INDEX idx_applicant_id (applicant_id),
+        INDEX idx_email (email),
+        INDEX idx_application_status (application_status),
+        INDEX idx_applied_at (applied_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    );
+    return;
+  }
+
+  const [columns] = await pool.execute("SHOW COLUMNS FROM job_applications");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addColumn('job_id', 'INT NOT NULL');
+  addColumn('applicant_id', 'VARCHAR(36) NULL');
+  addColumn('full_name', 'VARCHAR(255) NOT NULL');
+  addColumn('email', 'VARCHAR(255) NOT NULL');
+  addColumn('phone', 'VARCHAR(20) NOT NULL');
+  addColumn('alternate_phone', 'VARCHAR(20) NULL');
+  addColumn('date_of_birth', 'DATE NULL');
+  addColumn('gender', 'VARCHAR(50) NULL');
+  addColumn('address', 'TEXT NULL');
+  addColumn('city', 'VARCHAR(150) NULL');
+  addColumn('state', 'VARCHAR(150) NULL');
+  addColumn('pincode', 'VARCHAR(20) NULL');
+  addColumn('current_location', 'VARCHAR(255) NULL');
+  addColumn('current_job_title', 'VARCHAR(255) NULL');
+  addColumn('current_company', 'VARCHAR(255) NULL');
+  addColumn('total_experience', 'VARCHAR(100) NULL');
+  addColumn('relevant_experience', 'VARCHAR(100) NULL');
+  addColumn('employment_status', 'VARCHAR(100) NULL');
+  addColumn('current_salary', 'DECIMAL(12,2) NULL');
+  addColumn('expected_salary', 'DECIMAL(12,2) NULL');
+  addColumn('notice_period', 'VARCHAR(100) NULL');
+  addColumn('joining_date', 'DATE NULL');
+  addColumn('willing_to_relocate', "ENUM('Yes','No') DEFAULT 'No'");
+  addColumn('preferred_work_mode', 'VARCHAR(100) NULL');
+  addColumn('education', 'JSON NULL');
+  addColumn('skills', 'JSON NULL');
+  addColumn('certifications', 'VARCHAR(500) NULL');
+  addColumn('linkedin_url', 'VARCHAR(500) NULL');
+  addColumn('github_url', 'VARCHAR(500) NULL');
+  addColumn('portfolio_url', 'VARCHAR(500) NULL');
+  addColumn('resume', 'VARCHAR(500) NULL');
+  addColumn('cover_letter', 'VARCHAR(500) NULL');
+  addColumn('portfolio_file', 'VARCHAR(500) NULL');
+  addColumn('certificates', 'VARCHAR(500) NULL');
+  addColumn('screening_answers', 'JSON NULL');
+  addColumn('additional_information', 'LONGTEXT NULL');
+  addColumn('application_status', "ENUM('Applied','Under Review','Shortlisted','Interview','Selected','Rejected') NOT NULL DEFAULT 'Applied'");
+  addColumn('recruiter_notes', 'TEXT NULL');
+  addColumn('applied_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
+  addColumn('updated_at', 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE job_applications ${addColumnStatements.join(', ')}`);
+  }
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -1665,6 +2419,11 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
+    await ensureServicesSchema(pool);
+    await ensurePricingSchema(pool);
+    await ensureReviewsSchema(pool);
+    await ensureJobsSchema(pool);
+    await ensureJobApplicationsSchema(pool);
     await ensureLeaveSettingsSchema(pool);
     await ensureEmployeeLeavesSchema(pool);
     await ensureAttendanceSchema(pool);

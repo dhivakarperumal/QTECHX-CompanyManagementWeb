@@ -42,11 +42,33 @@ function optionalAuthenticate(req, res, next) {
 
 function authorize(...allowedRoles) {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      console.warn(`[Auth] Authorization blocked. User role '${req.user?.role}' not in allowed roles: [${allowedRoles.join(", ")}]`);
+    if (!req.user) {
+      console.warn(`[Auth] Authorization blocked. No user in request.`);
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    // Get user role - check multiple possible field names for flexibility
+    const userRole = req.user.role || req.user.user_role || req.user.emp_role || null;
+    
+    if (!userRole) {
+      console.warn(`[Auth] Authorization blocked. User has no role assigned.`);
       return res.status(403).json({ success: false, message: "You do not have permission to perform this action" });
     }
-    console.log(`[Auth] Authorization successful for role: ${req.user.role}`);
+
+    // Normalize role comparison (case-insensitive, trim whitespace)
+    const normalizedUserRole = userRole.toLowerCase().trim();
+    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase().trim());
+
+    // Check if user role is in allowed roles
+    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
+      // Also check for "super admin" which should have access to everything
+      if (normalizedUserRole !== "super admin") {
+        console.warn(`[Auth] Authorization blocked. User role '${userRole}' not in allowed roles: [${allowedRoles.join(", ")}]`);
+        return res.status(403).json({ success: false, message: "You do not have permission to perform this action" });
+      }
+    }
+
+    console.log(`[Auth] Authorization successful for role: ${userRole}`);
     next();
   };
 }

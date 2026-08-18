@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -10,6 +10,41 @@ const AdminSettingsPage = () => {
       icon: CalendarDays,
       path: '/admin/settings/leave',
       accent: 'from-orange-500/20 to-orange-600/10',
+    },
+    {
+      title: 'Services',
+      description: 'Create and review all web and business service offerings.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/services',
+      accent: 'from-cyan-500/20 to-cyan-600/10',
+    },
+    {
+      title: 'Pricing',
+      description: 'Manage pricing plans and their included features.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/pricing',
+      accent: 'from-emerald-500/20 to-emerald-600/10',
+    },
+    {
+      title: 'Reviews',
+      description: 'Manage customer testimonials, ratings, status, and admin replies.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/reviews',
+      accent: 'from-violet-500/20 to-violet-600/10',
+    },
+    {
+      title: 'Post Jobs',
+      description: 'Create, update, publish, and manage recruitment job postings with application tracking.',
+      icon: BriefcaseBusiness,
+      path: '/admin/settings/jobs',
+      accent: 'from-amber-500/20 to-orange-600/10',
+    },
+    {
+      title: 'Job Applications',
+      description: 'View and manage all job applications, change applicant status, and download resumes.',
+      icon: FileText,
+      path: '/admin/settings/job-applications',
+      accent: 'from-blue-500/20 to-cyan-600/10',
     },
   ];
 
