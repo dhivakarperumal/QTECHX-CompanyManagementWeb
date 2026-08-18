@@ -3,7 +3,7 @@ const { getDB } = require("../config/db");
 
 class JobApplicationModel {
   // Create a new job application
-  static async hasAlreadyApplied(jobId, phone = null, applicantId = null) {
+  static async hasAlreadyApplied(jobId, phone = null, email = null, applicantId = null) {
     const pool = getDB();
     const subConditions = [];
     const params = [parseInt(jobId)];
@@ -12,6 +12,12 @@ class JobApplicationModel {
       const cleanPhone = String(phone).replace(/[\s\-\+]/g, "").slice(-10);
       subConditions.push("RIGHT(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), 10) = ?");
       params.push(cleanPhone);
+    }
+
+    if (email && String(email).trim()) {
+      const cleanEmail = String(email).trim().toLowerCase();
+      subConditions.push("LOWER(TRIM(email)) = ?");
+      params.push(cleanEmail);
     }
 
     if (applicantId) {

@@ -358,12 +358,32 @@ const JobApply = () => {
   };
 
   // Step advance
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (activeFormStep === 1) {
       if (!validateStep1()) {
         toast.error("Please fill in the required personal details");
         return;
       }
+
+      // Check user table registration and duplicate application before moving to Step 2
+      try {
+        await api.post(`/job-applications/${jobId}/check-eligibility`, {
+          email: formData.email,
+          phone: formData.phone,
+        });
+      } catch (err) {
+        if (err.response?.status === 409) {
+          const msg = err.response?.data?.message || "Email or mobile number is already registered or has applied.";
+          toast.error(msg);
+          if (msg.toLowerCase().includes("email")) {
+            setErrors((prev) => ({ ...prev, email: msg }));
+          } else {
+            setErrors((prev) => ({ ...prev, phone: msg }));
+          }
+          return;
+        }
+      }
+
       setActiveFormStep(2);
     } else if (activeFormStep === 2) {
       if (!validateStep2()) {

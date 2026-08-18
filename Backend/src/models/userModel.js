@@ -97,13 +97,38 @@ async function updateUser(userId, updates) {
   return findByUserId(userId);
 }
 
-async function softDeleteUser(userId, updatedBy) {
+async function existsByEmailOrMobile(email, mobile) {
   const db = getDB();
-  await db.execute(
-    "UPDATE users SET status = 'Inactive', updated_by = ? WHERE user_id = ?",
-    [updatedBy || null, userId]
+  const conditions = [];
+  const params = [];
+
+  if (email && String(email).trim()) {
+    conditions.push("LOWER(TRIM(email)) = ?");
+    params.push(String(email).trim().toLowerCase());
+  }
+
+  if (mobile && String(mobile).trim()) {
+    const cleanMobile = String(mobile).replace(/[\s\-\+]/g, "").slice(-10);
+    conditions.push("RIGHT(REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '-', ''), '+', ''), 10) = ?");
+    params.push(cleanMobile);
+  }
+
+  if (conditions.length === 0) return null;
+
+  const [rows] = await db.execute(
+    `SELECT id, user_id, username, email, mobile, role FROM users WHERE (${conditions.join(" OR ")}) LIMIT 1`,
+    params
   );
-  return findByUserId(userId);
+  return rows[0] || null;
 }
 
-module.exports = { createUser, findByUserId, findByEmail, findForLogin, listUsers, updateUser, softDeleteUser };
+module.exports = {
+  createUser,
+  findByUserId,
+  findByEmail,
+  findForLogin,
+  listUsers,
+  updateUser,
+  softDeleteUser,
+  existsByEmailOrMobile,
+};
