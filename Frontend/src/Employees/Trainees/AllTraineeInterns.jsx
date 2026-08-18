@@ -97,7 +97,11 @@ export default function AllTraineeInterns() {
       const params = new URLSearchParams({ page, limit });
       if (search) params.append('search', search);
       if (typeFilter) params.append('type', typeFilter);
-      if (statusFilter) params.append('status', statusFilter);
+      if (statusFilter) {
+        params.append('status', statusFilter);
+      } else {
+        params.append('exclude_status', 'Pending');
+      }
       if (employeeId) params.append('employee_id', employeeId);
       const { data } = await api.get(`/trainee-intern?${params}`);
       if (!data.success) throw new Error(data.message || 'Failed');

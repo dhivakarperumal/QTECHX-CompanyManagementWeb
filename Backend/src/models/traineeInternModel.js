@@ -86,7 +86,7 @@ async function findTraineeInternByUUID(uuid) {
   return rows[0] || null;
 }
 
-async function listTraineeInterns({ page, limit, search, type, status, employee_id }) {
+async function listTraineeInterns({ page, limit, search, type, status, employee_id, exclude_status }) {
   const db = getDB();
   const offset = (page - 1) * limit;
   const conditions = [];
@@ -104,6 +104,10 @@ async function listTraineeInterns({ page, limit, search, type, status, employee_
   if (status) {
     conditions.push('status = ?');
     values.push(status);
+  }
+  if (exclude_status) {
+    conditions.push('status != ?');
+    values.push(exclude_status);
   }
   if (employee_id) {
     conditions.push(`EXISTS (
