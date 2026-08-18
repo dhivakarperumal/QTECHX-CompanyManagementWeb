@@ -260,7 +260,18 @@ const AdminJobApplicationsPage = () => {
 
       toast.success(data.message || 'Applicant successfully converted to employee');
       
-      // Update the applications list
+      // Promptly update local state
+      const appId = selectedApplicantForConversion.id;
+      setApplications(prev => 
+        prev.map(app => 
+          app.id === appId ? { ...app, status: 'Converted', application_status: 'Converted', updated_at: new Date().toISOString() } : app
+        )
+      );
+      if (selectedApplication?.id === appId) {
+        setSelectedApplication(prev => ({ ...prev, status: 'Converted', application_status: 'Converted' }));
+      }
+      
+      // Update the applications list from backend
       await fetchApplications();
       
       // Reset and close modal
