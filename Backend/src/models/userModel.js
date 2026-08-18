@@ -97,6 +97,15 @@ async function updateUser(userId, updates) {
   return findByUserId(userId);
 }
 
+async function softDeleteUser(userId, updatedBy) {
+  const db = getDB();
+  await db.execute(
+    "UPDATE users SET status = 'Inactive', updated_by = ? WHERE user_id = ?",
+    [updatedBy || null, userId]
+  );
+  return findByUserId(userId);
+}
+
 async function existsByEmailOrMobile(email, mobile) {
   const db = getDB();
   const conditions = [];
