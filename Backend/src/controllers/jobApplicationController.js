@@ -332,8 +332,14 @@ class JobApplicationController {
         return res.status(404).json({ message: "Application not found" });
       }
 
-      // Verify applicant can only delete their own application (if not admin)
-      if (req.user?.id && application.applicant_id !== req.user.id && !req.user.role?.includes("admin")) {
+      // Verify applicant can only delete their own application.
+      // Admin/recruiter/hr/super-admin users can delete any application, but the
+      // role may be stored in different cases or field names.
+      const userRole = req.user?.role || req.user?.user_role || req.user?.emp_role || "";
+      const normalizedRole = String(userRole).toLowerCase().trim();
+      const isPrivilegedRole = ["super admin", "admin", "recruiter", "hr"].includes(normalizedRole);
+
+      if (req.user?.id && application.applicant_id !== req.user.id && !isPrivilegedRole) {
         return res.status(403).json({ message: "Unauthorized to delete this application" });
       }
 
