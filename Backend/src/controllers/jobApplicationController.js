@@ -79,6 +79,17 @@ class JobApplicationController {
         return res.status(400).json({ message: "Invalid phone number" });
       }
 
+      const normalizedEmail = (email || "").trim().toLowerCase();
+      const alreadyApplied = await JobApplicationModel.hasAlreadyApplied(
+        parseInt(job_id),
+        req.user?.id || null,
+        normalizedEmail
+      );
+
+      if (alreadyApplied) {
+        return res.status(409).json({ message: "You have already applied for this job." });
+      }
+
       // Handle file uploads
       let resume = null;
       let coverLetter = null;

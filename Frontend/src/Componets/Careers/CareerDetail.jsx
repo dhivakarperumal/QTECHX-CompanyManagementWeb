@@ -11,6 +11,17 @@ import SocialMedia from "../Home/SocialMedia";
 import emailjs from "@emailjs/browser";
 import api from "../../api";
 
+const getAppliedJobs = () => {
+  try {
+    const raw = localStorage.getItem("applied_jobs");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
 const formatDate = (dateString) => {
   if (!dateString) return "Not specified";
   try {
@@ -45,20 +56,32 @@ const CareerDetail = () => {
         });
 
         const data = Array.isArray(result?.data) ? result.data : [];
-        setJobs(data.map((job) => ({
-          id: job.id,
-          title: job.job_title || "Untitled Role",
-          desc: job.short_description || job.full_job_description || "Job description not available yet.",
-          type: job.employment_type || job.work_mode || "Full-time",
-          salary: job.minimum_salary && job.maximum_salary
-            ? `${job.currency || 'INR'} ${job.minimum_salary} - ${job.maximum_salary}`
-            : (job.minimum_salary ? `${job.currency || 'INR'} ${job.minimum_salary}` : "Competitive"),
-          company: job.company_name || "Q Techx",
-          location: job.city || job.state || job.country || "Remote",
-          vacancies: job.vacancies || 1,
-          applicationStartDate: job.application_start_date,
-          applicationDeadline: job.application_deadline,
-        })));
+        const appliedJobs = getAppliedJobs();
+
+        setJobs(data.map((job) => {
+          const totalVacancies = Number(job.vacancies || 1);
+          const totalApplications = Number(job.total_applications || 0);
+          const remainingVacancies = Math.max(0, totalVacancies - totalApplications);
+          const alreadyApplied = appliedJobs.includes(String(job.id));
+
+          return {
+            id: job.id,
+            title: job.job_title || "Untitled Role",
+            desc: job.short_description || job.full_job_description || "Job description not available yet.",
+            type: job.employment_type || job.work_mode || "Full-time",
+            salary: job.minimum_salary && job.maximum_salary
+              ? `${job.currency || 'INR'} ${job.minimum_salary} - ${job.maximum_salary}`
+              : (job.minimum_salary ? `${job.currency || 'INR'} ${job.minimum_salary}` : "Competitive"),
+            company: job.company_name || "Q Techx",
+            location: job.city || job.state || job.country || "Remote",
+            vacancies: totalVacancies,
+            totalApplications,
+            remainingVacancies,
+            alreadyApplied,
+            applicationStartDate: job.application_start_date,
+            applicationDeadline: job.application_deadline,
+          };
+        }));
       } catch (err) {
         setError(err.response?.data?.message || err.message || "Failed to fetch jobs");
       } finally {

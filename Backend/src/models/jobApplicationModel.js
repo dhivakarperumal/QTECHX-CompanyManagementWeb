@@ -3,6 +3,35 @@ const { getDB } = require("../config/db");
 
 class JobApplicationModel {
   // Create a new job application
+  static async hasAlreadyApplied(jobId, applicantId = null, email = null) {
+    const pool = getDB();
+    const conditions = ["job_id = ?"];
+    const params = [jobId];
+
+    if (applicantId) {
+      conditions.push("applicant_id = ?");
+      params.push(applicantId);
+    }
+
+    if (email && String(email).trim()) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      conditions.push("LOWER(TRIM(email)) = ?");
+      params.push(normalizedEmail);
+    }
+
+    if (conditions.length === 1 && params.length === 1) {
+      return false;
+    }
+
+    const whereClause = conditions.map((condition) => `(${condition})`).join(" OR ");
+    const [rows] = await pool.execute(
+      `SELECT id FROM job_applications WHERE ${whereClause} LIMIT 1`,
+      params
+    );
+
+    return rows.length > 0;
+  }
+
   static async createApplication(applicationData) {
     const pool = getDB();
     const id = uuidv4();

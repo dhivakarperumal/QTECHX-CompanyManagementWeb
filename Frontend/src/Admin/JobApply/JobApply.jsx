@@ -350,6 +350,11 @@ const JobApply = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      const appliedJobs = JSON.parse(localStorage.getItem("applied_jobs") || "[]");
+      if (!appliedJobs.includes(String(jobId))) {
+        localStorage.setItem("applied_jobs", JSON.stringify([...appliedJobs, String(jobId)]));
+      }
+
       setSuccessData({
         id: data.data.id,
         job_title: jobData?.job_title,
@@ -362,6 +367,11 @@ const JobApply = () => {
       toast.success("Application submitted successfully!");
     } catch (error) {
       console.error("Error submitting application:", error);
+      if (error.response?.status === 409) {
+        toast.error("You have already applied for this job.");
+        navigate("/career");
+        return;
+      }
       toast.error(error.response?.data?.message || "Failed to submit application");
     } finally {
       setSubmitting(false);
