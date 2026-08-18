@@ -41,9 +41,9 @@ async function findForLogin(identifier) {
             e.employee_id AS emp_code, e.employee_code AS emp_code2
      FROM users u
      LEFT JOIN employees e ON e.official_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci
-     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
+     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ? OR u.mobile COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
      LIMIT 1`,
-    [identifier, identifier]
+    [identifier, identifier, identifier]
   );
   return rows[0] || null;
 }

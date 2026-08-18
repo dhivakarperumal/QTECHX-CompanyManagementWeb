@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
   Trash2,
   User,
+  UserCheck,
   X,
   AlertCircle,
   Edit2,
@@ -36,6 +37,7 @@ const STATUS_OPTIONS = [
   { value: 'Shortlisted',  label: 'Shortlisted',  color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
   { value: 'Interview',    label: 'Interview',    color: 'bg-purple-500/10 text-purple-400 border-purple-500/20', dot: 'bg-purple-400' },
   { value: 'Selected',     label: 'Selected',     color: 'bg-green-500/10 text-green-400 border-green-500/20',  dot: 'bg-green-400' },
+  { value: 'Converted',    label: 'Converted',    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',    dot: 'bg-cyan-400' },
   { value: 'Rejected',     label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',    dot: 'bg-rose-400' },
 ];
 
@@ -105,6 +107,10 @@ const AdminJobApplicationsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [eligibleApplicants, setEligibleApplicants] = useState([]);
+  const [selectedApplicantForConversion, setSelectedApplicantForConversion] = useState(null);
+  const [convertLoading, setConvertLoading] = useState(false);
 
   /* ── Fetch all applications ── */
   const fetchApplications = async () => {
@@ -226,6 +232,47 @@ const AdminJobApplicationsPage = () => {
   const fmtDate = (date) => {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  /* ── Fetch eligible applicants for conversion ── */
+  const fetchEligibleApplicants = async () => {
+    try {
+      const { data } = await api.get('/job-applications/admin/eligible-for-conversion');
+      setEligibleApplicants(Array.isArray(data?.data) ? data.data : []);
+    } catch (error) {
+      console.error('Error fetching eligible applicants:', error);
+      toast.error('Failed to load eligible applicants');
+    }
+  };
+
+  /* ── Convert applicant to employee ── */
+  const convertToEmployee = async () => {
+    if (!selectedApplicantForConversion) {
+      toast.error('Please select an applicant');
+      return;
+    }
+
+    try {
+      setConvertLoading(true);
+      const { data } = await api.post('/job-applications/admin/convert-to-employee', {
+        application_id: selectedApplicantForConversion.id
+      });
+
+      toast.success(data.message || 'Applicant successfully converted to employee');
+      
+      // Update the applications list
+      await fetchApplications();
+      
+      // Reset and close modal
+      setShowConvertModal(false);
+      setSelectedApplicantForConversion(null);
+      setEligibleApplicants([]);
+    } catch (error) {
+      console.error('Conversion error:', error);
+      toast.error(error.response?.data?.message || 'Failed to convert applicant');
+    } finally {
+      setConvertLoading(false);
+    }
   };
 
   /* ── Stats ── */
@@ -492,6 +539,130 @@ const AdminJobApplicationsPage = () => {
     );
   };
 
+  /* ─────────────────────────────── CONVERT MODAL ─────────────────────────────── */
+  const ConvertModal = () => {
+    if (!showConvertModal) return null;
+
+    const searchTerm = (selectedApplicantForConversion?.full_name || '').toLowerCase();
+
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0b1120]/95 shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-white/10 px-6 py-5 flex items-center justify-between bg-white/[0.02]">
+            <h2 className="text-xl font-bold text-white">Convert Job Applicant to Employee</h2>
+            <button
+              onClick={() => {
+                setShowConvertModal(false);
+                setSelectedApplicantForConversion(null);
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            {/* Applicant Selection */}
+            <div>
+              <label className="block mb-2.5">
+                <span className="text-sm font-medium text-white mb-2 flex items-center gap-1">
+                  Select Eligible Applicant
+                  <span className="text-red-400">*</span>
+                </span>
+              </label>
+              
+              <div className="relative">
+                <select
+                  value={selectedApplicantForConversion?.id || ''}
+                  onChange={(e) => {
+                    const applicant = eligibleApplicants.find(a => a.id === e.target.value);
+                    setSelectedApplicantForConversion(applicant || null);
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-[#0a0b10] text-white text-sm focus:outline-none focus:border-primary/50 transition"
+                >
+                  <option value="">-- Select an applicant --</option>
+                  {eligibleApplicants.map((applicant) => (
+                    <option key={applicant.id} value={applicant.id}>
+                      {applicant.label}
+                    </option>
+                  ))}
+                </select>
+                {eligibleApplicants.length === 0 && !convertLoading && (
+                  <p className="text-xs text-white/40 mt-2">No eligible applicants available (only 'Selected' status applicants can be converted)</p>
+                )}
+              </div>
+            </div>
+
+            {/* Applicant Details Preview */}
+            {selectedApplicantForConversion && (
+              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-3">Applicant Details</p>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="text-white/40">Full Name</p>
+                    <p className="text-white font-medium">{selectedApplicantForConversion.full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40">Email</p>
+                    <p className="text-white font-medium break-all">{selectedApplicantForConversion.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40">Phone</p>
+                    <p className="text-white font-medium">{selectedApplicantForConversion.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/40">Applied Position</p>
+                    <p className="text-white font-medium">{selectedApplicantForConversion.job_title || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-white/40">Status</p>
+                    <p className="text-emerald-400 font-medium">{selectedApplicantForConversion.status}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Info Box */}
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3.5 text-xs text-blue-200">
+              <p className="font-medium mb-1">ℹ️ Conversion Details</p>
+              <ul className="list-disc list-inside space-y-1 text-blue-200/80">
+                <li>A user account will be created with the applicant's email</li>
+                <li>Employee record will be created in the system</li>
+                <li>Application status will be updated to "Converted"</li>
+                <li>Employee can log in using the reset password flow</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-white/10 px-6 py-4 bg-white/[0.02] flex gap-3 justify-end">
+            <button
+              onClick={() => {
+                setShowConvertModal(false);
+                setSelectedApplicantForConversion(null);
+              }}
+              className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-white text-sm font-semibold hover:bg-white/10 transition"
+              disabled={convertLoading}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={convertToEmployee}
+              disabled={!selectedApplicantForConversion || convertLoading}
+              className="px-5 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {convertLoading && <Loader2 size={14} className="animate-spin" />}
+              {convertLoading ? 'Converting...' : 'Convert to Employee'}
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   /* ═══════════════════════════════════ RENDER ═══════════════════════════════════ */
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -518,13 +689,26 @@ const AdminJobApplicationsPage = () => {
             </p>
           </div>
         </div>
-        <button
-          onClick={fetchApplications}
-          className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
-          title="Refresh"
-        >
-          <RefreshCw size={15} className={loading ? 'animate-spin text-primary' : ''} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowConvertModal(true);
+              fetchEligibleApplicants();
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition shadow-lg shadow-emerald-500/25 hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+            title="Convert applicant to employee"
+          >
+            <UserCheck size={15} /> Convert Employee
+          </button>
+          <button
+            onClick={fetchApplications}
+            className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition"
+            title="Refresh"
+          >
+            <RefreshCw size={15} className={loading ? 'animate-spin text-primary' : ''} />
+          </button>
+        </div>
       </div>
 
       {/* ── Stat Cards ── */}
@@ -684,9 +868,11 @@ const AdminJobApplicationsPage = () => {
               </thead>
               <tbody>
                 {paginatedApplications.map((app, i) => (
-                  <tr key={app.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer" onClick={() => { setSelectedApplication(app); setShowDetailModal(true); }}>                    <td className="px-4 py-3.5 text-center">
+                  <tr key={app.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors cursor-pointer" onClick={() => { setSelectedApplication(app); setShowDetailModal(true); }}>
+                    <td className="px-4 py-3.5 text-center">
                       <span className="text-white/60 text-xs font-medium">{startIndex + i + 1}</span>
-                    </td>                    <td className="px-5 py-3.5">
+                    </td>
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={app.full_name} index={i} />
                         <div>
@@ -849,6 +1035,9 @@ const AdminJobApplicationsPage = () => {
       {showDetailModal && (
         <DetailModal application={selectedApplication} onClose={() => setShowDetailModal(false)} />
       )}
+
+      {/* ── Convert Modal ── */}
+      <ConvertModal />
     </div>
   );
 };
