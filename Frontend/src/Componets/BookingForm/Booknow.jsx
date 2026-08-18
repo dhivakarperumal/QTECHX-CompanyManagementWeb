@@ -94,6 +94,12 @@ const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
 const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
 const TYPE_OPTIONS = ['Trainee', 'Intern'];
+const progressSteps = [
+  { key: 'basic', label: 'Basic' },
+  { key: 'contact', label: 'Contact' },
+  { key: 'documents', label: 'Documents' },
+  { key: 'academic', label: 'Academic' },
+];
 
 const BLANK = {
   person_id: '', full_name: '', type: 'Trainee', department: '', designation: '', reporting_manager: '',
@@ -135,6 +141,7 @@ export default function Booknow() {
   const [files, setFiles] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [employees, setEmployees] = useState([]);
+  const [activeStep, setActiveStep] = useState(0);
   const [academicEntries, setAcademicEntries] = useState([
     { college_university: '', course: '', academic_department: '', year_semester: '', college_id_number: '', guide_name: '' }
   ]);
@@ -232,6 +239,9 @@ export default function Booknow() {
     }
   };
 
+  const goToPreviousStep = () => setActiveStep((prev) => Math.max(prev - 1, 0));
+  const goToNextStep = () => setActiveStep((prev) => Math.min(prev + 1, progressSteps.length - 1));
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.full_name?.trim()) {
@@ -275,160 +285,200 @@ export default function Booknow() {
         {success && <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl"><CheckCircle size={16} /> {success}</div>}
         {error && <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/25 text-rose-400 text-sm px-5 py-3.5 rounded-2xl"><AlertCircle size={16} /> {error}</div>}
 
+        <div className="rounded-2xl border border-white/10 bg-[#111318] p-4 shadow-lg shadow-black/20">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/50">Application Progress</span>
+            <span className="text-xs font-semibold text-orange-300">Step {activeStep + 1} of {progressSteps.length}</span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-full rounded-full bg-gradient-to-r from-orange-500 via-orange-400 to-orange-300" style={{ width: `${((activeStep + 1) / progressSteps.length) * 100}%` }} />
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {progressSteps.map((step, index) => (
+              <div key={step.key} className="flex items-center gap-2">
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${index <= activeStep ? 'bg-orange-500 text-white' : 'bg-white/5 text-white/45 border border-white/10'}`}>
+                  {index + 1}
+                </div>
+                <span className={`text-[10px] font-medium ${index <= activeStep ? 'text-orange-300' : 'text-white/50'}`}>
+                  {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSave} className="space-y-6 pb-8">
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><UserCircle2 size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Basic Information</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Person ID</span>
-              <div className="flex gap-2">
-                <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly placeholder="Auto-generated person ID" />
-                <button type="button" onClick={async () => { setPersonIdLoading(true); try { const { data } = await api.get('/trainee-intern/next-person-id'); if (data.success) setFormData((prev) => ({ ...prev, person_id: data.code || '' })); } catch (err) { console.warn(err); } finally { setPersonIdLoading(false); } }} className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
-                  {personIdLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                </button>
-              </div>
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Full Name *</span>
-              <input className={fieldClass} name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter full name" />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Type</span>
-              <Select
-                value={formData.type ? { value: formData.type, label: formData.type } : null}
-                onChange={option => handleChange({ target: { name: 'type', value: option ? option.value : '' } })}
-                options={TYPE_OPTIONS.map(v => ({ value: v, label: v }))}
-                styles={customSelectStyles}
-                placeholder="Select type"
-                isSearchable={false}
-              />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Department</span>
-              <input className={fieldClass} name="department" value={formData.department} onChange={handleChange} placeholder="e.g. IT / HR" />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Designation</span>
-              <input className={fieldClass} name="designation" value={formData.designation} onChange={handleChange} placeholder="Software Developer" />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Reporting Manager</span>
-              <Select
-                value={formData.reporting_manager ? { value: formData.reporting_manager, label: formData.reporting_manager } : null}
-                onChange={(opt) => handleChange({ target: { name: 'reporting_manager', value: opt ? opt.value : '' } })}
-                options={employees.map(emp => ({ value: `${emp.first_name || ''} ${emp.last_name || ''}`.trim(), label: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }))}
-                styles={customSelectStyles}
-                placeholder="Select reporting manager"
-                isSearchable={true}
-              />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Joining Date</span>
-              <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} placeholder="Select joining date" />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">End Date (Optional)</span>
-              <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} placeholder="Select end date" />
-            </label>
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Status</span>
-              <Select
-                value={formData.status ? { value: formData.status, label: formData.status } : null}
-                onChange={option => handleChange({ target: { name: 'status', value: option ? option.value : '' } })}
-                options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
-                styles={customSelectStyles}
-                placeholder="Select status"
-                isSearchable={false}
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Contact Information</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number {isEdit ? "" : <span className="text-red-500">*</span>}</span><input className={fieldClass} name="mobile_number" required={!isEdit} value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Email Address</span><input className={fieldClass} type="email" name="email_address" value={formData.email_address} onChange={handleChange} placeholder="name@email.com" /></label>
-            <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Emergency contact name" /></label>
-            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} placeholder="9876543210" /></label>
-          </div>
-        </section>
-
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
-            <h2 className="text-base font-bold text-white">Documents</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              ['Profile Photo', 'profile_photo'],
-              ['Resume', 'resume'],
-              ['College ID (Intern/Trainee)', 'college_id_doc'],
-              ['Offer Letter', 'offer_letter'],
-              ['Internship Letter (Optional)', 'internship_letter'],
-            ].map(([label, name]) => (
-              <label key={name} className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">{label}</span>
-                <input className={fieldClass} type="file" name={name} onChange={handleFile} />
-                {formData[name] && (
-                  <a href={buildUploadUrl(formData[name])} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-orange-400 hover:text-orange-300">View current file</a>
-                )}
-              </label>
-            ))}
-          </div>
-        </section>
-
-        <section className={sectionClass}>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
-              <h2 className="text-base font-bold text-white">Academic Information</h2>
+        {activeStep === 0 && (
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><UserCircle2 size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Basic Information</h2>
             </div>
-            <button type="button" onClick={addAcademicEntry} className="inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-[11px] font-semibold text-orange-300 transition hover:bg-orange-500/20">
-              + Add More
-            </button>
-          </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Person ID</span>
+                <div className="flex gap-2">
+                  <input className={fieldClass} name="person_id" value={formData.person_id} onChange={handleChange} readOnly placeholder="Auto-generated person ID" />
+                  <button type="button" onClick={async () => { setPersonIdLoading(true); try { const { data } = await api.get('/trainee-intern/next-person-id'); if (data.success) setFormData((prev) => ({ ...prev, person_id: data.code || '' })); } catch (err) { console.warn(err); } finally { setPersonIdLoading(false); } }} className="shrink-0 w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
+                    {personIdLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  </button>
+                </div>
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Full Name *</span>
+                <input className={fieldClass} name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Enter full name" />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Type</span>
+                <Select
+                  value={formData.type ? { value: formData.type, label: formData.type } : null}
+                  onChange={option => handleChange({ target: { name: 'type', value: option ? option.value : '' } })}
+                  options={TYPE_OPTIONS.map(v => ({ value: v, label: v }))}
+                  styles={customSelectStyles}
+                  placeholder="Select type"
+                  isSearchable={false}
+                />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Department</span>
+                <input className={fieldClass} name="department" value={formData.department} onChange={handleChange} placeholder="e.g. IT / HR" />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Designation</span>
+                <input className={fieldClass} name="designation" value={formData.designation} onChange={handleChange} placeholder="Software Developer" />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Reporting Manager</span>
+                <Select
+                  value={formData.reporting_manager ? { value: formData.reporting_manager, label: formData.reporting_manager } : null}
+                  onChange={(opt) => handleChange({ target: { name: 'reporting_manager', value: opt ? opt.value : '' } })}
+                  options={employees.map(emp => ({ value: `${emp.first_name || ''} ${emp.last_name || ''}`.trim(), label: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }))}
+                  styles={customSelectStyles}
+                  placeholder="Select reporting manager"
+                  isSearchable={true}
+                />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Joining Date</span>
+                <input className={fieldClass} type="date" name="joining_date" value={formData.joining_date} onChange={handleChange} placeholder="Select joining date" />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">End Date (Optional)</span>
+                <input className={fieldClass} type="date" name="end_date" value={formData.end_date} onChange={handleChange} placeholder="Select end date" />
+              </label>
+              <label className="text-sm text-white/60">
+                <span className="mb-1.5 block font-medium">Status</span>
+                <Select
+                  value={formData.status ? { value: formData.status, label: formData.status } : null}
+                  onChange={option => handleChange({ target: { name: 'status', value: option ? option.value : '' } })}
+                  options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
+                  styles={customSelectStyles}
+                  placeholder="Select status"
+                  isSearchable={false}
+                />
+              </label>
+            </div>
+          </section>
+        )}
 
-          <div className="space-y-4">
-            {academicEntries.map((entry, index) => (
-              <div key={`academic-${index}`} className="rounded-2xl border border-white/10 bg-[#0d1117] p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">Academic Entry {index + 1}</span>
-                  {academicEntries.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeAcademicEntry(index)}
-                      className="text-xs text-rose-400 transition hover:text-rose-300"
-                    >
-                      Remove
-                    </button>
+        {activeStep === 1 && (
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Contact Information</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Mobile Number {isEdit ? "" : <span className="text-red-500">*</span>}</span><input className={fieldClass} name="mobile_number" required={!isEdit} value={formData.mobile_number} onChange={handleChange} placeholder="9876543210" /></label>
+              <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Email Address</span><input className={fieldClass} type="email" name="email_address" value={formData.email_address} onChange={handleChange} placeholder="name@email.com" /></label>
+              <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
+              <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Emergency contact name" /></label>
+              <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} placeholder="9876543210" /></label>
+            </div>
+          </section>
+        )}
+
+        {activeStep === 2 && (
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
+              <h2 className="text-base font-bold text-white">Documents</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                ['Profile Photo', 'profile_photo'],
+                ['Resume', 'resume'],
+                ['College ID (Intern/Trainee)', 'college_id_doc'],
+                ['Offer Letter', 'offer_letter'],
+                ['Internship Letter (Optional)', 'internship_letter'],
+              ].map(([label, name]) => (
+                <label key={name} className="text-sm text-white/60">
+                  <span className="mb-1.5 block font-medium">{label}</span>
+                  <input className={fieldClass} type="file" name={name} onChange={handleFile} />
+                  {formData[name] && (
+                    <a href={buildUploadUrl(formData[name])} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-orange-400 hover:text-orange-300">View current file</a>
                   )}
-                </div>
+                </label>
+              ))}
+            </div>
+          </section>
+        )}
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} value={entry.college_university} onChange={(e) => updateAcademicEntry(index, 'college_university', e.target.value)} placeholder="College or university name" /></label>
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} value={entry.course} onChange={(e) => updateAcademicEntry(index, 'course', e.target.value)} placeholder="Course or program" /></label>
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} value={entry.academic_department} onChange={(e) => updateAcademicEntry(index, 'academic_department', e.target.value)} placeholder="Academic department" /></label>
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} value={entry.year_semester} onChange={(e) => updateAcademicEntry(index, 'year_semester', e.target.value)} placeholder="Year / semester" /></label>
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} value={entry.college_id_number} onChange={(e) => updateAcademicEntry(index, 'college_id_number', e.target.value)} placeholder="College ID number" /></label>
-                  <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} value={entry.guide_name} onChange={(e) => updateAcademicEntry(index, 'guide_name', e.target.value)} placeholder="Guide or faculty name" /></label>
-                </div>
+        {activeStep === 3 && (
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
+                <h2 className="text-base font-bold text-white">Academic Information</h2>
               </div>
-            ))}
-          </div>
-        </section>
+              <button type="button" onClick={addAcademicEntry} className="inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-[11px] font-semibold text-orange-300 transition hover:bg-orange-500/20">
+                + Add More
+              </button>
+            </div>
 
-        <div className="flex justify-end">
-          <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-70">
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
+            <div className="space-y-4">
+              {academicEntries.map((entry, index) => (
+                <div key={`academic-${index}`} className="rounded-2xl border border-white/10 bg-[#0d1117] p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">Academic Entry {index + 1}</span>
+                    {academicEntries.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeAcademicEntry(index)}
+                        className="text-xs text-rose-400 transition hover:text-rose-300"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College / University</span><input className={fieldClass} value={entry.college_university} onChange={(e) => updateAcademicEntry(index, 'college_university', e.target.value)} placeholder="College or university name" /></label>
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Course</span><input className={fieldClass} value={entry.course} onChange={(e) => updateAcademicEntry(index, 'course', e.target.value)} placeholder="Course or program" /></label>
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Department</span><input className={fieldClass} value={entry.academic_department} onChange={(e) => updateAcademicEntry(index, 'academic_department', e.target.value)} placeholder="Academic department" /></label>
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Year / Semester</span><input className={fieldClass} value={entry.year_semester} onChange={(e) => updateAcademicEntry(index, 'year_semester', e.target.value)} placeholder="Year / semester" /></label>
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">College ID</span><input className={fieldClass} value={entry.college_id_number} onChange={(e) => updateAcademicEntry(index, 'college_id_number', e.target.value)} placeholder="College ID number" /></label>
+                    <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Guide / Faculty Name</span><input className={fieldClass} value={entry.guide_name} onChange={(e) => updateAcademicEntry(index, 'guide_name', e.target.value)} placeholder="Guide or faculty name" /></label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <button type="button" onClick={goToPreviousStep} disabled={activeStep === 0} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">
+            Previous
           </button>
+
+          {activeStep < progressSteps.length - 1 ? (
+            <button type="button" onClick={goToNextStep} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110">
+              Next
+            </button>
+          ) : (
+            <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-70">
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
+            </button>
+          )}
         </div>
       </form>
       </div>
