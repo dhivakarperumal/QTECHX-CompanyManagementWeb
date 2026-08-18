@@ -92,7 +92,7 @@ const Navbar = () => {
   };
 
   const desktopLinkClass = ({ isActive }) =>
-    `text-base font-bold  transition-colors ${isActive ? "text-primary" : "text-white hover:text-primary"
+    `text-base font-semibold  transition-colors ${isActive ? "text-primary" : "text-white hover:text-primary"
     }`;
 
   const mobileLinkClass = ({ isActive }) =>
@@ -120,7 +120,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("services")}
-                  className="group flex items-center gap-1 text-base font-bold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
                 >
                   Services
 
@@ -212,7 +212,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("whoWeAre")}
-                  className="group flex items-center gap-1 text-base font-bold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
                 >
                   Who We Are?
 
