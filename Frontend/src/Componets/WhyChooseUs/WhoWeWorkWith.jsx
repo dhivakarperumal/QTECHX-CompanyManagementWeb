@@ -82,42 +82,41 @@ const WhoWeWorkWith = () => {
         </div>
 
         <PageContainer className="relative z-10 py-14 sm:py-16 md:py-20">
-          <div className="mx-auto max-w-6xl text-center">
-            {/* Section Header */}
-            <div className="mb-12 text-center sm:mb-16">
-              <p
-                data-aos="fade-down"
-                className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-              >
-                INDUSTRIES & DOMAINS
-              </p>
+          {/* Section Header */}
+          <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
+            <p
+              data-aos="fade-down"
+              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
+            >
+              INDUSTRIES & DOMAINS
+            </p>
 
-              <h2
-                data-aos="zoom-in"
-                className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-              >
-                WHO WE <span className="text-[#FF6A00]">WORK WITH</span>
-              </h2>
+            <h2
+              data-aos="zoom-in"
+              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
+            >
+              WHO WE <span className="text-[#FF6A00]">WORK WITH</span>
+            </h2>
 
-              <div
-                data-aos="fade-up"
-                className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-              />
+            <div
+              data-aos="fade-up"
+              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
+            />
 
-              <p
-                data-aos="fade-up"
-                data-aos-delay="200"
-                className="mx-auto mt-4 max-w-3xl text-justify text-xs leading-[25px] text-white/70 sm:text-sm sm:text-center md:text-base"
-              >
-                At Q-Techx Solutions, we partner with businesses that are committed to growth
-                and innovation. Our clients often invest in new capabilities, integrate
-                acquisitions, and modernize their IT systems—and we provide end-to-end
-                solutions to help them achieve these goals efficiently and effectively.
-              </p>
-            </div>
+            <p
+              data-aos="fade-up"
+              data-aos-delay="200"
+              className="mx-auto mt-4 text-justify text-xs leading-[25px] text-white/70 sm:text-sm sm:text-center md:text-base"
+            >
+              At Q-Techx Solutions, we partner with businesses that are committed to growth
+              and innovation. Our clients often invest in new capabilities, integrate
+              acquisitions, and modernize their IT systems—and we provide end-to-end
+              solutions to help them achieve these goals efficiently and effectively.
+            </p>
+          </div>
 
-            {/* Categories Grid */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+          {/* Categories Grid */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
               {categories.map((item, index) => (
                 <div
                   key={index}
@@ -239,7 +238,7 @@ const WhoWeWorkWith = () => {
                 </div>
               ))}
             </div>
-          </div>
+          
         </PageContainer>
 
         {/* Bottom Orange Laser Line */}
