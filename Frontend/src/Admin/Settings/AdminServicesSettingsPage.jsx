@@ -43,6 +43,93 @@ import api from '../../api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../PrivateRouter/AuthContext';
 
+const SERVICE_CATEGORY_OPTIONS = [
+  'Web Development',
+  'Mobile App Development',
+  'UI/UX Design',
+  'Digital Marketing',
+  'Cloud & DevOps',
+  'AI & Automation',
+  'QA & Testing',
+  'Branding & Content',
+  'ERP & Business Solutions',
+  'Cybersecurity',
+];
+
+const SERVICE_SUBCATEGORY_OPTIONS = {
+  'Web Development': [
+    'Website Development',
+    'Frontend Development',
+    'Backend Development',
+    'Full Stack Development',
+    'E-commerce Development',
+    'CMS Development',
+  ],
+  'Mobile App Development': [
+    'Android App Development',
+    'iOS App Development',
+    'Cross-platform App Development',
+    'App Maintenance',
+    'App UI/UX Design',
+  ],
+  'UI/UX Design': [
+    'Website UI Design',
+    'Mobile App UI Design',
+    'UX Research',
+    'Wireframing',
+    'Design System',
+  ],
+  'Digital Marketing': [
+    'SEO',
+    'Social Media Marketing',
+    'Paid Ads',
+    'Content Marketing',
+    'Email Marketing',
+  ],
+  'Cloud & DevOps': [
+    'Cloud Migration',
+    'DevOps Setup',
+    'CI/CD Pipeline',
+    'Infrastructure Automation',
+    'Server Monitoring',
+  ],
+  'AI & Automation': [
+    'AI Chatbot Development',
+    'Workflow Automation',
+    'Data Analytics',
+    'Process Optimization',
+    'Custom AI Solutions',
+  ],
+  'QA & Testing': [
+    'Manual Testing',
+    'Automation Testing',
+    'Performance Testing',
+    'API Testing',
+    'Bug Fixing',
+  ],
+  'Branding & Content': [
+    'Brand Identity',
+    'Content Strategy',
+    'Copywriting',
+    'Social Media Creative',
+    'Marketing Collateral',
+  ],
+  'ERP & Business Solutions': [
+    'ERP Implementation',
+    'CRM Setup',
+    'Business Workflow Automation',
+    'Data Management',
+    'Enterprise Integration',
+  ],
+  'Cybersecurity': [
+    'Security Audit',
+    'Vulnerability Assessment',
+    'Web Security',
+    'Access Control',
+    'Compliance Hardening',
+  ],
+};
+
 const emptyService = {
   id: 1,
   service_code: '',
@@ -743,11 +830,37 @@ const AdminServicesSettingsPage = () => {
                   </div>
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-white/40">Category</label>
-                    <input value={draft.category} onChange={(e) => updateField('category', e.target.value)} className="w-full rounded-xl border border-white/10 bg-[#0a0b10] px-4 py-3 text-sm text-white outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-inner" placeholder="Web Development" />
+                    <select
+                      value={draft.category || ''}
+                      onChange={(e) => {
+                        const nextCategory = e.target.value;
+                        setDraft((prev) => ({
+                          ...prev,
+                          category: nextCategory,
+                          subcategory: SERVICE_SUBCATEGORY_OPTIONS[nextCategory]?.includes(prev.subcategory) ? prev.subcategory : '',
+                        }));
+                      }}
+                      className="w-full rounded-xl border border-white/10 bg-[#0a0b10] px-4 py-3 text-sm text-white outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-inner"
+                    >
+                      <option value="">Select service category</option>
+                      {SERVICE_CATEGORY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-white/40">Subcategory</label>
-                    <input value={draft.subcategory} onChange={(e) => updateField('subcategory', e.target.value)} className="w-full rounded-xl border border-white/10 bg-[#0a0b10] px-4 py-3 text-sm text-white outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-inner" placeholder="Web Application Development" />
+                    <select
+                      value={draft.subcategory || ''}
+                      onChange={(e) => updateField('subcategory', e.target.value)}
+                      disabled={!draft.category}
+                      className="w-full rounded-xl border border-white/10 bg-[#0a0b10] px-4 py-3 text-sm text-white outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-inner disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">{draft.category ? 'Select service subcategory' : 'Select category first'}</option>
+                      {(SERVICE_SUBCATEGORY_OPTIONS[draft.category] || []).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-white/40">Status</label>
