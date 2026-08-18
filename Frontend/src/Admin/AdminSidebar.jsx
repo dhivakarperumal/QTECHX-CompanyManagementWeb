@@ -124,8 +124,8 @@ const navItems = [
     label: "Trainees & Internships",
     icon: GraduationCap,
     children: [
+      { path: "/admin/trainees/pending", label: "New Registrations", icon: AlertCircle, badge: 'pending' },
       { path: "/admin/trainees", label: "All Trainees & Interns", icon: GraduationCap },
-      { path: "/admin/trainees/pending", label: "Pending Registrations", icon: AlertCircle, badge: 'pending' },
       { path: "/admin/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
       { path: "/admin/trainees/tasks", label: "Tasks", icon: CheckSquare },
       { path: "/admin/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },

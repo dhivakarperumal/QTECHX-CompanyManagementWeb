@@ -972,7 +972,7 @@ async function ensureSchema(pool) {
       reporting_manager VARCHAR(255) NULL,
       joining_date DATE NULL,
       end_date DATE NULL,
-      status ENUM('Active','Completed','On Leave','Inactive') NOT NULL DEFAULT 'Active',
+      status ENUM('Pending','Active','Completed','On Leave','Inactive') NOT NULL DEFAULT 'Pending',
       mobile_number VARCHAR(20) NULL,
       email_address VARCHAR(255) NULL,
       current_address TEXT NULL,
@@ -1000,6 +1000,11 @@ async function ensureSchema(pool) {
       INDEX idx_ti_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await pool.execute(
+    `ALTER TABLE trainee_intern
+      MODIFY COLUMN status ENUM('Pending','Active','Completed','On Leave','Inactive') NOT NULL DEFAULT 'Pending'`
+  ).catch(() => {});
 
   // ── Trainee / Intern Attendance ───────────────────────────────────────
   await pool.execute(

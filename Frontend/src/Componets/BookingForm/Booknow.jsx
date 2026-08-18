@@ -112,7 +112,7 @@ const BLANK = {
 
 const toForm = (item) => ({
   person_id: item.person_id || '', full_name: item.full_name || '', type: item.type || 'Trainee', department: item.department || '', designation: item.designation || '', reporting_manager: item.reporting_manager || '',
-  joining_date: item.joining_date ? item.joining_date.slice(0, 10) : '', joining_time: item.joining_time || '', end_date: item.end_date ? item.end_date.slice(0, 10) : '', end_time: item.end_time || '', status: item.status || 'Pending', mobile_number: item.mobile_number || '', email_address: item.email_address || '', current_address: item.current_address || '',
+  joining_date: item.joining_date ? item.joining_date.slice(0, 10) : '', joining_time: item.joining_time || '', end_date: item.end_date ? item.end_date.slice(0, 10) : '', end_time: item.end_time || '', status: item.status && item.status.trim() ? item.status : 'Pending', mobile_number: item.mobile_number || '', email_address: item.email_address || '', current_address: item.current_address || '',
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
@@ -251,9 +251,9 @@ export default function Booknow() {
     setLoading(true); setError(''); setSuccess('');
     try {
       // For new records, force status to 'Pending'. For edits, use the current formData.status
-      const submissionData = { 
-        ...formData, 
-        status: isEdit ? (formData.status || 'Active') : 'Pending'
+      const submissionData = {
+        ...formData,
+        status: (formData.status || '').trim() || 'Pending'
       };
       const form = new FormData();
       Object.entries(submissionData).forEach(([key, value]) => {
@@ -279,7 +279,7 @@ export default function Booknow() {
       const res = isEdit ? await api.put(`/trainee-intern/${id}`, form) : await api.post('/trainee-intern', form);
       if (!res.data.success) throw new Error(res.data.message || 'Failed');
       setSuccess(isEdit ? 'Member updated successfully!' : 'Member created successfully!');
-      setTimeout(() => navigate('/home'), 1400);
+      setTimeout(() => navigate('/'), 1400);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to save member');
     } finally {
@@ -496,11 +496,21 @@ export default function Booknow() {
             <button type="button" onClick={goToNextStep} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110">
               Next
             </button>
-          ) : (
-            <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-70">
-              {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
-            </button>
-          )}
+          ) : (() => {
+            const isStep4Valid = academicEntries.length > 0 && academicEntries.every(entry => 
+              entry.college_university?.trim() && 
+              entry.course?.trim() && 
+              entry.academic_department?.trim() && 
+              entry.year_semester?.trim() && 
+              entry.college_id_number?.trim() && 
+              entry.guide_name?.trim()
+            );
+            return (
+              <button type="submit" disabled={loading || !isStep4Valid} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed">
+                {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
+              </button>
+            );
+          })()}
         </div>
       </form>
       </div>
