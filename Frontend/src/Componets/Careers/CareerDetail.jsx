@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, IndianRupee } from "lucide-react";
+import { Clock, IndianRupee, Calendar, Users } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Head from "../Components/Head";
@@ -10,6 +10,16 @@ import { Link } from "react-router-dom";
 import SocialMedia from "../Home/SocialMedia";
 import emailjs from "@emailjs/browser";
 import api from "../../api";
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Not specified";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  } catch {
+    return "Invalid date";
+  }
+};
 
 const CareerDetail = () => {
   const navigate = useNavigate();
@@ -45,6 +55,9 @@ const CareerDetail = () => {
             : (job.minimum_salary ? `${job.currency || 'INR'} ${job.minimum_salary}` : "Competitive"),
           company: job.company_name || "Q Techx",
           location: job.city || job.state || job.country || "Remote",
+          vacancies: job.vacancies || 1,
+          applicationStartDate: job.application_start_date,
+          applicationDeadline: job.application_deadline,
         })));
       } catch (err) {
         setError(err.response?.data?.message || err.message || "Failed to fetch jobs");
@@ -466,6 +479,21 @@ const CareerDetail = () => {
                       <IndianRupee size={16} className="text-primary" /> {job.salary}
                     </span>
                     <span className="text-gray-500 text-xs md:text-sm">{job.location}</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center mt-4 gap-3 text-sm text-gray-600 border-t border-gray-300 pt-4">
+                    <span className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded">
+                      <Calendar size={14} className="text-blue-600" /> 
+                      <span className="text-xs text-blue-900">Start: <strong>{formatDate(job.applicationStartDate)}</strong></span>
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded">
+                      <Calendar size={14} className="text-red-600" /> 
+                      <span className="text-xs text-red-900">Deadline: <strong>{formatDate(job.applicationDeadline)}</strong></span>
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded ml-auto">
+                      <Users size={14} className="text-green-600" /> 
+                      <span className="text-xs text-green-900"><strong>{job.vacancies}</strong> vacancies</span>
+                    </span>
                   </div>
 
                   <button
