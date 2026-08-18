@@ -79,15 +79,27 @@ class JobApplicationController {
         return res.status(400).json({ message: "Invalid phone number" });
       }
 
-      const normalizedEmail = (email || "").trim().toLowerCase();
+      // Check if email or mobile exists in users table
+      const userModel = require("../models/userModel");
+      const existingUser = await userModel.existsByEmailOrMobile(email, phone);
+      if (existingUser) {
+        return res.status(409).json({
+          message: "This email address or mobile number is already registered in our user system. Please use different details or contact support.",
+        });
+      }
+
+      // Check if already applied for this specific job
       const alreadyApplied = await JobApplicationModel.hasAlreadyApplied(
         parseInt(job_id),
-        req.user?.id || null,
-        normalizedEmail
+        phone,
+        email,
+        req.user?.id || null
       );
 
       if (alreadyApplied) {
-        return res.status(409).json({ message: "You have already applied for this job." });
+        return res.status(409).json({
+          message: "This mobile number or email address has already been used to apply for this position.",
+        });
       }
 
       // Handle file uploads
@@ -705,8 +717,50 @@ class JobApplicationController {
       console.error("[JobApplicationController] getEligibleApplicantsForConversion error:", error);
       res.status(500).json({
         message: "Failed to fetch eligible applicants",
-        error: error.message
+        error: error.message,
       });
+    }
+  }
+
+  static async checkEligibility(req, res) {
+    try {
+      const { job_id } = req.params;
+      const { email, phone } = req.body;
+
+      if (!email && !phone) {
+        return res.status(400).json({ message: "Email or phone number is required" });
+      }
+
+      // Check users table
+      const userModel = require("../models/userModel");
+      const existingUser = await userModel.existsByEmailOrMobile(email, phone);
+      if (existingUser) {
+        return res.status(409).json({
+          eligible: false,
+          message: "This email address or mobile number is already registered in our user system.",
+        });
+      }
+
+      // Check duplicate application for this job
+      if (job_id) {
+        const alreadyApplied = await JobApplicationModel.hasAlreadyApplied(
+          parseInt(job_id),
+          phone,
+          email,
+          req.user?.id || null
+        );
+        if (alreadyApplied) {
+          return res.status(409).json({
+            eligible: false,
+            message: "This mobile number or email address has already been used to apply for this position.",
+          });
+        }
+      }
+
+      return res.status(200).json({ eligible: true, message: "Eligible to apply" });
+    } catch (error) {
+      console.error("[JobApplicationController] checkEligibility error:", error);
+      res.status(500).json({ message: "Failed to verify eligibility", error: error.message });
     }
   }
 }

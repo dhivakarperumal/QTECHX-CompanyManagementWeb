@@ -64,6 +64,9 @@ router.get("/:job_id/form-data", async (req, res) => {
   }
 });
 
+// Public route - Pre-check email and phone eligibility
+router.post("/:job_id/check-eligibility", JobApplicationController.checkEligibility);
+
 // Admin/Recruiter routes - MUST BE BEFORE /:id routes
 // Get all applications
 router.get(

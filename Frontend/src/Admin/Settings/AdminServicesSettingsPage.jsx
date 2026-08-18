@@ -171,7 +171,10 @@ const emptyService = {
   updated_at: new Date().toISOString(),
 };
 
-const parseList = (value) => String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+const parseList = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+};
 
 const parseJsonObject = (value) => {
   if (!value) return {};
@@ -698,11 +701,13 @@ const AdminServicesSettingsPage = () => {
       {!loading && !error && filteredServices.length > 0 && viewMode === "table" && (
         <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden mt-4">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[850px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Service</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Category</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Pricing</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Duration</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Status</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Type</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Added</th>
@@ -728,6 +733,20 @@ const AdminServicesSettingsPage = () => {
                       <div className="space-y-1">
                         <p className="text-white/70 text-xs font-semibold">{s.category || "General"}</p>
                         <p className="text-white/40 text-[10px] uppercase tracking-wider">{s.subcategory || "Main"}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="space-y-0.5">
+                        <p className="text-white text-xs font-semibold">
+                          {s.pricing?.starting_price ? `₹${Number(s.pricing.starting_price).toLocaleString('en-IN')}` : '—'}
+                        </p>
+                        <p className="text-white/40 text-[10px]">{s.pricing?.pricing_type || 'Starting From'}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="space-y-0.5">
+                        <p className="text-white/80 text-xs font-medium">{s.duration?.estimated_time || '—'}</p>
+                        <p className="text-white/40 text-[10px]">{s.duration?.delivery_type || 'Project Based'}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
@@ -787,6 +806,18 @@ const AdminServicesSettingsPage = () => {
                   <span className="text-white/40 font-medium px-2 py-1 bg-white/5 rounded-md">{s.category || "General"}</span>
                   {s.featured && <span className="text-orange-400 font-bold">Featured</span>}
                 </div>
+                {(s.pricing?.starting_price || s.duration?.estimated_time) && (
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-white/[0.04]">
+                    <div>
+                      <span className="text-white/30 text-[10px] block">Price:</span>
+                      <span className="text-white font-semibold">{s.pricing?.starting_price ? `₹${Number(s.pricing.starting_price).toLocaleString('en-IN')}` : 'Custom'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-white/30 text-[10px] block">Duration:</span>
+                      <span className="text-white/70 font-medium">{s.duration?.estimated_time || '2-6 Wks'}</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
                 <p className="text-[10px] font-semibold text-white/30 tracking-wider">ADDED {fmtDate(s.created_at)}</p>

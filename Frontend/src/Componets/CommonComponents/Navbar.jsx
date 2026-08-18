@@ -297,13 +297,21 @@ const Navbar = () => {
                 <FiArrowRight className="text-base" />
               </Link>
 
-              {user && (
+              {user ? (
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/20"
+                  className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition-all hover:bg-red-500/20"
                 >
-                  <FiLogOut /> Logout
+                  <FiLogOut />
+                  Logout
                 </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 px-5 py-2.5 text-sm font-semibold text-[#FF6A00] transition-all duration-300 hover:bg-[#FF6A00] hover:text-black hover:shadow-[0_8px_25px_rgba(255,106,0,0.3)]"
+                >
+                  Login
+                </Link>
               )}
             </div>
 

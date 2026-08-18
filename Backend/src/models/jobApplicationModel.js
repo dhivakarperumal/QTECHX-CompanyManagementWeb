@@ -3,27 +3,33 @@ const { getDB } = require("../config/db");
 
 class JobApplicationModel {
   // Create a new job application
-  static async hasAlreadyApplied(jobId, applicantId = null, email = null) {
+  static async hasAlreadyApplied(jobId, phone = null, email = null, applicantId = null) {
     const pool = getDB();
-    const conditions = ["job_id = ?"];
-    const params = [jobId];
+    const subConditions = [];
+    const params = [parseInt(jobId)];
 
-    if (applicantId) {
-      conditions.push("applicant_id = ?");
-      params.push(applicantId);
+    if (phone && String(phone).trim()) {
+      const cleanPhone = String(phone).replace(/[\s\-\+]/g, "").slice(-10);
+      subConditions.push("RIGHT(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), 10) = ?");
+      params.push(cleanPhone);
     }
 
     if (email && String(email).trim()) {
-      const normalizedEmail = String(email).trim().toLowerCase();
-      conditions.push("LOWER(TRIM(email)) = ?");
-      params.push(normalizedEmail);
+      const cleanEmail = String(email).trim().toLowerCase();
+      subConditions.push("LOWER(TRIM(email)) = ?");
+      params.push(cleanEmail);
     }
 
-    if (conditions.length === 1 && params.length === 1) {
+    if (applicantId) {
+      subConditions.push("applicant_id = ?");
+      params.push(applicantId);
+    }
+
+    if (subConditions.length === 0) {
       return false;
     }
 
-    const whereClause = conditions.map((condition) => `(${condition})`).join(" OR ");
+    const whereClause = `job_id = ? AND (${subConditions.join(" OR ")})`;
     const [rows] = await pool.execute(
       `SELECT id FROM job_applications WHERE ${whereClause} LIMIT 1`,
       params
