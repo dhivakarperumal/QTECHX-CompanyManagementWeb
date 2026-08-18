@@ -27,6 +27,7 @@ import { AdminProvider } from './PrivateRouter/AdminContext';
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
 import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
+import Booknow from './Componets/BookingForm/Booknow.jsx'
 import ProjectPage from "./Componets/Projects/ProjectPage.jsx";
 import Prices from "./Componets/Prices/Prices.jsx";
 import WhyChooseUs from './Componets/WhyChooseUs/WhyChooseUs.jsx';
@@ -131,6 +132,7 @@ const router = createHashRouter([
       { path: "/whatwedo", element: <WhatWeDo /> },
       { path: "/achievements", element: <OurAchievements /> },
       { path: "/career", element: <CareerDetail /> },
+      { path: "/booknow", element: <Booknow /> },
       { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       {
