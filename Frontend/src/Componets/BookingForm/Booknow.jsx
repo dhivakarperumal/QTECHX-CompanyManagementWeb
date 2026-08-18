@@ -496,11 +496,21 @@ export default function Booknow() {
             <button type="button" onClick={goToNextStep} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110">
               Next
             </button>
-          ) : (
-            <button type="submit" disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-70">
-              {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
-            </button>
-          )}
+          ) : (() => {
+            const isStep4Valid = academicEntries.length > 0 && academicEntries.every(entry => 
+              entry.college_university?.trim() && 
+              entry.course?.trim() && 
+              entry.academic_department?.trim() && 
+              entry.year_semester?.trim() && 
+              entry.college_id_number?.trim() && 
+              entry.guide_name?.trim()
+            );
+            return (
+              <button type="submit" disabled={loading || !isStep4Valid} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed">
+                {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {loading ? 'Saving…' : 'Save Member'}
+              </button>
+            );
+          })()}
         </div>
       </form>
       </div>
