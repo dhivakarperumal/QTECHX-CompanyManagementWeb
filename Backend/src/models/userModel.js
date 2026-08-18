@@ -33,6 +33,15 @@ async function findByUserId(userId, includePassword = false, id = null) {
   return rows[0] || null;
 }
 
+async function findByEmail(email) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT ${publicFields} FROM users WHERE email = ? LIMIT 1`,
+    [email]
+  );
+  return rows[0] || null;
+}
+
 async function findForLogin(identifier) {
   const db = getDB();
   const fields = publicFields.split(', ').map((field) => `u.${field}`).join(', ');
@@ -97,4 +106,4 @@ async function softDeleteUser(userId, updatedBy) {
   return findByUserId(userId);
 }
 
-module.exports = { createUser, findByUserId, findForLogin, listUsers, updateUser, softDeleteUser };
+module.exports = { createUser, findByUserId, findByEmail, findForLogin, listUsers, updateUser, softDeleteUser };
