@@ -10,7 +10,7 @@ import {
 import api from '../../api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
+const STATUS_OPTIONS = ['Pending', 'Active', 'Completed', 'On Leave', 'Inactive'];
 const TYPE_OPTIONS = ['Trainee', 'Intern'];
 
 const STATUS_STYLES = {

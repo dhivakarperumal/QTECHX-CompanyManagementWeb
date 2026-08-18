@@ -92,7 +92,7 @@ const customSelectStyles = {
 
 const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6';
 const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
-const STATUS_OPTIONS = ['Active', 'Completed', 'On Leave', 'Inactive'];
+const STATUS_OPTIONS = ['Pending', 'Active', 'Completed', 'On Leave', 'Inactive'];
 const TYPE_OPTIONS = ['Trainee', 'Intern'];
 
 const BLANK = {
