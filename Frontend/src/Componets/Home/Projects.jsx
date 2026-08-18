@@ -16,6 +16,64 @@ import PageContainer from "../CommonComponents/PageContainer";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
+const getImageUrl = (image) => {
+  // No image
+  if (!image) {
+    return "/images/default-project.jpg";
+  }
+
+  // If backend gives an array, use first item
+  if (Array.isArray(image)) {
+    return getImageUrl(image[0]);
+  }
+
+  // If backend gives an object
+  if (typeof image === "object") {
+    const imageValue =
+      image.url ||
+      image.path ||
+      image.image ||
+      image.src ||
+      image.filename ||
+      image.file ||
+      "";
+
+    return getImageUrl(imageValue);
+  }
+
+  // Make sure it is a string
+  if (typeof image !== "string") {
+    return "/images/default-project.jpg";
+  }
+
+  const cleanImage = image.trim();
+
+  if (!cleanImage) {
+    return "/images/default-project.jpg";
+  }
+
+  // Already a complete URL
+  if (
+    cleanImage.startsWith("http://") ||
+    cleanImage.startsWith("https://") ||
+    cleanImage.startsWith("data:")
+  ) {
+    return cleanImage;
+  }
+
+  // Backend URL
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api";
+
+  const backendUrl = apiUrl.replace(/\/api\/?$/, "");
+
+  // Remove accidental leading slash
+  const imagePath = cleanImage.replace(/^\/+/, "");
+
+  return `${backendUrl}/${imagePath}`;
+};
+
 const Projects = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,14 +118,17 @@ const Projects = () => {
             return {
               id: project.id,
               title: project.project_name || "",
-              image:
-                projectImages[0] ||
-                "/images/default-project.jpg",
+
+              image: getImageUrl(projectImages[0]),
+
               category:
                 project.project_category || "General",
+
               description:
                 project.project_description || "",
+
               features,
+
               link: project.github_link || "#",
             };
           });
@@ -709,13 +770,21 @@ const Projects = () => {
                               src={project.image}
                               alt={project.title}
                               className="
-                                h-full
-                                w-full
-                                object-cover
-                                transition-transform
-                                duration-700
-                                group-hover:scale-105
-                              "
+    h-full
+    w-full
+    object-cover
+    transition-transform
+    duration-700
+    group-hover:scale-105
+  "
+                              onError={(e) => {
+                                console.error("❌ Project image failed:", project.image);
+
+                                if (!e.currentTarget.dataset.fallback) {
+                                  e.currentTarget.dataset.fallback = "true";
+                                  e.currentTarget.src = "/images/default-project.jpg";
+                                }
+                              }}
                             />
 
                             {/* Image overlay */}
