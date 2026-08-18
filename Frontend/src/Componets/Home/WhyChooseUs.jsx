@@ -327,7 +327,7 @@ const WhyChooseUs = () => {
                   mt-5
                   text-sm
                   leading-6
-                  text-white/65
+                  text-white/80
                   sm:text-base
                   sm:leading-7
                   lg:text-[15px]
@@ -347,7 +347,7 @@ const WhyChooseUs = () => {
                   mt-3
                   text-sm
                   leading-6
-                  text-white/65
+                  text-white/80
                   sm:text-base
                   sm:leading-7
                   lg:text-[15px]
@@ -415,7 +415,7 @@ const WhyChooseUs = () => {
                       className="
                         text-[9px]
                         font-medium
-                        text-white/65
+                        text-white/80
                         sm:text-[10px]
                       "
                     >
