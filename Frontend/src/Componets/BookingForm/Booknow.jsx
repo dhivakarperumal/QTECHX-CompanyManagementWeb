@@ -103,7 +103,7 @@ const progressSteps = [
 
 const BLANK = {
   person_id: '', full_name: '', type: 'Trainee', department: '', designation: '', reporting_manager: '',
-  joining_date: '', end_date: '', status: 'Active', mobile_number: '', email_address: '', current_address: '',
+  joining_date: '', end_date: '', status: 'Pending', mobile_number: '', email_address: '', current_address: '',
   emergency_contact_name: '', emergency_contact_number: '', college_university: '', course: '',
   academic_department: '', year_semester: '', college_id_number: '', guide_name: '',
   profile_photo: '', resume: '', college_id_doc: '', offer_letter: '', internship_letter: '',
@@ -112,7 +112,7 @@ const BLANK = {
 
 const toForm = (item) => ({
   person_id: item.person_id || '', full_name: item.full_name || '', type: item.type || 'Trainee', department: item.department || '', designation: item.designation || '', reporting_manager: item.reporting_manager || '',
-  joining_date: item.joining_date ? item.joining_date.slice(0, 10) : '', end_date: item.end_date ? item.end_date.slice(0, 10) : '', status: item.status || 'Active', mobile_number: item.mobile_number || '', email_address: item.email_address || '', current_address: item.current_address || '',
+  joining_date: item.joining_date ? item.joining_date.slice(0, 10) : '', end_date: item.end_date ? item.end_date.slice(0, 10) : '', status: item.status || 'Pending', mobile_number: item.mobile_number || '', email_address: item.email_address || '', current_address: item.current_address || '',
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
@@ -250,8 +250,9 @@ export default function Booknow() {
     }
     setLoading(true); setError(''); setSuccess('');
     try {
+      const submissionData = { ...formData, status: 'Pending' };
       const form = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(submissionData).forEach(([key, value]) => {
         if (value === '' || value === null || value === undefined) return;
         if (key === 'profile_photo' || key === 'resume' || key === 'college_id_doc' || key === 'offer_letter' || key === 'internship_letter') return;
         form.append(key, value);

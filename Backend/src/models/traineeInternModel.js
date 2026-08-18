@@ -43,7 +43,7 @@ async function createTraineeIntern(data) {
       data.reporting_manager || null,
       data.joining_date || null,
       data.end_date || null,
-      data.status || 'Active',
+      data.status || 'Pending',
       data.mobile_number || null,
       data.email_address || null,
       data.current_address || null,
