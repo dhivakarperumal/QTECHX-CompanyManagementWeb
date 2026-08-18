@@ -266,7 +266,7 @@ const Projects = () => {
     pauseOnHover: true,
     arrows: window.innerWidth >= 768,
     nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />, 
+    prevArrow: <PrevArrow />,
   };
 
   return (
@@ -600,7 +600,7 @@ const Projects = () => {
                   className="
                     rounded-full
                     border
-                    border-[#FF6A00]/25
+                    border-[#FF6A00]/50
                     bg-[#FF6A00]/5
                     px-3
                     py-1
@@ -740,7 +740,7 @@ const Projects = () => {
                                 top-4
                                 rounded-full
                                 border
-                                border-[#FF6A00]/40
+                                border-[#FF6A00]/50
                                 bg-[#03070a]/80
                                 px-3
                                 py-1
