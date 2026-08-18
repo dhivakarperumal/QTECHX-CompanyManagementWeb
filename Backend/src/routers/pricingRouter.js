@@ -3,6 +3,9 @@ const router = express.Router();
 const pricingController = require('../controllers/pricingController');
 const { authenticate, authorize } = require('../security/authMiddleware');
 
+// Public endpoints - no authentication required
+router.get('/public/all', pricingController.listPricing);
+
 router.use(authenticate);
 
 router.get('/', pricingController.listPricing);

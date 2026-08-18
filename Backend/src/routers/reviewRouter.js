@@ -3,6 +3,9 @@ const router = express.Router();
 const reviewController = require('../controllers/reviewController');
 const { authenticate, authorize } = require('../security/authMiddleware');
 
+// Public endpoint - no authentication required
+router.get('/public/approved', reviewController.getApprovedReviews);
+
 router.use(authenticate);
 
 router.get('/', reviewController.listReviews);
