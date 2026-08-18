@@ -3,27 +3,27 @@ const { getDB } = require("../config/db");
 
 class JobApplicationModel {
   // Create a new job application
-  static async hasAlreadyApplied(jobId, applicantId = null, email = null) {
+  static async hasAlreadyApplied(jobId, phone = null, applicantId = null) {
     const pool = getDB();
-    const conditions = ["job_id = ?"];
-    const params = [jobId];
+    const subConditions = [];
+    const params = [parseInt(jobId)];
+
+    if (phone && String(phone).trim()) {
+      const cleanPhone = String(phone).replace(/[\s\-\+]/g, "").slice(-10);
+      subConditions.push("RIGHT(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), 10) = ?");
+      params.push(cleanPhone);
+    }
 
     if (applicantId) {
-      conditions.push("applicant_id = ?");
+      subConditions.push("applicant_id = ?");
       params.push(applicantId);
     }
 
-    if (email && String(email).trim()) {
-      const normalizedEmail = String(email).trim().toLowerCase();
-      conditions.push("LOWER(TRIM(email)) = ?");
-      params.push(normalizedEmail);
-    }
-
-    if (conditions.length === 1 && params.length === 1) {
+    if (subConditions.length === 0) {
       return false;
     }
 
-    const whereClause = conditions.map((condition) => `(${condition})`).join(" OR ");
+    const whereClause = `job_id = ? AND (${subConditions.join(" OR ")})`;
     const [rows] = await pool.execute(
       `SELECT id FROM job_applications WHERE ${whereClause} LIMIT 1`,
       params

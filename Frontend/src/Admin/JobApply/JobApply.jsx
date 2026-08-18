@@ -501,8 +501,10 @@ const JobApply = () => {
     } catch (error) {
       console.error("Error submitting application:", error);
       if (error.response?.status === 409) {
-        toast.error("You have already applied for this job.");
-        navigate("/career");
+        toast.error(
+          error.response?.data?.message ||
+            "This mobile number has already been used to apply for this position."
+        );
         return;
       }
       toast.error(
