@@ -476,6 +476,24 @@ html, body, #root {
   z-index: 20000 !important;
 }
 
+/* Global Select and Options Dark Mode */
+select, select option {
+  color-scheme: dark !important;
+  background-color: #0c1216 !important;
+  color: #f3f4f6 !important;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #f97316 !important;
+  color: #ffffff !important;
+}
+
+input[type="date"] {
+  color-scheme: dark !important;
+}
+
 /* Global Admin Select */
 .admin-select {
   background: #1b1d24;
@@ -483,6 +501,7 @@ html, body, #root {
   border: 1px solid #f97316;
   border-radius: 12px;
   outline: none;
+  color-scheme: dark;
 }
 
 .admin-select:focus {

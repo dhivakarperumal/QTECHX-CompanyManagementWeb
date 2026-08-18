@@ -601,25 +601,25 @@ const JobApply = () => {
                     Application Receipt Details
                   </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs sm:text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-xs sm:text-sm">
                     <div className="border-b border-[#1c252d] pb-2 sm:border-b-0">
-                      <span className="text-gray-500 block text-xs">Position Applied:</span>
+                      <span className="text-gray-500 block text-xs mb-1">Position Applied:</span>
                       <span className="font-semibold text-gray-200">{successData?.job_title}</span>
                     </div>
                     <div className="border-b border-[#1c252d] pb-2 sm:border-b-0">
-                      <span className="text-gray-500 block text-xs">Company:</span>
+                      <span className="text-gray-500 block text-xs mb-1">Company:</span>
                       <span className="font-semibold text-gray-200">{successData?.company_name}</span>
                     </div>
                     <div className="border-b border-[#1c252d] pb-2 sm:border-b-0">
-                      <span className="text-gray-500 block text-xs">Application ID:</span>
+                      <span className="text-gray-500 block text-xs mb-1">Application ID:</span>
                       <span className="font-mono font-bold text-[#FF6A00]">{successData?.id}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500 block text-xs">Submission Date:</span>
+                      <span className="text-gray-500 block text-xs mb-1">Submission Date:</span>
                       <span className="text-gray-200">{successData?.applied_at}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500 block text-xs">Status:</span>
+                      <span className="text-gray-500 block text-xs mb-1">Status:</span>
                       <span className="inline-block mt-0.5 rounded-full border border-blue-500/40 bg-blue-500/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-400">
                         Under Review
                       </span>
@@ -801,7 +801,7 @@ const JobApply = () => {
 
                       {/* Personal Information Review */}
                       <div className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5 sm:p-6 shadow-sm">
-                        <div className="mb-3 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
+                        <div className="mb-3.5 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
                           <h3 className="flex items-center gap-2 font-bold text-gray-100 text-sm">
                             <User size={16} className="text-[#FF6A00]" />
                             <span>Personal Information</span>
@@ -813,37 +813,37 @@ const JobApply = () => {
                             Edit
                           </button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-5 text-xs">
                           <div>
-                            <span className="text-gray-500 block">Full Name:</span>
+                            <span className="text-gray-500 block mb-1">Full Name:</span>
                             <span className="font-semibold text-gray-200">{formData.full_name || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Email:</span>
+                            <span className="text-gray-500 block mb-1">Email:</span>
                             <span className="font-semibold text-gray-200">{formData.email || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Phone:</span>
+                            <span className="text-gray-500 block mb-1">Phone:</span>
                             <span className="font-semibold text-gray-200">{formData.phone || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Alternate Phone:</span>
+                            <span className="text-gray-500 block mb-1">Alternate Phone:</span>
                             <span className="font-semibold text-gray-200">{formData.alternate_phone || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Current Location:</span>
+                            <span className="text-gray-500 block mb-1">Current Location:</span>
                             <span className="font-semibold text-gray-200">{formData.current_location || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">City:</span>
+                            <span className="text-gray-500 block mb-1">City:</span>
                             <span className="font-semibold text-gray-200">{formData.city || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">State:</span>
+                            <span className="text-gray-500 block mb-1">State:</span>
                             <span className="font-semibold text-gray-200">{formData.state || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Pincode:</span>
+                            <span className="text-gray-500 block mb-1">Pincode:</span>
                             <span className="font-semibold text-gray-200">{formData.pincode || "N/A"}</span>
                           </div>
                         </div>
@@ -851,7 +851,7 @@ const JobApply = () => {
 
                       {/* Professional Information Review */}
                       <div className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5 sm:p-6 shadow-sm">
-                        <div className="mb-3 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
+                        <div className="mb-3.5 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
                           <h3 className="flex items-center gap-2 font-bold text-gray-100 text-sm">
                             <Briefcase size={16} className="text-[#FF6A00]" />
                             <span>Professional Background</span>
@@ -863,37 +863,37 @@ const JobApply = () => {
                             Edit
                           </button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-5 text-xs">
                           <div>
-                            <span className="text-gray-500 block">Current Job Title:</span>
+                            <span className="text-gray-500 block mb-1">Current Job Title:</span>
                             <span className="font-semibold text-gray-200">{formData.current_job_title || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Current Company:</span>
+                            <span className="text-gray-500 block mb-1">Current Company:</span>
                             <span className="font-semibold text-gray-200">{formData.current_company || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Total Experience:</span>
+                            <span className="text-gray-500 block mb-1">Total Experience:</span>
                             <span className="font-semibold text-gray-200">{formData.total_experience} Years</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Relevant Experience:</span>
+                            <span className="text-gray-500 block mb-1">Relevant Experience:</span>
                             <span className="font-semibold text-gray-200">{formData.relevant_experience} Years</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Notice Period:</span>
+                            <span className="text-gray-500 block mb-1">Notice Period:</span>
                             <span className="font-semibold text-gray-200">{formData.notice_period || "N/A"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Expected CTC:</span>
+                            <span className="text-gray-500 block mb-1">Expected CTC:</span>
                             <span className="font-semibold text-gray-200">{formData.expected_salary ? `₹ ${formData.expected_salary}` : "Not Disclosed"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Employment Status:</span>
+                            <span className="text-gray-500 block mb-1">Employment Status:</span>
                             <span className="font-semibold text-gray-200">{formData.employment_status || "Employed"}</span>
                           </div>
                           <div>
-                            <span className="text-gray-500 block">Preferred Work Mode:</span>
+                            <span className="text-gray-500 block mb-1">Preferred Work Mode:</span>
                             <span className="font-semibold text-gray-200">{formData.preferred_work_mode || "Flexible"}</span>
                           </div>
                         </div>
@@ -901,7 +901,7 @@ const JobApply = () => {
 
                       {/* Education & Skills Review */}
                       <div className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5 sm:p-6 shadow-sm">
-                        <div className="mb-3 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
+                        <div className="mb-3.5 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
                           <h3 className="flex items-center gap-2 font-bold text-gray-100 text-sm">
                             <GraduationCap size={16} className="text-[#FF6A00]" />
                             <span>Education & Skills</span>
@@ -916,12 +916,12 @@ const JobApply = () => {
 
                         <div className="space-y-4">
                           <div>
-                            <span className="text-gray-500 block mb-1.5 text-xs">Skills & Tech Stack:</span>
-                            <div className="flex flex-wrap gap-1.5">
+                            <span className="text-gray-500 block mb-2 text-xs">Skills & Tech Stack:</span>
+                            <div className="flex flex-wrap gap-2">
                               {formData.skills.map((skill, i) => (
                                 <span
                                   key={i}
-                                  className="rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-2.5 py-0.5 text-xs font-semibold text-[#FF6A00]"
+                                  className="rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-3 py-1 text-xs font-semibold text-[#FF6A00]"
                                 >
                                   {skill}
                                 </span>
@@ -930,8 +930,8 @@ const JobApply = () => {
                           </div>
 
                           <div className="border-t border-[#1c252d] pt-3">
-                            <span className="text-gray-500 block mb-1.5 text-xs">Academic Qualifications:</span>
-                            <div className="text-xs text-gray-300 space-y-1">
+                            <span className="text-gray-500 block mb-2 text-xs">Academic Qualifications:</span>
+                            <div className="text-xs text-gray-300 space-y-1.5">
                               {formData.education.map((edu, idx) => (
                                 <p key={idx}>
                                   • <strong className="text-gray-100">{edu.qualification}</strong> {edu.degree && `(${edu.degree})`} - {edu.college || "Institute not specified"} {edu.year && `[${edu.year}]`} {edu.cgpa && `— ${edu.cgpa}`}
@@ -944,7 +944,7 @@ const JobApply = () => {
 
                       {/* Uploaded Documents Review */}
                       <div className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5 sm:p-6 shadow-sm">
-                        <div className="mb-3 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
+                        <div className="mb-3.5 flex items-center justify-between border-b border-[#1c252d] pb-2.5">
                           <h3 className="flex items-center gap-2 font-bold text-gray-100 text-sm">
                             <FileText size={16} className="text-[#FF6A00]" />
                             <span>Documents & Attachments</span>
@@ -957,7 +957,7 @@ const JobApply = () => {
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-300">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-300">
                           <div className="flex items-center gap-2">
                             <span className="text-[#FF6A00]">📄 Resume:</span>
                             <span className="font-semibold text-gray-200">{formData.resume ? formData.resume.name : "Not uploaded"}</span>
@@ -984,7 +984,7 @@ const JobApply = () => {
                       </div>
 
                       {/* Review Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-3.5 justify-between pt-4 border-t border-[#1c252d]">
+                      <div className="flex flex-col sm:flex-row gap-3.5 justify-between pt-6 border-t border-[#1c252d]">
                         <button
                           type="button"
                           onClick={() => { setCurrentStep("form"); setActiveFormStep(4); }}
@@ -1018,27 +1018,27 @@ const JobApply = () => {
                     /* =====================================================
                         4. ACTIVE STEP FORM (STEPS 1 - 4)
                     ====================================================== */
-                    <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="space-y-6">
+                    <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }} className="space-y-8">
                       
                       {/* ── STEP 1: PERSONAL INFORMATION ── */}
                       {activeFormStep === 1 && (
-                        <div className="space-y-5">
-                          <div className="border-b border-[#1c252d] pb-3">
+                        <div className="space-y-6">
+                          <div className="border-b border-[#1c252d] pb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00]">
                               STEP 1 OF 4
                             </p>
                             <h2 className="hero-font text-xl font-bold uppercase text-gray-100 sm:text-2xl">
                               PERSONAL <span className="text-[#FF6A00]">INFORMATION</span>
                             </h2>
-                            <p className="mt-0.5 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500">
                               Please provide your contact and primary demographic details.
                             </p>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:gap-y-7 md:grid-cols-2 lg:grid-cols-3">
                             {/* Full Name */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Full Name <span className="text-[#FF6A00]">*</span>
                               </label>
                               <input
@@ -1048,15 +1048,15 @@ const JobApply = () => {
                                 onChange={handleInputChange}
                                 className={`w-full rounded-xl border ${
                                   errors.full_name ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
                                 placeholder="e.g. Alexander Pierce"
                               />
-                              {errors.full_name && <p className="mt-1 text-xs text-red-400">{errors.full_name}</p>}
+                              {errors.full_name && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.full_name}</p>}
                             </div>
 
                             {/* Email */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Email Address <span className="text-[#FF6A00]">*</span>
                               </label>
                               <input
@@ -1066,15 +1066,15 @@ const JobApply = () => {
                                 onChange={handleInputChange}
                                 className={`w-full rounded-xl border ${
                                   errors.email ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
                                 placeholder="name@example.com"
                               />
-                              {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
+                              {errors.email && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.email}</p>}
                             </div>
 
                             {/* Phone */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Phone Number <span className="text-[#FF6A00]">*</span>
                               </label>
                               <input
@@ -1084,15 +1084,15 @@ const JobApply = () => {
                                 onChange={handleInputChange}
                                 className={`w-full rounded-xl border ${
                                   errors.phone ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00] focus:shadow-[0_0_15px_rgba(255,106,0,0.2)]`}
                                 placeholder="10-digit number"
                               />
-                              {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
+                              {errors.phone && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.phone}</p>}
                             </div>
 
                             {/* Alternate Phone */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Alternate Phone
                               </label>
                               <input
@@ -1100,14 +1100,14 @@ const JobApply = () => {
                                 name="alternate_phone"
                                 value={formData.alternate_phone}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="Optional secondary number"
                               />
                             </div>
 
                             {/* Date of Birth */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Date of Birth
                               </label>
                               <input
@@ -1115,32 +1115,34 @@ const JobApply = () => {
                                 name="date_of_birth"
                                 value={formData.date_of_birth}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               />
                             </div>
 
                             {/* Gender */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Gender
                               </label>
                               <select
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               >
-                                <option value="" className="bg-[#0c1216]">Select Gender</option>
-                                <option value="Male" className="bg-[#0c1216]">Male</option>
-                                <option value="Female" className="bg-[#0c1216]">Female</option>
-                                <option value="Other" className="bg-[#0c1216]">Other</option>
-                                <option value="Prefer not to say" className="bg-[#0c1216]">Prefer not to say</option>
+                                <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Gender</option>
+                                <option value="Male" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Male</option>
+                                <option value="Female" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Female</option>
+                                <option value="Other" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Other</option>
+                                <option value="Prefer not to say" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Prefer not to say</option>
                               </select>
                             </div>
 
                             {/* Current Location */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Current Location / Area <span className="text-[#FF6A00]">*</span>
                               </label>
                               <input
@@ -1150,15 +1152,15 @@ const JobApply = () => {
                                 onChange={handleInputChange}
                                 className={`w-full rounded-xl border ${
                                   errors.current_location ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]`}
                                 placeholder="e.g. Bangalore, Whitefield"
                               />
-                              {errors.current_location && <p className="mt-1 text-xs text-red-400">{errors.current_location}</p>}
+                              {errors.current_location && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.current_location}</p>}
                             </div>
 
                             {/* City */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 City <span className="text-[#FF6A00]">*</span>
                               </label>
                               <input
@@ -1168,15 +1170,15 @@ const JobApply = () => {
                                 onChange={handleInputChange}
                                 className={`w-full rounded-xl border ${
                                   errors.city ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]`}
                                 placeholder="e.g. Chennai"
                               />
-                              {errors.city && <p className="mt-1 text-xs text-red-400">{errors.city}</p>}
+                              {errors.city && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.city}</p>}
                             </div>
 
                             {/* State */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 State
                               </label>
                               <input
@@ -1184,14 +1186,14 @@ const JobApply = () => {
                                 name="state"
                                 value={formData.state}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. Tamil Nadu"
                               />
                             </div>
 
                             {/* Pincode */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Pincode
                               </label>
                               <input
@@ -1199,21 +1201,21 @@ const JobApply = () => {
                                 name="pincode"
                                 value={formData.pincode}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. 600001"
                               />
                             </div>
 
                             {/* Address */}
                             <div className="md:col-span-2">
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Residential Address
                               </label>
                               <textarea
                                 name="address"
                                 value={formData.address}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="Street, Apartment / House No."
                                 rows="2"
                               />
@@ -1224,23 +1226,23 @@ const JobApply = () => {
 
                       {/* ── STEP 2: PROFESSIONAL INFORMATION ── */}
                       {activeFormStep === 2 && (
-                        <div className="space-y-5">
-                          <div className="border-b border-[#1c252d] pb-3">
+                        <div className="space-y-6">
+                          <div className="border-b border-[#1c252d] pb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00]">
                               STEP 2 OF 4
                             </p>
                             <h2 className="hero-font text-xl font-bold uppercase text-gray-100 sm:text-2xl">
                               PROFESSIONAL <span className="text-[#FF6A00]">EXPERIENCE</span>
                             </h2>
-                            <p className="mt-0.5 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500">
                               Detail your employment history, compensation, and career readiness.
                             </p>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:gap-y-7 md:grid-cols-2 lg:grid-cols-3">
                             {/* Current Job Title */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Current / Most Recent Job Title
                               </label>
                               <input
@@ -1248,14 +1250,14 @@ const JobApply = () => {
                                 name="current_job_title"
                                 value={formData.current_job_title}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. Frontend Developer"
                               />
                             </div>
 
                             {/* Current Company */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Current / Previous Company
                               </label>
                               <input
@@ -1263,110 +1265,114 @@ const JobApply = () => {
                                 name="current_company"
                                 value={formData.current_company}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. Acme Corp"
                               />
                             </div>
 
                             {/* Total Experience */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Total Experience <span className="text-[#FF6A00]">*</span>
                               </label>
                               <select
                                 name="total_experience"
                                 value={formData.total_experience}
                                 onChange={handleInputChange}
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
                                 className={`w-full rounded-xl border ${
                                   errors.total_experience ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]`}
                               >
-                                <option value="" className="bg-[#0c1216]">Select Experience</option>
-                                <option value="0" className="bg-[#0c1216]">Fresher / Entry Level</option>
-                                <option value="1" className="bg-[#0c1216]">1 Year</option>
-                                <option value="2" className="bg-[#0c1216]">2 Years</option>
-                                <option value="3" className="bg-[#0c1216]">3 Years</option>
-                                <option value="5" className="bg-[#0c1216]">4 - 5 Years</option>
-                                <option value="10" className="bg-[#0c1216]">6 - 10 Years</option>
-                                <option value="15" className="bg-[#0c1216]">10+ Years</option>
+                                <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Experience</option>
+                                <option value="0" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Fresher / Entry Level</option>
+                                <option value="1" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">1 Year</option>
+                                <option value="2" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">2 Years</option>
+                                <option value="3" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">3 Years</option>
+                                <option value="5" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">4 - 5 Years</option>
+                                <option value="10" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">6 - 10 Years</option>
+                                <option value="15" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">10+ Years</option>
                               </select>
                               {errors.total_experience && (
-                                <p className="mt-1 text-xs text-red-400">{errors.total_experience}</p>
+                                <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.total_experience}</p>
                               )}
                             </div>
 
                             {/* Relevant Experience */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Relevant Experience <span className="text-[#FF6A00]">*</span>
                               </label>
                               <select
                                 name="relevant_experience"
                                 value={formData.relevant_experience}
                                 onChange={handleInputChange}
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
                                 className={`w-full rounded-xl border ${
                                   errors.relevant_experience ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]`}
                               >
-                                <option value="" className="bg-[#0c1216]">Select Relevant Experience</option>
-                                <option value="0" className="bg-[#0c1216]">Less than 6 months</option>
-                                <option value="1" className="bg-[#0c1216]">6 months - 1 Year</option>
-                                <option value="2" className="bg-[#0c1216]">1 - 2 Years</option>
-                                <option value="3" className="bg-[#0c1216]">2 - 3 Years</option>
-                                <option value="5" className="bg-[#0c1216]">3 - 5 Years</option>
-                                <option value="10" className="bg-[#0c1216]">5+ Years</option>
+                                <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Relevant Experience</option>
+                                <option value="0" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Less than 6 months</option>
+                                <option value="1" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">6 months - 1 Year</option>
+                                <option value="2" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">1 - 2 Years</option>
+                                <option value="3" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">2 - 3 Years</option>
+                                <option value="5" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">3 - 5 Years</option>
+                                <option value="10" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">5+ Years</option>
                               </select>
                               {errors.relevant_experience && (
-                                <p className="mt-1 text-xs text-red-400">{errors.relevant_experience}</p>
+                                <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.relevant_experience}</p>
                               )}
                             </div>
 
                             {/* Employment Status */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Current Employment Status
                               </label>
                               <select
                                 name="employment_status"
                                 value={formData.employment_status}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               >
-                                <option value="Employed" className="bg-[#0c1216]">Employed</option>
-                                <option value="Unemployed" className="bg-[#0c1216]">Unemployed / Immediate Joiner</option>
-                                <option value="Self-Employed" className="bg-[#0c1216]">Self-Employed</option>
-                                <option value="Freelancer" className="bg-[#0c1216]">Freelancer / Consultant</option>
+                                <option value="Employed" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Employed</option>
+                                <option value="Unemployed" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Unemployed / Immediate Joiner</option>
+                                <option value="Self-Employed" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Self-Employed</option>
+                                <option value="Freelancer" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Freelancer / Consultant</option>
                               </select>
                             </div>
 
                             {/* Notice Period */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Notice Period <span className="text-[#FF6A00]">*</span>
                               </label>
                               <select
                                 name="notice_period"
                                 value={formData.notice_period}
                                 onChange={handleInputChange}
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
                                 className={`w-full rounded-xl border ${
                                   errors.notice_period ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]`}
                               >
-                                <option value="" className="bg-[#0c1216]">Select Notice Period</option>
-                                <option value="Immediate" className="bg-[#0c1216]">Immediate (0 Days)</option>
-                                <option value="15 Days" className="bg-[#0c1216]">15 Days</option>
-                                <option value="1 Month" className="bg-[#0c1216]">1 Month (30 Days)</option>
-                                <option value="2 Months" className="bg-[#0c1216]">2 Months (60 Days)</option>
-                                <option value="3 Months" className="bg-[#0c1216]">3 Months (90 Days)</option>
+                                <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Notice Period</option>
+                                <option value="Immediate" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Immediate (0 Days)</option>
+                                <option value="15 Days" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">15 Days</option>
+                                <option value="1 Month" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">1 Month (30 Days)</option>
+                                <option value="2 Months" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">2 Months (60 Days)</option>
+                                <option value="3 Months" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">3 Months (90 Days)</option>
                               </select>
                               {errors.notice_period && (
-                                <p className="mt-1 text-xs text-red-400">{errors.notice_period}</p>
+                                <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.notice_period}</p>
                               )}
                             </div>
 
                             {/* Current Salary */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Current Annual CTC (INR)
                               </label>
                               <input
@@ -1374,14 +1380,14 @@ const JobApply = () => {
                                 name="current_salary"
                                 value={formData.current_salary}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. 500000"
                               />
                             </div>
 
                             {/* Expected Salary */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Expected Annual CTC (INR)
                               </label>
                               <input
@@ -1389,14 +1395,14 @@ const JobApply = () => {
                                 name="expected_salary"
                                 value={formData.expected_salary}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. 700000"
                               />
                             </div>
 
                             {/* Available Joining Date */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Earliest Joining Date
                               </label>
                               <input
@@ -1404,41 +1410,44 @@ const JobApply = () => {
                                 name="joining_date"
                                 value={formData.joining_date}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               />
                             </div>
 
                             {/* Willing to Relocate */}
                             <div>
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Willing to Relocate?
                               </label>
                               <select
                                 name="willing_to_relocate"
                                 value={formData.willing_to_relocate}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               >
-                                <option value="No" className="bg-[#0c1216]">No</option>
-                                <option value="Yes" className="bg-[#0c1216]">Yes</option>
+                                <option value="No" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">No</option>
+                                <option value="Yes" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Yes</option>
                               </select>
                             </div>
 
                             {/* Preferred Work Mode */}
                             <div className="md:col-span-2">
-                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                 Preferred Work Mode
                               </label>
                               <select
                                 name="preferred_work_mode"
                                 value={formData.preferred_work_mode}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                               >
-                                <option value="" className="bg-[#0c1216]">Select Preference</option>
-                                <option value="Remote" className="bg-[#0c1216]">Remote (Work from Anywhere)</option>
-                                <option value="On-site" className="bg-[#0c1216]">On-site (Office)</option>
-                                <option value="Hybrid" className="bg-[#0c1216]">Hybrid</option>
+                                <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Preference</option>
+                                <option value="Remote" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Remote (Work from Anywhere)</option>
+                                <option value="On-site" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">On-site (Office)</option>
+                                <option value="Hybrid" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Hybrid</option>
                               </select>
                             </div>
                           </div>
@@ -1447,50 +1456,50 @@ const JobApply = () => {
 
                       {/* ── STEP 3: EDUCATION, SKILLS & LINKS ── */}
                       {activeFormStep === 3 && (
-                        <div className="space-y-6">
-                          <div className="border-b border-[#1c252d] pb-3">
+                        <div className="space-y-8">
+                          <div className="border-b border-[#1c252d] pb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00]">
                               STEP 3 OF 4
                             </p>
                             <h2 className="hero-font text-xl font-bold uppercase text-gray-100 sm:text-2xl">
                               EDUCATION & <span className="text-[#FF6A00]">SKILLS</span>
                             </h2>
-                            <p className="mt-0.5 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500">
                               Add your educational degrees, key engineering skills, and online profiles.
                             </p>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-8">
                             {/* Education Entries */}
-                            <div className="space-y-3.5">
-                              <label className="text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="space-y-5">
+                              <label className="text-xs font-bold uppercase tracking-wider text-gray-200 block mb-2">
                                 Academic Qualifications <span className="text-[#FF6A00]">*</span>
                               </label>
 
                               {formData.education.map((edu, index) => (
                                 <div
                                   key={index}
-                                  className="relative rounded-2xl border border-[#1c252d] bg-[#070b0e] p-4 transition hover:border-[#283642]"
+                                  className="relative rounded-2xl border border-[#1c252d] bg-[#070b0e] p-6 sm:p-7 transition hover:border-[#283642]"
                                 >
-                                  <div className="mb-3 flex items-center justify-between">
-                                    <span className="rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
+                                  <div className="mb-5 flex items-center justify-between">
+                                    <span className="rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
                                       Degree / Entry #{index + 1}
                                     </span>
                                     {formData.education.length > 1 && (
                                       <button
                                         type="button"
                                         onClick={() => removeEducation(index)}
-                                        className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition"
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition"
                                       >
-                                        <X size={13} />
+                                        <X size={14} />
                                       </button>
                                     )}
                                   </div>
 
-                                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 md:grid-cols-3">
+                                  <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:gap-y-7 sm:grid-cols-2 md:grid-cols-3">
                                     {/* Qualification */}
                                     <div>
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         Qualification <span className="text-[#FF6A00]">*</span>
                                       </label>
                                       <select
@@ -1498,21 +1507,22 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "qualification", e.target.value)
                                         }
+                                        style={{ colorScheme: "dark", backgroundColor: "#0c1216", color: "#f3f4f6" }}
                                         className={`w-full rounded-xl border ${
                                           errors[`education_${index}_qualification`]
                                             ? "border-red-500"
                                             : "border-[#1e2830]"
-                                        } bg-[#0c1216] px-3 py-2 text-xs text-gray-100 outline-none transition focus:border-[#FF6A00]`}
+                                        } bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]`}
                                       >
-                                        <option value="">Select Qualification</option>
-                                        <option value="12th Pass">12th Pass / Higher Secondary</option>
-                                        <option value="Diploma">Diploma</option>
-                                        <option value="Bachelor">Bachelor's Degree</option>
-                                        <option value="Master">Master's Degree</option>
-                                        <option value="PhD">Doctorate / PhD</option>
+                                        <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select Qualification</option>
+                                        <option value="12th Pass" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">12th Pass / Higher Secondary</option>
+                                        <option value="Diploma" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Diploma</option>
+                                        <option value="Bachelor" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Bachelor's Degree</option>
+                                        <option value="Master" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Master's Degree</option>
+                                        <option value="PhD" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Doctorate / PhD</option>
                                       </select>
                                       {errors[`education_${index}_qualification`] && (
-                                        <p className="mt-1 text-xs text-red-400">
+                                        <p className="mt-1.5 text-xs text-red-400 font-medium">
                                           {errors[`education_${index}_qualification`]}
                                         </p>
                                       )}
@@ -1520,7 +1530,7 @@ const JobApply = () => {
 
                                     {/* Degree */}
                                     <div>
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         Degree / Course Name
                                       </label>
                                       <input
@@ -1529,14 +1539,14 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "degree", e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                         placeholder="e.g. B.Tech / B.E."
                                       />
                                     </div>
 
                                     {/* Specialization */}
                                     <div>
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         Specialization / Stream
                                       </label>
                                       <input
@@ -1545,14 +1555,14 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "specialization", e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                         placeholder="e.g. Computer Science"
                                       />
                                     </div>
 
                                     {/* College / University */}
                                     <div className="sm:col-span-2">
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         College / University
                                       </label>
                                       <input
@@ -1561,14 +1571,14 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "college", e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                         placeholder="e.g. Anna University"
                                       />
                                     </div>
 
                                     {/* Year of Passing */}
                                     <div>
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         Graduation Year
                                       </label>
                                       <input
@@ -1577,14 +1587,14 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "year", e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                         placeholder="e.g. 2023"
                                       />
                                     </div>
 
                                     {/* CGPA */}
                                     <div>
-                                      <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                         Percentage / CGPA
                                       </label>
                                       <input
@@ -1593,7 +1603,7 @@ const JobApply = () => {
                                         onChange={(e) =>
                                           handleEducationChange(index, "cgpa", e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                        className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                         placeholder="e.g. 8.4 CGPA or 82%"
                                       />
                                     </div>
@@ -1604,18 +1614,18 @@ const JobApply = () => {
                               <button
                                 type="button"
                                 onClick={addEducation}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-[#25323a] bg-[#070b0e] px-4 py-1.5 text-xs font-semibold text-[#FF6A00] hover:border-[#FF6A00] hover:bg-[#FF6A00]/10 transition"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-[#25323a] bg-[#070b0e] px-5 py-2 text-xs font-semibold text-[#FF6A00] hover:border-[#FF6A00] hover:bg-[#FF6A00]/10 transition"
                               >
                                 <span>+ Add Another Degree</span>
                               </button>
                             </div>
 
                             {/* Skills Section */}
-                            <div className="border-t border-[#1c252d] pt-4">
-                              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="border-t border-[#1c252d] pt-6">
+                              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-200">
                                 Skills & Tech Stack <span className="text-[#FF6A00]">*</span>
                               </label>
-                              <p className="mb-2.5 text-xs text-gray-500">
+                              <p className="mb-3 text-xs text-gray-500">
                                 Type a skill (e.g. React, Node.js, Python, Figma) and press <strong className="text-gray-200">Enter</strong> to tag.
                               </p>
 
@@ -1624,16 +1634,16 @@ const JobApply = () => {
                                 onKeyPress={handleSkillAdd}
                                 className={`w-full rounded-xl border ${
                                   errors.skills ? "border-red-500" : "border-[#1e2830]"
-                                } bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]`}
+                                } bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]`}
                                 placeholder="Type skill name & hit Enter..."
                               />
-                              {errors.skills && <p className="mt-1 text-xs text-red-400">{errors.skills}</p>}
+                              {errors.skills && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.skills}</p>}
 
-                              <div className="mt-3 flex flex-wrap gap-1.5">
+                              <div className="mt-4 flex flex-wrap gap-2">
                                 {formData.skills.map((skill, i) => (
                                   <span
                                     key={i}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/15 px-3 py-1 text-xs font-semibold text-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.15)]"
+                                    className="inline-flex items-center gap-2 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/15 px-3.5 py-1.5 text-xs font-semibold text-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.15)]"
                                   >
                                     <span>{skill}</span>
                                     <button
@@ -1649,29 +1659,29 @@ const JobApply = () => {
                             </div>
 
                             {/* Certifications */}
-                            <div className="border-t border-[#1c252d] pt-4">
-                              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="border-t border-[#1c252d] pt-6">
+                              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-200">
                                 Certifications & Licenses
                               </label>
                               <textarea
                                 name="certifications"
                                 value={formData.certifications}
                                 onChange={handleInputChange}
-                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-2.5 text-xs sm:text-sm text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                 placeholder="e.g. AWS Certified Solutions Architect, Meta Frontend Specialization"
                                 rows="2"
                               />
                             </div>
 
                             {/* Professional Links */}
-                            <div className="border-t border-[#1c252d] pt-4">
-                              <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="border-t border-[#1c252d] pt-6">
+                              <label className="mb-4 block text-xs font-bold uppercase tracking-wider text-gray-200">
                                 Professional & Portfolio Profiles
                               </label>
 
-                              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+                              <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-3">
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     LinkedIn Profile URL
                                   </label>
                                   <input
@@ -1679,13 +1689,13 @@ const JobApply = () => {
                                     name="linkedin_url"
                                     value={formData.linkedin_url}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2.5 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="https://linkedin.com/in/username"
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     GitHub Profile URL
                                   </label>
                                   <input
@@ -1693,13 +1703,13 @@ const JobApply = () => {
                                     name="github_url"
                                     value={formData.github_url}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2.5 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="https://github.com/username"
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     Portfolio Website
                                   </label>
                                   <input
@@ -1707,7 +1717,7 @@ const JobApply = () => {
                                     name="portfolio_url"
                                     value={formData.portfolio_url}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2.5 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="https://yourportfolio.com"
                                   />
                                 </div>
@@ -1719,28 +1729,28 @@ const JobApply = () => {
 
                       {/* ── STEP 4: DOCUMENTS, SCREENING & DECLARATION ── */}
                       {activeFormStep === 4 && (
-                        <div className="space-y-6">
-                          <div className="border-b border-[#1c252d] pb-3">
+                        <div className="space-y-8">
+                          <div className="border-b border-[#1c252d] pb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00]">
                               STEP 4 OF 4
                             </p>
                             <h2 className="hero-font text-xl font-bold uppercase text-gray-100 sm:text-2xl">
                               DOCUMENTS & <span className="text-[#FF6A00]">DECLARATION</span>
                             </h2>
-                            <p className="mt-0.5 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500">
                               Upload your CV, answer screening questions, and authorize consent.
                             </p>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-8">
                             {/* Document Uploads Grid */}
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2">
                               {/* Resume */}
                               <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                   Resume / CV {jobData?.resume_required === "Yes" && <span className="text-[#FF6A00]">*</span>}
                                 </label>
-                                <div className={`relative overflow-hidden rounded-2xl border-2 border-dashed ${errors.resume ? "border-red-500 bg-red-500/5" : "border-[#1e2830] bg-[#070b0e] hover:border-[#FF6A00]/60"} p-5 text-center transition cursor-pointer`}>
+                                <div className={`relative overflow-hidden rounded-2xl border-2 border-dashed ${errors.resume ? "border-red-500 bg-red-500/5" : "border-[#1e2830] bg-[#070b0e] hover:border-[#FF6A00]/60"} p-6 text-center transition cursor-pointer`}>
                                   <input
                                     type="file"
                                     name="resume"
@@ -1750,25 +1760,25 @@ const JobApply = () => {
                                     accept=".pdf,.doc,.docx"
                                   />
                                   <label htmlFor="resume-input" className="cursor-pointer">
-                                    <Upload className="mx-auto mb-1.5 text-[#FF6A00]" size={24} />
+                                    <Upload className="mx-auto mb-2 text-[#FF6A00]" size={26} />
                                     <p className="text-xs font-bold uppercase tracking-wider text-gray-200">Click or drag resume</p>
-                                    <p className="mt-0.5 text-[11px] text-gray-500">PDF, DOC, DOCX (Max 10 MB)</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">PDF, DOC, DOCX (Max 10 MB)</p>
                                   </label>
                                 </div>
                                 {formData.resume && (
-                                  <p className="mt-1.5 text-xs font-semibold text-emerald-400">
+                                  <p className="mt-2 text-xs font-semibold text-emerald-400">
                                     ✓ Attached: {formData.resume.name}
                                   </p>
                                 )}
-                                {errors.resume && <p className="mt-1 text-xs text-red-400">{errors.resume}</p>}
+                                {errors.resume && <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.resume}</p>}
                               </div>
 
                               {/* Cover Letter */}
                               <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                   Cover Letter
                                 </label>
-                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-5 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
+                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-6 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
                                   <input
                                     type="file"
                                     name="cover_letter"
@@ -1778,13 +1788,13 @@ const JobApply = () => {
                                     accept=".pdf,.doc,.docx"
                                   />
                                   <label htmlFor="cover-letter-input" className="cursor-pointer">
-                                    <Upload className="mx-auto mb-1.5 text-gray-500" size={24} />
+                                    <Upload className="mx-auto mb-2 text-gray-500" size={26} />
                                     <p className="text-xs font-bold uppercase tracking-wider text-gray-200">Upload Cover Letter</p>
-                                    <p className="mt-0.5 text-[11px] text-gray-500">PDF, DOC, DOCX (Optional)</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">PDF, DOC, DOCX (Optional)</p>
                                   </label>
                                 </div>
                                 {formData.cover_letter && (
-                                  <p className="mt-1.5 text-xs font-semibold text-emerald-400">
+                                  <p className="mt-2 text-xs font-semibold text-emerald-400">
                                     ✓ Attached: {formData.cover_letter.name}
                                   </p>
                                 )}
@@ -1792,10 +1802,10 @@ const JobApply = () => {
 
                               {/* Portfolio File */}
                               <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                   Portfolio File / Case Studies
                                 </label>
-                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-5 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
+                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-6 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
                                   <input
                                     type="file"
                                     name="portfolio_file"
@@ -1804,13 +1814,13 @@ const JobApply = () => {
                                     id="portfolio-input"
                                   />
                                   <label htmlFor="portfolio-input" className="cursor-pointer">
-                                    <Upload className="mx-auto mb-1.5 text-gray-500" size={24} />
+                                    <Upload className="mx-auto mb-2 text-gray-500" size={26} />
                                     <p className="text-xs font-bold uppercase tracking-wider text-gray-200">Upload Portfolio File</p>
-                                    <p className="mt-0.5 text-[11px] text-gray-500">Any file type (Max 10 MB)</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">Any file type (Max 10 MB)</p>
                                   </label>
                                 </div>
                                 {formData.portfolio_file && (
-                                  <p className="mt-1.5 text-xs font-semibold text-emerald-400">
+                                  <p className="mt-2 text-xs font-semibold text-emerald-400">
                                     ✓ Attached: {formData.portfolio_file.name}
                                   </p>
                                 )}
@@ -1818,10 +1828,10 @@ const JobApply = () => {
 
                               {/* Certificates */}
                               <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                   Certificates / Transcripts
                                 </label>
-                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-5 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
+                                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-[#1e2830] bg-[#070b0e] p-6 text-center transition hover:border-[#FF6A00]/60 cursor-pointer">
                                   <input
                                     type="file"
                                     name="certificates"
@@ -1830,13 +1840,13 @@ const JobApply = () => {
                                     id="certificates-input"
                                   />
                                   <label htmlFor="certificates-input" className="cursor-pointer">
-                                    <Upload className="mx-auto mb-1.5 text-gray-500" size={24} />
+                                    <Upload className="mx-auto mb-2 text-gray-500" size={26} />
                                     <p className="text-xs font-bold uppercase tracking-wider text-gray-200">Upload Certificates</p>
-                                    <p className="mt-0.5 text-[11px] text-gray-500">PDF, Images (Max 10 MB)</p>
+                                    <p className="mt-1 text-[11px] text-gray-500">PDF, Images (Max 10 MB)</p>
                                   </label>
                                 </div>
                                 {formData.certificates && (
-                                  <p className="mt-1.5 text-xs font-semibold text-emerald-400">
+                                  <p className="mt-2 text-xs font-semibold text-emerald-400">
                                     ✓ Attached: {formData.certificates.name}
                                   </p>
                                 )}
@@ -1845,15 +1855,15 @@ const JobApply = () => {
 
                             {/* Screening Questions (if any) */}
                             {jobData?.screening_questions && jobData.screening_questions.length > 0 && (
-                              <div className="border-t border-[#1c252d] pt-4">
-                                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#FF6A00]">
+                              <div className="border-t border-[#1c252d] pt-6">
+                                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#FF6A00]">
                                   Screening Questions
                                 </h3>
 
-                                <div className="space-y-3.5">
+                                <div className="space-y-4">
                                   {jobData.screening_questions.map((question, i) => (
-                                    <div key={question.id || i} className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-4">
-                                      <label className="mb-1.5 block text-xs font-semibold text-gray-200">
+                                    <div key={question.id || i} className="rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5">
+                                      <label className="mb-2 block text-xs font-semibold text-gray-200">
                                         {question.question_text}{" "}
                                         {question.required && <span className="text-[#FF6A00]">*</span>}
                                       </label>
@@ -1863,7 +1873,7 @@ const JobApply = () => {
                                           type="text"
                                           value={formData.screening_answers[question.id] || ""}
                                           onChange={(e) => handleScreeningChange(question.id, e.target.value)}
-                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3.5 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                           placeholder="Your answer"
                                         />
                                       )}
@@ -1872,14 +1882,14 @@ const JobApply = () => {
                                         <textarea
                                           value={formData.screening_answers[question.id] || ""}
                                           onChange={(e) => handleScreeningChange(question.id, e.target.value)}
-                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3.5 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                           placeholder="Your response..."
                                           rows="3"
                                         />
                                       )}
 
                                       {question.question_type === "yes_no" && (
-                                        <div className="flex gap-5 pt-1 text-xs">
+                                        <div className="flex gap-6 pt-2 text-xs">
                                           <label className="flex items-center gap-2 cursor-pointer text-gray-200">
                                             <input
                                               type="radio"
@@ -1909,11 +1919,12 @@ const JobApply = () => {
                                         <select
                                           value={formData.screening_answers[question.id] || ""}
                                           onChange={(e) => handleScreeningChange(question.id, e.target.value)}
-                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-3.5 py-2 text-xs text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                          style={{ colorScheme: "dark", backgroundColor: "#0c1216", color: "#f3f4f6" }}
+                                          className="w-full rounded-xl border border-[#1e2830] bg-[#0c1216] px-4 py-3 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                                         >
-                                          <option value="">Select option</option>
+                                          <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select option</option>
                                           {question.options?.map((opt, idx) => (
-                                            <option key={idx} value={opt} className="bg-[#0c1216]">
+                                            <option key={idx} value={opt} style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">
                                               {opt}
                                             </option>
                                           ))}
@@ -1926,80 +1937,81 @@ const JobApply = () => {
                             )}
 
                             {/* Additional Information */}
-                            <div className="border-t border-[#1c252d] pt-4">
-                              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="border-t border-[#1c252d] pt-6">
+                              <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-200">
                                 Candidate Statement & Insights
                               </h3>
 
-                              <div className="space-y-3.5">
+                              <div className="space-y-5">
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     Why do you want to join Q-Techx Solutions?
                                   </label>
                                   <textarea
                                     value={formData.additional_information}
                                     onChange={(e) => setFormData({ ...formData, additional_information: e.target.value })}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="Tell us about your motivation..."
-                                    rows="2"
+                                    rows="3"
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     Why are you suitable for this role?
                                   </label>
                                   <textarea
                                     value={formData.why_suitable}
                                     onChange={(e) => setFormData({ ...formData, why_suitable: e.target.value })}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="Highlight key achievements or strengths..."
-                                    rows="2"
+                                    rows="3"
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     Relevant Project Experience
                                   </label>
                                   <textarea
                                     value={formData.project_experience}
                                     onChange={(e) => setFormData({ ...formData, project_experience: e.target.value })}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2 text-xs text-gray-100 placeholder-gray-600 outline-none transition focus:border-[#FF6A00]"
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3 text-xs sm:text-sm text-gray-100 placeholder-zinc-600 outline-none transition focus:border-[#FF6A00]"
                                     placeholder="Key projects and tech stacks utilized..."
-                                    rows="2"
+                                    rows="3"
                                   />
                                 </div>
 
                                 <div>
-                                  <label className="mb-1 block text-xs font-semibold text-gray-400">
+                                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-300">
                                     How did you hear about this opportunity?
                                   </label>
                                   <select
                                     value={formData.hear_about}
                                     onChange={(e) => setFormData({ ...formData, hear_about: e.target.value })}
-                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-3.5 py-2 text-xs text-gray-100 outline-none transition focus:border-[#FF6A00]"
+                                    style={{ colorScheme: "dark", backgroundColor: "#070b0e", color: "#f3f4f6" }}
+                                    className="w-full rounded-xl border border-[#1e2830] bg-[#070b0e] px-4 py-3.5 text-xs sm:text-sm text-gray-100 outline-none transition focus:border-[#FF6A00] [color-scheme:dark]"
                                   >
-                                    <option value="" className="bg-[#0c1216]">Select an option</option>
-                                    <option value="LinkedIn" className="bg-[#0c1216]">LinkedIn</option>
-                                    <option value="Company Website" className="bg-[#0c1216]">Company Website</option>
-                                    <option value="Referral" className="bg-[#0c1216]">Friend / Employee Referral</option>
-                                    <option value="Job Portal" className="bg-[#0c1216]">Job Portal</option>
-                                    <option value="Social Media" className="bg-[#0c1216]">Social Media</option>
-                                    <option value="Other" className="bg-[#0c1216]">Other</option>
+                                    <option value="" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Select an option</option>
+                                    <option value="LinkedIn" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">LinkedIn</option>
+                                    <option value="Company Website" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Company Website</option>
+                                    <option value="Referral" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Friend / Employee Referral</option>
+                                    <option value="Job Portal" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Job Portal</option>
+                                    <option value="Social Media" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Social Media</option>
+                                    <option value="Other" style={{ backgroundColor: "#0c1216", color: "#f3f4f6" }} className="bg-[#0c1216] text-gray-100">Other</option>
                                   </select>
                                 </div>
                               </div>
                             </div>
 
                             {/* Declaration & Consent Checkboxes */}
-                            <div className="border-t border-[#1c252d] pt-4">
-                              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-200">
+                            <div className="border-t border-[#1c252d] pt-6">
+                              <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-200">
                                 Declarations & Authorizations <span className="text-[#FF6A00]">*</span>
                               </h3>
 
-                              <div className="space-y-3 rounded-2xl border border-[#1c252d] bg-[#070b0e] p-4 text-xs text-gray-300">
-                                <label className="flex items-start gap-2.5 cursor-pointer">
+                              <div className="space-y-4 rounded-2xl border border-[#1c252d] bg-[#070b0e] p-5 text-xs text-gray-300">
+                                <label className="flex items-start gap-3 cursor-pointer">
                                   <input
                                     type="checkbox"
                                     name="declaration_accuracy"
@@ -2012,10 +2024,10 @@ const JobApply = () => {
                                   </span>
                                 </label>
                                 {errors.declaration_accuracy && (
-                                  <p className="ml-5 text-xs text-red-400">{errors.declaration_accuracy}</p>
+                                  <p className="ml-6 text-xs text-red-400 font-medium">{errors.declaration_accuracy}</p>
                                 )}
 
-                                <label className="flex items-start gap-2.5 cursor-pointer">
+                                <label className="flex items-start gap-3 cursor-pointer">
                                   <input
                                     type="checkbox"
                                     name="declaration_privacy"
@@ -2028,10 +2040,10 @@ const JobApply = () => {
                                   </span>
                                 </label>
                                 {errors.declaration_privacy && (
-                                  <p className="ml-5 text-xs text-red-400">{errors.declaration_privacy}</p>
+                                  <p className="ml-6 text-xs text-red-400 font-medium">{errors.declaration_privacy}</p>
                                 )}
 
-                                <label className="flex items-start gap-2.5 cursor-pointer">
+                                <label className="flex items-start gap-3 cursor-pointer">
                                   <input
                                     type="checkbox"
                                     name="declaration_terms"
@@ -2044,10 +2056,10 @@ const JobApply = () => {
                                   </span>
                                 </label>
                                 {errors.declaration_terms && (
-                                  <p className="ml-5 text-xs text-red-400">{errors.declaration_terms}</p>
+                                  <p className="ml-6 text-xs text-red-400 font-medium">{errors.declaration_terms}</p>
                                 )}
 
-                                <label className="flex items-start gap-2.5 cursor-pointer">
+                                <label className="flex items-start gap-3 cursor-pointer">
                                   <input
                                     type="checkbox"
                                     name="declaration_contact"
@@ -2060,7 +2072,7 @@ const JobApply = () => {
                                   </span>
                                 </label>
                                 {errors.declaration_contact && (
-                                  <p className="ml-5 text-xs text-red-400">{errors.declaration_contact}</p>
+                                  <p className="ml-6 text-xs text-red-400 font-medium">{errors.declaration_contact}</p>
                                 )}
                               </div>
                             </div>
@@ -2069,13 +2081,13 @@ const JobApply = () => {
                       )}
 
                       {/* ── STEP ACTION BUTTONS (BOTTOM OF FORM) ── */}
-                      <div className="flex flex-wrap items-center justify-between gap-3.5 pt-4 border-t border-[#1c252d]">
+                      <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[#1c252d]">
                         <div>
                           {activeFormStep > 1 ? (
                             <button
                               type="button"
                               onClick={handlePrevStep}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#25323a] bg-[#070b0e] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-300 hover:border-[#FF6A00]/50 hover:text-[#FF6A00] transition"
+                              className="inline-flex items-center gap-2 rounded-full border border-[#25323a] bg-[#070b0e] px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-300 hover:border-[#FF6A00]/50 hover:text-[#FF6A00] transition"
                             >
                               <ArrowLeft size={14} />
                               <span>Previous Step</span>
@@ -2084,7 +2096,7 @@ const JobApply = () => {
                             <button
                               type="button"
                               onClick={() => navigate("/career")}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#25323a] bg-[#070b0e] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-400 hover:border-[#FF6A00]/50 hover:text-[#FF6A00] transition"
+                              className="inline-flex items-center gap-2 rounded-full border border-[#25323a] bg-[#070b0e] px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-400 hover:border-[#FF6A00]/50 hover:text-[#FF6A00] transition"
                             >
                               <span>Cancel</span>
                             </button>
@@ -2096,7 +2108,7 @@ const JobApply = () => {
                             <button
                               type="button"
                               onClick={handleNextStep}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6A00] px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:bg-[#ff781a] hover:shadow-[0_0_30px_rgba(255,106,0,0.5)] transition"
+                              className="inline-flex items-center gap-2 rounded-full bg-[#FF6A00] px-7 py-3 text-xs font-extrabold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:bg-[#ff781a] hover:shadow-[0_0_30px_rgba(255,106,0,0.5)] transition"
                             >
                               <span>Save & Continue</span>
                               <ArrowRight size={14} />
@@ -2105,7 +2117,7 @@ const JobApply = () => {
                             <button
                               type="button"
                               onClick={handleReview}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6A00] px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:bg-[#ff781a] hover:shadow-[0_0_30px_rgba(255,106,0,0.5)] transition"
+                              className="inline-flex items-center gap-2 rounded-full bg-[#FF6A00] px-7 py-3 text-xs font-extrabold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:bg-[#ff781a] hover:shadow-[0_0_30px_rgba(255,106,0,0.5)] transition"
                             >
                               <span>Review Application</span>
                               <Sparkles size={14} />
