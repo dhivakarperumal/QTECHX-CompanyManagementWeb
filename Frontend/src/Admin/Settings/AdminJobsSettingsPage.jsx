@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, BriefcaseBusiness, CalendarDays, CheckCircle2, ChevronRight, ChevronDown, CircleDollarSign, Clock3, FileText, Globe2, ImageIcon, LayoutGrid, List, Loader2, MapPin, Pencil, Plus, RefreshCw, Search, ShieldCheck, Sparkles, SlidersHorizontal, Tag, Trash2, X, Eye, Edit2, AlertCircle, UserCheck, UserX } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -266,6 +267,7 @@ const JobStatusPill = ({ status }) => {
 };
 
 const AdminJobsSettingsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -569,6 +571,15 @@ const AdminJobsSettingsPage = () => {
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+            title="Back"
+            aria-label="Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
             <BriefcaseBusiness size={22} className="text-primary" />
           </div>
