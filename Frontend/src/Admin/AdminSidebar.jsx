@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -125,6 +125,7 @@ const navItems = [
     icon: GraduationCap,
     children: [
       { path: "/admin/trainees", label: "All Trainees & Interns", icon: GraduationCap },
+      { path: "/admin/trainees/pending", label: "Pending Registrations", icon: AlertCircle, badge: 'pending' },
       { path: "/admin/trainees/attendance", label: "Attendance", icon: ClipboardCheck },
       { path: "/admin/trainees/tasks", label: "Tasks", icon: CheckSquare },
       { path: "/admin/trainees/tasks/assign", label: "Assign Tasks", icon: UserCheck },
@@ -170,6 +171,25 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { userProfile } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  /* ===== FETCH PENDING COUNT ===== */
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/trainee-intern?limit=1&status=Pending`);
+        const data = await response.json();
+        if (data.success && data.pagination) {
+          setPendingCount(data.pagination.total || 0);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch pending count:', err);
+      }
+    };
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
   useEffect(() => {
@@ -326,6 +346,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                               location.pathname.startsWith("/admin/trainees/edit/")
                             )) ||
 
+                          // Pending Trainees
+                          (sub.path === "/admin/trainees/pending" &&
+                            location.pathname === "/admin/trainees/pending") ||
+
                           // Trainee Attendance
                           (sub.path === "/admin/trainees/attendance" &&
                             location.pathname.startsWith("/admin/trainees/attendance/view/")) ||
@@ -348,9 +372,15 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                                 : "text-white/50 hover:text-white hover:bg-white/10"
                               }
                             `}
+                            title={collapsed && sub.badge ? `${sub.label} (${pendingCount})` : ''}
                           >
                             <SubIcon className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{sub.label}</span>
+                            <span className="truncate flex-1">{sub.label}</span>
+                            {sub.badge === 'pending' && pendingCount > 0 && !collapsed && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 ml-2 shrink-0">
+                                {pendingCount}
+                              </span>
+                            )}
                           </NavLink>
                         );
                       })}

@@ -18,6 +18,13 @@ async function generatePersonCode(db) {
   return `TI-${String(nextId).padStart(3, '0')}`;
 }
 
+// Helper to combine date and time into datetime
+function combineDateAndTime(date, time) {
+  if (!date) return null;
+  if (!time) return date; // Just return date if no time provided
+  return `${date} ${time}:00`; // Append time with :00 for seconds
+}
+
 async function createTraineeIntern(data) {
   const db = getDB();
   const personId = (data.person_id || '').toString().trim() || (await generatePersonCode(db));
@@ -41,9 +48,9 @@ async function createTraineeIntern(data) {
       data.department || null,
       data.designation || null,
       data.reporting_manager || null,
-      data.joining_date || null,
-      data.end_date || null,
-      data.status || 'Active',
+      combineDateAndTime(data.joining_date, data.joining_time) || null,
+      combineDateAndTime(data.end_date, data.end_time) || null,
+      (data.status || '').trim() || 'Pending',
       data.mobile_number || null,
       data.email_address || null,
       data.current_address || null,
@@ -119,10 +126,37 @@ async function listTraineeInterns({ page, limit, search, type, status, employee_
 
 async function updateTraineeIntern(uuid, updates) {
   const db = getDB();
-  const fields = Object.keys(updates);
+  let fields = Object.keys(updates);
   if (!fields.length) return findTraineeInternByUUID(uuid);
+  
+  // Handle date and time combination
+  const processedUpdates = { ...updates };
+  
+  // Handle status - ensure it's never empty
+  if (updates.status !== undefined) {
+    processedUpdates.status = (updates.status || '').trim() || 'Pending';
+  }
+  
+  // If joining_time is provided, combine with joining_date
+  if (updates.joining_time !== undefined || updates.joining_date !== undefined) {
+    const joiningDate = updates.joining_date !== undefined ? updates.joining_date : null;
+    const joiningTime = updates.joining_time !== undefined ? updates.joining_time : null;
+    processedUpdates.joining_date = combineDateAndTime(joiningDate, joiningTime);
+    // Remove joining_time from fields since it's not a database column
+    fields = fields.filter(f => f !== 'joining_time');
+  }
+  
+  // If end_time is provided, combine with end_date
+  if (updates.end_time !== undefined || updates.end_date !== undefined) {
+    const endDate = updates.end_date !== undefined ? updates.end_date : null;
+    const endTime = updates.end_time !== undefined ? updates.end_time : null;
+    processedUpdates.end_date = combineDateAndTime(endDate, endTime);
+    // Remove end_time from fields since it's not a database column
+    fields = fields.filter(f => f !== 'end_time');
+  }
+  
   const assignments = fields.map((field) => `${field} = ?`).join(', ');
-  const values = [...fields.map((field) => updates[field]), uuid];
+  const values = [...fields.map((field) => processedUpdates[field]), uuid];
   await db.execute(`UPDATE trainee_intern SET ${assignments} WHERE uuid = ?`, values);
   return findTraineeInternByUUID(uuid);
 }

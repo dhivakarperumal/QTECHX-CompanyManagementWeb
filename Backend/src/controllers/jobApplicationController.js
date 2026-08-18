@@ -294,7 +294,7 @@ class JobApplicationController {
         return res.status(400).json({ message: "Status is required" });
       }
 
-      const validStatuses = ["Applied", "Under Review", "Shortlisted", "Interview", "Selected", "Rejected"];
+      const validStatuses = ["Applied", "Under Review", "Shortlisted", "Interview", "Selected", "Converted", "Rejected"];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
@@ -443,6 +443,263 @@ class JobApplicationController {
       res.status(500).json({
         message: "Failed to fetch applications",
         error: error.message,
+      });
+    }
+  }
+
+  static async convertToEmployee(req, res) {
+    const db = require("../config/db").getDB();
+    let connection;
+    
+    try {
+      const { application_id } = req.body;
+
+      if (!application_id) {
+        return res.status(400).json({ message: "Application ID is required" });
+      }
+
+      // Check authorization - allow Super Admin, Admin, Recruiter, and HR (case-insensitive)
+      const userRole = req.user?.role;
+      const normalizedRole = userRole?.toLowerCase().trim();
+      if (!normalizedRole || !['super admin', 'admin', 'recruiter', 'hr'].includes(normalizedRole)) {
+        return res.status(403).json({ message: "Only admins, recruiters, HR, and Super Admin can convert applicants" });
+      }
+
+      // Get application with all details
+      const application = await JobApplicationModel.getApplicationById(application_id);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Job application not found" });
+      }
+
+      // Check if already converted
+      if (application.application_status === 'Converted') {
+        return res.status(400).json({ message: "This applicant has already been converted to an employee" });
+      }
+
+      // Only "Selected" applicants can be converted
+      if (application.application_status !== 'Selected') {
+        return res.status(400).json({ 
+          message: `Only applicants with 'Selected' status can be converted. Current status: ${application.application_status}` 
+        });
+      }
+
+      // Start transaction
+      connection = await db.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // 1. Check if user already exists (by email)
+        const [existingUsers] = await connection.execute(
+          "SELECT id, user_id FROM users WHERE LOWER(TRIM(email)) = ? LIMIT 1",
+          [String(application.email).trim().toLowerCase()]
+        );
+
+        if (existingUsers.length > 0) {
+          await connection.rollback();
+          return res.status(409).json({ message: "Email already exists in user accounts" });
+        }
+
+        // 2. Check if mobile already exists in users
+        const mobileForCheck = application.phone ? String(application.phone).trim() : null;
+        if (mobileForCheck) {
+          const [existingMobile] = await connection.execute(
+            "SELECT id, user_id FROM users WHERE LOWER(TRIM(mobile)) = ? LIMIT 1",
+            [mobileForCheck.toLowerCase()]
+          );
+          if (existingMobile.length > 0) {
+            await connection.rollback();
+            return res.status(409).json({ message: "Mobile number already exists in user accounts" });
+          }
+        }
+
+        // 3. Check if employee already exists in employees table by email or mobile
+        const emailForEmployeeCheck = String(application.email || '').trim().toLowerCase();
+        const [existingEmployee] = await connection.execute(
+          "SELECT id FROM employees WHERE LOWER(TRIM(personal_email)) = ? OR (? IS NOT NULL AND LOWER(TRIM(mobile_number)) = ?) LIMIT 1",
+          [emailForEmployeeCheck, mobileForCheck, mobileForCheck ? mobileForCheck.toLowerCase() : '']
+        );
+
+        if (existingEmployee.length > 0) {
+          await connection.rollback();
+          return res.status(409).json({ message: "This applicant has already been converted to an employee" });
+        }
+
+        // 4. Generate employee_id and employee_code
+        const employeeId = uuidv4();
+        const [codeRows] = await connection.execute(
+          "SELECT employee_code FROM employees WHERE employee_code IS NOT NULL AND LOWER(employee_code) REGEXP '^empqt[0-9]+$' ORDER BY CAST(SUBSTRING(employee_code, 6) AS UNSIGNED) DESC LIMIT 1"
+        );
+        
+        let nextCode = "EMPQT1";
+        if (codeRows.length > 0) {
+          const match = String(codeRows[0].employee_code).match(/^EMPQT(\d+)$/i);
+          if (match) {
+            nextCode = `EMPQT${parseInt(match[1]) + 1}`;
+          }
+        }
+
+        // 5. Create User Account
+        // Default employee login: email + mobile number as password
+        const bcrypt = require("bcrypt");
+        const safeMobileForPassword = mobileForCheck ? String(mobileForCheck).replace(/\s+/g, '').trim() : '';
+        const defaultPassword = safeMobileForPassword || Math.random().toString(36).slice(-10);
+        const hashedPassword = await bcrypt.hash(defaultPassword, 12);
+        const username = (application.email).split('@')[0];
+
+        const [userResult] = await connection.execute(
+          `INSERT INTO users (user_id, username, email, mobile, password, role, status, created_by, updated_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            employeeId,
+            username || `emp_${Date.now()}`,
+            application.email,
+            mobileForCheck,
+            hashedPassword,
+            'Employee',
+            'Active',
+            req.user?.user_id || 'SYSTEM',
+            req.user?.user_id || 'SYSTEM'
+          ]
+        );
+
+        // 6. Parse skills and education if they're JSON
+        let skillsArray = [];
+        let educationArray = [];
+
+        if (application.skills) {
+          try {
+            skillsArray = Array.isArray(application.skills) 
+              ? application.skills 
+              : (typeof application.skills === 'string' ? JSON.parse(application.skills) : []);
+          } catch (e) {
+            skillsArray = [];
+          }
+        }
+
+        if (application.education) {
+          try {
+            educationArray = Array.isArray(application.education) 
+              ? application.education 
+              : (typeof application.education === 'string' ? JSON.parse(application.education) : []);
+          } catch (e) {
+            educationArray = [];
+          }
+        }
+
+        // 7. Create Employee Record
+        const employeeData = {
+          employee_id: employeeId,
+          employee_code: nextCode,
+          first_name: (application.full_name || '').split(' ')[0] || '',
+          last_name: (application.full_name || '').split(' ').slice(1).join(' ') || '',
+          gender: application.gender || null,
+          dob: application.date_of_birth || null,
+          personal_email: application.email,
+          mobile_number: mobileForCheck,
+          permanent_address: application.address || null,
+          designation: application.current_job_title || 'Employee',
+          joining_date: new Date().toISOString().split('T')[0],
+          employment_status: 'Active',
+          role: 'Employee',
+          educational_details: JSON.stringify(educationArray),
+          resume_url: application.resume || null,
+          created_by: req.user?.user_id || 'SYSTEM',
+          updated_by: req.user?.user_id || 'SYSTEM'
+        };
+
+        const fields = Object.keys(employeeData).filter(k => employeeData[k] !== undefined);
+        const values = fields.map(k => employeeData[k]);
+        const placeholders = fields.map(() => '?').join(', ');
+
+        const [empResult] = await connection.execute(
+          `INSERT INTO employees (${fields.join(', ')}) VALUES (${placeholders})`,
+          values
+        );
+
+        // 8. Update Job Application Status to "Converted"
+        await connection.execute(
+          "UPDATE job_applications SET application_status = ?, updated_at = NOW() WHERE id = ?",
+          ['Converted', application_id]
+        );
+
+        // 9. Commit transaction
+        await connection.commit();
+
+        return res.status(201).json({
+          success: true,
+          message: "Applicant successfully converted to employee",
+          data: {
+            employee_id: employeeId,
+            employee_code: nextCode,
+            user_id: employeeId,
+            application_id: application_id,
+            email: application.email,
+            password: safeMobileForPassword || defaultPassword,
+            temporary_password_note: safeMobileForPassword
+              ? `Login with email: ${application.email} and password: ${safeMobileForPassword}`
+              : "Employee can reset password on first login"
+          }
+        });
+
+      } catch (transactionError) {
+        await connection.rollback();
+        throw transactionError;
+      }
+    } catch (error) {
+      console.error("[JobApplicationController] convertToEmployee error:", error);
+      
+      if (error.code === 'ER_DUP_ENTRY') {
+        if (error.message.includes('email')) {
+          return res.status(409).json({ message: "Email already exists" });
+        }
+        if (error.message.includes('mobile')) {
+          return res.status(409).json({ message: "Mobile number already exists" });
+        }
+      }
+
+      res.status(500).json({
+        message: "Failed to convert applicant to employee",
+        error: error.message
+      });
+    } finally {
+      if (connection) {
+        await connection.release();
+      }
+    }
+  }
+
+  static async getEligibleApplicantsForConversion(req, res) {
+    try {
+      // Only "Selected" applications are eligible
+      const applications = await JobApplicationModel.getApplicationsByStatus('Selected', 1000);
+      
+      // Filter to exclude already converted applications (those with status = 'Converted')
+      const db = require("../config/db").getDB();
+      const [convertedApps] = await db.execute(
+        "SELECT id FROM job_applications WHERE application_status = 'Converted'"
+      );
+      
+      const convertedSet = new Set(convertedApps.map(row => row.id));
+      const eligible = applications.filter(app => !convertedSet.has(app.id));
+
+      const formatted = eligible.map(app => ({
+        id: app.id,
+        label: `${app.full_name} | ${app.email} | ${app.phone} | ${app.current_job_title || 'N/A'} | ${app.application_status}`,
+        full_name: app.full_name,
+        email: app.email,
+        phone: app.phone,
+        job_title: app.current_job_title,
+        status: app.application_status,
+        application_data: app
+      }));
+
+      res.json({ data: formatted });
+    } catch (error) {
+      console.error("[JobApplicationController] getEligibleApplicantsForConversion error:", error);
+      res.status(500).json({
+        message: "Failed to fetch eligible applicants",
+        error: error.message
       });
     }
   }

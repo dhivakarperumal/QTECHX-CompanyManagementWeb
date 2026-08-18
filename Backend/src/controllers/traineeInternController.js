@@ -27,7 +27,7 @@ function getUploadedFiles(req) {
 }
 
 const bcrypt = require('bcrypt');
-const { createUser, updateUser } = require('../models/userModel');
+const { createUser, updateUser, findByEmail } = require('../models/userModel');
 
 async function createTraineeInternHandler(req, res) {
   try {
@@ -54,18 +54,28 @@ async function createTraineeInternHandler(req, res) {
     // Create User record
     if (username && userPassword) {
       try {
-        const hashedPassword = await bcrypt.hash(userPassword, 12);
-        await createUser({
-          user_id: trainee.uuid || null, // Fixed: use returned trainee's uuid
-          username: username || null,
-          email: req.body.official_email || traineeData.email_address || null,
-          mobile: traineeData.mobile_number || null,
-          password: hashedPassword,
-          role: traineeData.type || 'Trainee',
-          status: traineeData.status || 'Active',
-          created_by: actor || null,
-          updated_by: actor || null,
-        });
+        const userEmail = req.body.official_email || traineeData.email_address || null;
+        
+        // Check if user with this email already exists
+        if (userEmail) {
+          const existingUser = await findByEmail(userEmail);
+          if (existingUser) {
+            console.warn(`User with email ${userEmail} already exists, skipping user creation`);
+          } else {
+            const hashedPassword = await bcrypt.hash(userPassword, 12);
+            await createUser({
+              user_id: trainee.uuid || null, // Fixed: use returned trainee's uuid
+              username: username || null,
+              email: userEmail,
+              mobile: traineeData.mobile_number || null,
+              password: hashedPassword,
+              role: traineeData.type || 'Trainee',
+              status: traineeData.status || 'Active',
+              created_by: actor || null,
+              updated_by: actor || null,
+            });
+          }
+        }
       } catch (err) {
         console.error('Failed to create associated user account:', err);
       }
@@ -122,7 +132,7 @@ async function updateTraineeInternHandler(req, res) {
     const uploadedFiles = getUploadedFiles(req);
     const allowedFields = [
       'person_id', 'full_name', 'type', 'department', 'designation',
-      'reporting_manager', 'joining_date', 'end_date', 'status',
+      'reporting_manager', 'joining_date', 'joining_time', 'end_date', 'end_time', 'status',
       'mobile_number', 'email_address', 'current_address', 'emergency_contact_name',
       'emergency_contact_number', 'profile_photo', 'resume', 'college_id_doc',
       'offer_letter', 'internship_letter', 'college_university', 'course',

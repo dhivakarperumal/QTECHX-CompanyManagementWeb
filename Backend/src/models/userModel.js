@@ -33,6 +33,15 @@ async function findByUserId(userId, includePassword = false, id = null) {
   return rows[0] || null;
 }
 
+async function findByEmail(email) {
+  const db = getDB();
+  const [rows] = await db.execute(
+    `SELECT ${publicFields} FROM users WHERE email = ? LIMIT 1`,
+    [email]
+  );
+  return rows[0] || null;
+}
+
 async function findForLogin(identifier) {
   const db = getDB();
   const fields = publicFields.split(', ').map((field) => `u.${field}`).join(', ');
@@ -41,9 +50,9 @@ async function findForLogin(identifier) {
             e.employee_id AS emp_code, e.employee_code AS emp_code2
      FROM users u
      LEFT JOIN employees e ON e.official_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci
-     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
+     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ? OR u.mobile COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
      LIMIT 1`,
-    [identifier, identifier]
+    [identifier, identifier, identifier]
   );
   return rows[0] || null;
 }
@@ -97,4 +106,4 @@ async function softDeleteUser(userId, updatedBy) {
   return findByUserId(userId);
 }
 
-module.exports = { createUser, findByUserId, findForLogin, listUsers, updateUser, softDeleteUser };
+module.exports = { createUser, findByUserId, findByEmail, findForLogin, listUsers, updateUser, softDeleteUser };

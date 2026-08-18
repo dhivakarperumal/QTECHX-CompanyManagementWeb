@@ -144,7 +144,7 @@ const EventBanner = () => {
             "
             >
               <Link
-                to="/form"
+                to="/booknow"
                 className="
                 group
                 inline-flex

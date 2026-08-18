@@ -1,6 +1,6 @@
 const express = require('express');
 const { upload } = require('../config/multerConfig');
-const { authenticate } = require('../security/authMiddleware');
+const { authenticate, optionalAuthenticate } = require('../security/authMiddleware');
 const {
   createTraineeInternHandler,
   getAllTraineeInternsHandler,
@@ -12,10 +12,10 @@ const {
 
 const router = express.Router();
 
-router.get('/next-person-id', authenticate, getNextPersonCodeHandler);
-router.get('/', authenticate, getAllTraineeInternsHandler);
+router.get('/next-person-id', optionalAuthenticate, getNextPersonCodeHandler);
+router.get('/', optionalAuthenticate, getAllTraineeInternsHandler);
 router.get('/:id', authenticate, getTraineeInternByIdHandler);
-router.post('/', authenticate, upload.fields([
+router.post('/', optionalAuthenticate, upload.fields([
   { name: 'profile_photo', maxCount: 1 },
   { name: 'resume', maxCount: 1 },
   { name: 'college_id_doc', maxCount: 1 },
