@@ -37,7 +37,7 @@ const ProjectPage = () => {
 
   // Transform API response to match ProjectCard format
   const transformedProjects = projects.map((proj) => {
-    let imageUrl = '/images/default-project.jpg';
+    let imageUrl = '/Project/p1.jpg';
     
     if (proj.project_images) {
       try {
@@ -46,12 +46,18 @@ const ProjectPage = () => {
           : proj.project_images;
         const firstImage = Array.isArray(images) ? images[0] : images;
         if (firstImage) {
-          imageUrl = firstImage.file_path || firstImage;
+          imageUrl = typeof firstImage === 'object'
+            ? (firstImage.file_path || firstImage.filePath || firstImage.url || firstImage.path || firstImage.image || firstImage.src || '')
+            : firstImage;
         }
       } catch (e) {
         console.error('Error parsing project images:', e);
         imageUrl = proj.project_images;
       }
+    }
+
+    if (!imageUrl) {
+      imageUrl = '/Project/p1.jpg';
     }
     
     return {

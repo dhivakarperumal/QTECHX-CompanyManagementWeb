@@ -16,6 +16,69 @@ import PageContainer from "../CommonComponents/PageContainer";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
+const getImageUrl = (image) => {
+  if (!image) {
+    return "/Project/p1.jpg";
+  }
+
+  // If array, recurse on first item
+  if (Array.isArray(image)) {
+    return image.length > 0 ? getImageUrl(image[0]) : "/Project/p1.jpg";
+  }
+
+  // If JSON string or serialized data
+  if (typeof image === "string") {
+    const trimmed = image.trim();
+    if (!trimmed) {
+      return "/Project/p1.jpg";
+    }
+
+    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return getImageUrl(parsed);
+      } catch {
+        // Continue to regular string handling
+      }
+    }
+
+    // Already a complete URL
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.startsWith("data:") ||
+      trimmed.startsWith("blob:")
+    ) {
+      return trimmed;
+    }
+
+    // Absolute path
+    if (trimmed.startsWith("/")) {
+      return trimmed;
+    }
+
+    return `/${trimmed}`;
+  }
+
+  // If object
+  if (typeof image === "object") {
+    const imageValue =
+      image.file_path ||
+      image.filePath ||
+      image.url ||
+      image.path ||
+      image.image ||
+      image.src ||
+      image.filename ||
+      image.file ||
+      "";
+
+    return getImageUrl(imageValue);
+  }
+
+  return "/Project/p1.jpg";
+};
+
 const Projects = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,12 +105,15 @@ const Projects = () => {
             if (project.project_images) {
               if (typeof project.project_images === "string") {
                 try {
-                  projectImages = JSON.parse(project.project_images);
+                  const parsed = JSON.parse(project.project_images);
+                  projectImages = Array.isArray(parsed) ? parsed : [parsed];
                 } catch {
-                  projectImages = [];
+                  projectImages = [project.project_images];
                 }
               } else if (Array.isArray(project.project_images)) {
                 projectImages = project.project_images;
+              } else if (typeof project.project_images === "object") {
+                projectImages = [project.project_images];
               }
             }
 
@@ -55,20 +121,23 @@ const Projects = () => {
               ? project.frontend_tech
                 .split(",")
                 .map((tech) => tech.trim())
+                .filter(Boolean)
               : [];
 
+            const imageCandidate = projectImages.length > 0 
+              ? projectImages[0] 
+              : (project.image || project.file_path || project.project_images);
+
             return {
-              id: project.id,
-              title: project.project_name || "",
-              image:
-                projectImages[0] ||
-                "/images/default-project.jpg",
+              id: project.uuid || project.id,
+              title: project.project_name || project.title || "Untitled Project",
+              image: getImageUrl(imageCandidate),
               category:
-                project.project_category || "General",
+                project.project_category || project.category || "General",
               description:
-                project.project_description || "",
+                project.description || project.project_description || "",
               features,
-              link: project.github_link || "#",
+              link: project.github_link || project.link || "#",
             };
           });
 
@@ -709,13 +778,21 @@ const Projects = () => {
                               src={project.image}
                               alt={project.title}
                               className="
-                                h-full
-                                w-full
-                                object-cover
-                                transition-transform
-                                duration-700
-                                group-hover:scale-105
-                              "
+    h-full
+    w-full
+    object-cover
+    transition-transform
+    duration-700
+    group-hover:scale-105
+  "
+                              onError={(e) => {
+                                console.error("❌ Project image failed:", project.image);
+
+                                if (!e.currentTarget.dataset.fallback) {
+                                  e.currentTarget.dataset.fallback = "true";
+                                  e.currentTarget.src = "/Project/p1.jpg";
+                                }
+                              }}
                             />
 
                             {/* Image overlay */}
