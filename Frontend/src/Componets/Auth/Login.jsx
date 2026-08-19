@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { getRoleHome } from "../../PrivateRouter/roleUtils";
@@ -20,6 +20,7 @@ const Login = () => {
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const isAttemptingRef = useRef(false);
 
   const validate = () => {
     let newErrors = {};
@@ -42,6 +43,40 @@ const Login = () => {
     setServerError("");
   };
 
+  // Auto-login when credentials (username + 6+ char password) are typed correctly
+  useEffect(() => {
+    const username = formData.username?.trim();
+    const password = formData.password;
+
+    if (!username || !password || password.length < 6 || submitted || isAttemptingRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (isAttemptingRef.current || submitted) return;
+      isAttemptingRef.current = true;
+      try {
+        const { data } = await api.post("/users/login", {
+          identifier: username,
+          password: password,
+        });
+
+        if (data?.token && data?.user) {
+          setIsSubmitting(true);
+          login(data.user, data.token);
+          setSubmitted(true);
+          navigate(getRoleHome(data.user?.role), { replace: true });
+        }
+      } catch {
+        // Quietly fail during auto-type verification so typing is not interrupted
+      } finally {
+        isAttemptingRef.current = false;
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [formData.username, formData.password, submitted, login, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
@@ -54,7 +89,7 @@ const Login = () => {
     setServerError("");
     try {
       const { data } = await api.post("/users/login", {
-        identifier: formData.username,
+        identifier: formData.username.trim(),
         password: formData.password,
       });
 

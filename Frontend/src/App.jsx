@@ -6,11 +6,13 @@ import Footer from "./Componets/Components/Footer";
 
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
 import ScrollNavigator from "./Componets/CommonComponents/ScrollNavigator";
-import FloatingWhatsApp from "./Componets/CommonComponents/FloatingWhatsApp";
+import FloatingSupport from "./Componets/CommonComponents/FloatingSupport";
 import Loader from "./Componets/CommonComponents/Loader";
+import { useAuth } from "./PrivateRouter/AuthContext";
 
 function App() {
   const [loading] = useState(false);
+  const { user } = useAuth();
   const { pathname, hash } = useLocation();
   const currentRoute = hash?.startsWith("#") ? hash.slice(1) : pathname;
   const isAuthPage = currentRoute === "/login" || currentRoute === "/register";
@@ -32,7 +34,7 @@ function App() {
       {showPublicChrome && <Navbar />}
       <ScrollToTop/>
       <ScrollNavigator/>
-      <FloatingWhatsApp />
+      <FloatingSupport />
       <Outlet />
       <Toaster
         position="top-right"

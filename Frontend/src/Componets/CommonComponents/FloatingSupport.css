@@ -73,9 +73,9 @@
 }
 
 .support-item.call {
-  background: #ffffff;
-  color: #F8740E;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #FF6A00, #e05e00);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(255, 106, 0, 0.45);
 }
 
 /* Tooltip - appears to the LEFT for right-side buttons */

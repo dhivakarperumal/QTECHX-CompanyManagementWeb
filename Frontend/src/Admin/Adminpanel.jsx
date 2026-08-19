@@ -4,7 +4,6 @@ import React from "react";
 import { PacmanLoader } from "react-spinners";
 import Sidebar from "./AdminSidebar";
 import Header from "./AdminHeader";
-import FloatingSupport from "../Componets/CommonComponents/FloatingSupport";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -72,9 +71,6 @@ const AdminLayout = () => {
            © {new Date().getFullYear()} Q-Techx Solutions. All rights reserved.
          </footer>
        )}
-
-       {/* Floating Support (Chat, WhatsApp, Call) */}
-       <FloatingSupport />
 
       </div>
     </div>
