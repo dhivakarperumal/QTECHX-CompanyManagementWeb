@@ -950,27 +950,21 @@ const ProjectQuotationsPage = () => {
                   Quotation overview
                 </div>
                 <h2 className="mt-2 text-2xl font-semibold text-white">
-                  {modalMode === "view"
-                    ? activeQuotation?.quotation_number || "Quotation"
-                    : modalMode === "edit"
-                    ? "Update quotation details"
-                    : "Create a new quotation"}
+                  {activeQuotation.quotation_number || "Quotation"}
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm text-slate-400">
                   Capture the project scope, pricing, approvals, and engagement history in one place.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-between">
-                {modalMode === "view" ? (
-                  <button onClick={() => openEditModal(activeQuotation)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
-                    <Pencil className="h-4 w-4" /> Edit
-                  </button>
-                ) : null}
-                <button onClick={closeModal} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">Close</button>
+                <button onClick={() => openEditModal(activeQuotation)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+                  <Pencil className="h-4 w-4" /> Edit
+                </button>
+                <button onClick={closeViewModal} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">Close</button>
               </div>
             </div>
 
-            {modalMode === "view" && activeQuotation && (
+            {activeQuotation && (
               <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(249,115,22,0.16),rgba(15,17,25,0.95)_45%,rgba(30,41,59,0.9))] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">

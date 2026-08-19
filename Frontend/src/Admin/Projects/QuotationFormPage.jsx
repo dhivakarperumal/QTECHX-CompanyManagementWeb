@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Save, Plus, Trash2, ChevronRight, ChevronLeft,
   User, Building2, Mail, Phone, Briefcase, Calendar, CreditCard,
   FileText, Layers, Clock, Tag, DollarSign, CheckCircle2,
   FileSpreadsheet, MessageSquare, Paperclip, Settings, Loader2,
-  Hash, AlertCircle, Check,
+  Hash, Check,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
@@ -36,49 +36,73 @@ const createDefaultTimeline = () => [
   { phase: "Development",            start_date: "", end_date: "", duration: "20 Days" },
 ];
 
-const createDefaultForm = (defaults = {}) => ({
-  id: null, uuid: null,
-  quotation_number: "",
-  client_name: "",
-  company_name: "",
-  contact_person: "",
-  email: "",
-  phone_number: "",
-  project_name: "",
-  project_description: "",
-  scope_of_work: "",
-  technologies_used: "",
-  project_type: "Website",
-  service_category: "Web Development",
-  service_type: "Website Development",
-  quotation_date: dayjs().format("YYYY-MM-DD"),
-  valid_until: dayjs().add(30, "day").format("YYYY-MM-DD"),
-  currency: "INR",
-  payment_terms: "50%-50%",
-  delivery_timeline: "4 Weeks",
-  sales_executive: "Admin",
-  prepared_by: "Admin",
-  platform: "Website",
-  subtotal: 0, discount: 0, additional_charges: 0,
-  tax_amount: 0, round_off: 0, grand_total: 0,
-  advance_amount: 0, balance_amount: 0,
-  status: "Draft",
-  approval_status: "Pending",
-  payment_status: "Pending",
-  notes: "",
-  terms_conditions: "",
-  created_by: "Admin",
-  updated_by: "Admin",
-  created_at: "", updated_at: "",
-  items: [createEmptyItem()],
-  timeline_items: createDefaultTimeline(),
-  terms_sections: createDefaultTerms(),
-  attachments: [], activity_logs: [],
-  approval: { approved_by: "", approval_status: "Pending", comments: "", approved_at: "", rejection_reason: "" },
-  client_message: "", response_date: "", sent_date: "", viewed_date: "",
-  download_count: 0, email_status: "Pending", whatsapp_status: "Pending",
-  ...defaults,
-});
+const createDefaultForm = (defaults = {}) => {
+  const result = {
+    id: null, uuid: null,
+    quotation_number: "",
+    client_name: "",
+    company_name: "",
+    contact_person: "",
+    email: "",
+    phone_number: "",
+    address: "",
+    gst_number: "",
+    project_name: "",
+    project_description: "",
+    scope_of_work: "",
+    technologies_used: "",
+    project_type: "Website",
+    service_category: "Web Development",
+    service_type: "Website Development",
+    quotation_date: dayjs().format("YYYY-MM-DD"),
+    valid_until: dayjs().add(30, "day").format("YYYY-MM-DD"),
+    currency: "INR",
+    payment_terms: "50%-50%",
+    delivery_timeline: "4 Weeks",
+    sales_executive: "Admin",
+    prepared_by: "Admin",
+    platform: "Website",
+    subtotal: 0, discount: 0, additional_charges: 0,
+    tax_amount: 0, round_off: 0, grand_total: 0,
+    advance_amount: 0, balance_amount: 0,
+    status: "Draft",
+    approval_status: "Pending",
+    payment_status: "Pending",
+    notes: "",
+    terms_conditions: "",
+    created_by: "Admin",
+    updated_by: "Admin",
+    created_at: "", updated_at: "",
+    items: [createEmptyItem()],
+    timeline_items: createDefaultTimeline(),
+    terms_sections: createDefaultTerms(),
+    attachments: [], activity_logs: [],
+    approval: { approved_by: "", approval_status: "Pending", comments: "", approved_at: "", rejection_reason: "" },
+    client_message: "", response_date: "", sent_date: "", viewed_date: "",
+    download_count: 0, email_status: "Pending", whatsapp_status: "Pending",
+    ...defaults,
+  };
+
+  // Format dates for input type="date"
+  if (result.quotation_date) {
+    result.quotation_date = dayjs(result.quotation_date).format("YYYY-MM-DD");
+  }
+  if (result.valid_until) {
+    result.valid_until = dayjs(result.valid_until).format("YYYY-MM-DD");
+  }
+  if (result.approval?.approved_at) {
+    result.approval.approved_at = dayjs(result.approval.approved_at).format("YYYY-MM-DD");
+  }
+  if (Array.isArray(result.timeline_items)) {
+    result.timeline_items = result.timeline_items.map(t => ({
+      ...t,
+      start_date: t.start_date ? dayjs(t.start_date).format("YYYY-MM-DD") : "",
+      end_date: t.end_date ? dayjs(t.end_date).format("YYYY-MM-DD") : "",
+    }));
+  }
+
+  return result;
+};
 
 const calculatePricing = (items, values) => {
   const subtotal = items.reduce((sum, item) => {
@@ -138,9 +162,9 @@ const selectCls = inputCls + " [&>option]:bg-[#111318]";
 const textareaCls = inputCls + " resize-none min-h-[100px] leading-relaxed";
 
 // ─── Section card wrapper ─────────────────────────────────────────────────────
-function Section({ title, subtitle, icon: Icon, children }) {
+function Section({ title, subtitle, icon: Icon, children, className = "" }) {
   return (
-    <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
+    <div className={`bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden ${className}`}>
       <div className="flex items-center gap-3 px-6 py-4 border-b border-white/8 bg-white/[0.02]">
         {Icon && (
           <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0">
@@ -496,11 +520,17 @@ function StepClient({ formData, set, clients, selectedClientUuid, onClientPick }
               <input value={formData.phone_number} onChange={e => set("phone_number", e.target.value)} placeholder="+91 99999 99999" className={inputCls + " pl-9"} />
             </div>
           </Field>
-          <Field label="Email address" className="sm:col-span-2">
+          <Field label="Email address">
             <div className="relative">
               <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
               <input type="email" value={formData.email} onChange={e => set("email", e.target.value)} placeholder="email@company.com" className={inputCls + " pl-9"} />
             </div>
+          </Field>
+          <Field label="GST Number">
+            <input value={formData.gst_number || ""} onChange={e => set("gst_number", e.target.value)} placeholder="Enter GST Number" className={inputCls} />
+          </Field>
+          <Field label="Address" className="sm:col-span-2">
+            <textarea value={formData.address || ""} onChange={e => set("address", e.target.value)} placeholder="Complete address..." className={`${inputCls} min-h-[80px] resize-y py-3`} />
           </Field>
         </div>
       </Section>
@@ -564,6 +594,23 @@ function StepClient({ formData, set, clients, selectedClientUuid, onClientPick }
 }
 
 function StepProject({ formData, set }) {
+  const [technologyInput, setTechnologyInput] = useState("");
+  const technologies = (formData.technologies_used || "")
+    .split(",")
+    .map(value => value.trim())
+    .filter(Boolean);
+
+  const addTechnology = () => {
+    const technology = technologyInput.trim();
+    if (!technology || technologies.some(value => value.toLowerCase() === technology.toLowerCase())) return;
+    set("technologies_used", [...technologies, technology].join(", "));
+    setTechnologyInput("");
+  };
+
+  const removeTechnology = technology => {
+    set("technologies_used", technologies.filter(value => value !== technology).join(", "));
+  };
+
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Section title="Project Information" subtitle="Core details about the project" icon={Briefcase}>
@@ -606,12 +653,40 @@ function StepProject({ formData, set }) {
             <textarea value={formData.scope_of_work} onChange={e => set("scope_of_work", e.target.value)} placeholder="List the features, modules, and deliverables…" className={textareaCls + " min-h-[130px]"} />
           </Field>
           <Field label="Technologies used">
-            <input value={formData.technologies_used} onChange={e => set("technologies_used", e.target.value)} placeholder="e.g. React, Node.js, MySQL, AWS" className={inputCls} />
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {technologies.map(technology => (
+                  <span key={technology} className="inline-flex items-center gap-2 rounded-lg border border-orange-500/25 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-200">
+                    {technology}
+                    <button type="button" onClick={() => removeTechnology(technology)} className="text-orange-300/70 transition hover:text-white" aria-label={`Remove ${technology}`}>
+                      <Trash2 size={13} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={technologyInput}
+                  onChange={e => setTechnologyInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTechnology();
+                    }
+                  }}
+                  placeholder="e.g. React, Node.js, MySQL"
+                  className={inputCls}
+                />
+                <button type="button" onClick={addTechnology} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/20">
+                  <Plus size={15} /> Add
+                </button>
+              </div>
+            </div>
           </Field>
         </div>
       </Section>
 
-      <Section title="Internal Notes" subtitle="Notes and client message (not printed on quotation)" icon={MessageSquare} >
+      <Section title="Internal Notes" subtitle="Notes and client message (not printed on quotation)" icon={MessageSquare} className="lg:col-span-2 print:hidden">
         <div className="grid gap-4">
           <Field label="Internal notes">
             <textarea value={formData.notes} onChange={e => set("notes", e.target.value)} placeholder="Notes for the internal team…" className={textareaCls} />
