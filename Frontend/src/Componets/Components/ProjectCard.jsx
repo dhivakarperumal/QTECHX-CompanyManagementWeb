@@ -29,7 +29,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         from-[#171d22]
         via-[#11171c]
         to-[#0d1216]
-        shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.08)]
+        shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_16px_rgba(255,106,0,0.05)]
         transition-all
         duration-500
         ease-[cubic-bezier(0.22,1,0.36,1)]
@@ -38,7 +38,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         hover:from-[#1d2429]
         hover:via-[#141b20]
         hover:to-[#0f1519]
-        hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
+        hover:shadow-[0_14px_34px_rgba(0,0,0,0.45),0_0_24px_rgba(255,106,0,0.14)]
       "
     >
       {/* Top Laser Accent Line */}
@@ -95,8 +95,8 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
             absolute
             inset-0
             bg-gradient-to-t
-            from-[#0d1216]
-            via-[#03070a]/30
+            from-[#0d1216]/35
+            via-[#03070a]/10
             to-transparent
           "
         />
