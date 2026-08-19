@@ -41,6 +41,16 @@ body {
   color: var(--text-primary);
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 #root {
   background: var(--bg-dark);
   color: var(--text-primary);
