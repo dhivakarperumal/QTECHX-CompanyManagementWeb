@@ -15,11 +15,11 @@ const Home = () => {
     <>
       <Hero />
       {/* <FeaturedOpenings /> */}
-      <EventBanner/>
+      {/* <EventBanner/>
       <Services/>
       <AboutUs/>
       <Methodology/>
-      <WhyChooseUs />
+      <WhyChooseUs /> */}
       <Projects />
       <Careers />
       <Testimonial />

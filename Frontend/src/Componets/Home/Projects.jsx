@@ -166,9 +166,9 @@ const Projects = () => {
       if (window.innerWidth < 640) {
         setSlidesToShow(1);
       } else if (window.innerWidth < 1024) {
-        setSlidesToShow(3);
+        setSlidesToShow(2);
       } else {
-        setSlidesToShow(4);
+        setSlidesToShow(3);
       }
     };
 
@@ -337,8 +337,8 @@ const Projects = () => {
     autoplaySpeed: 2800,
     pauseOnHover: true,
     arrows: window.innerWidth >= 768,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
+    // nextArrow: <NextArrow />,
+    // prevArrow: <PrevArrow />,
   };
 
   return (
@@ -677,7 +677,7 @@ const Projects = () => {
   overflow-hidden
   rounded-2xl
   border
-  border-white/10
+  border-[#FF6A00]/60
   bg-gradient-to-br
   from-[#171d22]
   via-[#11171c]
@@ -720,10 +720,10 @@ const Projects = () => {
                           <div
                             className="
     relative
-    h-[220px]
+    h-[170px]
     overflow-hidden
     bg-[#080d11]
-    sm:h-[240px]
+    sm:h-[180px]
   "
                           >
                             <img
@@ -732,13 +732,17 @@ const Projects = () => {
                               className="
       h-full
       w-full
-      object-cover
+      object-contain
+      p-2
       transition-transform
       duration-700
       group-hover:scale-105
     "
                               onError={(e) => {
-                                console.error("❌ Project image failed:", project.image);
+                                console.error(
+                                  "❌ Project image failed:",
+                                  project.image
+                                );
 
                                 if (!e.currentTarget.dataset.fallback) {
                                   e.currentTarget.dataset.fallback = "true";
