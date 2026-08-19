@@ -378,19 +378,8 @@ const FeaturedOpenings = () => {
         </div>
       </PageContainer>
 
-      {/* ================= BOTTOM BORDER ================= */}
-
-      <div
-        className="
-          absolute
-          bottom-0
-          left-0
-          right-0
-          h-px
-          bg-[#FF6A00]/40
-          shadow-[0_0_8px_rgba(255,106,0,0.2)]
-        "
-      />
+      
+      
     </section>
   );
 };

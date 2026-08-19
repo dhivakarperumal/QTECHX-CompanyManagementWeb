@@ -214,7 +214,7 @@ const Hero = () => {
         </div>
       </PageContainer>
       {/* Orange line below navbar */}
-      <div className="h-px w-full bg-[#FF6A00]/70 shadow-[0_0_8px_rgba(255,106,0,0.25)]" />
+      <div className="h-px w-full bg-white/30" />
 
     </section>
   );
