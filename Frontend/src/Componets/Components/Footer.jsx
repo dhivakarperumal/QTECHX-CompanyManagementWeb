@@ -481,22 +481,23 @@ const Footer = () => {
               latest business news.
             </p>
 
-            {/* Email input */}
-
-            <div
-              className="
-              mb-4
-              flex
-              items-center
-              overflow-hidden
-              rounded-xl
-              border
-              border-white/10
-              bg-[#11171c]
-              shadow-[0_8px_25px_rgba(0,0,0,0.5)]
-              focus-within:border-[#FF6A00]/60
-            "
-            >
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Email input */}
+              <div
+                className="
+                flex
+                min-w-[220px]
+                flex-1
+                items-center
+                overflow-hidden
+                rounded-xl
+                border
+                border-white/10
+                bg-[#11171c]
+                shadow-[0_8px_25px_rgba(0,0,0,0.5)]
+                focus-within:border-[#FF6A00]/60
+              "
+              >
 
               <input
                 type="email"
@@ -532,29 +533,29 @@ const Footer = () => {
                 <FaEnvelope />
               </button>
 
-            </div>
+              </div>
 
-            {/* Subscribe button */}
+              {/* Subscribe button and social links */}
+              <div className="flex flex-wrap items-center gap-4">
+                <Buttons type="button">
+                  Subscribe Now
+                </Buttons>
 
-            <div className="mt-1 flex flex-wrap items-center gap-4">
-              <Buttons type="button">
-                Subscribe Now
-              </Buttons>
-
-              <div className="flex flex-wrap gap-2.5">
-                {socialLinks.map(({ name, icon: Icon, url }) => (
-                  <a
-                    key={name}
-                    href={url}
-                    target={url.startsWith("mailto:") ? undefined : "_blank"}
-                    rel={url.startsWith("mailto:") ? undefined : "noreferrer"}
-                    aria-label={name}
-                    title={name}
-                    className="group flex h-11 w-11 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#11171c] text-base text-white/70 shadow-[0_8px_20px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white"
-                  >
-                    <Icon />
-                  </a>
-                ))}
+                <div className="flex flex-wrap gap-2.5">
+                  {socialLinks.map(({ name, icon: Icon, url }) => (
+                    <a
+                      key={name}
+                      href={url}
+                      target={url.startsWith("mailto:") ? undefined : "_blank"}
+                      rel={url.startsWith("mailto:") ? undefined : "noreferrer"}
+                      aria-label={name}
+                      title={name}
+                      className="group flex h-11 w-11 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#11171c] text-base text-white/70 shadow-[0_8px_20px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white"
+                    >
+                      <Icon />
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
 
