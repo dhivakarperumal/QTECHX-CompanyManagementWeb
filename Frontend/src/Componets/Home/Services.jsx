@@ -252,38 +252,10 @@ function Services() {
 
                       {/* ================= ICON ================= */}
 
-                      <div className="relative z-10 mb-7">
-
-                        <div
-                          className="
-        flex
-        h-16
-        w-16
-        items-center
-        justify-center
-        rounded-2xl
-        border
-        border-[#FF6A00]
-        bg-[#FF6A00]
-        shadow-[0_0_30px_rgba(255,106,0,0.25)]
-        transition-all
-        duration-500
-        group-hover:border-[#FF6A00]/25
-        group-hover:bg-[#FF6A00]/10
-        group-hover:shadow-none
-      "
-                        >
+                      <div className="relative z-10 mb-7 flex justify-center">
+                        <div className="flex h-24 w-24 items-center justify-center">
                           {Icon ? (
-                            <Icon
-                              className="
-            text-2xl
-            text-black
-            transition-all
-            duration-300
-            group-hover:scale-105
-            group-hover:text-[#FF6A00]
-          "
-                            />
+                            <Icon className="text-3xl text-[#FF6A00]" />
                           ) : service.singlepageimage &&
                             service.singlepageimage.length > 0 ? (
                             <img
@@ -293,13 +265,19 @@ function Services() {
                                   : service.singlepageimage
                               }
                               alt={service.title}
-                              className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-105"
+                              className="
+          h-20
+          w-20
+          object-contain
+          transition-transform
+          duration-300
+          group-hover:scale-105
+        "
                             />
                           ) : (
-                            <FaLaptopCode className="text-2xl text-black transition-all duration-300 group-hover:scale-105 group-hover:text-[#FF6A00]" />
+                            <FaLaptopCode className="text-3xl text-[#FF6A00]" />
                           )}
                         </div>
-
                       </div>
 
                       {/* ================= CONTENT ================= */}
