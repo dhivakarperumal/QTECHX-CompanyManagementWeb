@@ -21,7 +21,7 @@ import { IoIosArrowForward } from "react-icons/io";
 
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
-import aboutImg from "/images/about4.webp";
+import aboutImg from "/images/about us (2).png";
 import Head from "../Components/Head";
 
 // Animated Counter Component with IntersectionObserver
