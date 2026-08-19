@@ -6,8 +6,8 @@ import "./FloatingSupport.css";
 // Bottom‑right floating action buttons: WhatsApp, Call and AI Chat Assistant
 const FloatingSupport = () => {
   const [chatOpen, setChatOpen] = useState(false);
-  const whatsappNumber = "919876543210"; // Replace with your number
-  const phoneNumber = "+919876543210";   // Replace with your call line
+  const whatsappNumber = "919597293504"; // Company WhatsApp number
+  const phoneNumber = "+919597293504";   // Company Call line
 
   const handleWhatsApp = () => {
     window.open(`https://wa.me/${whatsappNumber}?text=Hello, I need some help!`, "_blank");

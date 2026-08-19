@@ -103,10 +103,10 @@ const Hero = () => {
               accelerate business growth.
             </p>
 
-           <div className="mt-8 flex justify-center lg:justify-start">
-  <Link
-    to="/about"
-    className="
+            <div className="mt-8 flex justify-center lg:justify-start">
+              <Link
+                to="/about"
+                className="
       group
       inline-flex
       items-center
@@ -128,11 +128,11 @@ const Hero = () => {
       hover:shadow-[0_8px_30px_rgba(255,106,0,0.35)]
       active:scale-95
     "
-  >
-    <span>Explore Q-TechX</span>
+              >
+                <span>Explore Q-TechX</span>
 
-    <span
-      className="
+                <span
+                  className="
         flex
         h-6
         w-6
@@ -150,11 +150,11 @@ const Hero = () => {
         group-hover:bg-white
         group-hover:text-[#FF6A00]
       "
-    >
-      →
-    </span>
-  </Link>
-</div>
+                >
+                  →
+                </span>
+              </Link>
+            </div>
           </div>
 
           {/* RIGHT IMAGE */}

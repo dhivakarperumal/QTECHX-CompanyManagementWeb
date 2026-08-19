@@ -6,6 +6,7 @@ import Footer from "./Componets/Components/Footer";
 
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
 import ScrollNavigator from "./Componets/CommonComponents/ScrollNavigator";
+import FloatingWhatsApp from "./Componets/CommonComponents/FloatingWhatsApp";
 import Loader from "./Componets/CommonComponents/Loader";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
       {showPublicChrome && <Navbar />}
       <ScrollToTop/>
       <ScrollNavigator/>
+      <FloatingWhatsApp />
       <Outlet />
       <Toaster
         position="top-right"
