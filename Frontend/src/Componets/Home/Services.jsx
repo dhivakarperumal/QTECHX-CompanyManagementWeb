@@ -266,13 +266,17 @@ function Services() {
                               }
                               alt={service.title}
                               className="
-          h-20
-          w-20
-          object-contain
-          transition-transform
-          duration-300
-          group-hover:scale-105
-        "
+    h-24
+    w-24
+    rounded-full
+    border
+    border-[#FF6A00]/70
+    object-contain
+    transition-all
+    duration-300
+    group-hover:border-[#FF6A00]/70
+    group-hover:scale-105
+  "
                             />
                           ) : (
                             <FaLaptopCode className="text-3xl text-[#FF6A00]" />
