@@ -316,7 +316,7 @@ const ServiceDetails = () => {
                 title="OUR"
                 highlight="PROCESS & APPROACH"
                 align="left"
-                size="sm"
+                size="lg"
                 className="mb-0"
               />
 
@@ -397,7 +397,7 @@ const ServiceDetails = () => {
             title="PROJECT"
             highlight="INVESTMENT & TIMELINE"
             description="Clear scope estimations, scalable architectures, and rapid delivery milestones tailored to your business goals."
-            size="sm"
+            size="lg"
             className="mb-12"
           />
 
@@ -577,18 +577,16 @@ const ServiceDetails = () => {
 
         <PageContainer className="relative z-10">
           <div className="mb-12 text-center">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              WHY PARTNER WITH US
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.5rem]">
-              WHY CHOOSE US FOR <span className="text-[#FF6A00]">{service.title}</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-            <p className="mx-auto mt-3 max-w-xl text-xs text-white/60 sm:text-sm">
-              Discover why top businesses trust Q-Techx Solutions for their most critical IT projects.
-            </p>
+            <SectionTitle
+              subtitle="WHY PARTNER WITH US"
+              title="WHY CHOOSE US FOR"
+              highlight={service.title}
+              size="lg"
+              align="center"
+              description="Discover why top businesses trust Q-Techx Solutions for their most critical IT projects."
+              className="mb-0"
+            />
           </div>
-
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {whyChooseUsEntries.map(([title, desc], idx) => {
               const icons = [FiAward, FiZap, FiShield, FiCpu, FiCheckCircle];

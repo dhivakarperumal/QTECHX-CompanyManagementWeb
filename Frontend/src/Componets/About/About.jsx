@@ -277,7 +277,7 @@ const About = () => {
                 title="EMPOWERING YOUR BUSINESS THROUGH"
                 highlight="NEXT-GEN TECH"
                 align="left"
-                size="sm"
+                size="lg"
                 className="mb-0"
               />
 
@@ -409,7 +409,7 @@ const About = () => {
             subtitle="WHAT DRIVES US"
             title="OUR FOUNDATIONAL"
             highlight="PILLARS"
-            size="sm"
+            size="lg"
             className="mb-12 sm:mb-14"
           />
 
@@ -481,7 +481,7 @@ const About = () => {
             subtitle="PURPOSE & DIRECTION"
             title="MISSION, VISION &"
             highlight="GOALS"
-            size="sm"
+            size="lg"
             className="mb-10 sm:mb-12"
           />
 
@@ -614,7 +614,7 @@ const About = () => {
             subtitle="OUR MILESTONES"
             title="OUR JOURNEY"
             highlight="STARTED"
-            size="sm"
+            size="lg"
             description="Tracing our evolution from an education platform to a premier global software solutions provider."
             className="mb-14 sm:mb-16"
           />
@@ -738,7 +738,7 @@ const About = () => {
             subtitle="PROVEN RESULTS"
             title="OUR IMPACT IN"
             highlight="NUMBERS"
-            size="sm"
+            size="lg"
             className="mb-12 sm:mb-14"
           />
 
