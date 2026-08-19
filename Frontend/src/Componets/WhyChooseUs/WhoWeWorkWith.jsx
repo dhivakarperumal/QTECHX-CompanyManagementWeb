@@ -115,15 +115,16 @@ const WhoWeWorkWith = () => {
           </div>
 
           {/* Categories Grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
               {categories.map((item, index) => (
                 <div
                   key={index}
                   data-aos="fade-up"
-                  data-aos-delay={(index % 4) * 80}
+                  data-aos-delay={(index % 4) * 110}
                   className="
                     group
                     relative
+                    min-h-[230px]
                     flex
                     flex-col
                     items-center
@@ -141,6 +142,7 @@ const WhoWeWorkWith = () => {
                     shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
                     transition-all
                     duration-500
+                    ease-[cubic-bezier(0.22,1,0.36,1)]
                     hover:-translate-y-2
                     hover:border-[#FF6A00]/50
                     hover:from-[#1d2429]
@@ -167,6 +169,14 @@ const WhoWeWorkWith = () => {
                     "
                   />
 
+                  {/* Corner number accent */}
+                  <span className="absolute right-4 top-3 z-20 font-mono text-[10px] font-bold tracking-widest text-white/25 transition-all duration-300 group-hover:text-[#FF6A00]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  {/* Hover sweep */}
+                  <div className="pointer-events-none absolute inset-0 z-10 -translate-x-full skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+
                   {/* Icon Box */}
                   <div
                     className="
@@ -184,8 +194,10 @@ const WhoWeWorkWith = () => {
                       p-3
                       shadow-[inset_0_0_15px_rgba(255,106,0,0.05)]
                       transition-all
-                      duration-300
+                      duration-500
+                      ease-out
                       group-hover:scale-110
+                      group-hover:-translate-y-1
                       group-hover:border-[#FF6A00]/40
                       group-hover:bg-[#FF6A00]/10
                       group-hover:shadow-[0_0_20px_rgba(255,106,0,0.25)]
@@ -194,7 +206,7 @@ const WhoWeWorkWith = () => {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="h-full w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                      className="h-full w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] transition-transform duration-700 ease-out group-hover:scale-110"
                     />
                   </div>
 
@@ -207,12 +219,17 @@ const WhoWeWorkWith = () => {
                       text-white
                       transition-colors
                       duration-300
+                      group-hover:-translate-y-0.5
                       group-hover:text-[#FF6A00]
                       sm:text-base
                     "
                   >
                     {item.title}
                   </h3>
+
+                  <span className="relative z-20 mt-3 flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/25 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:text-[#FF6A00]/80 group-hover:opacity-100">
+                    Explore domain <span aria-hidden="true">↗</span>
+                  </span>
 
                   {/* Card Bottom Glow */}
                   <div
