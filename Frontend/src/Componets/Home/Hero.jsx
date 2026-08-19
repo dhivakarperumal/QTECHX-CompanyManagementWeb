@@ -105,7 +105,7 @@ const Hero = () => {
 
            <div className="mt-8 flex justify-center lg:justify-start">
   <Link
-    to="/career"
+    to="/about"
     className="
       group
       inline-flex

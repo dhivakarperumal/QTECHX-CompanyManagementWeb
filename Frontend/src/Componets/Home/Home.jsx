@@ -8,6 +8,8 @@ import WhyChooseUs from "./WhyChooseUs";
 import Projects from "./Projects";
 import Careers from "./Careers";
 import Testimonial from "./Testimonial";
+import JobOpeningBanner from "./JobOpeningBanner";
+import InnovationHub from "./InnovationHub";
 
 const Home = () => {
 
@@ -15,12 +17,14 @@ const Home = () => {
     <>
       <Hero />
       {/* <FeaturedOpenings /> */}
+      <InnovationHub/>
       <EventBanner/>
       <Services/>
       <AboutUs/>
       <Methodology/>
       <WhyChooseUs />
       <Projects />
+       <JobOpeningBanner />
       <Careers />
       <Testimonial />
     </>
