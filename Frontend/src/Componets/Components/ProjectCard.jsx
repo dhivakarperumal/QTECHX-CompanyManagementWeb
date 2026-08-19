@@ -1,6 +1,6 @@
 // src/components/ProjectCard.jsx
 import React, { useState } from "react";
-import { FiExternalLink, FiArrowRight } from "react-icons/fi";
+import { FiExternalLink, FiArrowRight, FiEye } from "react-icons/fi";
 
 const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
   const [imageError, setImageError] = useState(false);
@@ -25,7 +25,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         rounded-3xl
         border
         border-white/[0.12]
-        bg-[#11171c]
+        bg-gradient-to-b from-[#182127] to-[#0e151a]
         shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_16px_rgba(255,106,0,0.05)]
         transition-all
         duration-500
@@ -61,11 +61,13 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       <div
         className="
           relative
+          mx-2
           h-[175px]
           w-full
           overflow-hidden
+          rounded-2xl
           bg-[#080d11]
-            sm:h-[185px]
+          sm:h-[185px]
         "
       >
         <img
@@ -84,24 +86,14 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         />
 
         {/* Gradient Overlay */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            bg-gradient-to-t
-            from-[#0b1014]/45
-            via-[#03070a]/5
-            to-transparent
-          "
-        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b1014]/35 via-transparent to-transparent" />
 
         {/* Category Badge */}
         <span
           className="
             absolute
-            left-4
-            top-4
+            left-3
+            top-3
             z-10
             rounded-full
             border
@@ -127,7 +119,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       </div>
 
       {/* Content Wrapper */}
-      <div className="flex min-h-[238px] flex-1 flex-col p-5 sm:p-5">
+      <div className="flex min-h-[238px] flex-1 flex-col px-5 pb-5 pt-2 sm:px-5 sm:pb-5">
         {/* Title */}
         <h3
           className="
@@ -260,8 +252,10 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
           {onSelect && (
             <button
               onClick={() => onSelect(project)}
+              aria-label={`Quick view ${project.title}`}
+              title="Quick View"
               className="
-                rounded-full border border-[#FF6A00]/35 bg-[#FF6A00]/10 px-3 py-1.5 text-[10px]
+                flex h-8 w-8 items-center justify-center rounded-full border border-[#FF6A00]/35 bg-[#FF6A00]/10
                 font-bold
                 uppercase
                 tracking-wider
@@ -271,7 +265,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
                 hover:-translate-y-0.5 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
               "
             >
-              Quick View
+              <FiEye size={12} />
             </button>
           )}
         </div>
