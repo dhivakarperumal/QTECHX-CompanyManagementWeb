@@ -29,6 +29,7 @@ const EventBanner = () => {
     "
       style={{
         backgroundImage: "url('/images/student event.png')",
+        objectPosition: "top"
       }}
     >
       {/* Light background blur */}
