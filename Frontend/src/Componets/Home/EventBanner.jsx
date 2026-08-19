@@ -27,7 +27,7 @@ const EventBanner = () => {
       bg-center
     "
       style={{
-        backgroundImage: "url('/images/student event.png')",
+        backgroundImage: "url('/images/eventimage.png')",
         objectPosition: "top"
       }}
     >
