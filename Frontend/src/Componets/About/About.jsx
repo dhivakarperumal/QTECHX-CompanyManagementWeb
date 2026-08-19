@@ -133,6 +133,7 @@ const About = () => {
       easing: "ease-in-out",
       offset: 60,
     });
+    AOS.refresh();
   }, []);
 
   const tabData = {
@@ -305,9 +306,11 @@ const About = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-2.5 text-xs font-semibold text-white/90 sm:text-sm"
+                    data-aos="fade-up"
+                    data-aos-delay={idx * 80}
+                    className="group flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-2.5 text-xs font-semibold text-white/90 transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00]/35 hover:bg-[#FF6A00]/[0.06] sm:text-sm"
                   >
-                    <FiCheckCircle className="shrink-0 text-[#FF6A00]" size={16} />
+                    <FiCheckCircle className="shrink-0 text-[#FF6A00] transition-transform duration-300 group-hover:scale-110" size={16} />
                     <span>{item}</span>
                   </div>
                 ))}
@@ -357,11 +360,11 @@ const About = () => {
                 <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-[#FF6A00]/15 blur-2xl" />
 
                 {/* Outer frame */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#FF6A00]/50 bg-gradient-to-br from-[#171d22] via-[#11171c] to-[#080b0e] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.15)]">
+                <div className="group relative overflow-hidden rounded-2xl border border-[#FF6A00]/50 bg-gradient-to-br from-[#171d22] via-[#11171c] to-[#080b0e] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.15)] transition-all duration-500 hover:-translate-y-1 hover:border-[#FF6A00] hover:shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(255,106,0,0.22)]">
                   <img
                     src={aboutImg}
                     alt="Q-Techx Solutions Company"
-                    className="h-[300px] w-full rounded-xl object-cover object-center transition-transform duration-700 hover:scale-105 sm:h-[380px] lg:h-[420px]"
+                    className="h-[300px] w-full rounded-xl object-cover object-center transition-transform duration-700 group-hover:scale-105 sm:h-[380px] lg:h-[420px]"
                     onError={(e) => {
                       e.currentTarget.src = "/images/about us (2).png";
                     }}
@@ -372,7 +375,7 @@ const About = () => {
                 </div>
 
                 {/* Floating Experience Badge */}
-                <div className="absolute -bottom-6 -left-4 rounded-xl border border-[#FF6A00]/60 bg-[#0b1014]/95 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(255,106,0,0.2)] backdrop-blur-md sm:-bottom-7 sm:-left-6 sm:p-5">
+                <div className="absolute -bottom-6 -left-4 rounded-xl border border-[#FF6A00]/60 bg-[#0b1014]/95 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(255,106,0,0.2)] backdrop-blur-md transition-transform duration-500 hover:-translate-y-2 sm:-bottom-7 sm:-left-6 sm:p-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#FF6A00]/40 bg-[#FF6A00]/10 text-[#FF6A00]">
                       <FiAward size={22} />
@@ -540,6 +543,7 @@ const About = () => {
           {/* Active Tab Content Card */}
           <div
             data-aos="zoom-in"
+            key={activeTab}
             className="
               mx-auto
               max-w-4xl
@@ -555,6 +559,7 @@ const About = () => {
               shadow-[0_15px_40px_rgba(0,0,0,0.7),0_0_25px_rgba(255,106,0,0.1)]
               transition-all
               duration-500
+              animate-[modalIn_420ms_cubic-bezier(0.22,1,0.36,1)]
               hover:border-[#FF6A00]/50
               sm:p-8
               md:p-10
