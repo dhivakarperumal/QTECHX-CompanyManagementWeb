@@ -124,8 +124,7 @@ const Footer = () => {
           right-0
           top-0
           h-px
-          bg-[#FF6A00]/70
-          shadow-[0_0_10px_rgba(255,106,0,0.3)]
+          bg-white/30
         "
       />
 

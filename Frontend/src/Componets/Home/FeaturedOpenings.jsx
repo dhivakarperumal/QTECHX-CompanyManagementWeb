@@ -166,8 +166,7 @@ const FeaturedOpenings = () => {
           right-0
           top-0
           h-px
-          bg-[#FF6A00]/40
-          shadow-[0_0_8px_rgba(255,106,0,0.2)]
+          bg-white/30
         "
       />
 

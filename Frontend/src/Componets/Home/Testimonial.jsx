@@ -197,7 +197,7 @@ const Testimonial = () => {
       />
 
       {/* =====================================================
-          TOP ORANGE LINE
+          TOP LINE
       ====================================================== */}
 
       <div
@@ -207,8 +207,7 @@ const Testimonial = () => {
           right-0
           top-0
           h-px
-          bg-[#FF6A00]/60
-          shadow-[0_0_8px_rgba(255,106,0,0.25)]
+          bg-white/30
         "
       />
 
@@ -655,15 +654,14 @@ const Testimonial = () => {
         )}
 
       {/* =====================================================
-          BOTTOM ORANGE LINE
+          BOTTOM LINE
       ====================================================== */}
 
       <div
         className="
           h-px
           w-full
-          bg-[#FF6A00]/60
-          shadow-[0_0_8px_rgba(255,106,0,0.25)]
+          bg-white/30
         "
       />
 

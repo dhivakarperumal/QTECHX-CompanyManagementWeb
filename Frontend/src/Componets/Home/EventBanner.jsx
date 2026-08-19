@@ -21,7 +21,7 @@ const EventBanner = () => {
       w-full
       overflow-hidden
       border-y
-      border-[#FF6A00]/70
+      border-white/30
       bg-[#030303]
       bg-cover
       bg-center

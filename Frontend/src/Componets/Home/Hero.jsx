@@ -40,7 +40,7 @@ const Hero = () => {
       />
 
       {/* Top border */}
-      <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-[#FF6A00]/20" />
+      <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-white/30" />
 
       {/* ================= ONLY CONTENT ================= */}
 
@@ -213,7 +213,7 @@ const Hero = () => {
 
         </div>
       </PageContainer>
-      {/* Orange line below navbar */}
+      {/* Bottom line */}
       <div className="h-px w-full bg-white/30" />
 
     </section>
