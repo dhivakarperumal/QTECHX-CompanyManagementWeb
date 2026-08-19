@@ -16,185 +16,230 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       data-aos="fade-up"
       data-aos-delay={aosDelay}
       className="
-        group
-        relative
-        flex
-        h-full
-        flex-col
-        overflow-hidden
-        rounded-3xl
-        border
-        border-white/[0.12]
-        bg-gradient-to-b from-[#182127] to-[#0e151a]
-        shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_16px_rgba(255,106,0,0.05)]
-        transition-all
-        duration-500
-        ease-[cubic-bezier(0.22,1,0.36,1)]
-        hover:-translate-y-1.5
-        hover:border-[#FF6A00]/50
-        hover:bg-[#151d22]
-        hover:shadow-[0_14px_34px_rgba(0,0,0,0.45),0_0_24px_rgba(255,106,0,0.14)]
-      "
+      group
+      relative
+      flex
+      h-full
+      flex-col
+      overflow-hidden
+      rounded-3xl
+      border
+      border-[#FF6A00]/50
+      bg-[#151d22]
+      shadow-[0_14px_34px_rgba(0,0,0,0.45),0_0_24px_rgba(255,106,0,0.14)]
+      transition-all
+      duration-500
+      ease-[cubic-bezier(0.22,1,0.36,1)]
+      hover:-translate-y-1.5
+      hover:border-[#FF6A00]/70
+      hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_28px_rgba(255,106,0,0.18)]
+    "
     >
-      {/* Top Laser Accent Line */}
+
+      {/* ================= TOP ORANGE ACCENT ================= */}
+
       <div
         className="
-          absolute
-          left-0
-          right-0
-          top-0
-          z-20
-          h-[2px]
-          origin-left
-          scale-x-0
-          bg-[#FF6A00]
-          transition-transform
-          duration-500
-          group-hover:scale-x-100
-        "
+        absolute
+        left-0
+        right-0
+        top-0
+        z-20
+        h-[2px]
+        bg-[#FF6A00]
+      "
       />
 
-      {/* Hover light sweep */}
-      <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-20 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
+      {/* ================= HOVER LIGHT SWEEP ================= */}
 
-      {/* Image Wrapper */}
       <div
         className="
-          relative
-          mx-2
-          h-[175px]
-          w-full
-          overflow-hidden
-          rounded-2xl
-          bg-[#080d11]
-          sm:h-[185px]
-        "
+        pointer-events-none
+        absolute
+        inset-y-0
+        -left-1/2
+        z-20
+        w-1/3
+        -skew-x-12
+        bg-gradient-to-r
+        from-transparent
+        via-white/[0.07]
+        to-transparent
+        transition-transform
+        duration-700
+        ease-out
+        group-hover:translate-x-[430%]
+      "
+      />
+
+      {/* ================= IMAGE ================= */}
+
+      <div
+        className="
+        relative
+        mx-2
+        h-[175px]
+        w-[calc(100%-1rem)]
+        overflow-hidden
+        rounded-2xl
+        bg-[#080d11]
+        sm:h-[185px]
+      "
       >
         <img
           src={imageSrc}
           alt={project.title}
           onError={handleImageError}
           className="
-            h-full
-            w-full
-            object-cover
-            transition-transform
-            duration-700
-            ease-out
-            group-hover:scale-105
-          "
+          h-full
+          w-full
+          object-cover
+          transition-transform
+          duration-700
+          ease-out
+          group-hover:scale-105
+        "
         />
 
-        {/* Gradient Overlay */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b1014]/35 via-transparent to-transparent" />
+        {/* Image Gradient */}
+        <div
+          className="
+          pointer-events-none
+          absolute
+          inset-0
+          bg-gradient-to-t
+          from-[#0b1014]/35
+          via-transparent
+          to-transparent
+        "
+        />
 
-        {/* Category Badge */}
+        {/* ================= CATEGORY BADGE ================= */}
+
         <span
           className="
-            absolute
-            left-3
-            top-3
-            z-10
-            rounded-lg
-            border
-            border-[#FF6A00]/60
-            bg-[#111820]/90
-            px-3.5
-            py-1.5
-            text-[9px]
-            font-bold
-            uppercase
-            tracking-[0.16em]
-            text-[#ff9a4d]
-            backdrop-blur-md
-            shadow-[0_6px_16px_rgba(0,0,0,0.35)]
-            transition-all
-            duration-300
-            group-hover:border-[#FF6A00]
-            group-hover:bg-[#FF6A00]
-            group-hover:text-white
-            group-hover:shadow-[0_0_16px_rgba(255,106,0,0.35)]
-          "
+          absolute
+          left-3
+          top-3
+          z-10
+          rounded-lg
+          border
+          border-[#FF6A00]
+          bg-[#FF6A00]
+          px-3.5
+          py-1.5
+          text-[9px]
+          font-bold
+          uppercase
+          tracking-[0.16em]
+          text-white
+          shadow-[0_0_16px_rgba(255,106,0,0.25)]
+        "
         >
           {project.category || "Project"}
         </span>
 
-        <div className="pointer-events-none absolute bottom-3 right-3 flex h-8 w-8 translate-y-2 items-center justify-center rounded-full border border-white/20 bg-[#03070a]/70 text-white/70 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 group-hover:border-[#FF6A00]/60 group-hover:text-[#FF6A00] group-hover:opacity-100">
-          <FiArrowRight size={14} />
-        </div>
       </div>
 
-      {/* Content Wrapper */}
-      <div className="flex min-h-[238px] flex-1 flex-col px-5 pb-5 pt-2 sm:px-5 sm:pb-5">
-        {/* Title */}
+      {/* ================= CONTENT ================= */}
+
+      <div
+        className="
+        flex
+        min-h-[238px]
+        flex-1
+        flex-col
+        px-5
+        pb-5
+        pt-3
+        sm:px-5
+        sm:pb-5
+      "
+      >
+
+        {/* ================= TITLE ================= */}
+
         <h3
           className="
-            line-clamp-2
-            min-h-[48px]
-            text-lg
-            font-bold
-            tracking-tight
-            text-white
-            transition-colors
-            duration-300
-            group-hover:text-[#FF6A00]
-            sm:text-xl
-          "
+          line-clamp-2
+          min-h-[37px]
+          text-lg
+          font-bold
+          tracking-tight
+          text-white
+          transition-colors
+          duration-300
+          group-hover:text-[#FF6A00]
+          sm:text-xl
+        "
         >
           {project.title}
         </h3>
 
-        {/* Orange Accent Bar */}
+        {/* ================= ORANGE ACCENT ================= */}
+
         <div
           className="
-            mt-1
-            h-[2px]
-            w-8
-            bg-[#FF6A00]
-            shadow-[0_0_8px_rgba(255,106,0,0.4)]
-            transition-all
-            duration-300
-            group-hover:w-14
-          "
+          h-[2px]
+          w-10
+          bg-[#FF6A00]
+          shadow-[0_0_8px_rgba(255,106,0,0.4)]
+          transition-all
+          duration-300
+          group-hover:w-14
+        "
         />
 
-        {/* Description */}
+        {/* ================= DESCRIPTION ================= */}
+
         <p
           className="
-            mt-2.5
-            line-clamp-2
-            text-xs
-            leading-relaxed
-            text-white/65
-            sm:text-sm
-            sm:leading-5
-          "
+          mt-2.5
+          line-clamp-2
+          min-h-[40px]
+          text-xs
+          leading-5
+          text-white/65
+          sm:text-sm
+          sm:leading-5
+        "
         >
-          {project.description || "Scalable digital solution engineered for modern business performance."}
+          {project.description ||
+            "Scalable digital solution engineered for modern business performance."}
         </p>
 
-        {/* Dynamic Tech Features */}
+        {/* ================= TECH FEATURES ================= */}
+
         {project.features && project.features.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+          <div
+            className="
+            mt-4
+            flex
+            flex-wrap
+            gap-1.5
+            sm:gap-2
+          "
+          >
             {project.features.slice(0, 4).map((feature, index) => (
               <span
                 key={index}
                 className="
-                  rounded-md
-                  border
-                  border-white/10
-                  bg-white/[0.03]
-                  px-2.5
-                  py-1
-                  text-[10px]
-                  font-medium
-                  text-white/60
-                  backdrop-blur-sm
-                  transition-colors
-                  duration-200
-                  group-hover:border-[#FF6A00]/30
-                  group-hover:text-white/80
-                "
+                rounded-md
+                border
+                border-[#FF6A00]/30
+                bg-[#FF6A00]/10
+                px-2.5
+                py-1
+                text-[10px]
+                font-medium
+                text-white/75
+                backdrop-blur-sm
+                transition-all
+                duration-200
+                group-hover:border-[#FF6A00]/50
+                group-hover:bg-[#FF6A00]/15
+                group-hover:text-white
+              "
               >
                 {feature}
               </span>
@@ -202,58 +247,83 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
           </div>
         )}
 
-        {/* Footer Actions */}
-          <div className="mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
+        {/* ================= FOOTER ACTIONS ================= */}
+
+        <div
+          className="
+          mt-auto
+          flex
+          items-center
+          justify-between
+          border-t
+          border-[#FF6A00]/20
+          pt-4
+        "
+        >
+
+          {/* View Project */}
+
           {project.link && project.link !== "#" ? (
             <a
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
               className="
-                group/btn
-                inline-flex
+              group/btn
+              inline-flex
+              items-center
+              gap-2.5
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-[#FF6A00]
+              transition-all
+              duration-300
+              hover:text-white
+            "
+            >
+              <span>View Project</span>
+
+              <span
+                className="
+                flex
+                h-7
+                w-7
                 items-center
-                gap-2.5
-                text-xs
-                font-bold
-                uppercase
-                tracking-wider
+                justify-center
+                rounded-full
+                border
+                border-[#FF6A00]/40
+                bg-[#FF6A00]/10
                 text-[#FF6A00]
                 transition-all
                 duration-300
-                hover:text-white
+                group-hover/btn:translate-x-1
+                group-hover/btn:border-[#FF6A00]
+                group-hover/btn:bg-[#FF6A00]
+                group-hover/btn:text-white
+                group-hover/btn:shadow-[0_0_12px_rgba(255,106,0,0.5)]
               "
-            >
-              <span>View Project</span>
-              <span
-                className="
-                  flex
-                  h-7
-                  w-7
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-[#FF6A00]/40
-                  bg-[#FF6A00]/10
-                  text-[#FF6A00]
-                  transition-all
-                  duration-300
-                  group-hover/btn:translate-x-1
-                  group-hover/btn:border-[#FF6A00]
-                  group-hover/btn:bg-[#FF6A00]
-                  group-hover/btn:text-white
-                  group-hover/btn:shadow-[0_0_12px_rgba(255,106,0,0.5)]
-                "
               >
                 <FiExternalLink size={12} />
               </span>
             </a>
           ) : (
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/40">
+            <span
+              className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wider
+              text-white/40
+            "
+            >
               Internal Enterprise Project
             </span>
           )}
+
+          {/* Quick View */}
 
           {onSelect && (
             <button
@@ -261,42 +331,58 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
               aria-label={`Quick view ${project.title}`}
               title="Quick View"
               className="
-                flex h-8 w-8 items-center justify-center rounded-full border border-[#FF6A00]/35 bg-[#FF6A00]/10
-                font-bold
-                uppercase
-                tracking-wider
-                text-[#FFB066]
-                transition-all
-                duration-300
-                hover:-translate-y-0.5 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
-              "
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#FF6A00]
+              bg-[#FF6A00]
+              text-white
+              hover:border-[#FF6A00]/50
+              hover:bg-[#FF6A00]/10
+              font-bold
+              uppercase
+              tracking-wider
+              cursor-pointer
+              transition-all
+              duration-300
+              hover:-translate-y-0.5
+              
+              hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
+            "
             >
               <FiEye size={12} />
             </button>
           )}
+
         </div>
       </div>
 
-      {/* Card Bottom Glow */}
+      {/* ================= BOTTOM ORANGE GLOW ================= */}
+
       <div
         className="
-          pointer-events-none
-          absolute
-          -bottom-24
-          left-1/2
-          h-28
-          w-28
-          -translate-x-1/2
-          rounded-full
-          bg-[#FF6A00]/10
-          opacity-30
-          blur-[40px]
-          transition-all
-          duration-500
-          group-hover:bg-[#FF6A00]/20
-          group-hover:opacity-100
-        "
+        pointer-events-none
+        absolute
+        -bottom-24
+        left-1/2
+        h-28
+        w-28
+        -translate-x-1/2
+        rounded-full
+        bg-[#FF6A00]/15
+        opacity-60
+        blur-[40px]
+        transition-all
+        duration-500
+        group-hover:bg-[#FF6A00]/25
+        group-hover:opacity-100
+      "
       />
+
     </div>
   );
 };
