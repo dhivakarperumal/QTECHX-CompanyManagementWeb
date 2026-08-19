@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FiArrowRight, FiBriefcase, FiUsers, FiZap } from "react-icons/fi";
+import PageContainer from "../CommonComponents/PageContainer";
 
 const JobOpeningBanner = () => {
     return (
@@ -36,17 +37,17 @@ const JobOpeningBanner = () => {
   "
             />
             {/* ================= CONTENT ================= */}
+            <PageContainer>
+                <div className="relative z-10 flex min-h-[260px] items-center py-10 sm:min-h-[280px]  md:min-h-[300px] ">
 
-            <div className="relative z-10 mx-auto flex min-h-[260px] max-w-7xl items-center px-5 py-10 sm:min-h-[280px] sm:px-8 md:min-h-[300px] lg:px-10">
+                    <div className="max-w-xl">
 
-                <div className="max-w-xl">
+                        {/* Eyebrow */}
+                        <div className="mb-3 flex items-center gap-2">
+                            <span className="h-[2px] w-7 bg-[#FF6A00]" />
 
-                    {/* Eyebrow */}
-                    <div className="mb-3 flex items-center gap-2">
-                        <span className="h-[2px] w-7 bg-[#FF6A00]" />
-
-                        <span
-                            className="
+                            <span
+                                className="
                 text-[10px]
                 font-bold
                 uppercase
@@ -54,14 +55,14 @@ const JobOpeningBanner = () => {
                 text-[#FF6A00]
                 sm:text-xs
               "
-                        >
-                            CAREER OPPORTUNITIES
-                        </span>
-                    </div>
+                            >
+                                CAREER OPPORTUNITIES
+                            </span>
+                        </div>
 
-                    {/* Heading */}
-                    <h2
-                        className="
+                        {/* Heading */}
+                        <h2
+                            className="
               text-2xl
               font-bold
               uppercase
@@ -72,16 +73,16 @@ const JobOpeningBanner = () => {
               md:text-4xl
               lg:text-[2.7rem]
             "
-                    >
-                        BUILD YOUR
-                        <span className="block text-[#FF6A00]">
-                            FUTURE WITH US
-                        </span>
-                    </h2>
+                        >
+                            BUILD YOUR
+                            <span className="block text-[#FF6A00]">
+                                FUTURE WITH US
+                            </span>
+                        </h2>
 
-                    {/* Description */}
-                    <p
-                        className="
+                        {/* Description */}
+                        <p
+                            className="
               mt-3
               max-w-lg
               text-xs
@@ -90,18 +91,18 @@ const JobOpeningBanner = () => {
               sm:text-sm
               sm:leading-6
             "
-                    >
-                        Join our passionate team and work on innovative digital
-                        solutions that shape the future of technology.
-                    </p>
+                        >
+                            Join our passionate team and work on innovative digital
+                            solutions that shape the future of technology.
+                        </p>
 
-                    {/* ================= BUTTONS ================= */}
+                        {/* ================= BUTTONS ================= */}
 
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
 
-                        <Link
-                            to="/career"
-                            className="
+                            <Link
+                                to="/career"
+                                className="
                 group
                 inline-flex
                 items-center
@@ -124,11 +125,11 @@ const JobOpeningBanner = () => {
                 sm:px-5
                 sm:py-2
               "
-                        >
-                            <span>View Openings</span>
+                            >
+                                <span>View Openings</span>
 
-                            <span
-                                className="
+                                <span
+                                    className="
                   flex
                   h-6
                   w-6
@@ -143,14 +144,14 @@ const JobOpeningBanner = () => {
                   group-hover:bg-white
                   group-hover:text-[#FF6A00]
                 "
-                            >
-                                <FiArrowRight size={13} />
-                            </span>
-                        </Link>
+                                >
+                                    <FiArrowRight size={13} />
+                                </span>
+                            </Link>
 
-                        <Link
-                            to="/contact"
-                            className="
+                            <Link
+                                to="/contact"
+                                className="
                 inline-flex
                 items-center
                 gap-2
@@ -174,15 +175,16 @@ const JobOpeningBanner = () => {
                 sm:px-6
                 sm:py-3
               "
-                        >
-                            Contact Us
-                        </Link>
+                            >
+                                Contact Us
+                            </Link>
 
+                        </div>
                     </div>
+
+
                 </div>
-
-
-            </div>
+            </PageContainer>
             {/* ================= TOP ORANGE LINE ================= */}
 
             <div className="absolute left-0 right-0 top-0 h-px bg-white/30" />

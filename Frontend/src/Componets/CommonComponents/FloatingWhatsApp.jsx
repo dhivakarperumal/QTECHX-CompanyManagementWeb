@@ -38,8 +38,6 @@ const FloatingWhatsApp = () => {
         onMouseLeave={() => setIsHovered(false)}
         className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_25px_rgba(37,211,102,0.45)] transition-all duration-300 hover:scale-110 hover:bg-[#20bd5a] hover:shadow-[0_10px_30px_rgba(37,211,102,0.65)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/40 sm:h-14 sm:w-14"
       >
-        {/* Radar ping animation behind the button */}
-        <span className="pointer-events-none absolute inline-flex h-full w-full animate-ping rounded-full bg-[#25D366] opacity-35" />
 
         {/* WhatsApp Icon */}
         <FaWhatsapp className="relative z-10 text-2xl text-white transition-transform duration-300 group-hover:scale-110 sm:text-3xl" />
