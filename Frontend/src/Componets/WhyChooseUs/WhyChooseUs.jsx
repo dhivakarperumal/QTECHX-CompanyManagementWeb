@@ -6,6 +6,7 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const WhyChooseUs = () => {
   const features = [
@@ -101,38 +102,13 @@ const WhyChooseUs = () => {
 
         <PageContainer className="relative z-10 py-14 sm:py-16 md:py-20">
           {/* Section Header */}
-          <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              OUR VALUE PROPOSITION
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              WHY <span className="text-[#FF6A00]">CHOOSE US</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-            />
-
-            <p
-              data-aos="fade-up"
-              data-aos-delay="200"
-              className="mx-auto mt-4 text-justify text-xs leading-[25px] text-white/70 sm:text-sm sm:text-center md:text-base"
-            >
-              At Q-Techx Solutions, our solutions are cutting-edge and delivered on time.
-              We leverage innovative processes and advanced technologies to achieve
-              customer-focused results. With years of experience across diverse
-              industries, we’ve seen it all—and know exactly how to make your project a
-              success.
-            </p>
-          </div>
+          <SectionTitle
+            subtitle="OUR VALUE PROPOSITION"
+            title="WHY"
+            highlight="CHOOSE US"
+            description="At Q-Techx Solutions, our solutions are cutting-edge and delivered on time. We leverage innovative processes and advanced technologies to achieve customer-focused results. With years of experience across diverse industries, we’ve seen it all—and know exactly how to make your project a success."
+            className="mb-12 sm:mb-16"
+          />
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">

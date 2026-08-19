@@ -13,6 +13,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 import api from "../../api";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
@@ -464,60 +465,11 @@ const Projects = () => {
               HEADING
           ================================================== */}
 
-          <div
-            className="
-              mb-8
-              text-center
-              sm:mb-10
-            "
-          >
-            <p
-              className="
-                mb-2
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-[0.18em]
-                text-[#FF6A00]
-                sm:text-xs
-                md:text-sm
-              "
-            >
-              OUR WORK
-            </p>
-
-            <h2
-              className="
-                hero-font
-                text-[2.3rem]
-                font-bold
-                uppercase
-                leading-none
-                tracking-[-0.035em]
-                text-white
-                sm:text-4xl
-                md:text-5xl
-                lg:text-[3.5rem]
-              "
-            >
-              LATEST{" "}
-              <span className="text-[#FF6A00]">
-                PROJECTS
-              </span>
-            </h2>
-
-            <div
-              className="
-                mx-auto
-                mt-3
-                h-[2px]
-                w-14
-                bg-[#FF6A00]
-                shadow-[0_0_10px_rgba(255,106,0,0.5)]
-              "
-            />
-
-          </div>
+          <SectionTitle
+            subtitle="OUR WORK"
+            title="LATEST"
+            highlight="PROJECTS"
+          />
 
           {/* =================================================
               MAIN PROJECT AREA

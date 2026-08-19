@@ -20,6 +20,7 @@ import {
 import { IoIosArrowForward } from "react-icons/io";
 
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 import SocialMedia from "../Home/SocialMedia";
 import aboutImg from "/images/about4.webp";
 import Head from "../Components/Head";
@@ -271,16 +272,14 @@ const About = () => {
             
             {/* Left Content */}
             <div data-aos="fade-right" className="space-y-6">
-              <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-                  WHO WE ARE
-                </p>
-                <h2 className="hero-font text-2xl font-bold uppercase leading-tight text-white sm:text-4xl lg:text-[2.6rem]">
-                  EMPOWERING YOUR BUSINESS THROUGH{" "}
-                  <span className="text-[#FF6A00]">NEXT-GEN TECH</span>
-                </h2>
-                <div className="mt-3 h-[2px] w-12 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-              </div>
+              <SectionTitle
+                subtitle="WHO WE ARE"
+                title="EMPOWERING YOUR BUSINESS THROUGH"
+                highlight="NEXT-GEN TECH"
+                align="left"
+                size="sm"
+                className="mb-0"
+              />
 
               <p className="text-justify text-sm leading-relaxed text-white/75 sm:text-base sm:leading-7">
                 Q-Techx Solutions delivers cutting-edge IT solutions globally,
@@ -406,15 +405,13 @@ const About = () => {
 
         <PageContainer className="relative z-10">
           {/* Heading */}
-          <div className="mb-12 text-center sm:mb-14">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              WHAT DRIVES US
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.6rem]">
-              OUR FOUNDATIONAL <span className="text-[#FF6A00]">PILLARS</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-          </div>
+          <SectionTitle
+            subtitle="WHAT DRIVES US"
+            title="OUR FOUNDATIONAL"
+            highlight="PILLARS"
+            size="sm"
+            className="mb-12 sm:mb-14"
+          />
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -480,15 +477,13 @@ const About = () => {
         <div className="pointer-events-none absolute -left-36 bottom-0 h-80 w-80 rounded-full bg-[#FF6A00]/10 blur-[140px]" />
 
         <PageContainer className="relative z-10">
-          <div className="mb-10 text-center sm:mb-12">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              PURPOSE & DIRECTION
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.6rem]">
-              MISSION, VISION & <span className="text-[#FF6A00]">GOALS</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-          </div>
+          <SectionTitle
+            subtitle="PURPOSE & DIRECTION"
+            title="MISSION, VISION &"
+            highlight="GOALS"
+            size="sm"
+            className="mb-10 sm:mb-12"
+          />
 
           {/* Interactive Tab Switcher */}
           <div
@@ -615,19 +610,14 @@ const About = () => {
         <div className="pointer-events-none absolute -right-40 top-1/3 h-96 w-96 rounded-full bg-[#FF6A00]/10 blur-[150px]" />
 
         <PageContainer className="relative z-10">
-          <div className="mb-14 text-center sm:mb-16">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              OUR MILESTONES
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.6rem]">
-              OUR JOURNEY <span className="text-[#FF6A00]">STARTED</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-            <p className="mx-auto mt-4 max-w-xl text-xs text-white/60 sm:text-sm">
-              Tracing our evolution from an education platform to a premier
-              global software solutions provider.
-            </p>
-          </div>
+          <SectionTitle
+            subtitle="OUR MILESTONES"
+            title="OUR JOURNEY"
+            highlight="STARTED"
+            size="sm"
+            description="Tracing our evolution from an education platform to a premier global software solutions provider."
+            className="mb-14 sm:mb-16"
+          />
 
           {/* Timeline Structure */}
           <div className="relative mx-auto max-w-5xl">
@@ -744,15 +734,13 @@ const About = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-[#FF6A00]/40 shadow-[0_0_8px_rgba(255,106,0,0.2)]" />
 
         <PageContainer className="relative z-10">
-          <div className="mb-12 text-center sm:mb-14">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              PROVEN RESULTS
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.6rem]">
-              OUR IMPACT IN <span className="text-[#FF6A00]">NUMBERS</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-          </div>
+          <SectionTitle
+            subtitle="PROVEN RESULTS"
+            title="OUR IMPACT IN"
+            highlight="NUMBERS"
+            size="sm"
+            className="mb-12 sm:mb-14"
+          />
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div data-aos="zoom-in" data-aos-delay="100">

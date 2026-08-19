@@ -18,6 +18,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const iconMap = {
   FaCode,
@@ -104,22 +105,12 @@ function Services() {
       <PageContainer className="relative z-10">
 
         {/* Section heading */}
-        <div
-          data-aos="fade-up"
-          className="mx-auto mb-12 max-w-3xl text-center"
-        >
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#FF6A00] sm:text-sm">
-            WHAT WE DO
-          </p>
-
-          <h2 className="text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl">
-            OUR{" "}
-            <span className="text-[#FF6A00]">
-              SERVICES
-            </span>
-          </h2>
-
-        </div>
+        <SectionTitle
+          subtitle="WHAT WE DO"
+          title="OUR"
+          highlight="SERVICES"
+          className="mb-12"
+        />
 
         {/* ================= STATES ================= */}
 

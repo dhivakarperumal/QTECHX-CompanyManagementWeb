@@ -8,6 +8,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 import api from "../../api";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
@@ -362,78 +363,13 @@ const Testimonial = () => {
                   SECTION HEADING
               ================================================== */}
 
-              <div
-                className="
-                  mb-7
-                  text-center
-                  sm:mb-9
-                "
-              >
-
-                <p
-                  className="
-                    mb-2
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.18em]
-                    text-[#FF6A00]
-                    sm:text-xs
-                    md:text-sm
-                  "
-                >
-                  TESTIMONIALS
-                </p>
-
-                <h2
-                  className="
-                    hero-font
-                    text-[2.2rem]
-                    font-bold
-                    uppercase
-                    leading-none
-                    tracking-[-0.035em]
-                    text-white
-                    sm:text-4xl
-                    md:text-5xl
-                    lg:text-[3.5rem]
-                  "
-                >
-                  TRUST FROM{" "}
-                  <span className="text-[#FF6A00]">
-                    CLIENTS
-                  </span>
-                </h2>
-
-                <div
-                  className="
-                    mx-auto
-                    mt-3
-                    h-[2px]
-                    w-14
-                    bg-[#FF6A00]
-                    shadow-[0_0_10px_rgba(255,106,0,0.5)]
-                  "
-                />
-
-                <p
-                  className="
-                    mx-auto
-                    mt-4
-                    max-w-xl
-                    text-sm
-                    leading-6
-                    text-white/50
-                    sm:text-base
-                    sm:leading-7
-                  "
-                >
-                  Hear what our clients have to say
-                  about their experience working with
-                  Q-Techx Solutions.
-                </p>
-
-              </div>
+              <SectionTitle
+                subtitle="TESTIMONIALS"
+                title="TRUST FROM"
+                highlight="CLIENTS"
+                description="Hear what our clients have to say about their experience working with Q-Techx Solutions."
+                className="mb-7 sm:mb-9"
+              />
 
               {/* =================================================
                   BACKGROUND QUOTE

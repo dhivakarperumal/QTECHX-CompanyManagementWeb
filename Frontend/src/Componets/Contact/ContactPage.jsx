@@ -10,6 +10,7 @@ import { FiSend, FiCheckCircle } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import SocialMedia from "../Home/SocialMedia";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 import emailjs from "@emailjs/browser";
 
 const ContactPage = () => {
@@ -103,35 +104,12 @@ const ContactPage = () => {
 
         <PageContainer className="relative z-10 py-12 sm:py-16 md:py-20">
           {/* Section Header */}
-          <div className="mx-auto max-w-3xl text-center">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              CONNECT WITH US
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              GET IN TOUCH <span className="text-[#FF6A00]">WITH US</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-            />
-
-            <p
-              data-aos="fade-up"
-              data-aos-delay="200"
-              className="mx-auto mt-4 text-justify text-xs leading-[25px] text-white/70 sm:text-sm sm:text-center md:text-base"
-            >
-              Have a question or need a custom quote? Our team is ready to help. Reach out now —
-              we’ll respond within 24 hours with the answers and support you need.
-            </p>
-          </div>
+          <SectionTitle
+            subtitle="CONNECT WITH US"
+            title="GET IN TOUCH"
+            highlight="WITH US"
+            description="Have a question or need a custom quote? Our team is ready to help. Reach out now — we’ll respond within 24 hours with the answers and support you need."
+          />
 
           {/* Contact Cards Grid */}
           <div

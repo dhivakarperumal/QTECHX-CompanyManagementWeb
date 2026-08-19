@@ -17,6 +17,7 @@ import {
 } from "react-icons/fi";
 import SocialMedia from "../Home/SocialMedia";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 import api from "../../api";
 
 const DEFAULT_PRICING_PLANS = [
@@ -355,28 +356,12 @@ const Prices = () => {
           {/* =====================================================
               1. SECTION HEADING
           ====================================================== */}
-          <div className="mb-10 text-center sm:mb-14">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              TRANSPARENT & AFFORDABLE
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              CHOOSE THE PERFECT <span className="text-[#FF6A00]">PLAN FOR YOU</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-            />
-
-           
-          </div>
+          <SectionTitle
+            subtitle="TRANSPARENT & AFFORDABLE"
+            title="CHOOSE THE PERFECT"
+            highlight="PLAN FOR YOU"
+            className="mb-10 sm:mb-14"
+          />
 
           {/* =====================================================
               2. CATEGORY FILTER TABS
@@ -621,24 +606,13 @@ const Prices = () => {
               5. INTERACTIVE FAQ ACCORDION
           ====================================================== */}
           <div className="mt-20 sm:mt-24">
-            <div className="mb-10 text-center sm:mb-12">
-              <p
-                data-aos="fade-down"
-                className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs"
-              >
-                GOT QUESTIONS?
-              </p>
-              <h2
-                data-aos="zoom-in"
-                className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl md:text-4xl"
-              >
-                FREQUENTLY ASKED <span className="text-[#FF6A00]">QUESTIONS</span>
-              </h2>
-              <div
-                data-aos="fade-up"
-                className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-              />
-            </div>
+            <SectionTitle
+              subtitle="GOT QUESTIONS?"
+              title="FREQUENTLY ASKED"
+              highlight="QUESTIONS"
+              size="sm"
+              className="mb-10 sm:mb-12"
+            />
 
             <div className="mx-auto max-w-3xl space-y-4">
               {FAQS.map((faq, index) => {

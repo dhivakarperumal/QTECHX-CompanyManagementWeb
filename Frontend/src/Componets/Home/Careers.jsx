@@ -5,6 +5,7 @@ import { FiArrowRight, FiX } from "react-icons/fi";
 import career from "/images/chouse.jpg";
 import Button from "../Components/Button";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -404,72 +405,23 @@ const Careers = () => {
 
             <div className="relative z-10">
 
-              {/* Small heading */}
-
-              <p
-                data-aos="fade-left"
-                className="
-                  mb-2
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.18em]
-                  text-[#FF6A00]
-                  sm:text-xs
-                  md:text-sm
-                "
-              >
-                JOIN OUR TEAM
-              </p>
-
-
-              {/* Main heading */}
-
-              <h2
-                data-aos="fade-left"
-                data-aos-delay="150"
-                className="
-                  hero-font
-                  text-[2.2rem]
-                  font-bold
-                  uppercase
-                  leading-[1]
-                  tracking-[-0.035em]
-                  text-white
-                  sm:text-4xl
-                  md:text-5xl
-                  lg:text-[3.2rem]
-                "
+              {/* Heading */}
+              <SectionTitle
+                subtitle="JOIN OUR TEAM"
+                align="left"
+                aos="fade-left"
+                className="text-center lg:text-left mb-0"
+                underlineClassName="mx-auto lg:mr-auto lg:ml-0 mt-4"
               >
                 EMPOWERING{" "}
                 <span className="text-[#FF6A00]">
                   INNOVATION
                 </span>
-
                 <br />
-
                 WITH LEADING
                 <br />
-
                 TECHNOLOGIES.
-              </h2>
-
-
-              {/* Orange line */}
-
-              <div
-                data-aos="fade-left"
-                data-aos-delay="250"
-                className="
-                  mt-4
-                  h-[2px]
-                  w-14
-                  bg-[#FF6A00]
-                  shadow-[0_0_10px_rgba(255,106,0,0.5)]
-                  lg:mx-0
-                  mx-auto
-                "
-              />
+              </SectionTitle>
 
 
               {/* Description */}

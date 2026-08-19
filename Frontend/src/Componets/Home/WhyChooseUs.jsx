@@ -6,6 +6,7 @@ import Logo from "/images/logo.png";
 
 import Button from "../Components/Button";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -259,42 +260,12 @@ const WhyChooseUs = () => {
                 "
               />
 
-              {/* Small Heading */}
-
-              <p
-                className="
-                  relative
-                  z-10
-                  mb-2
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.18em]
-                  text-[#FF6A00]
-                  sm:text-xs
-                  md:text-sm
-                "
-              >
-                WHY CHOOSE US
-              </p>
-
-              {/* Main Heading */}
-
-              <h2
-                className="
-                  hero-font
-                  relative
-                  z-10
-                  text-[2.2rem]
-                  font-bold
-                  uppercase
-                  leading-[1]
-                  tracking-[-0.035em]
-                  text-white
-                  sm:text-4xl
-                  md:text-4xl
-                  lg:text-[3.2rem]
-                "
+              {/* Heading */}
+              <SectionTitle
+                subtitle="WHY CHOOSE US"
+                align="left"
+                className="mb-0"
+                underlineClassName="mr-auto"
               >
                 WE'RE{" "}
                 <span className="text-[#FF6A00]">
@@ -302,21 +273,7 @@ const WhyChooseUs = () => {
                 </span>
                 <br />
                 SOLUTIONS
-              </h2>
-
-              {/* Orange underline */}
-
-              <div
-                className="
-                  relative
-                  z-10
-                  mt-3
-                  h-[2px]
-                  w-14
-                  bg-[#FF6A00]
-                  shadow-[0_0_10px_rgba(255,106,0,0.5)]
-                "
-              />
+              </SectionTitle>
 
               {/* Description */}
 
