@@ -244,7 +244,7 @@ const About = () => {
   return (
     <div className="w-full bg-[#03070a] text-white">
 
-       <Head
+      <Head
         title="About Us"
         subtitle={
           <>
@@ -268,7 +268,7 @@ const About = () => {
 
         <PageContainer className="relative z-10">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
-            
+
             {/* Left Content */}
             <div data-aos="fade-right" className="space-y-6">
               <SectionTitle
@@ -422,35 +422,82 @@ const About = () => {
                   data-aos="fade-up"
                   data-aos-delay={index * 120}
                   className="
-                    group
-                    relative
-                    overflow-hidden
-                    rounded-2xl
-                    border
-                    border-white/10
-                    bg-gradient-to-br
-                    from-[#171d22]
-                    via-[#11171c]
-                    to-[#0d1216]
-                    p-6
-                    shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
-                    transition-all
-                    duration-500
-                    hover:-translate-y-2
-                    hover:border-[#FF6A00]/50
-                    hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.20)]
-                  "
+    group
+    relative
+    overflow-hidden
+    rounded-2xl
+    border
+    border-[#FF6A00]/50
+    bg-gradient-to-br
+    from-[#171d22]
+    via-[#11171c]
+    to-[#0d1216]
+    p-6
+    shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.20)]
+    transition-all
+    duration-[1200ms]
+    ease-[cubic-bezier(0.22,1,0.36,1)]
+    hover:-translate-y-0
+    hover:border-white/10
+    hover:shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
+  "
                 >
-                  {/* Top orange line on hover */}
-                  <div className="absolute left-0 right-0 top-0 h-[2px] bg-[#FF6A00] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  {/* Top orange line */}
+                  <div
+                    className="
+      absolute
+      left-0
+      right-0
+      top-0
+      h-[2px]
+      bg-[#FF6A00]
+      opacity-100
+      transition-opacity
+      duration-[1200ms]
+      ease-in-out
+      group-hover:opacity-0
+    "
+                  />
 
                   {/* Icon */}
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#FF6A00] group-hover:text-white">
+                  <div
+                    className="
+      mb-5
+      flex
+      h-12
+      w-12
+      items-center
+      justify-center
+      rounded-xl
+      border
+      border-[#FF6A00]
+      bg-[#FF6A00]
+      text-white
+      transition-all
+      duration-[1200ms]
+      ease-[cubic-bezier(0.22,1,0.36,1)]
+      group-hover:scale-100
+      group-hover:border-[#FF6A00]/30
+      group-hover:bg-[#FF6A00]/10
+      group-hover:text-[#FF6A00]
+    "
+                  >
                     <PillarIcon size={24} />
                   </div>
 
                   {/* Title */}
-                  <h3 className="mb-2 text-lg font-bold text-white transition-colors duration-300 group-hover:text-[#FF6A00]">
+                  <h3
+                    className="
+      mb-2
+      text-lg
+      font-bold
+      text-[#FF6A00]
+      transition-colors
+      duration-[1000ms]
+      ease-in-out
+      group-hover:text-white
+    "
+                  >
                     {pillar.title}
                   </h3>
 
@@ -460,7 +507,24 @@ const About = () => {
                   </p>
 
                   {/* Glow */}
-                  <div className="pointer-events-none absolute -bottom-10 left-1/2 h-20 w-20 -translate-x-1/2 rounded-full bg-[#FF6A00]/10 blur-xl transition-all duration-500 group-hover:bg-[#FF6A00]/20" />
+                  <div
+                    className="
+      pointer-events-none
+      absolute
+      -bottom-10
+      left-1/2
+      h-20
+      w-20
+      -translate-x-1/2
+      rounded-full
+      bg-[#FF6A00]/20
+      blur-xl
+      transition-all
+      duration-[1400ms]
+      ease-in-out
+      group-hover:bg-[#FF6A00]/10
+    "
+                  />
                 </div>
               );
             })}
@@ -518,18 +582,16 @@ const About = () => {
                     sm:px-6
                     sm:py-3
                     sm:text-sm
-                    ${
-                      isActive
-                        ? "border border-[#FF6A00] bg-[#FF6A00] text-white shadow-[0_0_25px_rgba(255,106,0,0.4)]"
-                        : "border border-white/10 bg-[#11171c] text-white/70 hover:border-[#FF6A00]/40 hover:text-white"
+                    ${isActive
+                      ? "border border-[#FF6A00] bg-[#FF6A00] text-white shadow-[0_0_25px_rgba(255,106,0,0.4)]"
+                      : "border border-white/10 bg-[#11171c] text-white/70 hover:border-[#FF6A00]/40 hover:text-white"
                     }
                   `}
                 >
                   <TabIcon
                     size={16}
-                    className={`transition-colors ${
-                      isActive ? "text-white" : "text-[#FF6A00]"
-                    }`}
+                    className={`transition-colors ${isActive ? "text-white" : "text-[#FF6A00]"
+                      }`}
                   />
                   <span>{tab.label}</span>
                 </button>
@@ -779,103 +841,204 @@ const About = () => {
       </section>
 
       {/* =====================================================
-          7. CALL TO ACTION BANNER
-      ====================================================== */}
+    7. CALL TO ACTION BANNER
+====================================================== */}
       <section className="relative w-full overflow-hidden bg-[#03070a] py-16 sm:py-20">
         <PageContainer className="relative z-10">
           <div
             data-aos="zoom-in"
             className="
-              relative
-              overflow-hidden
-              rounded-3xl
-              border
-              border-[#FF6A00]/50
-              bg-gradient-to-br
-              from-[#171d22]
-              via-[#11171c]
-              to-[#080b0e]
-              p-8
-              text-center
-              shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.18)]
-              sm:p-12
-              lg:p-16
-            "
+        group
+        relative
+        overflow-hidden
+        rounded-3xl
+        border
+        border-[#FF6A00]/50
+        p-8
+        text-center
+        shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.18)]
+        sm:p-12
+        lg:p-16
+      "
           >
-            {/* Ambient inner glow */}
-            <div className="pointer-events-none absolute -left-20 top-0 h-40 w-40 rounded-full bg-[#FF6A00]/20 blur-3xl" />
-            <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-[#FF6A00]/20 blur-3xl" />
 
-            <h2 className="hero-font text-2xl font-bold uppercase text-white sm:text-4xl lg:text-[2.8rem]">
-              READY TO BUILD YOUR NEXT <span className="text-[#FF6A00]">BIG IDEA?</span>
-            </h2>
+            {/* Background Image */}
+            <div
+              className="
+          absolute
+          inset-0
+          bg-cover
+          bg-center
+          bg-no-repeat
+          transition-transform
+          duration-[1800ms]
+          ease-out
+          group-hover:scale-105
+        "
+              style={{
+                backgroundImage:
+                  "url('/images/cta-tech-img.png')",
+              }}
+            />
 
-            <p className="mx-auto mt-4 max-w-2xl text-xs leading-relaxed text-white/70 sm:text-sm md:text-base">
-              Partner with Q-Techx Solutions today. Let’s collaborate to turn
-              your visionary ideas into robust, scalable, and high-impact digital
-              realities.
-            </p>
+            {/* Dark Overlay */}
+            <div
+              className="
+    absolute
+    inset-0
+    bg-black/25
+  "
+            />
 
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link
-                to="/contact"
+            {/* Orange Gradient Overlay */}
+            <div
+              className="
+    pointer-events-none
+    absolute
+    inset-0
+    bg-gradient-to-r
+    from-black/30
+    via-black/10
+    to-[#FF6A00]/10
+  "
+            />
+
+            {/* Ambient Glow */}
+            <div
+              className="
+          pointer-events-none
+          absolute
+          -left-20
+          top-0
+          h-40
+          w-40
+          rounded-full
+          bg-[#FF6A00]/25
+          blur-3xl
+        "
+            />
+
+            <div
+              className="
+          pointer-events-none
+          absolute
+          -right-20
+          bottom-0
+          h-40
+          w-40
+          rounded-full
+          bg-[#FF6A00]/25
+          blur-3xl
+        "
+            />
+
+            {/* Content */}
+            <div className="relative z-10">
+
+              <h2
                 className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-2.5
-                  rounded-full
-                  bg-[#FF6A00]
-                  px-7
-                  py-3.5
-                  text-xs
-                  font-bold
-                  uppercase
-                  tracking-wider
-                  text-white
-                  shadow-[0_0_25px_rgba(255,106,0,0.4)]
-                  transition-all
-                  duration-300
-                  hover:bg-[#e05e00]
-                  hover:shadow-[0_0_35px_rgba(255,106,0,0.6)]
-                  sm:text-sm
-                "
+            hero-font
+            text-2xl
+            font-bold
+            uppercase
+            text-white
+            sm:text-4xl
+            lg:text-[2.8rem]
+          "
               >
-                <span>Get In Touch</span>
-                <FiArrowRight
-                  size={16}
-                  className="transition-transform duration-300 group-hover:translate-x-1"
-                />
-              </Link>
+                READY TO BUILD YOUR NEXT{" "}
+                <span className="text-[#FF6A00]">
+                  BIG IDEA?
+                </span>
+              </h2>
 
-              <Link
-                to="/projects"
+              <p
                 className="
-                  group
-                  inline-flex
-                  items-center
-                  gap-2.5
-                  rounded-full
-                  border
-                  border-white/20
-                  bg-white/[0.04]
-                  px-7
-                  py-3.5
-                  text-xs
-                  font-bold
-                  uppercase
-                  tracking-wider
-                  text-white
-                  transition-all
-                  duration-300
-                  hover:border-[#FF6A00]/60
-                  hover:bg-[#FF6A00]/10
-                  hover:text-[#FF6A00]
-                  sm:text-sm
-                "
+            mx-auto
+            mt-4
+            max-w-2xl
+            text-xs
+            leading-relaxed
+            text-white/80
+            sm:text-sm
+            md:text-base
+          "
               >
-                <span>View Our Projects</span>
-              </Link>
+                Partner with Q-Techx Solutions today. Let’s collaborate to turn
+                your visionary ideas into robust, scalable, and high-impact digital
+                realities.
+              </p>
+
+              {/* Buttons */}
+              <div className="mt-8 flex flex-wrap justify-center gap-4">
+
+                <Link
+                  to="/contact"
+                  className="
+              group/btn
+              inline-flex
+              items-center
+              gap-2.5
+              rounded-full
+              bg-[#FF6A00]
+              px-7
+              py-3.5
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-white
+              shadow-[0_0_25px_rgba(255,106,0,0.4)]
+              transition-all
+              duration-700
+              hover:bg-[#e05e00]
+              hover:shadow-[0_0_35px_rgba(255,106,0,0.6)]
+              sm:text-sm
+            "
+                >
+                  <span>Get In Touch</span>
+
+                  <FiArrowRight
+                    size={16}
+                    className="
+                transition-transform
+                duration-500
+                group-hover/btn:translate-x-1
+              "
+                  />
+                </Link>
+
+                <Link
+                  to="/projects"
+                  className="
+              group/btn
+              inline-flex
+              items-center
+              gap-2.5
+              rounded-full
+              border
+              border-white/30
+              bg-black/30
+              px-7
+              py-3.5
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-white
+              backdrop-blur-sm
+              transition-all
+              duration-700
+              hover:border-[#FF6A00]
+              hover:bg-[#FF6A00]/15
+              hover:text-[#FF6A00]
+              sm:text-sm
+            "
+                >
+                  <span>View Our Projects</span>
+                </Link>
+
+              </div>
             </div>
           </div>
         </PageContainer>
