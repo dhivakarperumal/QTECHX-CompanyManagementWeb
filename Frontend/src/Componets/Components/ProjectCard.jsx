@@ -22,22 +22,17 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         h-full
         flex-col
         overflow-hidden
-        rounded-2xl
+        rounded-3xl
         border
-        border-white/10
-        bg-gradient-to-br
-        from-[#171d22]
-        via-[#11171c]
-        to-[#0d1216]
+        border-white/[0.12]
+        bg-[#11171c]
         shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_16px_rgba(255,106,0,0.05)]
         transition-all
         duration-500
         ease-[cubic-bezier(0.22,1,0.36,1)]
         hover:-translate-y-1.5
         hover:border-[#FF6A00]/50
-        hover:from-[#1d2429]
-        hover:via-[#141b20]
-        hover:to-[#0f1519]
+        hover:bg-[#151d22]
         hover:shadow-[0_14px_34px_rgba(0,0,0,0.45),0_0_24px_rgba(255,106,0,0.14)]
       "
     >
@@ -66,11 +61,11 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       <div
         className="
           relative
-          h-[180px]
+          h-[175px]
           w-full
           overflow-hidden
           bg-[#080d11]
-            sm:h-[190px]
+            sm:h-[185px]
         "
       >
         <img
@@ -95,8 +90,8 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
             absolute
             inset-0
             bg-gradient-to-t
-            from-[#0d1216]/35
-            via-[#03070a]/10
+            from-[#0b1014]/45
+            via-[#03070a]/5
             to-transparent
           "
         />
@@ -132,10 +127,12 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       </div>
 
       {/* Content Wrapper */}
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
+      <div className="flex min-h-[238px] flex-1 flex-col p-5 sm:p-5">
         {/* Title */}
         <h3
           className="
+            line-clamp-2
+            min-h-[48px]
             text-lg
             font-bold
             tracking-tight
@@ -166,13 +163,13 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* Description */}
         <p
           className="
-            mt-3
-            line-clamp-3
+            mt-2.5
+            line-clamp-2
             text-xs
             leading-relaxed
             text-white/65
             sm:text-sm
-            sm:leading-6
+            sm:leading-5
           "
         >
           {project.description || "Scalable digital solution engineered for modern business performance."}
@@ -208,7 +205,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         )}
 
         {/* Footer Actions */}
-        <div className="mt-auto flex items-center justify-between pt-5">
+          <div className="mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
           {project.link && project.link !== "#" ? (
             <a
               href={project.link}
@@ -264,14 +261,14 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
             <button
               onClick={() => onSelect(project)}
               className="
-                text-[11px]
+                rounded-full border border-[#FF6A00]/35 bg-[#FF6A00]/10 px-3 py-1.5 text-[10px]
                 font-bold
                 uppercase
                 tracking-wider
-                text-white/50
-                transition-colors
-                duration-200
-                hover:text-[#FF6A00]
+                text-[#FFB066]
+                transition-all
+                duration-300
+                hover:-translate-y-0.5 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
               "
             >
               Quick View
@@ -285,18 +282,18 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         className="
           pointer-events-none
           absolute
-          -bottom-20
+          -bottom-24
           left-1/2
-          h-36
-          w-36
+          h-28
+          w-28
           -translate-x-1/2
           rounded-full
           bg-[#FF6A00]/10
-          opacity-50
-          blur-[45px]
+          opacity-30
+          blur-[40px]
           transition-all
           duration-500
-          group-hover:bg-[#FF6A00]/25
+          group-hover:bg-[#FF6A00]/20
           group-hover:opacity-100
         "
       />
