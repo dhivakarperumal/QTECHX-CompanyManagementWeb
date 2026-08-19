@@ -5,7 +5,10 @@ const {
   listQuotations,
   updateQuotation,
   deleteQuotation,
+  setQuotationStatus,
 } = require('../models/quotationModel');
+
+const quotationStatuses = ['Draft', 'Sent', 'Viewed', 'Accepted', 'Rejected', 'Expired', 'Cancelled'];
 
 function ok(res, data, code = 200) {
   return res.status(code).json({ success: true, ...data });
@@ -85,10 +88,57 @@ async function deleteQuotationHandler(req, res) {
   }
 }
 
+async function updateQuotationStatusHandler(req, res) {
+  const { status } = req.body || {};
+  if (!quotationStatuses.includes(status)) return fail(res, 'Invalid quotation status', 400);
+  try {
+    const quotation = await setQuotationStatus(req.params.id, status);
+    if (!quotation) return fail(res, 'Quotation not found', 404);
+    return ok(res, { data: quotation });
+  } catch (err) {
+    console.error('updateQuotationStatusHandler:', err);
+    return fail(res, 'Failed to update quotation status', 500, err.message);
+  }
+}
+
+async function duplicateQuotationHandler(req, res) {
+  try {
+    const source = await findQuotationByUUID(req.params.id);
+    if (!source) return fail(res, 'Quotation not found', 404);
+    const { id, uuid, quotation_number, created_at, updated_at, ...copy } = source;
+    const quotation = await createQuotation({ ...copy, status: 'Draft', quotation_date: new Date().toISOString().slice(0, 10), valid_until: null, created_by: req.user?.user_id || 'SYSTEM', updated_by: req.user?.user_id || 'SYSTEM' , uuid: uuidv4(), quotation_number: '' });
+    return ok(res, { data: quotation }, 201);
+  } catch (err) {
+    console.error('duplicateQuotationHandler:', err);
+    return fail(res, 'Failed to duplicate quotation', 500, err.message);
+  }
+}
+
+async function previewQuotationHandler(req, res) {
+  try {
+    const quotation = await findQuotationByUUID(req.params.id);
+    if (!quotation) return fail(res, 'Quotation not found', 404);
+    return ok(res, { data: quotation });
+  } catch (err) {
+    return fail(res, 'Failed to load quotation preview', 500, err.message);
+  }
+}
+
+async function shareQuotationHandler(req, res) {
+  const quotation = await findQuotationByUUID(req.params.id);
+  if (!quotation) return fail(res, 'Quotation not found', 404);
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  return ok(res, { data: { url: `${baseUrl}/#/quotation/${quotation.uuid}`, quotation_number: quotation.quotation_number } });
+}
+
 module.exports = {
   createQuotationHandler,
   getAllQuotationsHandler,
   getQuotationByIdHandler,
   updateQuotationHandler,
   deleteQuotationHandler,
+  updateQuotationStatusHandler,
+  duplicateQuotationHandler,
+  previewQuotationHandler,
+  shareQuotationHandler,
 };
