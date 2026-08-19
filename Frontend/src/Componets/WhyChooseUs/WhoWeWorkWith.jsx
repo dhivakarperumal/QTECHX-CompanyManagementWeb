@@ -124,30 +124,24 @@ const WhoWeWorkWith = () => {
                   className="
                     group
                     relative
-                    min-h-[230px]
+                    min-h-[250px]
                     flex
                     flex-col
                     items-center
                     justify-center
                     overflow-hidden
-                    rounded-2xl
+                    rounded-3xl
                     border
                     border-white/10
-                    bg-gradient-to-br
-                    from-[#171d22]
-                    via-[#11171c]
-                    to-[#0d1216]
-                    p-6
+                    bg-[#0e1419]
+                    p-3
                     text-center
                     shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
                     transition-all
                     duration-500
                     ease-[cubic-bezier(0.22,1,0.36,1)]
-                    hover:-translate-y-2
-                    hover:border-[#FF6A00]/50
-                    hover:from-[#1d2429]
-                    hover:via-[#141b20]
-                    hover:to-[#0f1519]
+                    hover:-translate-y-1.5
+                    hover:border-[#FF6A00]/45
                     hover:shadow-[0_18px_45px_rgba(0,0,0,0.8),0_0_28px_rgba(255,106,0,0.18)]
                   "
                 >
@@ -174,83 +168,24 @@ const WhoWeWorkWith = () => {
                     {String(index + 1).padStart(2, "0")}
                   </span>
 
-                  {/* Hover sweep */}
-                  <div className="pointer-events-none absolute inset-0 z-10 -translate-x-full skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
-
-                  {/* Icon Box */}
-                  <div
-                    className="
-                      relative
-                      mb-4
-                      flex
-                      h-20
-                      w-20
-                      items-center
-                      justify-center
-                      rounded-2xl
-                      border
-                      border-white/10
-                      bg-white/[0.03]
-                      p-3
-                      shadow-[inset_0_0_15px_rgba(255,106,0,0.05)]
-                      transition-all
-                      duration-500
-                      ease-out
-                      group-hover:scale-110
-                      group-hover:-translate-y-1
-                      group-hover:border-[#FF6A00]/40
-                      group-hover:bg-[#FF6A00]/10
-                      group-hover:shadow-[0_0_20px_rgba(255,106,0,0.25)]
-                    "
-                  >
+                  {/* Visual frame */}
+                  <div className="relative flex min-h-[178px] flex-1 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#1a242a] via-[#111a20] to-[#0a1014] transition-colors duration-500 group-hover:border-[#FF6A00]/30">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,106,0,0.12),transparent_55%)] opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-[1.4rem] border border-white/10 bg-[#0b1115]/80 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition-all duration-500 group-hover:-translate-y-1 group-hover:scale-105 group-hover:border-[#FF6A00]/40 group-hover:shadow-[0_0_24px_rgba(255,106,0,0.18)]">
                     <img
                       src={item.image}
                       alt={item.title}
                       className="h-full w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] transition-transform duration-700 ease-out group-hover:scale-110"
                     />
+                    </div>
                   </div>
 
-                  {/* Title */}
-                  <h3
-                    className="
-                      text-sm
-                      font-bold
-                      tracking-tight
-                      text-white
-                      transition-colors
-                      duration-300
-                      group-hover:-translate-y-0.5
-                      group-hover:text-[#FF6A00]
-                      sm:text-base
-                    "
-                  >
-                    {item.title}
-                  </h3>
-
-                  <span className="relative z-20 mt-3 flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/25 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:text-[#FF6A00]/80 group-hover:opacity-100">
-                    Explore domain <span aria-hidden="true">↗</span>
-                  </span>
-
-                  {/* Card Bottom Glow */}
-                  <div
-                    className="
-                      pointer-events-none
-                      absolute
-                      -bottom-16
-                      left-1/2
-                      h-28
-                      w-28
-                      -translate-x-1/2
-                      rounded-full
-                      bg-[#FF6A00]/10
-                      opacity-40
-                      blur-[35px]
-                      transition-all
-                      duration-500
-                      group-hover:bg-[#FF6A00]/25
-                      group-hover:opacity-100
-                    "
-                  />
+                  <div className="flex w-full items-center justify-between gap-3 px-2 py-2">
+                    <h3 className="text-left text-sm font-bold leading-5 tracking-tight text-white transition-colors duration-300 group-hover:text-[#FF6A00] sm:text-base">
+                      {item.title}
+                    </h3>
+                    <span className="shrink-0 text-lg text-[#FF6A00]/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-[#FF6A00]" aria-hidden="true">↗</span>
+                  </div>
                 </div>
               ))}
             </div>
