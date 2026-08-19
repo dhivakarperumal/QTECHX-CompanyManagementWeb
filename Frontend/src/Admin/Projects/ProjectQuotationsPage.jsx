@@ -6,9 +6,7 @@ import {
   Search,
   Eye,
   Pencil,
-  Copy,
   Trash2,
-  Mail,
   Download,
   Printer,
   FileText,
@@ -377,26 +375,9 @@ const ProjectQuotationsPage = () => {
     toast.success("Quotation deleted.");
   };
 
-  const handleDuplicate = async (quote) => {
-    try {
-      const { data } = await api.post(`/quotations/${getQuoteKey(quote)}/duplicate`);
-      setQuotations((prev) => [data.data, ...prev]);
-      toast.success("Quotation duplicated successfully.");
-    } catch (err) {
-      console.error("handleDuplicate:", err);
-      toast.error("Unable to duplicate quotation.");
-    }
-  };
-
   const handleQuickAction = async (action, quote) => {
     const key = getQuoteKey(quote);
-    if (action === "email") {
-      await api.patch(`/quotations/${key}/status`, { status: "Sent" });
-      setQuotations((prev) =>
-        prev.map((item) => (getQuoteKey(item) === key ? { ...item, status: "Sent" } : item))
-      );
-      toast.success("Quotation marked as sent. Configure email delivery to attach the PDF.");
-    } else if (action === "pdf") {
+    if (action === "pdf") {
       const { data } = await api.get(`/quotations/${key}/preview`);
       const printWindow = window.open("", "quotation-preview", "width=900,height=700");
       if (printWindow) {
@@ -846,15 +827,15 @@ const ProjectQuotationsPage = () => {
                         <button onClick={() => openEditModal(quote)} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition" title="Edit">
                           <Pencil size={13} />
                         </button>
-                        <button onClick={() => handleDuplicate(quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Duplicate">
+                        {/* <button onClick={() => handleDuplicate(quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Duplicate">
                           <Copy size={13} />
-                        </button>
-                        <button onClick={() => handleQuickAction("pdf", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="PDF">
+                        </button> */}
+                        {/* <button onClick={() => handleQuickAction("pdf", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="PDF">
                           <Download size={13} />
-                        </button>
-                        <button onClick={() => handleQuickAction("email", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Email">
+                        </button> */}
+                        {/* <button onClick={() => handleQuickAction("email", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Email">
                           <Mail size={13} />
-                        </button>
+                        </button> */}
                         <button onClick={() => handleQuickAction("print", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Print">
                           <Printer size={13} />
                         </button>
@@ -932,9 +913,12 @@ const ProjectQuotationsPage = () => {
                     <button onClick={() => openEditModal(quote)} className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 flex items-center justify-center transition" title="Edit">
                       <Pencil size={13} />
                     </button>
-                    <button onClick={() => handleDuplicate(quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 flex items-center justify-center transition" title="Duplicate">
+                     <button onClick={() => handleQuickAction("print", quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 border border-transparent hover:border-white/15 flex items-center justify-center transition" title="Print">
+                          <Printer size={13} />
+                      </button>
+                    {/* <button onClick={() => handleDuplicate(quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/70 flex items-center justify-center transition" title="Duplicate">
                       <Copy size={13} />
-                    </button>
+                    </button> */}
                     <button onClick={() => handleDelete(quote)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition" title="Delete">
                       <Trash2 size={13} />
                     </button>
