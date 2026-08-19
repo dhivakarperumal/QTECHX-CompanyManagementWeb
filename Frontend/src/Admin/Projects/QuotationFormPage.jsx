@@ -356,6 +356,18 @@ export default function QuotationFormPage() {
     const payload  = {
       ...formData,
       ...pricing,
+      timeline_items: (formData.timeline_items || []).map((phase, index) => ({
+        ...phase,
+        sort_order: index,
+        phase: phase.phase || phase.phase_name || "",
+        description: phase.description || "",
+        features_modules: Array.isArray(phase.features_modules) ? phase.features_modules.join(", ") : (phase.features_modules || ""),
+        duration: phase.duration || "",
+        estimated_working_days: Number(phase.estimated_working_days) || 0,
+        cost: Number(phase.cost) || 0,
+        start_date: phase.start_date || null,
+        end_date: phase.end_date || null,
+      })),
       terms_conditions: formData.terms_conditions ||
         formData.terms_sections.map(s => `${s.title}: ${s.content}`).join("\n"),
       activity_logs: [

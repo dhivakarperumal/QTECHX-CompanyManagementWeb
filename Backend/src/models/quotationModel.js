@@ -95,7 +95,7 @@ async function createQuotation(data) {
       items, additional_charges_items, support_details, timeline_items, terms_sections, attachments, activity_logs, approval, client_message,
       response_date, sent_date, viewed_date, download_count, email_status, whatsapp_status,
       created_by, updated_by, deleted
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (${Array.from({ length: 53 }, () => '?').join(',')})`,
     [
       data.uuid,
       quotationNumber,
@@ -207,21 +207,34 @@ async function listQuotations({ page = 1, limit = 50, search, status, approval_s
 
 async function updateQuotation(uuid, updates) {
   const db = getDB();
-  if (Array.isArray(updates.timeline_items)) updates.timeline_items = normalizeTimeline(updates.timeline_items);
-  Object.assign(updates, calculateTotals(updates));
-  const fields = Object.keys(updates).filter((field) => quotationFields.split(', ').includes(field) && !['id', 'uuid', 'quotation_number', 'created_at'].includes(field));
+  const existing = await findQuotationByUUID(uuid);
+  if (!existing) return null;
+  const merged = { ...existing, ...updates };
+  if (Array.isArray(merged.timeline_items)) merged.timeline_items = normalizeTimeline(merged.timeline_items);
+  Object.assign(merged, calculateTotals(merged));
+  const fields = Object.keys(merged).filter((field) => quotationFields.split(', ').includes(field) && !['id', 'uuid', 'quotation_number', 'created_at'].includes(field));
   if (!fields.length) return findQuotationByUUID(uuid);
 
   const assignments = fields.map((field) => `${field} = ?`).join(', ');
   const values = fields.map((field) => {
     if (['items', 'additional_charges_items', 'support_details', 'timeline_items', 'terms_sections', 'attachments', 'activity_logs', 'approval'].includes(field)) {
-      return JSON.stringify(updates[field] || []);
+      return JSON.stringify(merged[field] || []);
     }
-    return updates[field];
+    return merged[field];
   });
   values.push(uuid);
 
-  await db.execute(`UPDATE quotations SET ${assignments} WHERE uuid = ?`, values);
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.execute(`UPDATE quotations SET ${assignments} WHERE uuid = ? AND deleted = 0`, values);
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
   return findQuotationByUUID(uuid);
 }
 
