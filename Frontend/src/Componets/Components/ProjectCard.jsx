@@ -160,8 +160,10 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* ================= TITLE ================= */}
 
         <h3
+          onClick={() => onSelect(project)}
           className="
           line-clamp-2
+          cursor-pointer
           min-h-[37px]
           text-lg
           font-bold
