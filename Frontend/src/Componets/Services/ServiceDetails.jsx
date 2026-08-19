@@ -585,7 +585,7 @@ const ServiceDetails = () => {
 
 
       {/* =====================================================
-          4. WHY CHOOSE US SECTION (REQUESTED FEATURE)
+          4. WHY CHOOSE US SECTION 
       ====================================================== */}
       <section className="relative w-full overflow-hidden bg-[#03070a] py-14 sm:py-16 md:py-20">
         {/* Neon lines */}
@@ -618,40 +618,110 @@ const ServiceDetails = () => {
                   data-aos="fade-up"
                   data-aos-delay={idx * 100}
                   className="
-                    group
-                    relative
-                    overflow-hidden
-                    rounded-2xl
-                    border
-                    border-white/10
-                    bg-gradient-to-br
-                    from-[#171d22]
-                    via-[#11171c]
-                    to-[#0d1216]
-                    p-6
-                    shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
-                    transition-all
-                    duration-500
-                    hover:-translate-y-2
-                    hover:border-[#FF6A00]/50
-                    hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.20)]
-                  "
+    group
+    relative
+    overflow-hidden
+    rounded-2xl
+    border
+    border-[#FF6A00]/50
+    bg-gradient-to-br
+    from-[#171d22]
+    via-[#11171c]
+    to-[#0d1216]
+    p-6
+    shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.20)]
+    transition-all
+    duration-[1200ms]
+    ease-[cubic-bezier(0.22,1,0.36,1)]
+    hover:-translate-y-0
+    hover:border-white/10
+    hover:shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(255,106,0,0.06)]
+  "
                 >
-                  <div className="absolute left-0 right-0 top-0 h-[2px] bg-[#FF6A00] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  {/* Top orange line */}
+                  <div
+                    className="
+      absolute
+      left-0
+      right-0
+      top-0
+      h-[2px]
+      bg-[#FF6A00]
+      opacity-100
+      transition-opacity
+      duration-[1200ms]
+      ease-in-out
+      group-hover:opacity-0
+    "
+                  />
 
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#FF6A00]/10 text-[#FF6A00] transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#FF6A00] group-hover:text-white">
+                  {/* Icon */}
+                  <div
+                    className="
+      mb-5
+      flex
+      h-12
+      w-12
+      items-center
+      justify-center
+      rounded-xl
+      border
+      border-[#FF6A00]
+      bg-[#FF6A00]
+      text-white
+      transition-all
+      duration-[1200ms]
+      ease-[cubic-bezier(0.22,1,0.36,1)]
+      group-hover:scale-100
+      group-hover:border-[#FF6A00]/30
+      group-hover:bg-[#FF6A00]/10
+      group-hover:text-[#FF6A00]
+    "
+                  >
                     <IconComp size={22} />
                   </div>
 
-                  <h3 className="mb-2 text-base font-bold text-white transition-colors duration-300 group-hover:text-[#FF6A00] sm:text-lg">
+                  {/* Title */}
+                  <h3
+                    className="
+      mb-2
+      text-base
+      font-bold
+      text-[#FF6A00]
+      transition-colors
+      duration-[1000ms]
+      ease-in-out
+      group-hover:text-white
+      sm:text-lg
+    "
+                  >
                     {title}
                   </h3>
 
+                  {/* Description */}
                   <p className="text-xs leading-relaxed text-white/65 sm:text-sm">
                     {desc}
                   </p>
 
-                  <div className="pointer-events-none absolute -bottom-10 left-1/2 h-20 w-20 -translate-x-1/2 rounded-full bg-[#FF6A00]/10 blur-xl transition-all duration-500 group-hover:bg-[#FF6A00]/20" />
+                  {/* Glow */}
+                  <div
+                    className="
+      pointer-events-none
+      absolute
+      -bottom-10
+      left-1/2
+      h-20
+      w-20
+      -translate-x-1/2
+      rounded-full
+      bg-[#FF6A00]/20
+      blur-xl
+      transition-all
+      duration-[1400ms]
+      ease-in-out
+      group-hover:bg-[#FF6A00]/10
+    "
+                  />
                 </div>
               );
             })}
