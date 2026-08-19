@@ -156,7 +156,7 @@ const STEPS = [
   { id: "project",  label: "Project",        icon: Briefcase },
   { id: "items",    label: "Line Items",     icon: Layers },
   { id: "pricing",  label: "Pricing",        icon: DollarSign },
-  { id: "charges",  label: "Extra Charges",  icon: CreditCard },
+  { id: "charges",  label: "Additional / Third-Party Charges",  icon: CreditCard },
   { id: "timeline", label: "Timeline",       icon: Clock },
   { id: "terms",    label: "Terms",          icon: FileText },
   { id: "support",  label: "Support & AMC",  icon: Wrench },
@@ -917,6 +917,53 @@ function StepPricing({ formData, set, fmt }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function StepCharges({ formData, updateCharge, addCharge, removeCharge, fmt }) {
+  const charges = formData.additional_charges_items || [];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h2 className="text-base font-bold text-white">Additional / Third-Party Charges</h2><p className="mt-0.5 text-xs text-white/35">Add optional services and recurring charges to this quotation</p></div>
+        <div className="flex flex-wrap gap-2">{chargeOptions.map(option => <button key={option} onClick={() => addCharge(option)} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-orange-500/15 hover:text-orange-300">+ {option}</button>)}</div>
+      </div>
+      {charges.length === 0 ? <button onClick={() => addCharge()} className="w-full rounded-2xl border border-dashed border-orange-400/30 bg-orange-500/5 py-10 text-sm text-orange-300 hover:bg-orange-500/10">Add a third-party service</button> : charges.map((charge, idx) => (
+        <div key={idx} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="mb-4 flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-wider text-orange-400">Charge {idx + 1}</span><button onClick={() => removeCharge(idx)} className="text-rose-400"><Trash2 size={15} /></button></div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Service name" className="sm:col-span-2"><input value={charge.service_name} onChange={e => updateCharge(idx, "service_name", e.target.value)} placeholder="e.g. Domain" className={inputCls} /></Field>
+            <Field label="Quantity"><input type="number" min="1" value={charge.quantity} onChange={e => updateCharge(idx, "quantity", Number(e.target.value))} className={inputCls} /></Field>
+            <Field label="Unit price"><input type="number" min="0" value={charge.unit_price} onChange={e => updateCharge(idx, "unit_price", Number(e.target.value))} className={inputCls} /></Field>
+            <Field label="Tax %"><input type="number" min="0" value={charge.tax_percentage} onChange={e => updateCharge(idx, "tax_percentage", Number(e.target.value))} className={inputCls} /></Field>
+            <Field label="Recurring / One-Time"><select value={charge.billing_type} onChange={e => updateCharge(idx, "billing_type", e.target.value)} className={selectCls}><option>One-Time</option><option>Recurring</option></select></Field>
+            <Field label="Billing period"><input value={charge.billing_period} onChange={e => updateCharge(idx, "billing_period", e.target.value)} placeholder="Monthly / Yearly" className={inputCls} /></Field>
+            <Field label="Total"><div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-orange-300">{fmt(charge.total, formData.currency)}</div></Field>
+            <Field label="Description" className="sm:col-span-2 lg:col-span-4"><textarea value={charge.description} onChange={e => updateCharge(idx, "description", e.target.value)} placeholder="Describe this charge" className={textareaCls} /></Field>
+          </div>
+        </div>
+      ))}
+      <div className="flex justify-end rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-sm font-bold text-orange-300">Additional charges: {fmt(formData.additional_charges, formData.currency)}</div>
+    </div>
+  );
+}
+
+function StepSupport({ formData, updateSupport }) {
+  const support = formData.support_details || createDefaultSupport();
+  return (
+    <Section title="Support & Maintenance" subtitle="Define included support and AMC terms" icon={Wrench}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Free support duration"><input value={support.free_support_duration} onChange={e => updateSupport("free_support_duration", e.target.value)} placeholder="e.g. 30 days" className={inputCls} /></Field>
+        <Field label="AMC status"><select value={support.amc_status} onChange={e => updateSupport("amc_status", e.target.value)} className={selectCls}><option>Included</option><option>Optional</option><option>Paid</option></select></Field>
+        <Field label="Bug-fix terms" className="sm:col-span-2"><textarea value={support.bug_fix_terms} onChange={e => updateSupport("bug_fix_terms", e.target.value)} placeholder="Describe bug-fix coverage and exclusions" className={textareaCls} /></Field>
+        <Field label="Deployment support" className="sm:col-span-2"><textarea value={support.deployment_support} onChange={e => updateSupport("deployment_support", e.target.value)} placeholder="Describe deployment and handover support" className={textareaCls} /></Field>
+        <Field label="AMC details" className="sm:col-span-2"><textarea value={support.amc_details} onChange={e => updateSupport("amc_details", e.target.value)} placeholder="Describe AMC coverage" className={textareaCls} /></Field>
+        <Field label="AMC cost"><input type="number" min="0" value={support.amc_cost} onChange={e => updateSupport("amc_cost", Number(e.target.value))} className={inputCls} /></Field>
+        <Field label="AMC duration"><input value={support.amc_duration} onChange={e => updateSupport("amc_duration", e.target.value)} placeholder="e.g. 12 months" className={inputCls} /></Field>
+        <Field label="AMC start date"><input type="date" value={support.amc_start_date} onChange={e => updateSupport("amc_start_date", e.target.value)} className={inputCls} /></Field>
+        <Field label="AMC end date"><input type="date" value={support.amc_end_date} onChange={e => updateSupport("amc_end_date", e.target.value)} className={inputCls} /></Field>
+      </div>
+    </Section>
   );
 }
 
