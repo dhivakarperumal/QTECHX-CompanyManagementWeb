@@ -95,19 +95,25 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
             left-3
             top-3
             z-10
-            rounded-full
+            rounded-lg
             border
-            border-[#FF6A00]/50
-            bg-[#03070a]/85
-            px-3
-            py-1
-            text-[10px]
-            font-semibold
+            border-[#FF6A00]/60
+            bg-[#111820]/90
+            px-3.5
+            py-1.5
+            text-[9px]
+            font-bold
             uppercase
-            tracking-wider
-            text-[#FF6A00]
+            tracking-[0.16em]
+            text-[#ff9a4d]
             backdrop-blur-md
-            shadow-[0_0_12px_rgba(255,106,0,0.2)]
+            shadow-[0_6px_16px_rgba(0,0,0,0.35)]
+            transition-all
+            duration-300
+            group-hover:border-[#FF6A00]
+            group-hover:bg-[#FF6A00]
+            group-hover:text-white
+            group-hover:shadow-[0_0_16px_rgba(255,106,0,0.35)]
           "
         >
           {project.category || "Project"}
@@ -141,7 +147,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* Orange Accent Bar */}
         <div
           className="
-            mt-2.5
+            mt-1
             h-[2px]
             w-8
             bg-[#FF6A00]
