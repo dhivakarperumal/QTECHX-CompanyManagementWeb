@@ -316,6 +316,11 @@ const ProjectQuotationsPage = () => {
   // ── Stat cards (logic unchanged) ──
   const statCards = useMemo(() => {
     const totalValue = quotations.reduce((sum, item) => sum + Number(item.grand_total || 0), 0);
+    const advanceValue = quotations.reduce((sum, item) => sum + Number(item.advance_amount || 0), 0);
+    const remainingValue = quotations.reduce((sum, item) => {
+      const balance = item.balance_amount ?? (Number(item.grand_total || 0) - Number(item.advance_amount || 0));
+      return sum + Math.max(Number(balance) || 0, 0);
+    }, 0);
     const approvedValue = quotations
       .filter((item) => item.approval_status === "Approved")
       .reduce((sum, item) => sum + Number(item.grand_total || 0), 0);
@@ -328,6 +333,8 @@ const ProjectQuotationsPage = () => {
       { label: "Expired",             value: quotations.filter((item) => item.status === "Expired").length,              icon: Clock3,          cls: "text-slate-400",   bg: "bg-slate-500/15"   },
       { label: "Converted",           value: quotations.filter((item) => item.status === "Converted to Project").length, icon: FolderKanban,    cls: "text-violet-400",  bg: "bg-violet-500/15"  },
       { label: "Total Value",         value: formatCurrency(totalValue),                                                  icon: CircleDollarSign,cls: "text-orange-400",  bg: "bg-orange-500/15"  },
+      { label: "Advance Paid",        value: formatCurrency(advanceValue),                                               icon: CircleDollarSign,cls: "text-emerald-400",  bg: "bg-emerald-500/15"  },
+      { label: "Remaining Amount",    value: formatCurrency(remainingValue),                                             icon: CircleDollarSign,cls: "text-rose-400",     bg: "bg-rose-500/15"     },
       { label: "Approved Value",      value: formatCurrency(approvedValue),                                               icon: Sparkles,        cls: "text-teal-400",    bg: "bg-teal-500/15"    },
       { label: "Pending Approvals",   value: pendingApprovals,                                                            icon: CircleAlert,     cls: "text-fuchsia-400", bg: "bg-fuchsia-500/15" },
     ];
