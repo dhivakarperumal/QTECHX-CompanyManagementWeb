@@ -65,8 +65,8 @@ const SectionTitle = ({
   // Heading sizes
   const sizeClasses = {
     sm: "text-lg sm:text-xl md:text-2xl",
-    default: "text-xl sm:text-2xl md:text-3xl lg:text-4xl",
-    lg: "text-2xl sm:text-3xl md:text-4xl lg:text-[2.7rem]",
+    default: "text-xl sm:text-2xl md:text-3xl lg:text-[2rem]",
+    lg: "text-2xl sm:text-2.5xl md:text-3xl lg:text-[2rem]",
   }[size] || "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
 
   const aosProps = aos

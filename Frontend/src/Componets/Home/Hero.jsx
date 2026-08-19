@@ -67,8 +67,8 @@ const Hero = () => {
               text-white
               sm:text-3xl
               md:text-3xl
-              lg:text-[3.2rem]
-              xl:text-[3.2rem]
+              lg:text-[3rem]
+              xl:text-[2.7rem]
             "
             >
               SMART IDEAS.

@@ -98,7 +98,7 @@ const EventBanner = () => {
               text-white
               sm:text-4xl
               md:text-4xl
-              lg:text-[3rem]
+              lg:text-[2.7rem]
             "
             >
               STUDENT
