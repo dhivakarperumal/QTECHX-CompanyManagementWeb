@@ -8,7 +8,6 @@ import Footer from "./Componets/Components/Footer";
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
 import ScrollNavigator from "./Componets/CommonComponents/ScrollNavigator";
 import Loader from "./Componets/CommonComponents/Loader";
-import FloatingSupport from "./Componets/CommonComponents/FloatingSupport";
 
 function App() {
   const [loading] = useState(false);
@@ -44,7 +43,6 @@ function App() {
           },
         }}
       />
-      {!isAdmin && <FloatingSupport />}
       {showPublicChrome && <Footer />}
       {/* {showPublicChrome && <Footer />} */}
     </section>

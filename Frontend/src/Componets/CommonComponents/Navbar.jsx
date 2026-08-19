@@ -105,7 +105,9 @@ const Navbar = () => {
         <PageContainer>
           <div className="mx-auto flex h-[72px] w-full max-w-[1480px] items-center justify-between ">
             <Link to="/" className="flex items-center gap-3">
-              <img src="/images/logo.png" alt="Q-Techx logo" className="h-10 w-auto sm:h-12" />
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#FF6A00]/45 bg-[#111820] p-2 shadow-[0_8px_24px_rgba(0,0,0,0.28)] sm:h-14 sm:w-14">
+                <img src="/images/logo.png" alt="Q-Techx logo" className="h-full w-full object-contain" />
+              </span>
               <div className="leading-none">
                 <div className="text-[18px] font-black tracking-tight text-white sm:text-[20px]">Q-TECHX</div>
                 <div className="mt-0.5 text-[8px] font-semibold tracking-[0.32em] text-orange-300/90 sm:text-[9px]">SOLUTIONS</div>
@@ -383,7 +385,9 @@ const Navbar = () => {
         >
           <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
-              <img src="/images/logo.png" alt="Q-Techx logo" className="h-8 w-auto" />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#FF6A00]/45 bg-[#111820] p-2">
+                <img src="/images/logo.png" alt="Q-Techx logo" className="h-full w-full object-contain" />
+              </span>
               <div className="leading-none">
                 <div className="text-base font-black tracking-tight text-white">Q-TECHX</div>
                 <div className="mt-1 text-[7px] font-semibold tracking-[0.28em] text-orange-300">SOLUTIONS</div>
