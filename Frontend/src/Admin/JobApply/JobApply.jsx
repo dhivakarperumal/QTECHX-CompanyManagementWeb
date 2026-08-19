@@ -20,7 +20,6 @@ import toast from "react-hot-toast";
 import api from "../../api";
 import Head from "../../Componets/Components/Head";
 import PageContainer from "../../Componets/CommonComponents/PageContainer";
-import SocialMedia from "../../Componets/Home/SocialMedia";
 
 const FORM_STEPS = [
   { id: 1, title: "Personal", label: "Personal Info", icon: User },
@@ -2160,7 +2159,6 @@ const JobApply = () => {
       </div>
 
       {/* ── SOCIAL MEDIA FOOTER ── */}
-      <SocialMedia />
     </>
   );
 };

@@ -7,7 +7,6 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { FiCheckCircle, FiSend, FiBell } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import SocialMedia from "../Home/SocialMedia";
 import PageContainer from "../CommonComponents/PageContainer";
 import emailjs from "@emailjs/browser";
 import api from "../../api";
@@ -553,7 +552,6 @@ const CareerDetail = () => {
       </div>
 
       {/* ── SOCIAL MEDIA FOOTER (MATCHING HOME) ── */}
-      <SocialMedia />
     </>
   );
 };

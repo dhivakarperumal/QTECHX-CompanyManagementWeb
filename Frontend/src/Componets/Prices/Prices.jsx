@@ -15,7 +15,6 @@ import {
   FiChevronUp,
   FiHelpCircle,
 } from "react-icons/fi";
-import SocialMedia from "../Home/SocialMedia";
 import PageContainer from "../CommonComponents/PageContainer";
 import api from "../../api";
 
@@ -707,7 +706,6 @@ const Prices = () => {
       </div>
 
       {/* ── SOCIAL MEDIA FOOTER (MATCHING HOME) ── */}
-      <SocialMedia />
     </>
   );
 };

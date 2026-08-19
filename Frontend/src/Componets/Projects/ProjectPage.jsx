@@ -13,7 +13,6 @@ import {
   FiCheckCircle,
   FiZap,
 } from "react-icons/fi";
-import SocialMedia from "../Home/SocialMedia";
 import ProjectCard from "../Components/ProjectCard";
 import PageContainer from "../CommonComponents/PageContainer";
 import api from "../../api";
@@ -628,7 +627,6 @@ const ProjectPage = () => {
       )}
 
       {/* ── SOCIAL MEDIA FOOTER (MATCHING HOME) ── */}
-      <SocialMedia />
     </>
   );
 };

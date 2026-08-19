@@ -4,7 +4,6 @@ import emailjs from "@emailjs/browser";
 import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
-import SocialMedia from "../Home/SocialMedia";
 
 const Form = () => {
   const [formData, setFormData] = useState({
@@ -303,7 +302,6 @@ const Form = () => {
       </div>
     </section>
 
-    <SocialMedia/>
     </>
   );
 };

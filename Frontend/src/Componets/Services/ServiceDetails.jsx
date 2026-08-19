@@ -25,7 +25,6 @@ import {
 } from "react-icons/fi";
 
 import PageContainer from "../CommonComponents/PageContainer";
-import SocialMedia from "../Home/SocialMedia";
 import api from "../../api";
 
 import "slick-carousel/slick/slick.css";
@@ -910,7 +909,6 @@ const ServiceDetails = () => {
       {/* =====================================================
           5. SOCIAL MEDIA SECTION
       ====================================================== */}
-      <SocialMedia />
     </div>
   );
 };

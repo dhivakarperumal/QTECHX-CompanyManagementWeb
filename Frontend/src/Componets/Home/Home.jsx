@@ -6,7 +6,6 @@ import WhyChooseUs from "./WhyChooseUs";
 import Projects from "./Projects";
 import Careers from "./Careers";
 import Testimonial from "./Testimonial";
-import SocialMedia from "./SocialMedia";
 import EventBanner from "./EventBanner";
 
 const Home = () => {
@@ -22,7 +21,6 @@ const Home = () => {
       <Projects />
       <Careers />
       <Testimonial />
-      <SocialMedia />
     </>
   );
 };
