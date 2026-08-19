@@ -434,11 +434,11 @@ const AboutUs = () => {
             />
 
             <CounterCard
-              end={24}
-              suffix="/7"
-              label="Support"
-              description="Technical Assistance"
-              icon={FiClock}
+              end={99}
+              suffix="%"
+              label="Delivery"
+              description="On-Time Delivery"
+              icon={FiTrendingUp}
               delay={500}
             />
           </div>
