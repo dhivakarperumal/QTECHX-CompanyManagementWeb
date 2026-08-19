@@ -1,6 +1,6 @@
 // src/components/ScrollNavigator.jsx
 import React, { useEffect, useState } from "react";
-import { FiChevronUp } from "react-icons/fi";
+import { FiArrowUp } from "react-icons/fi";
 
 const ScrollNavigator = () => {
   const [showButtons, setShowButtons] = useState(false);
@@ -26,10 +26,10 @@ const ScrollNavigator = () => {
       <div className="fixed right-4 bottom-5 z-30 flex flex-col gap-3">
         <button
           onClick={scrollToTop}
-          className="bg-primary-light text-white p-2 cursor-pointer rounded-full shadow-md  transition"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#FF6A00] text-white shadow-[0_8px_22px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#e85d00] hover:shadow-[0_10px_26px_rgba(255,106,0,0.35)] focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/50"
           aria-label="Scroll to top"
         >
-          <FiChevronUp size={24} />
+          <FiArrowUp size={28} strokeWidth={3} />
         </button>
       </div>
     )
