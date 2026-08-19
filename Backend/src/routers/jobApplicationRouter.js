@@ -64,9 +64,6 @@ router.get("/:job_id/form-data", async (req, res) => {
   }
 });
 
-// Public route - Pre-check email and phone eligibility
-router.post("/:job_id/check-eligibility", JobApplicationController.checkEligibility);
-
 // Admin/Recruiter routes - MUST BE BEFORE /:id routes
 // Get all applications
 router.get(
@@ -90,22 +87,6 @@ router.get(
   authenticate,
   authorize("admin", "recruiter"),
   JobApplicationController.getApplicationsByJob
-);
-
-// Admin/Recruiter routes - Get eligible applicants for conversion
-router.get(
-  "/admin/eligible-for-conversion",
-  authenticate,
-  authorize("admin", "recruiter", "hr"),
-  JobApplicationController.getEligibleApplicantsForConversion
-);
-
-// Admin/Recruiter routes - Convert job applicant to employee
-router.post(
-  "/admin/convert-to-employee",
-  authenticate,
-  authorize("admin", "recruiter", "hr"),
-  JobApplicationController.convertToEmployee
 );
 
 // Public route - Submit application
