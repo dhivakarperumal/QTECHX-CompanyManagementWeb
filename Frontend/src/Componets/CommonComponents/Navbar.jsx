@@ -54,7 +54,6 @@ const Navbar = () => {
     { id: 1, title: "Why Choose Us", path: "/whychooseus" },
     { id: 2, title: "Who We Work With", path: "/whoweworkwith" },
     { id: 3, title: "What We Do", path: "/whatwedo" },
-    { id: 4, title: "Our Achievements", path: "/achievements" },
   ];
 
   const iconMap = {
