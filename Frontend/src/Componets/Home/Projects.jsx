@@ -593,16 +593,7 @@ const Projects = () => {
                 "
               >
                 <div>
-                  <p
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-widest
-                      text-white/35
-                    "
-                  >
-                    SHOWING
-                  </p>
+
 
                   <h3
                     className="
@@ -753,27 +744,32 @@ const Projects = () => {
                           </div>
 
 
-                          {/* =================================
-    PROJECT NAME + CATEGORY
+                        {/* =================================
+    PROJECT NAME + CATEGORY + DESCRIPTION
 ================================= */}
 
-                          <div className="px-4 py-4 text-left">
-                            <h3
-                              className="
+<div className="px-4 py-4 text-left">
+
+  {/* Project Name */}
+  <h3
+    className="
+      min-h-[24px]
       text-base
       font-semibold
+      leading-6
       text-white
       transition-colors
       duration-300
       group-hover:text-[#FF6A00]
       sm:text-lg
     "
-                            >
-                              {project.title}
-                            </h3>
+  >
+    {project.title}
+  </h3>
 
-                            <span
-                              className="
+  {/* Category */}
+  <span
+    className="
       mt-2
       inline-flex
       items-center
@@ -793,12 +789,29 @@ const Projects = () => {
       group-hover:border-[#FF6A00]/70
       group-hover:bg-[#FF6A00]/15
     "
-                            >
-                              {project.category}
-                            </span>
-                          </div>
+  >
+    {project.category}
+  </span>
 
+  {/* Description */}
+  <p
+    className="
+      mt-3
+      h-[40px]
+      overflow-hidden
+      line-clamp-2
+      text-xs
+      leading-5
+      text-white/55
+      sm:text-sm
+      sm:leading-5
+    "
+  >
+    {project.description ||
+      "Scalable digital solution engineered for modern business performance."}
+  </p>
 
+</div>
                           {/* Bottom glow */}
 
                           <div
