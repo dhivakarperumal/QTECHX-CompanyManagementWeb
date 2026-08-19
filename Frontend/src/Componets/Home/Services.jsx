@@ -171,14 +171,15 @@ function Services() {
                     to={`/services/${service.id}`}
                     data-aos="fade-up"
                     data-aos-delay={index * 70}
-                    className="group"
+                    className="group flex h-full flex-col"
                   >
                     <article
                       className="
     group
     relative
     flex
-    min-h-[330px]
+    h-full
+    min-h-[340px]
     flex-col
     overflow-hidden
     rounded-[20px]
@@ -304,13 +305,15 @@ function Services() {
                       <div className="relative z-10 flex flex-1 flex-col">
 
                         <h3
+                          title={service.title}
                           className="
         mb-3
-        max-w-[90%]
+        line-clamp-2
+        h-12
         text-lg
         font-bold
         uppercase
-        leading-tight
+        leading-6
         tracking-wide
         text-white
         transition-all
@@ -323,7 +326,7 @@ function Services() {
 
                         <p
                           className="
-        line-clamp-5
+        line-clamp-4
         text-sm
         leading-6
         text-white/45
