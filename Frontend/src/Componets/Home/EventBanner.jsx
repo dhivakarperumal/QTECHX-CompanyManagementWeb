@@ -90,14 +90,14 @@ const EventBanner = () => {
               data-aos="fade-up"
               data-aos-delay="300"
               className="
-              text-3xl
+              text-2xl
               font-bold
               uppercase
               leading-[1.2]
               tracking-tight
               text-white
-              sm:text-4xl
-              md:text-4xl
+              sm:text-2xl
+              md:text-2xl
               lg:text-[2.7rem]
             "
             >
@@ -118,11 +118,13 @@ const EventBanner = () => {
               mx-auto
               mt-2
               max-w-[480px]
-              text-sm
+              text-xs
+              md:text-base
               leading-6
               text-white/80
-              sm:text-base
+              sm:text-xs
               sm:leading-7
+              
               md:mx-0
             "
             >
@@ -152,8 +154,8 @@ const EventBanner = () => {
                 gap-4
                 rounded-lg
                 bg-[#FF6A00]
-                px-6
-                py-3
+                px-4
+                py-2
                 text-sm
                 font-bold
                 uppercase
