@@ -264,7 +264,7 @@ function ProjectAssetsPage() {
   useEffect(() => {
     if (isImageRoute) {
       setFilterType('project_image');
-      setViewMode('card');
+      setViewMode('table');
       return;
     }
     if (isDocumentsRoute) {
@@ -819,6 +819,7 @@ function ProjectAssetsPage() {
             <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="bg-white/[0.03] border-b border-white/8">
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Preview</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">File Name</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Project</th>
@@ -829,8 +830,11 @@ function ProjectAssetsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAssets.map((asset) => (
+                {filteredAssets.map((asset,ind) => (
                   <tr key={asset.id} className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group">
+                     <td className="px-4 py-3.5">
+                      <p className="text-white font-semibold text-sm truncate max-w-[200px]" >{ind+1}</p>
+                    </td>
                     <td className="px-5 py-3">
                       <div className="h-10 w-10 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
                         {asset.assetType === 'image' && asset.uploadedPath ? (
