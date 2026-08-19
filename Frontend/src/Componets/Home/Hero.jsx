@@ -59,7 +59,7 @@ const heroSlides = [
       text: "Book Now",
       link: "/booknow",
     },
-    image: "/images/hero2.png",
+    image: "/images/hero3.png",
     alt: "Next-Gen Product Engineering",
   },
   {
@@ -78,12 +78,12 @@ const heroSlides = [
       text: "About Us",
       link: "/about",
     },
-    image: "/images/hero3.png",
+    image: "/images/hero2.png",
     alt: "Future-Ready Tech and Growth Consulting",
   },
 ];
 
-const AUTO_PLAY_INTERVAL = 6000; // 6 seconds per slide
+const AUTO_PLAY_INTERVAL = 5000; // 5 seconds per slide
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -258,53 +258,7 @@ const Hero = () => {
           </AnimatePresence>
         </div>
 
-        {/* ================= BOTTOM SLIDER CONTROLS & PAGINATION ================= */}
-        <div className="relative z-20 flex flex-col items-center justify-between gap-4 border-t border-white/10 py-4 sm:flex-row sm:gap-0">
-          {/* Slide Numbers & Progress Bars */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {heroSlides.map((slide, index) => {
-              const isActive = index === currentSlide;
-              return (
-                <button
-                  key={slide.id}
-                  onClick={() => goToSlide(index)}
-                  className={`group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-300 ${
-                    isActive
-                      ? "bg-[#FF6A00]/15 text-[#FF6A00] border border-[#FF6A00]/40"
-                      : "text-white/45 hover:text-white hover:bg-white/5 border border-transparent"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                >
-                  <span className="font-mono">0{index + 1}</span>
-                  <span
-                    className={`hidden sm:inline-block h-1 rounded-full transition-all duration-500 ${
-                      isActive ? "w-8 bg-[#FF6A00]" : "w-3 bg-white/20 group-hover:bg-white/40"
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Previous / Next Arrow Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={prevSlide}
-              aria-label="Previous slide"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#11171c] text-white/80 shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white active:scale-95"
-            >
-              <FiChevronLeft size={18} />
-            </button>
-
-            <button
-              onClick={nextSlide}
-              aria-label="Next slide"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#11171c] text-white/80 shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white active:scale-95"
-            >
-              <FiChevronRight size={18} />
-            </button>
-          </div>
-        </div>
+       
       </PageContainer>
 
       {/* Bottom line */}
