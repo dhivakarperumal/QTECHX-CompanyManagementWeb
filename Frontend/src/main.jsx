@@ -1,6 +1,6 @@
 import { StrictMode, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createHashRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import checkTokenStatus from './utils/tokenDebugger.js'
@@ -27,7 +27,6 @@ import { AdminProvider } from './PrivateRouter/AdminContext';
 import RouteError from './Componets/Components/RouteError.jsx'
 import AboutUs from './Componets/About/About.jsx'
 import ServiceDetails from './Componets/Services/ServiceDetails.jsx'
-import Booknow from './Componets/BookingForm/Booknow.jsx'
 import ProjectPage from "./Componets/Projects/ProjectPage.jsx";
 import Prices from "./Componets/Prices/Prices.jsx";
 import WhyChooseUs from './Componets/WhyChooseUs/WhyChooseUs.jsx';
@@ -75,7 +74,6 @@ import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
 import AdminCompletedTasksPage from './Admin/Tasks/AdminCompletedTasksPage.jsx'
 import AdminCancelledTasksPage from './Admin/Tasks/AdminCancelledTasksPage.jsx'
 import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
-import PendingTraineeInterns from './Admin/Trainees/PendingTraineeInterns.jsx'
 import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
@@ -114,7 +112,7 @@ const Incomes = lazy(() => import('./Admin/Expenses/Incomes.jsx'))
 
 
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <App />,
@@ -133,7 +131,6 @@ const router = createBrowserRouter([
       { path: "/whatwedo", element: <WhatWeDo /> },
       { path: "/achievements", element: <OurAchievements /> },
       { path: "/career", element: <CareerDetail /> },
-      { path: "/booknow", element: <Booknow /> },
       { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       {
@@ -288,10 +285,6 @@ const router = createBrowserRouter([
           {
             path: 'trainees',
             element: <AllTraineeInterns />,
-          },
-          {
-            path: 'trainees/pending',
-            element: <PendingTraineeInterns />,
           },
           {
             path: 'internships',
