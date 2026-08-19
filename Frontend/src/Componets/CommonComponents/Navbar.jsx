@@ -353,9 +353,8 @@ const Navbar = () => {
             </button>
           </div>
         </PageContainer>
-        {/* Orange separator line */}
         {/* Subtle separator */}
-<div className="h-px w-full bg-white/30" />
+        <div className="h-px w-full bg-white/30" />
 
       </nav>
 
