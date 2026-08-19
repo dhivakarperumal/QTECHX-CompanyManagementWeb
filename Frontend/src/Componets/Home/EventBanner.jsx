@@ -25,7 +25,6 @@ const EventBanner = () => {
       bg-[#030303]
       bg-cover
       bg-center
-      md:bg-right
     "
       style={{
         backgroundImage: "url('/images/student event.png')",
