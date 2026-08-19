@@ -8,7 +8,7 @@ const PageHeader = ({ title, background }) => {
 
   return (
     <div
-      className="relative w-full h-[180px] sm:h-[200px] md:h-[210px] lg:h-[220px] flex items-center justify-center text-white"
+      className="relative w-full h-[160px] sm:h-[170px] md:h-[180px] lg:h-[200px] flex items-center justify-center text-white"
       style={{
         backgroundImage: `url(${bgImage})`,
         backgroundSize: "cover",

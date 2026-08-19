@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./Componets/CommonComponents/Navbar";
-import Header from "./Componets/CommonComponents/Header";
 import Footer from "./Componets/Components/Footer";
 
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";

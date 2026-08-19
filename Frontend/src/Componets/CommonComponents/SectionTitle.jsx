@@ -65,7 +65,7 @@ const SectionTitle = ({
   // Heading sizes
   const sizeClasses = {
     sm: "text-lg sm:text-xl md:text-2xl",
-    default: "text-xl sm:text-2xl md:text-3xl lg:text-[2rem]",
+    default: "text-xl sm:text-2xl md:text-3xl lg:text-[1.7rem]",
     lg: "text-2xl sm:text-2.5xl md:text-3xl lg:text-[2rem]",
   }[size] || "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
 
@@ -84,7 +84,7 @@ const SectionTitle = ({
       {/* Eyebrow Subtitle */}
       {subtitle && (
         <p
-          className={`mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#FF6A00] sm:text-xs md:text-sm ${subtitleClassName}`}
+          className={`mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#FF6A00] sm:text-xs md:text-xs ${subtitleClassName}`}
         >
           {subtitle}
         </p>
