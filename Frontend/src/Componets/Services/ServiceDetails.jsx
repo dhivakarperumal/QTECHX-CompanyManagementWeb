@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 import SocialMedia from "../Home/SocialMedia";
 import api from "../../api";
 
@@ -310,15 +311,14 @@ const ServiceDetails = () => {
 
             {/* Right: Process Content */}
             <div data-aos="zoom-in-left" className="space-y-5">
-              <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-                  ENGINEERED FOR EXCELLENCE
-                </p>
-                <h2 className="hero-font text-2xl font-bold uppercase leading-tight text-white sm:text-3xl md:text-4xl">
-                  OUR <span className="text-[#FF6A00]">PROCESS & APPROACH</span>
-                </h2>
-                <div className="mt-3 h-[2px] w-12 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-              </div>
+              <SectionTitle
+                subtitle="ENGINEERED FOR EXCELLENCE"
+                title="OUR"
+                highlight="PROCESS & APPROACH"
+                align="left"
+                size="sm"
+                className="mb-0"
+              />
 
               {/* Tagline / Subtitle */}
               {service.tagline && (
@@ -392,19 +392,14 @@ const ServiceDetails = () => {
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF6A00]/10 blur-[150px]" />
 
         <PageContainer className="relative z-10">
-          <div className="mb-12 text-center">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-              TRANSPARENT ENGAGEMENT
-            </p>
-            <h2 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-4xl lg:text-[2.5rem]">
-              PROJECT <span className="text-[#FF6A00]">INVESTMENT & TIMELINE</span>
-            </h2>
-            <div className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]" />
-            <p className="mx-auto mt-3 max-w-xl text-xs text-white/60 sm:text-sm">
-              Clear scope estimations, scalable architectures, and rapid delivery
-              milestones tailored to your business goals.
-            </p>
-          </div>
+          <SectionTitle
+            subtitle="TRANSPARENT ENGAGEMENT"
+            title="PROJECT"
+            highlight="INVESTMENT & TIMELINE"
+            description="Clear scope estimations, scalable architectures, and rapid delivery milestones tailored to your business goals."
+            size="sm"
+            className="mb-12"
+          />
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {/* Card 1: Pricing */}

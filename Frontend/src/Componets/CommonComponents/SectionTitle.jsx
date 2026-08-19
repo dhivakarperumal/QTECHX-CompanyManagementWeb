@@ -47,33 +47,33 @@ const SectionTitle = ({
   const containerAlign = isLeft
     ? "text-left"
     : isRight
-    ? "text-right ml-auto"
-    : "text-center mx-auto";
+      ? "text-right ml-auto"
+      : "text-center mx-auto";
 
   const underlineAlign = isLeft
     ? "mr-auto"
     : isRight
-    ? "ml-auto"
-    : "mx-auto";
+      ? "ml-auto"
+      : "mx-auto";
 
   const descAlign = isLeft
     ? "text-left"
     : isRight
-    ? "text-right"
-    : "text-center mx-auto";
+      ? "text-right"
+      : "text-center mx-auto";
 
   // Heading sizes
   const sizeClasses = {
-    sm: "text-2xl sm:text-3xl md:text-4xl",
-    default: "text-[2.2rem] sm:text-4xl md:text-5xl lg:text-[3.2rem]",
-    lg: "text-[2.4rem] sm:text-5xl md:text-5xl lg:text-[3.5rem]",
-  }[size] || "text-[2.2rem] sm:text-4xl md:text-5xl lg:text-[3.2rem]";
+    sm: "text-lg sm:text-xl md:text-2xl",
+    default: "text-xl sm:text-2xl md:text-3xl lg:text-4xl",
+    lg: "text-2xl sm:text-3xl md:text-4xl lg:text-[2.7rem]",
+  }[size] || "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
 
   const aosProps = aos
     ? {
-        "data-aos": aos,
-        ...(aosDelay !== undefined ? { "data-aos-delay": aosDelay } : {}),
-      }
+      "data-aos": aos,
+      ...(aosDelay !== undefined ? { "data-aos-delay": aosDelay } : {}),
+    }
     : {};
 
   return (
