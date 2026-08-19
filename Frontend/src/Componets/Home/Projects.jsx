@@ -125,8 +125,8 @@ const Projects = () => {
                 .filter(Boolean)
               : [];
 
-            const imageCandidate = projectImages.length > 0 
-              ? projectImages[0] 
+            const imageCandidate = projectImages.length > 0
+              ? projectImages[0]
               : (project.image || project.file_path || project.project_images);
 
             return {
@@ -269,13 +269,14 @@ const Projects = () => {
         rounded-full
         border
         border-[#FF6A00]/50
-        bg-[#0b1014]
-        text-[#FF6A00]
+        bg-[#FF6A00]
+        text-white
+        cursor-pointer
         shadow-[0_0_20px_rgba(255,106,0,0.12)]
         transition-all
         duration-300
         hover:border-[#FF6A00]
-        hover:bg-[#FF6A00]
+        hover:bg-[#0b1014]
         hover:text-white
         hover:shadow-[0_0_25px_rgba(255,106,0,0.3)]
       "
@@ -306,13 +307,14 @@ const Projects = () => {
         rounded-full
         border
         border-[#FF6A00]/50
-        bg-[#0b1014]
-        text-[#FF6A00]
+        bg-[#FF6A00]
+        text-white
         shadow-[0_0_20px_rgba(255,106,0,0.12)]
         transition-all
         duration-300
         hover:border-[#FF6A00]
-        hover:bg-[#FF6A00]
+        hover:bg-[#0b1014]
+        cursor-pointer
         hover:text-white
         hover:shadow-[0_0_25px_rgba(255,106,0,0.3)]
       "
@@ -713,30 +715,29 @@ const Projects = () => {
                           />
 
                           {/* =================================
-                              IMAGE
-                          ================================== */}
+    IMAGE
+================================= */}
 
                           <div
                             className="
-                              relative
-                              h-[220px]
-                              overflow-hidden
-                              bg-[#080d11]
-                              sm:h-[240px]
-                            "
+    relative
+    h-[220px]
+    overflow-hidden
+    bg-[#080d11]
+    sm:h-[240px]
+  "
                           >
-
                             <img
                               src={project.image}
                               alt={project.title}
                               className="
-    h-full
-    w-full
-    object-cover
-    transition-transform
-    duration-700
-    group-hover:scale-105
-  "
+      h-full
+      w-full
+      object-cover
+      transition-transform
+      duration-700
+      group-hover:scale-105
+    "
                               onError={(e) => {
                                 console.error("❌ Project image failed:", project.image);
 
@@ -746,179 +747,52 @@ const Projects = () => {
                                 }
                               }}
                             />
-
-                            {/* Image overlay */}
-
-                            <div
-                              className="
-                                absolute
-                                inset-0
-                                bg-gradient-to-t
-                                from-[#03070a]
-                                via-[#03070a]/20
-                                to-transparent
-                              "
-                            />
-
-                            {/* Category */}
-
-                            <span
-                              className="
-                                absolute
-                                left-4
-                                top-4
-                                rounded-full
-                                border
-                                border-[#FF6A00]/50
-                                bg-[#03070a]/80
-                                px-3
-                                py-1
-                                text-[9px]
-                                font-semibold
-                                uppercase
-                                tracking-wider
-                                text-[#FF6A00]
-                                backdrop-blur-sm
-                              "
-                            >
-                              {project.category}
-                            </span>
-
                           </div>
 
 
                           {/* =================================
-                              CONTENT
-                          ================================== */}
+    PROJECT NAME + CATEGORY
+================================= */}
 
-                          <div className="p-5">
-
+                          <div className="px-4 py-4 text-left">
                             <h3
                               className="
-                                text-xl
-                                font-bold
-                                text-white
-                                transition-colors
-                                duration-300
-                                group-hover:text-[#FF6A00]
-                              "
+      text-base
+      font-semibold
+      text-white
+      transition-colors
+      duration-300
+      group-hover:text-[#FF6A00]
+      sm:text-lg
+    "
                             >
                               {project.title}
                             </h3>
 
-
-                            <div
+                            <span
                               className="
-                                mt-2
-                                h-[2px]
-                                w-8
-                                bg-[#FF6A00]
-                                transition-all
-                                duration-300
-                                group-hover:w-14
-                              "
-                            />
-
-
-                            <p
-                              className="
-                                mt-3
-                                line-clamp-3
-                                text-sm
-                                leading-6
-                                text-white/50
-                              "
+      mt-2
+      inline-flex
+      items-center
+      rounded-full
+      border
+      border-[#FF6A00]/40
+      bg-[#FF6A00]/10
+      px-2.5
+      py-1
+      text-[9px]
+      font-semibold
+      uppercase
+      tracking-[0.12em]
+      text-[#FF6A00]
+      transition-all
+      duration-300
+      group-hover:border-[#FF6A00]/70
+      group-hover:bg-[#FF6A00]/15
+    "
                             >
-                              {project.description}
-                            </p>
-
-
-                            {/* Features */}
-
-                            {project.features.length > 0 && (
-                              <div
-                                className="
-                                  mt-4
-                                  flex
-                                  flex-wrap
-                                  gap-2
-                                "
-                              >
-                                {project.features
-                                  .slice(0, 3)
-                                  .map(
-                                    (feature, featureIndex) => (
-                                      <span
-                                        key={featureIndex}
-                                        className="
-                                          rounded-md
-                                          border
-                                          border-white/10
-                                          bg-white/[0.03]
-                                          px-2
-                                          py-1
-                                          text-[9px]
-                                          text-white/45
-                                        "
-                                      >
-                                        {feature}
-                                      </span>
-                                    )
-                                  )}
-                              </div>
-                            )}
-
-
-                            {/* View Project */}
-
-                            {project.link &&
-                              project.link !== "#" && (
-                                <a
-                                  href={project.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="
-                                    group/link
-                                    mt-5
-                                    inline-flex
-                                    items-center
-                                    gap-2
-                                    text-xs
-                                    font-bold
-                                    uppercase
-                                    tracking-wide
-                                    text-[#FF6A00]
-                                    transition-all
-                                    duration-300
-                                    hover:text-white
-                                  "
-                                >
-                                  View Project
-
-                                  <span
-                                    className="
-                                      flex
-                                      h-6
-                                      w-6
-                                      items-center
-                                      justify-center
-                                      rounded-full
-                                      border
-                                      border-[#FF6A00]/50
-                                      transition-all
-                                      duration-300
-                                      group-hover/link:translate-x-1
-                                      group-hover/link:bg-[#FF6A00]
-                                      group-hover/link:text-white
-                                    "
-                                  >
-                                    <FiExternalLink
-                                      size={11}
-                                    />
-                                  </span>
-                                </a>
-                              )}
-
+                              {project.category}
+                            </span>
                           </div>
 
 
