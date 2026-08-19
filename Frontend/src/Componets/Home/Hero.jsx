@@ -52,23 +52,23 @@ const Hero = () => {
             data-aos="fade-right"
             className="relative z-20 max-w-[650px] text-center lg:text-left"
           >
-            <p className="mb-5 text-sm font-bold uppercase tracking-wide text-[#FF6A00] sm:text-base">
+            <p className="mb-5 text-xs md:text-sm font-bold uppercase tracking-wide text-[#FF6A00] sm:text-base">
               WELCOME TO Q-TECHX SOLUTIONS
             </p>
 
             <h1
               className="
               hero-font
-              text-[2.6rem]
+              text-[1.3rem]
               font-bold
               uppercase
-              leading-[0.98]
+              leading-[1.3]
               tracking-[-0.035em]
               text-white
-              sm:text-5xl
-              md:text-5xl
-              lg:text-[4rem]
-              xl:text-[4rem]
+              sm:text-3xl
+              md:text-3xl
+              lg:text-[3.2rem]
+              xl:text-[3.2rem]
             "
             >
               SMART IDEAS.
@@ -89,9 +89,10 @@ const Hero = () => {
               max-w-[590px]
               text-sm
               font-normal
-              leading-7
+              leading-5
+              md:leading-7
               text-white/80
-              sm:text-base
+              sm:text-sm  
               lg:mx-0
               lg:text-[17px]
               lg:leading-8
@@ -112,9 +113,12 @@ const Hero = () => {
       gap-4
       rounded-lg
       bg-[#FF6A00]
-      px-6
+      px-4
       py-2
-      text-sm
+      md:px-7
+      md:py-3
+      text-xs
+      md:text-sm
       font-bold
       uppercase
       text-white
@@ -123,8 +127,6 @@ const Hero = () => {
       hover:bg-[#ff7515]
       hover:shadow-[0_8px_30px_rgba(255,106,0,0.35)]
       active:scale-95
-      sm:px-7
-      sm:py-2
     "
   >
     <span>Explore Q-TechX</span>
