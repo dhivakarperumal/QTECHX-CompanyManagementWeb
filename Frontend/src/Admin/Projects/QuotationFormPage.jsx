@@ -52,7 +52,6 @@ const createDefaultForm = (defaults = {}) => {
     scope_of_work: "",
     technologies_used: "",
     project_type: "Website",
-    service_category: "Web Development",
     service_type: "Website Development",
     quotation_date: dayjs().format("YYYY-MM-DD"),
     valid_until: dayjs().add(30, "day").format("YYYY-MM-DD"),
@@ -61,7 +60,6 @@ const createDefaultForm = (defaults = {}) => {
     delivery_timeline: "4 Weeks",
     sales_executive: "Admin",
     prepared_by: "Admin",
-    platform: "Website",
     subtotal: 0, discount: 0, additional_charges: 0,
     tax_amount: 0, round_off: 0, grand_total: 0,
     advance_amount: 0, balance_amount: 0,
@@ -625,18 +623,12 @@ function StepProject({ formData, set }) {
               ))}
             </select>
           </Field>
-          <Field label="Service category">
-            <input value={formData.service_category} onChange={e => set("service_category", e.target.value)} placeholder="e.g. Web Development" className={inputCls} />
-          </Field>
           <Field label="Service type">
             <select value={formData.service_type} onChange={e => set("service_type", e.target.value)} className={selectCls}>
               {["Website Development","Mobile App Development","ERP Development","UI/UX Design","CRM Development","Other"].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-          </Field>
-          <Field label="Platform">
-            <input value={formData.platform} onChange={e => set("platform", e.target.value)} placeholder="e.g. Web, iOS, Android" className={inputCls} />
           </Field>
           <Field label="Delivery timeline" className="sm:col-span-2">
             <input value={formData.delivery_timeline} onChange={e => set("delivery_timeline", e.target.value)} placeholder="e.g. 4 Weeks, 3 Months" className={inputCls} />
