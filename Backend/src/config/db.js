@@ -2413,6 +2413,29 @@ async function ensureJobApplicationsSchema(pool) {
   }
 }
 
+async function ensureServiceRequestsSchema(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS service_requests (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid CHAR(36) NOT NULL,
+      service_id BIGINT UNSIGNED NULL,
+      service_title VARCHAR(255) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(50) NULL,
+      message TEXT NULL,
+      status ENUM('New', 'Contacted', 'Converted', 'Closed') NOT NULL DEFAULT 'New',
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_service_requests_uuid (uuid),
+      KEY idx_service_requests_status (status),
+      KEY idx_service_requests_service_id (service_id),
+      KEY idx_service_requests_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2425,6 +2448,7 @@ async function initDB() {
     await ensureSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
+    await ensureServiceRequestsSchema(pool);
     await ensurePricingSchema(pool);
     await ensureReviewsSchema(pool);
     await ensureJobsSchema(pool);

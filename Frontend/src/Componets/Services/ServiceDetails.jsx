@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import toast from "react-hot-toast";
@@ -42,7 +42,9 @@ const ServiceDetails = () => {
   }, []);
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const [service, setService] = useState(null);
+  const [availableServices, setAvailableServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -135,6 +137,21 @@ const ServiceDetails = () => {
     fetchService();
   }, [id]);
 
+  useEffect(() => {
+    const fetchAvailableServices = async () => {
+      try {
+        const { data } = await api.get("/services/public/all");
+        if (data.success && Array.isArray(data.data)) {
+          setAvailableServices(data.data);
+        }
+      } catch (err) {
+        console.warn("Failed to load service options:", err?.message);
+      }
+    };
+
+    fetchAvailableServices();
+  }, []);
+
   const handleFormChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -146,8 +163,12 @@ const ServiceDetails = () => {
     }
     setIsSubmitting(true);
     try {
-      // Simulate request or post inquiry
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const { data } = await api.post("/service-requests", {
+        service_id: service.id,
+        service_title: service.title,
+        ...formData,
+      });
+      if (!data.success) throw new Error(data.message || "Failed to submit request");
       toast.success("Thank you! Your request has been received. We will contact you shortly.");
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err) {
@@ -793,6 +814,28 @@ const ServiceDetails = () => {
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="space-y-4">
+                  {/* Selected service */}
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                      Selected Service *
+                    </label>
+                    <select
+                      value={service.id}
+                      onChange={(event) => navigate(`/services/${event.target.value}`)}
+                      className="w-full rounded-xl border border-white/10 bg-[#090d10] px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]/30"
+                    >
+                      {availableServices.length > 0 ? (
+                        availableServices.map((option) => (
+                          <option key={option.id} value={option.id} className="bg-[#090d10] text-white">
+                            {option.title}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={service.id}>{service.title}</option>
+                      )}
+                    </select>
+                  </div>
+
                   {/* Name */}
                   <div>
                     <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
