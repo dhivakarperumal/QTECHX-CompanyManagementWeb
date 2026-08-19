@@ -21,7 +21,6 @@ import { IoIosArrowForward } from "react-icons/io";
 
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
-import SocialMedia from "../Home/SocialMedia";
 import aboutImg from "/images/about4.webp";
 import Head from "../Components/Head";
 
@@ -885,7 +884,6 @@ const About = () => {
       {/* =====================================================
           8. SOCIAL MEDIA SECTION
       ====================================================== */}
-      <SocialMedia />
 
     </div>
   );

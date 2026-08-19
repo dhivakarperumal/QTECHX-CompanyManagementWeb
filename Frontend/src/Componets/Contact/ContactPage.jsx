@@ -8,7 +8,6 @@ import { MdLocationPin } from "react-icons/md";
 import { LuPhoneCall } from "react-icons/lu";
 import { FiSend, FiCheckCircle } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import SocialMedia from "../Home/SocialMedia";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 import emailjs from "@emailjs/browser";
@@ -539,7 +538,6 @@ const ContactPage = () => {
       </div>
 
       {/* ── SOCIAL MEDIA FOOTER (MATCHING HOME) ── */}
-      <SocialMedia />
     </>
   );
 };

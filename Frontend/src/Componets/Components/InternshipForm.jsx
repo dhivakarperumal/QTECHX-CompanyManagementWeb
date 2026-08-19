@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
-import SocialMedia from "../Home/SocialMedia";
 import Banner from '/images/Internship.jpg';
 import { ImPointRight } from "react-icons/im";
 import emailjs from '@emailjs/browser';
@@ -478,7 +477,6 @@ const handleSubmit = (e) => {
           </form>
           </div>
       </section>
-      <SocialMedia />
      </>
    );
 };

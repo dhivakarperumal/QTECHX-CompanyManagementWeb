@@ -3,6 +3,12 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaEnvelope,
+  FaFacebookF,
+  FaTwitter,
+  FaGoogle,
+  FaLinkedinIn,
+  FaWhatsapp,
+  FaInstagram,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
@@ -26,6 +32,15 @@ const Footer = () => {
     { name: "Our Achievements", path: "/achievements" },
     { name: "Terms Of Services", path: "/terms" },
     { name: "Privacy Policy", path: "/privacy-policy" },
+  ];
+
+  const socialLinks = [
+    { name: "Facebook", icon: FaFacebookF, url: "https://www.facebook.com/share/1A1X9dVCTm/" },
+    { name: "Twitter", icon: FaTwitter, url: "https://x.com/QTechxTpt?t=fmfCt7ZX-5RoQIbHJ-4s_A&s=09" },
+    { name: "Email", icon: FaGoogle, url: "mailto:info@qtechx.com" },
+    { name: "LinkedIn", icon: FaLinkedinIn, url: "https://www.linkedin.com/in/q-techx-solutions-724346366/" },
+    { name: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/919123589879?text=Hello%20Q-Techx%20Solutions" },
+    { name: "Instagram", icon: FaInstagram, url: "https://www.instagram.com/qtech.x?igsh=MXNsODg2YjA5N21wbA==" },
   ];
 
   return (
@@ -466,22 +481,23 @@ const Footer = () => {
               latest business news.
             </p>
 
-            {/* Email input */}
-
-            <div
-              className="
-              mb-4
-              flex
-              items-center
-              overflow-hidden
-              rounded-xl
-              border
-              border-white/10
-              bg-[#11171c]
-              shadow-[0_8px_25px_rgba(0,0,0,0.5)]
-              focus-within:border-[#FF6A00]/60
-            "
-            >
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Email input */}
+              <div
+                className="
+                flex
+                min-w-[220px]
+                flex-1
+                items-center
+                overflow-hidden
+                rounded-xl
+                border
+                border-white/10
+                bg-[#11171c]
+                shadow-[0_8px_25px_rgba(0,0,0,0.5)]
+                focus-within:border-[#FF6A00]/60
+              "
+              >
 
               <input
                 type="email"
@@ -517,19 +533,36 @@ const Footer = () => {
                 <FaEnvelope />
               </button>
 
+              </div>
+
+              {/* Subscribe button and social links */}
+              <div className="flex flex-wrap items-center gap-4">
+                <Buttons type="button">
+                  Subscribe Now
+                </Buttons>
+
+                <div className="flex flex-wrap gap-2.5">
+                  {socialLinks.map(({ name, icon: Icon, url }) => (
+                    <a
+                      key={name}
+                      href={url}
+                      target={url.startsWith("mailto:") ? undefined : "_blank"}
+                      rel={url.startsWith("mailto:") ? undefined : "noreferrer"}
+                      aria-label={name}
+                      title={name}
+                      className="group flex h-11 w-11 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#11171c] text-base text-white/70 shadow-[0_8px_20px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white"
+                    >
+                      <Icon />
+                    </a>
+                  ))}
+                </div>
+              </div>
             </div>
-
-            {/* Subscribe button */}
-
-            <Buttons>
-              Subscribe Now
-            </Buttons>
 
           </div>
 
         </div>
       </PageContainer>
-
 
         {/* =====================================================
           COPYRIGHT
