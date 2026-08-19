@@ -78,6 +78,7 @@ import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
 import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
+import PendingTraineeInterns from './Admin/Trainees/PendingTraineeInterns.jsx'
 
 import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
 import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
@@ -285,6 +286,10 @@ const router = createHashRouter([
           {
             path: 'trainees',
             element: <AllTraineeInterns />,
+          },
+          {
+            path: 'trainees/pending',
+            element: <PendingTraineeInterns />,
           },
           {
             path: 'internships',
