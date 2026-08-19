@@ -5,6 +5,7 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const WhatWeDo = () => {
   const features = [
@@ -101,23 +102,13 @@ const WhatWeDo = () => {
         <PageContainer className="relative z-10 py-14 sm:py-16 md:py-20">
           {/* Section Header */}
           <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              OUR METHODOLOGY & EXPERTISE
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              WHAT <span className="text-[#FF6A00]">WE DO</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
+            <SectionTitle
+              subtitle="OUR METHODOLOGY & EXPERTISE"
+              title="WHAT"
+              highlight="WE DO"
+              size="lg"
+              align="center"
+              className="mb-0"
             />
 
             <p
@@ -134,12 +125,12 @@ const WhatWeDo = () => {
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-              {features.map((item, index) => (
-                <div
-                  key={index}
-                  data-aos="fade-up"
-                  data-aos-delay={index * 100}
-                  className="
+            {features.map((item, index) => (
+              <div
+                key={index}
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+                className="
                     group
                     relative
                     flex
@@ -163,10 +154,10 @@ const WhatWeDo = () => {
                     hover:to-[#0f1519]
                     hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
                   "
-                >
-                  {/* Top Laser Accent Line */}
-                  <div
-                    className="
+              >
+                {/* Top Laser Accent Line */}
+                <div
+                  className="
                       absolute
                       left-0
                       right-0
@@ -180,14 +171,14 @@ const WhatWeDo = () => {
                       duration-500
                       group-hover:scale-x-100
                     "
-                  />
+                />
 
-                  {/* Image Wrapper */}
-                  <div className="relative h-60 w-full overflow-hidden bg-[#080d11]">
-                    <img
-                      src={item.img}
-                      alt={item.title}
-                      className="
+                {/* Image Wrapper */}
+                <div className="relative h-60 w-full overflow-hidden bg-[#080d11]">
+                  <img
+                    src={item.img}
+                    alt={item.title}
+                    className="
                         h-full
                         w-full
                         object-cover
@@ -196,14 +187,14 @@ const WhatWeDo = () => {
                         ease-out
                         group-hover:scale-110
                       "
-                      onError={(e) => {
-                        e.currentTarget.src = "/WhyChooseUs/Idea To Implementation.jpg";
-                      }}
-                    />
+                    onError={(e) => {
+                      e.currentTarget.src = "/WhyChooseUs/Idea To Implementation.jpg";
+                    }}
+                  />
 
-                    {/* Gradient Overlay */}
-                    <div
-                      className="
+                  {/* Gradient Overlay */}
+                  <div
+                    className="
                         pointer-events-none
                         absolute
                         inset-0
@@ -212,11 +203,11 @@ const WhatWeDo = () => {
                         via-[#03070a]/20
                         to-transparent
                       "
-                    />
+                  />
 
-                    {/* Step Number Pill */}
-                    <span
-                      className="
+                  {/* Step Number Pill */}
+                  <span
+                    className="
                         absolute
                         left-4
                         top-4
@@ -235,15 +226,15 @@ const WhatWeDo = () => {
                         backdrop-blur-md
                         shadow-[0_0_12px_rgba(255,106,0,0.2)]
                       "
-                    >
-                      0{index + 1}
-                    </span>
-                  </div>
+                  >
+                    0{index + 1}
+                  </span>
+                </div>
 
-                  {/* Card Content */}
-                  <div className="flex flex-1 flex-col p-6 text-left">
-                    <h3
-                      className="
+                {/* Card Content */}
+                <div className="flex flex-1 flex-col p-6 text-left">
+                  <h3
+                    className="
                         text-lg
                         font-bold
                         tracking-tight
@@ -253,13 +244,13 @@ const WhatWeDo = () => {
                         group-hover:text-[#FF6A00]
                         sm:text-xl
                       "
-                    >
-                      {item.title}
-                    </h3>
+                  >
+                    {item.title}
+                  </h3>
 
-                    {/* Small Accent Line */}
-                    <div
-                      className="
+                  {/* Small Accent Line */}
+                  <div
+                    className="
                         mb-3
                         mt-2
                         h-[2px]
@@ -270,24 +261,24 @@ const WhatWeDo = () => {
                         duration-300
                         group-hover:w-14
                       "
-                    />
+                  />
 
-                    <p
-                      className="
+                  <p
+                    className="
                         text-justify
                         text-xs
                         leading-[23px]
                         text-white/65
                         sm:text-sm
                       "
-                    >
-                      {item.desc}
-                    </p>
-                  </div>
+                  >
+                    {item.desc}
+                  </p>
+                </div>
 
-                  {/* Card Bottom Glow */}
-                  <div
-                    className="
+                {/* Card Bottom Glow */}
+                <div
+                  className="
                       pointer-events-none
                       absolute
                       -bottom-20
@@ -304,11 +295,11 @@ const WhatWeDo = () => {
                       group-hover:bg-[#FF6A00]/25
                       group-hover:opacity-100
                     "
-                  />
-                </div>
-              ))}
-            </div>
-          
+                />
+              </div>
+            ))}
+          </div>
+
         </PageContainer>
 
         {/* Bottom Orange Laser Line */}

@@ -5,6 +5,7 @@ import Head from "../Components/Head";
 import { IoIosArrowForward } from "react-icons/io";
 import { Link } from "react-router-dom";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const categories = [
   { title: "Cryptocurrency Exchange", image: "/WhyChooseUs/Cryptocurrency Exchange.png" },
@@ -83,23 +84,13 @@ const WhoWeWorkWith = () => {
         <PageContainer className="relative z-10 py-14 sm:py-16 md:py-20">
           {/* Section Header */}
           <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              INDUSTRIES & DOMAINS
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              WHO WE <span className="text-[#FF6A00]">WORK WITH</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
+            <SectionTitle
+              subtitle="INDUSTRIES & DOMAINS"
+              title="WHO WE"
+              highlight="WORK WITH"
+              size="lg"
+              align="center"
+              className="mb-0"
             />
 
             <p
@@ -116,12 +107,12 @@ const WhoWeWorkWith = () => {
 
           {/* Categories Grid */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-              {categories.map((item, index) => (
-                <div
-                  key={index}
-                  data-aos="fade-up"
-                  data-aos-delay={(index % 4) * 80}
-                  className="
+            {categories.map((item, index) => (
+              <div
+                key={index}
+                data-aos="fade-up"
+                data-aos-delay={(index % 4) * 80}
+                className="
                     group
                     relative
                     flex
@@ -148,10 +139,10 @@ const WhoWeWorkWith = () => {
                     hover:to-[#0f1519]
                     hover:shadow-[0_18px_45px_rgba(0,0,0,0.8),0_0_28px_rgba(255,106,0,0.18)]
                   "
-                >
-                  {/* Top Laser Accent Line */}
-                  <div
-                    className="
+              >
+                {/* Top Laser Accent Line */}
+                <div
+                  className="
                       absolute
                       left-0
                       right-0
@@ -165,11 +156,11 @@ const WhoWeWorkWith = () => {
                       duration-500
                       group-hover:scale-x-100
                     "
-                  />
+                />
 
-                  {/* Icon Box */}
-                  <div
-                    className="
+                {/* Icon Box */}
+                <div
+                  className="
                       relative
                       mb-4
                       flex
@@ -190,17 +181,17 @@ const WhoWeWorkWith = () => {
                       group-hover:bg-[#FF6A00]/10
                       group-hover:shadow-[0_0_20px_rgba(255,106,0,0.25)]
                     "
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="h-full w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-                    />
-                  </div>
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="h-full w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+                  />
+                </div>
 
-                  {/* Title */}
-                  <h3
-                    className="
+                {/* Title */}
+                <h3
+                  className="
                       text-sm
                       font-bold
                       tracking-tight
@@ -210,13 +201,13 @@ const WhoWeWorkWith = () => {
                       group-hover:text-[#FF6A00]
                       sm:text-base
                     "
-                  >
-                    {item.title}
-                  </h3>
+                >
+                  {item.title}
+                </h3>
 
-                  {/* Card Bottom Glow */}
-                  <div
-                    className="
+                {/* Card Bottom Glow */}
+                <div
+                  className="
                       pointer-events-none
                       absolute
                       -bottom-16
@@ -233,11 +224,11 @@ const WhoWeWorkWith = () => {
                       group-hover:bg-[#FF6A00]/25
                       group-hover:opacity-100
                     "
-                  />
-                </div>
-              ))}
-            </div>
-          
+                />
+              </div>
+            ))}
+          </div>
+
         </PageContainer>
 
         {/* Bottom Orange Laser Line */}
