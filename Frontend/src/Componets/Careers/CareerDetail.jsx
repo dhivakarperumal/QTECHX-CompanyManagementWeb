@@ -33,6 +33,15 @@ const formatDate = (dateString) => {
   }
 };
 
+const isDeadlinePassed = (dateString) => {
+  if (!dateString) return false;
+  const value = String(dateString);
+  const deadline = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T23:59:59`)
+    : new Date(value);
+  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < Date.now();
+};
+
 const CareerDetail = () => {
   const navigate = useNavigate();
   useEffect(() => {
@@ -363,6 +372,10 @@ const CareerDetail = () => {
                     sm:p-6
                   "
                 >
+                  {(() => {
+                    const deadlinePassed = isDeadlinePassed(job.applicationDeadline);
+                    return (
+                      <>
                   {/* Top Laser Line */}
                   <div className="absolute left-0 right-0 top-0 h-[2px] origin-left scale-x-0 bg-[#FF6A00] transition-transform duration-500 group-hover:scale-x-100" />
                   <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
@@ -417,7 +430,8 @@ const CareerDetail = () => {
                     {/* Apply Button */}
                     <button
                       type="button"
-                      onClick={() => handleApplyJob(job.id)}
+                      disabled={deadlinePassed}
+                      onClick={() => !deadlinePassed && handleApplyJob(job.id)}
                       className="
                         mt-5
                         w-full
@@ -435,11 +449,19 @@ const CareerDetail = () => {
                         hover:-translate-y-0.5
                         hover:bg-[#ff781a]
                         hover:shadow-[0_0_30px_rgba(255,106,0,0.45)]
+                        disabled:cursor-not-allowed
+                        disabled:bg-white/10
+                        disabled:text-white/40
+                        disabled:shadow-none
+                        disabled:hover:translate-y-0
                       "
                     >
-                      Apply Now
+                      {deadlinePassed ? "Applications Closed" : "Apply Now"}
                     </button>
                   </div>
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
