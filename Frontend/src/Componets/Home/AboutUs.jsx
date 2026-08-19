@@ -1,7 +1,12 @@
 import React, { useEffect } from "react";
 import about from "/images/about us (2).png";
-
 import { GiFamilyHouse, GiProgression } from "react-icons/gi";
+import {
+  FiUsers,
+  FiAward,
+  FiTrendingUp,
+  FiClock,
+} from "react-icons/fi";
 import Button from "../Components/Button";
 import { BsArrowRight } from "react-icons/bs";
 import PageContainer from "../CommonComponents/PageContainer";
@@ -9,6 +14,127 @@ import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
+
+const CounterCard = ({
+  end,
+  suffix = "+",
+  label,
+  description,
+  icon: Icon,
+  delay = 0,
+}) => {
+  const [count, setCount] = React.useState(0);
+  const [started, setStarted] = React.useState(false);
+  const ref = React.useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          setStarted(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.3,
+      }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+
+    let current = 0;
+
+    // Slower counting
+    const duration = 2500;
+    const interval = 40;
+    const steps = duration / interval;
+    const increment = end / steps;
+
+    const timer = setInterval(() => {
+      current += increment;
+
+      if (current >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [started, end]);
+
+  return (
+    <div
+      ref={ref}
+      data-aos="fade-up"
+      data-aos-delay={delay}
+      className="
+        flex
+        h-[72px]
+        w-[155px]
+        items-center
+        gap-3
+        rounded-lg
+        border
+        border-white/15
+        bg-[#080d11]/90
+        px-3
+        transition-all
+        duration-300
+        hover:border-[#FF6A00]/60
+        hover:bg-[#0d1318]
+        sm:h-[78px]
+        sm:w-[170px]
+      "
+    >
+      {/* Icon */}
+      <div
+        className="
+          flex
+          h-9
+          w-9
+          shrink-0
+          items-center
+          justify-center
+          rounded-md
+          bg-[#FF6A00]/10
+        "
+      >
+        <Icon
+          size={25}
+          className="text-[#FF6A00]"
+        />
+      </div>
+
+      {/* Text */}
+      <div>
+        <h3 className="text-lg font-bold leading-none sm:text-xl">
+          {count}
+          <span className="text-[#FF6A00]">
+            {suffix}
+          </span>
+        </h3>
+
+        <p className="mt-1 text-[10px] font-semibold text-[#FF6A00] sm:text-xs">
+          {label}
+        </p>
+
+        <p className="text-[8px] text-white/45 sm:text-[9px]">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const AboutUs = () => {
   useEffect(() => {
@@ -267,197 +393,55 @@ const AboutUs = () => {
               MIDDLE STATS
           ====================================================== */}
 
+          {/* ================= STATS ================= */}
+
           <div
             className="
-              order-3
-              flex
-              flex-row
-              justify-center
-              gap-4
-              md:order-2
-              md:flex-col
-              md:items-center
-              md:gap-4
-            "
+    order-3
+    flex
+    flex-col
+    items-center
+    justify-center
+    gap-4
+    md:order-2
+  "
           >
+            <CounterCard
+              end={5}
+              suffix="+"
+              label="Years"
+              description="Industry Experience"
+              icon={GiFamilyHouse}
+              delay={200}
+            />
 
-            {/* ================= 5+ YEARS ================= */}
+            <CounterCard
+              end={21}
+              suffix="+"
+              label="Projects"
+              description="Completed"
+              icon={GiProgression}
+              delay={300}
+            />
 
-            <div
-              data-aos="fade-up"
-              data-aos-delay="200"
-              className="
-                flex
-                h-[72px]
-                w-[155px]
-                items-center
-                gap-3
-                rounded-lg
-                border
-                border-white/15
-                bg-[#080d11]/90
-                px-3
-                transition-all
-                duration-300
-                hover:border-[#FF6A00]/60
-                hover:bg-[#0d1318]
-                sm:h-[78px]
-                sm:w-[170px]
-              "
-            >
+            <CounterCard
+              end={50}
+              suffix="+"
+              label="Clients"
+              description="Happy Clients"
+              icon={FiUsers}
+              delay={400}
+            />
 
-              {/* Icon */}
-
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-md
-                  bg-[#FF6A00]/10
-                "
-              >
-                <GiFamilyHouse
-                  size={25}
-                  className="text-[#FF6A00]"
-                />
-              </div>
-
-
-              {/* Text */}
-
-              <div>
-
-                <h3
-                  className="
-                    text-lg
-                    font-bold
-                    leading-none
-                    sm:text-xl
-                  "
-                >
-                  5+
-                </h3>
-
-                <p
-                  className="
-                    mt-1
-                    text-[10px]
-                    font-semibold
-                    text-[#FF6A00]
-                    sm:text-xs
-                  "
-                >
-                  Years
-                </p>
-
-                <p
-                  className="
-                    text-[8px]
-                    text-white/45
-                    sm:text-[9px]
-                  "
-                >
-                  Industry Experience
-                </p>
-
-              </div>
-
-            </div>
-
-
-            {/* ================= 21+ PROJECTS ================= */}
-
-            <div
-              data-aos="fade-up"
-              data-aos-delay="350"
-              className="
-                flex
-                h-[72px]
-                w-[155px]
-                items-center
-                gap-3
-                rounded-lg
-                border
-                border-white/15
-                bg-[#080d11]/90
-                px-3
-                transition-all
-                duration-300
-                hover:border-[#FF6A00]/60
-                hover:bg-[#0d1318]
-                sm:h-[78px]
-                sm:w-[170px]
-              "
-            >
-
-              {/* Icon */}
-
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-md
-                  bg-[#FF6A00]/10
-                "
-              >
-                <GiProgression
-                  size={25}
-                  className="text-[#FF6A00]"
-                />
-              </div>
-
-
-              {/* Text */}
-
-              <div>
-
-                <h3
-                  className="
-                    text-lg
-                    font-bold
-                    leading-none
-                    sm:text-xl
-                  "
-                >
-                  21+
-                </h3>
-
-                <p
-                  className="
-                    mt-1
-                    text-[10px]
-                    font-semibold
-                    text-[#FF6A00]
-                    sm:text-xs
-                  "
-                >
-                  Projects
-                </p>
-
-                <p
-                  className="
-                    text-[8px]
-                    text-white/45
-                    sm:text-[9px]
-                  "
-                >
-                  Completed
-                </p>
-
-              </div>
-
-            </div>
-
+            <CounterCard
+              end={24}
+              suffix="/7"
+              label="Support"
+              description="Technical Assistance"
+              icon={FiClock}
+              delay={500}
+            />
           </div>
-
 
           {/* =====================================================
               RIGHT IMAGE
