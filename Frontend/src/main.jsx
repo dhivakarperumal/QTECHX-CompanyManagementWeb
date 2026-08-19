@@ -36,6 +36,7 @@ import OurAchievements from "./Componets/WhyChooseUs/Achivements.jsx";
 import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import JobApply from "./Admin/JobApply/JobApply.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
+import Booknow from "./Componets/BookingForm/Booknow.jsx";
 
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
@@ -78,6 +79,7 @@ import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
 import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
 import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
 import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
+import PendingTraineeInterns from './Admin/Trainees/PendingTraineeInterns.jsx'
 
 import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
 import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
@@ -133,6 +135,7 @@ const router = createHashRouter([
       { path: "/career", element: <CareerDetail /> },
       { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
+      { path: "/booknow", element: <Booknow /> },
       {
         path: 'login',
         element: <Login />,
