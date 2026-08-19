@@ -343,8 +343,7 @@ const ProjectQuotationsPage = () => {
   };
 
   const openViewModal = (quote) => {
-    setActiveQuotation(quote);
-    setShowViewModal(true);
+    navigate(`/admin/myprojects/quotations/view/${getQuoteKey(quote)}`);
   };
 
   const closeViewModal = () => {

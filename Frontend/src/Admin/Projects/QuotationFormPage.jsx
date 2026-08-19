@@ -5,7 +5,7 @@ import {
   User, Building2, Mail, Phone, Briefcase, Calendar, CreditCard,
   FileText, Layers, Clock, Tag, DollarSign, CheckCircle2,
   FileSpreadsheet, MessageSquare, Paperclip, Settings, Loader2,
-  Hash, Check,
+  Hash, Check, Wrench, Printer, Download, Share2,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
@@ -24,6 +24,19 @@ const createEmptyItem = () => ({
   total: 0,
 });
 
+const chargeOptions = ["Domain", "Hosting / VPS", "SSL", "AI API", "WhatsApp API", "SMS", "Email", "Payment Gateway", "Other Services"];
+
+const createEmptyCharge = (service_name = "") => ({
+  service_name, description: "", quantity: 1, unit_price: 0, tax_percentage: 18,
+  billing_type: "One-Time", billing_period: "", total: 0,
+});
+
+const createDefaultSupport = () => ({
+  free_support_duration: "", bug_fix_terms: "", deployment_support: "",
+  amc_status: "Optional", amc_details: "", amc_cost: 0, amc_duration: "",
+  amc_start_date: "", amc_end_date: "",
+});
+
 const createDefaultTerms = () => [
   { title: "Payment Terms",   content: "50% advance and the remaining balance on project delivery." },
   { title: "Support Policy",  content: "Free support is included for the first 30 days after deployment." },
@@ -31,9 +44,9 @@ const createDefaultTerms = () => [
 ];
 
 const createDefaultTimeline = () => [
-  { phase: "Requirement Collection", start_date: "", end_date: "", duration: "7 Days" },
-  { phase: "UI Design",              start_date: "", end_date: "", duration: "10 Days" },
-  { phase: "Development",            start_date: "", end_date: "", duration: "20 Days" },
+  { phase: "Requirement Collection", description: "", features_modules: "", cost: 0, start_date: "", end_date: "", duration: "7 Days" },
+  { phase: "UI Design",              description: "", features_modules: "", cost: 0, start_date: "", end_date: "", duration: "10 Days" },
+  { phase: "Development",            description: "", features_modules: "", cost: 0, start_date: "", end_date: "", duration: "20 Days" },
 ];
 
 const createDefaultForm = (defaults = {}) => {
@@ -72,6 +85,8 @@ const createDefaultForm = (defaults = {}) => {
     updated_by: "Admin",
     created_at: "", updated_at: "",
     items: [createEmptyItem()],
+    additional_charges_items: [],
+    support_details: createDefaultSupport(),
     timeline_items: createDefaultTimeline(),
     terms_sections: createDefaultTerms(),
     attachments: [], activity_logs: [],
@@ -94,10 +109,15 @@ const createDefaultForm = (defaults = {}) => {
   if (Array.isArray(result.timeline_items)) {
     result.timeline_items = result.timeline_items.map(t => ({
       ...t,
+      description: t.description || "",
+      features_modules: Array.isArray(t.features_modules) ? t.features_modules.join(", ") : (t.features_modules || ""),
+      cost: Number(t.cost) || 0,
       start_date: t.start_date ? dayjs(t.start_date).format("YYYY-MM-DD") : "",
       end_date: t.end_date ? dayjs(t.end_date).format("YYYY-MM-DD") : "",
     }));
   }
+  if (!Array.isArray(result.additional_charges_items)) result.additional_charges_items = [];
+  result.support_details = { ...createDefaultSupport(), ...(result.support_details || {}) };
 
   return result;
 };
@@ -136,8 +156,10 @@ const STEPS = [
   { id: "project",  label: "Project",        icon: Briefcase },
   { id: "items",    label: "Line Items",     icon: Layers },
   { id: "pricing",  label: "Pricing",        icon: DollarSign },
+  { id: "charges",  label: "Extra Charges",  icon: CreditCard },
   { id: "timeline", label: "Timeline",       icon: Clock },
   { id: "terms",    label: "Terms",          icon: FileText },
+  { id: "support",  label: "Support & AMC",  icon: Wrench },
   { id: "approval", label: "Approval",       icon: CheckCircle2 },
 ];
 
@@ -271,6 +293,31 @@ export default function QuotationFormPage() {
     });
   };
 
+  const updateCharge = (idx, field, value) => {
+    setFormData(prev => {
+      const charges = [...prev.additional_charges_items];
+      const next = { ...charges[idx], [field]: value };
+      const taxable = Math.max(0, Number(next.quantity) || 0) * Math.max(0, Number(next.unit_price) || 0);
+      next.total = Math.round((taxable + taxable * Math.max(0, Number(next.tax_percentage) || 0) / 100) * 100) / 100;
+      charges[idx] = next;
+      const additionalCharges = charges.reduce((sum, charge) => sum + Number(charge.total || 0), 0);
+      return { ...prev, additional_charges_items: charges, additional_charges: Math.round(additionalCharges * 100) / 100 };
+    });
+  };
+
+  const addCharge = (service_name = "") =>
+    setFormData(prev => ({ ...prev, additional_charges_items: [...prev.additional_charges_items, createEmptyCharge(service_name)] }));
+
+  const removeCharge = idx =>
+    setFormData(prev => {
+      const charges = prev.additional_charges_items.filter((_, i) => i !== idx);
+      const additionalCharges = charges.reduce((sum, charge) => sum + Number(charge.total || 0), 0);
+      return { ...prev, additional_charges_items: charges, ...calculatePricing(prev.items, { ...prev, additional_charges: additionalCharges }) };
+    });
+
+  const updateSupport = (field, value) =>
+    setFormData(prev => ({ ...prev, support_details: { ...prev.support_details, [field]: value } }));
+
   // ── Timeline ──
   const updateTimeline = (idx, field, value) =>
     setFormData(prev => ({
@@ -279,7 +326,7 @@ export default function QuotationFormPage() {
     }));
 
   const addTimeline = () =>
-    setFormData(prev => ({ ...prev, timeline_items: [...prev.timeline_items, { phase: "", start_date: "", end_date: "", duration: "" }] }));
+    setFormData(prev => ({ ...prev, timeline_items: [...prev.timeline_items, { phase: "", description: "", features_modules: "", cost: 0, start_date: "", end_date: "", duration: "" }] }));
 
   const removeTimeline = idx =>
     setFormData(prev => ({ ...prev, timeline_items: prev.timeline_items.filter((_, i) => i !== idx) }));
@@ -433,9 +480,11 @@ export default function QuotationFormPage() {
         {step === 1 && <StepProject formData={formData} set={set} />}
         {step === 2 && <StepItems formData={formData} updateItem={updateItem} addItem={addItem} removeItem={removeItem} />}
         {step === 3 && <StepPricing formData={formData} set={setPricingField} fmt={fmt} />}
-        {step === 4 && <StepTimeline formData={formData} updateTimeline={updateTimeline} addTimeline={addTimeline} removeTimeline={removeTimeline} />}
-        {step === 5 && <StepTerms formData={formData} updateTerms={updateTerms} addTerms={addTerms} removeTerms={removeTerms} set={set} />}
-        {step === 6 && <StepApproval formData={formData} set={set} setApproval={setApproval} />}
+        {step === 4 && <StepCharges formData={formData} updateCharge={updateCharge} addCharge={addCharge} removeCharge={removeCharge} fmt={fmt} />}
+        {step === 5 && <StepTimeline formData={formData} updateTimeline={updateTimeline} addTimeline={addTimeline} removeTimeline={removeTimeline} />}
+        {step === 6 && <StepTerms formData={formData} updateTerms={updateTerms} addTerms={addTerms} removeTerms={removeTerms} set={set} />}
+        {step === 7 && <StepSupport formData={formData} updateSupport={updateSupport} />}
+        {step === 8 && <StepApproval formData={formData} set={set} setApproval={setApproval} />}
       </div>
 
       {/* ── Step Nav Buttons ── */}
@@ -900,8 +949,8 @@ function StepTimeline({ formData, updateTimeline, addTimeline, removeTimeline })
                 </button>
               )}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Phase name" className="lg:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Phase name" className="sm:col-span-2">
                 <input value={item.phase} onChange={e => updateTimeline(idx, "phase", e.target.value)} placeholder="e.g. UI Design" className={inputCls} />
               </Field>
               <Field label="Duration">
@@ -912,6 +961,15 @@ function StepTimeline({ formData, updateTimeline, addTimeline, removeTimeline })
               </Field>
               <Field label="End date">
                 <input type="date" value={item.end_date} onChange={e => updateTimeline(idx, "end_date", e.target.value)} className={inputCls} />
+              </Field>
+              <Field label="Cost">
+                <input type="number" min="0" value={item.cost ?? 0} onChange={e => updateTimeline(idx, "cost", Number(e.target.value))} placeholder="0" className={inputCls} />
+              </Field>
+              <Field label="Description">
+                <textarea value={item.description || ""} onChange={e => updateTimeline(idx, "description", e.target.value)} placeholder="Describe the work included in this phase" className={textareaCls} />
+              </Field>
+              <Field label="Features / modules">
+                <textarea value={item.features_modules || ""} onChange={e => updateTimeline(idx, "features_modules", e.target.value)} placeholder="Add features or modules, one per line" className={textareaCls} />
               </Field>
             </div>
           </div>
