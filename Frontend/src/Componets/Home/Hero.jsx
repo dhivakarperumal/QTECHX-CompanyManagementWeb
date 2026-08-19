@@ -40,14 +40,14 @@ const heroSlides = [
       text: "Contact Us",
       link: "/contact",
     },
-    image: "/images/hero1.png",
+    image: "/images/hero6.png",
     alt: "Custom Cloud and Web Applications",
   },
   {
     id: 3,
     badge: "NEXT-GEN PRODUCT ENGINEERING",
     titleLine1: "INNOVATIVE APPS.",
-    titleLine2: "SEAMLESS USER EXPERIENCE.",
+    titleLine2: "SEAMLESS EXPERIENCE.",
     titleHighlight: "MARKET IMPACT.",
     description:
       "From intuitive mobile apps to full-scale digital products, we craft exceptional user experiences powered by modern, reliable technology stacks.",
@@ -59,7 +59,7 @@ const heroSlides = [
       text: "Book Now",
       link: "/booknow",
     },
-    image: "/images/hero3.png",
+    image: "/images/hero5.png",
     alt: "Next-Gen Product Engineering",
   },
   {
@@ -78,7 +78,7 @@ const heroSlides = [
       text: "About Us",
       link: "/about",
     },
-    image: "/images/hero2.png",
+    image: "/images/hero4.png",
     alt: "Future-Ready Tech and Growth Consulting",
   },
 ];
