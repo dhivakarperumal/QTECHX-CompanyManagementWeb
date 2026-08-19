@@ -1,8 +1,10 @@
 import React, { useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { FaPenNib, FaBullhorn, FaCode } from "react-icons/fa";
 
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const Methodology = () => {
   useEffect(() => {
@@ -15,21 +17,21 @@ const Methodology = () => {
 
   const items = [
     {
-      image: "/images/branding.png",
+      icon: FaPenNib,
       number: "01",
       title: "Branding",
       description:
         "At Q-Techx Solutions, we build brands that stand out. From logos to complete strategies, we craft identities that connect with your audience and inspire lasting trust.",
     },
     {
-      image: "/images/marketing.png",
+      icon: FaBullhorn,
       number: "02",
       title: "Marketing",
       description:
         "We blend creativity with data to grow your business. From SEO to social media, our campaigns drive visibility, engagement, and real results.",
     },
     {
-      image: "/images/development.png",
+      icon: FaCode,
       number: "03",
       title: "Development",
       description:
@@ -199,64 +201,11 @@ const Methodology = () => {
               HEADING
           ================================================== */}
 
-          <div
-            className="
-              mx-auto
-              mb-8
-              max-w-3xl
-              text-center
-              sm:mb-10
-            "
-            data-aos="fade-up"
-          >
-            <p
-              className="
-                mb-2
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-[0.18em]
-                text-[#FF6A00]
-                sm:text-xs
-              "
-            >
-              HOW WE WORK
-            </p>
-
-            <h2
-              className="
-                hero-font
-                text-[2.3rem]
-                font-bold
-                uppercase
-                leading-none
-                tracking-[-0.035em]
-                text-white
-                sm:text-4xl
-                md:text-5xl
-                lg:text-[3.4rem]
-              "
-            >
-              OUR{" "}
-              <span className="text-[#FF6A00]">
-                METHODOLOGY
-              </span>
-            </h2>
-
-            {/* Orange underline */}
-
-            <div
-              className="
-                mx-auto
-                mt-3
-                h-[2px]
-                w-14
-                bg-[#FF6A00]
-                shadow-[0_0_10px_rgba(255,106,0,0.5)]
-              "
-            />
-
-          </div>
+          <SectionTitle
+            subtitle="HOW WE WORK"
+            title="OUR"
+            highlight="METHODOLOGY"
+          />
 
           {/* =================================================
               METHODOLOGY CARDS
@@ -414,20 +363,59 @@ const Methodology = () => {
                     "
                   />
 
-                  <img
-                    src={item.image}
-                    alt={item.title}
+                  <div
                     className="
-                      relative
-                      z-10
-                      h-24
-                      w-24
-                      object-contain
-                      transition-transform
-                      duration-500
-                      group-hover:scale-110
-                    "
-                  />
+    relative
+    mx-auto
+    mb-5
+    mt-4
+    flex
+    h-32
+    w-32
+    items-center
+    justify-center
+    rounded-full
+    border
+    border-[#FF6A00]/60
+    bg-gradient-to-br
+    from-[#171d21]
+    to-[#090d10]
+    shadow-[0_0_25px_rgba(255,106,0,0.15)]
+    transition-all
+    duration-500
+    group-hover:border-[#FF6A00]
+    group-hover:shadow-[0_0_40px_rgba(255,106,0,0.30)]
+  "
+                  >
+                    {/* Inner glow */}
+                    <div
+                      className="
+      absolute
+      inset-3
+      rounded-full
+      bg-[#FF6A00]/10
+      blur-xl
+      transition-all
+      duration-500
+      group-hover:bg-[#FF6A00]/20
+    "
+                    />
+
+                    {/* Icon */}
+                    <item.icon
+                      className="
+      relative
+      z-10
+      text-6xl
+      text-[#FF6A00]
+      drop-shadow-[0_0_10px_rgba(255,106,0,0.55)]
+      transition-all
+      duration-500
+      group-hover:scale-110
+      group-hover:drop-shadow-[0_0_18px_rgba(255,106,0,0.8)]
+    "
+                    />
+                  </div>
 
                 </div>
 

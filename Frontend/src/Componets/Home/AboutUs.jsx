@@ -5,6 +5,7 @@ import { GiFamilyHouse, GiProgression } from "react-icons/gi";
 import Button from "../Components/Button";
 import { BsArrowRight } from "react-icons/bs";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -165,45 +166,16 @@ const AboutUs = () => {
             "
           >
 
-            {/* Small Heading */}
-
-            <p
-              className="
-                mb-2
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-wide
-                text-[#FF6A00]
-                sm:text-xs
-                md:text-sm
-              "
-            >
-              WHO WE ARE
-            </p>
-
-
-            {/* Main Heading */}
-
-            <h2
-              className="
-                hero-font
-                text-[2.4rem]
-                font-bold
-                uppercase
-                leading-[0.98]
-                tracking-[-0.035em]
-                text-white
-                sm:text-5xl
-                md:text-5xl
-                lg:text-[3.5rem]
-              "
-            >
-              ABOUT{" "}
-              <span className="text-[#FF6A00]">
-                US
-              </span>
-            </h2>
+            {/* Heading */}
+            <SectionTitle
+              subtitle="WHO WE ARE"
+              title="ABOUT"
+              highlight="US"
+              align="left"
+              size="lg"
+              className="text-center md:text-left mb-0"
+              underlineClassName="mx-auto md:mr-auto md:ml-0"
+            />
 
 
             {/* First Paragraph */}
@@ -214,6 +186,7 @@ const AboutUs = () => {
                 mt-5
                 max-w-[570px]
                 text-sm
+                text-justify
                 font-normal
                 leading-6
                 text-white/80
@@ -242,6 +215,7 @@ const AboutUs = () => {
                 text-sm
                 font-normal
                 leading-6
+                text-justify
                 text-white/80
                 sm:text-base
                 sm:leading-7

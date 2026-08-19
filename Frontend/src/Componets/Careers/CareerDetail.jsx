@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import PageContainer from "../CommonComponents/PageContainer";
 import emailjs from "@emailjs/browser";
 import api from "../../api";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const getAppliedJobs = () => {
   try {
@@ -74,8 +75,8 @@ const CareerDetail = () => {
                 job.minimum_salary && job.maximum_salary
                   ? `${job.currency || "INR"} ${job.minimum_salary} - ${job.maximum_salary}`
                   : job.minimum_salary
-                  ? `${job.currency || "INR"} ${job.minimum_salary}`
-                  : "Competitive",
+                    ? `${job.currency || "INR"} ${job.minimum_salary}`
+                    : "Competitive",
               company: job.company_name || "Q Techx",
               location: job.city || job.state || job.country || "Remote",
               vacancies: totalVacancies,
@@ -237,23 +238,11 @@ const CareerDetail = () => {
         {/* Section 2: Opening Positions */}
         <PageContainer className="relative z-10 py-14 sm:py-16 md:py-20">
           <div className="mx-auto max-w-3xl text-center">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              CURRENT VACANCIES
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              OPENING <span className="text-[#FF6A00]">POSITIONS</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
+            <SectionTitle
+              subtitle="CURRENT VACANCIES"
+              title="OPENING"
+              highlight="POSITIONS"
+              size="default"
             />
           </div>
 

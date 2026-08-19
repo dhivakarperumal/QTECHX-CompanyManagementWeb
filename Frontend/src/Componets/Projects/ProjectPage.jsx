@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import ProjectCard from "../Components/ProjectCard";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 import api from "../../api";
 
 const getImageUrl = (image) => {
@@ -221,28 +222,12 @@ const ProjectPage = () => {
           {/* =====================================================
               SECTION HEADING
           ====================================================== */}
-          <div className="mb-10 text-center sm:mb-14">
-            <p
-              data-aos="fade-down"
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs md:text-sm"
-            >
-              PORTFOLIO & CASE STUDIES
-            </p>
-
-            <h2
-              data-aos="zoom-in"
-              className="hero-font text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.2rem]"
-            >
-              EXPLORE OUR <span className="text-[#FF6A00]">RECENT PROJECTS</span>
-            </h2>
-
-            <div
-              data-aos="fade-up"
-              className="mx-auto mt-3 h-[2px] w-14 bg-[#FF6A00] shadow-[0_0_10px_rgba(255,106,0,0.5)]"
-            />
-
-          
-          </div>
+          <SectionTitle
+            subtitle="PORTFOLIO & CASE STUDIES"
+            title="EXPLORE OUR"
+            highlight="RECENT PROJECTS"
+            className="mb-10 sm:mb-14"
+          />
 
           {/* =====================================================
               SEARCH & FILTER CONTROLS

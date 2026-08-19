@@ -18,6 +18,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 const iconMap = {
   FaCode,
@@ -104,22 +105,12 @@ function Services() {
       <PageContainer className="relative z-10">
 
         {/* Section heading */}
-        <div
-          data-aos="fade-up"
-          className="mx-auto mb-12 max-w-3xl text-center"
-        >
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#FF6A00] sm:text-sm">
-            WHAT WE DO
-          </p>
-
-          <h2 className="text-3xl font-bold uppercase tracking-tight text-white sm:text-4xl md:text-5xl">
-            OUR{" "}
-            <span className="text-[#FF6A00]">
-              SERVICES
-            </span>
-          </h2>
-
-        </div>
+        <SectionTitle
+          subtitle="WHAT WE DO"
+          title="OUR"
+          highlight="SERVICES"
+          className="mb-12"
+        />
 
         {/* ================= STATES ================= */}
 
@@ -171,27 +162,29 @@ function Services() {
                     to={`/services/${service.id}`}
                     data-aos="fade-up"
                     data-aos-delay={index * 70}
-                    className="group"
+                    className="group flex h-full flex-col"
                   >
                     <article
                       className="
     group
     relative
     flex
-    min-h-[330px]
+    h-full
+    min-h-[340px]
     flex-col
     overflow-hidden
     rounded-[20px]
     border
-    border-white/[0.08]
-    bg-[#11161b]
+    border-[#FF6A00]/50
+    hover:border-[#FF6A00]/60
+    bg-[#0b0e12]
     p-6
+    shadow-[0_20px_60px_rgba(255,106,0,0.15)]
     transition-all
     duration-500
-    hover:-translate-y-2
-    hover:border-[#FF6A00]/50
-    hover:bg-[#0b0e12]
-    hover:shadow-[0_20px_60px_rgba(255,106,0,0.15)]
+    hover:-translate-y-1
+    hover:bg-[#11161b]
+    hover:shadow-none
   "
                     >
                       {/* ================= ORANGE GLOW ================= */}
@@ -205,11 +198,11 @@ function Services() {
       h-44
       w-44
       rounded-full
-      bg-[#FF6A00]/10
+      bg-[#FF6A00]/25
       blur-[70px]
       transition-all
       duration-500
-      group-hover:bg-[#FF6A00]/25
+      group-hover:bg-[#FF6A00]/10
     "
                       />
 
@@ -221,11 +214,11 @@ function Services() {
       left-0
       top-0
       h-[2px]
-      w-0
+      w-full
       bg-[#FF6A00]
       transition-all
       duration-500
-      group-hover:w-full
+      group-hover:w-0
     "
                       />
 
@@ -239,10 +232,10 @@ function Services() {
       text-xs
       font-bold
       tracking-[0.15em]
-      text-white/10
+      text-[#FF6A00]/30
       transition-colors
       duration-300
-      group-hover:text-[#FF6A00]/30
+      group-hover:text-white/10
     "
                       >
                         {String(index + 1).padStart(2, "0")}
@@ -250,37 +243,10 @@ function Services() {
 
                       {/* ================= ICON ================= */}
 
-                      <div className="relative z-10 mb-7">
-
-                        <div
-                          className="
-        flex
-        h-16
-        w-16
-        items-center
-        justify-center
-        rounded-2xl
-        border
-        border-[#FF6A00]/25
-        bg-[#FF6A00]/10
-        transition-all
-        duration-500
-        group-hover:border-[#FF6A00]
-        group-hover:bg-[#FF6A00]
-        group-hover:shadow-[0_0_30px_rgba(255,106,0,0.25)]
-      "
-                        >
+                      <div className="relative z-10 mb-7 flex justify-center">
+                        <div className="flex h-24 w-24 items-center justify-center">
                           {Icon ? (
-                            <Icon
-                              className="
-            text-2xl
-            text-[#FF6A00]
-            transition-all
-            duration-300
-            group-hover:scale-110
-            group-hover:text-black
-          "
-                            />
+                            <Icon className="text-3xl text-[#FF6A00]" />
                           ) : service.singlepageimage &&
                             service.singlepageimage.length > 0 ? (
                             <img
@@ -290,13 +256,23 @@ function Services() {
                                   : service.singlepageimage
                               }
                               alt={service.title}
-                              className="h-9 w-9 object-contain"
+                              className="
+    h-24
+    w-24
+    rounded-full
+    border
+    border-[#FF6A00]/70
+    object-contain
+    transition-all
+    duration-300
+    group-hover:border-[#FF6A00]/70
+    group-hover:scale-105
+  "
                             />
                           ) : (
-                            <FaLaptopCode className="text-2xl text-[#FF6A00]" />
+                            <FaLaptopCode className="text-3xl text-[#FF6A00]" />
                           )}
                         </div>
-
                       </div>
 
                       {/* ================= CONTENT ================= */}
@@ -304,13 +280,15 @@ function Services() {
                       <div className="relative z-10 flex flex-1 flex-col">
 
                         <h3
+                          title={service.title}
                           className="
         mb-3
-        max-w-[90%]
+        line-clamp-2
+        h-12
         text-lg
         font-bold
         uppercase
-        leading-tight
+        leading-6
         tracking-wide
         text-white
         transition-all
@@ -323,13 +301,14 @@ function Services() {
 
                         <p
                           className="
-        line-clamp-5
+                          text-justify
+        line-clamp-4
         text-sm
         leading-6
-        text-white/45
+        text-white/65
         transition-colors
         duration-300
-        group-hover:text-white/65
+        group-hover:text-white/85
       "
                         >
                           {service.description ||
@@ -356,10 +335,10 @@ function Services() {
           font-bold
           uppercase
           tracking-[0.12em]
-          text-white/30
+          text-[#FF6A00]
           transition-colors
           duration-300
-          group-hover:text-[#FF6A00]
+          group-hover:text-white
         "
                           >
                             Explore Service
@@ -374,15 +353,15 @@ function Services() {
           justify-center
           rounded-full
           border
-          border-white/10
+          border-[#FF6A00]
+          bg-[#FF6A00]
           text-sm
-          text-[#FF6A00]
+          text-black
           transition-all
           duration-300
-          group-hover:translate-x-1
-          group-hover:border-[#FF6A00]
-          group-hover:bg-[#FF6A00]
-          group-hover:text-black
+          group-hover:border-white/10
+          group-hover:bg-transparent
+          group-hover:text-[#FF6A00]
         "
                           >
                             →

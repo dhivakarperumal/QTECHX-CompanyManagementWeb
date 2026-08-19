@@ -6,6 +6,7 @@ import Logo from "/images/logo.png";
 
 import Button from "../Components/Button";
 import PageContainer from "../CommonComponents/PageContainer";
+import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -259,42 +260,12 @@ const WhyChooseUs = () => {
                 "
               />
 
-              {/* Small Heading */}
-
-              <p
-                className="
-                  relative
-                  z-10
-                  mb-2
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.18em]
-                  text-[#FF6A00]
-                  sm:text-xs
-                  md:text-sm
-                "
-              >
-                WHY CHOOSE US
-              </p>
-
-              {/* Main Heading */}
-
-              <h2
-                className="
-                  hero-font
-                  relative
-                  z-10
-                  text-[2.2rem]
-                  font-bold
-                  uppercase
-                  leading-[1]
-                  tracking-[-0.035em]
-                  text-white
-                  sm:text-4xl
-                  md:text-4xl
-                  lg:text-[3.2rem]
-                "
+              {/* Heading */}
+              <SectionTitle
+                subtitle="WHY CHOOSE US"
+                align="left"
+                className="mb-0"
+                underlineClassName="mr-auto"
               >
                 WE'RE{" "}
                 <span className="text-[#FF6A00]">
@@ -302,21 +273,7 @@ const WhyChooseUs = () => {
                 </span>
                 <br />
                 SOLUTIONS
-              </h2>
-
-              {/* Orange underline */}
-
-              <div
-                className="
-                  relative
-                  z-10
-                  mt-3
-                  h-[2px]
-                  w-14
-                  bg-[#FF6A00]
-                  shadow-[0_0_10px_rgba(255,106,0,0.5)]
-                "
-              />
+              </SectionTitle>
 
               {/* Description */}
 
@@ -327,6 +284,7 @@ const WhyChooseUs = () => {
                   mt-5
                   text-sm
                   leading-6
+                  text-justify
                   text-white/80
                   sm:text-base
                   sm:leading-7
@@ -349,6 +307,7 @@ const WhyChooseUs = () => {
                   leading-6
                   text-white/80
                   sm:text-base
+                  text-justify
                   sm:leading-7
                   lg:text-[15px]
                   lg:leading-7
@@ -359,72 +318,7 @@ const WhyChooseUs = () => {
                 competitive digital world.
               </p>
 
-              {/* =================================================
-                  FEATURES
-              ================================================== */}
-
-              <div
-                className="
-                  relative
-                  z-10
-                  mt-5
-                  grid
-                  grid-cols-1
-                  gap-2
-                  sm:grid-cols-3
-                "
-              >
-                {features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                      rounded-lg
-                      border
-                      border-white/10
-                      bg-[#080d11]
-                      px-3
-                      py-2
-                      transition-all
-                      duration-300
-                      hover:border-[#FF6A00]/50
-                      hover:bg-[#10161b]
-                    "
-                  >
-                    <span
-                      className="
-                        flex
-                        h-5
-                        w-5
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-[#FF6A00]/10
-                        text-[10px]
-                        font-bold
-                        text-[#FF6A00]
-                      "
-                    >
-                      ✓
-                    </span>
-
-                    <span
-                      className="
-                        text-[9px]
-                        font-medium
-                        text-white/80
-                        sm:text-[10px]
-                      "
-                    >
-                      {feature}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
+            
               {/* Button */}
 
               <div

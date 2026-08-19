@@ -29,6 +29,7 @@ const EventBanner = () => {
     "
       style={{
         backgroundImage: "url('/images/student event.png')",
+        objectPosition: "top"
       }}
     >
       {/* Light background blur */}
@@ -93,12 +94,12 @@ const EventBanner = () => {
               text-3xl
               font-bold
               uppercase
-              leading-[1.05]
+              leading-[1.2]
               tracking-tight
               text-white
               sm:text-4xl
               md:text-4xl
-              lg:text-[3.2rem]
+              lg:text-[2.7rem]
             "
             >
               STUDENT
@@ -116,7 +117,7 @@ const EventBanner = () => {
               data-aos-delay="450"
               className="
               mx-auto
-              mt-4
+              mt-2
               max-w-[480px]
               text-sm
               leading-6

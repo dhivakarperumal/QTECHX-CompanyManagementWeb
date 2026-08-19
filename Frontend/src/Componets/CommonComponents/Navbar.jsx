@@ -54,7 +54,6 @@ const Navbar = () => {
     { id: 1, title: "Why Choose Us", path: "/whychooseus" },
     { id: 2, title: "Who We Work With", path: "/whoweworkwith" },
     { id: 3, title: "What We Do", path: "/whatwedo" },
-    { id: 4, title: "Our Achievements", path: "/achievements" },
   ];
 
   const iconMap = {
@@ -136,7 +135,7 @@ const Navbar = () => {
 
                 {/* Animated Dropdown */}
                 <div
-                  className={`absolute left-1/2 top-full z-50 mt-4 w-[26rem] -translate-x-1/2
+                  className={`absolute left-1/2 top-full z-50 mt-4 w-[36rem] -translate-x-1/2
       transition-all duration-300 ease-out
       ${openMenu === "services"
                       ? "visible translate-y-0 scale-100 opacity-100"
