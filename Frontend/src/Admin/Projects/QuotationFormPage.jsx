@@ -103,6 +103,12 @@ const createDefaultForm = (defaults = {}) => {
   if (result.valid_until) {
     result.valid_until = dayjs(result.valid_until).format("YYYY-MM-DD");
   }
+  if (result.sent_date) {
+    result.sent_date = dayjs(result.sent_date).format("YYYY-MM-DD");
+  }
+  if (result.response_date) {
+    result.response_date = dayjs(result.response_date).format("YYYY-MM-DD");
+  }
   if (result.approval?.approved_at) {
     result.approval.approved_at = dayjs(result.approval.approved_at).format("YYYY-MM-DD");
   }
@@ -1165,10 +1171,10 @@ function StepApproval({ formData, set, setApproval }) {
               <input value={formData.delivery_timeline} onChange={e => set("delivery_timeline", e.target.value)} placeholder="e.g. 4 Weeks" className={inputCls} />
             </Field>
             <Field label="Sent date">
-              <input type="date" value={formData.sent_date} onChange={e => set("sent_date", e.target.value)} className={inputCls} />
+              <input type="date" value={formData.sent_date || ""} onChange={e => set("sent_date", e.target.value || null)} className={inputCls} aria-label="Sent date (DD-MM-YYYY)" />
             </Field>
             <Field label="Response date">
-              <input type="date" value={formData.response_date} onChange={e => set("response_date", e.target.value)} className={inputCls} />
+              <input type="date" value={formData.response_date || ""} onChange={e => set("response_date", e.target.value || null)} className={inputCls} aria-label="Response date (DD-MM-YYYY)" />
             </Field>
           </div>
         </Section>
