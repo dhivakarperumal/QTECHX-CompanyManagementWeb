@@ -99,7 +99,8 @@ const ProjectPage = () => {
 
   useEffect(() => {
     fetchProjects();
-    AOS.init({ duration: 900, easing: "ease-in-out", once: true, offset: 60 });
+    AOS.init({ duration: 900, easing: "ease-out-cubic", once: true, offset: 60 });
+    AOS.refresh();
   }, [fetchProjects]);
 
   // Transform API response
@@ -410,7 +411,7 @@ const ProjectPage = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
               {filteredProjects.map((project, i) => (
                 <ProjectCard
                   key={project.id}

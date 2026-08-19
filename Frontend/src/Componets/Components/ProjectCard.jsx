@@ -32,6 +32,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.08)]
         transition-all
         duration-500
+        ease-[cubic-bezier(0.22,1,0.36,1)]
         hover:-translate-y-1.5
         hover:border-[#FF6A00]/50
         hover:from-[#1d2429]
@@ -58,15 +59,18 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         "
       />
 
+      {/* Hover light sweep */}
+      <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-20 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
+
       {/* Image Wrapper */}
       <div
         className="
           relative
-          h-[210px]
+          h-[180px]
           w-full
           overflow-hidden
           bg-[#080d11]
-          sm:h-[230px]
+            sm:h-[190px]
         "
       >
         <img
@@ -121,6 +125,10 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         >
           {project.category || "Project"}
         </span>
+
+        <div className="pointer-events-none absolute bottom-3 right-3 flex h-8 w-8 translate-y-2 items-center justify-center rounded-full border border-white/20 bg-[#03070a]/70 text-white/70 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 group-hover:border-[#FF6A00]/60 group-hover:text-[#FF6A00] group-hover:opacity-100">
+          <FiArrowRight size={14} />
+        </div>
       </div>
 
       {/* Content Wrapper */}
