@@ -200,7 +200,8 @@ const Prices = () => {
   const [openFaq, setOpenFaq] = useState(0);
 
   useEffect(() => {
-    AOS.init({ duration: 900, easing: "ease-in-out", once: true, offset: 60 });
+    AOS.init({ duration: 900, easing: "ease-out-cubic", once: true, offset: 60 });
+    AOS.refresh();
 
     const fetchPrices = async () => {
       try {
@@ -423,7 +424,7 @@ const Prices = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
               {filteredPlans.map((plan, index) => {
                 const isFeatured = plan.isPopular || plan.plan_title === "Dynamic Website";
 
@@ -442,6 +443,7 @@ const Prices = () => {
                       rounded-2xl
                       transition-all
                       duration-500
+                      ease-[cubic-bezier(0.22,1,0.36,1)]
                       ${
                         isFeatured
                           ? "border-2 border-[#FF6A00] bg-gradient-to-br from-[#1d2329] via-[#141a20] to-[#0f1418] shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_35px_rgba(255,106,0,0.22)] -translate-y-1 hover:-translate-y-2.5"
@@ -464,6 +466,7 @@ const Prices = () => {
                         ${isFeatured ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
                       `}
                     />
+                    <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
 
                     {/* Popular Badge */}
                     {isFeatured && (
@@ -475,17 +478,17 @@ const Prices = () => {
                       </div>
                     )}
 
-                    <div className="flex flex-1 flex-col p-6 sm:p-7 md:p-8">
+                    <div className="flex flex-1 flex-col p-5 sm:p-6">
                       {/* Plan Title */}
                       <h3
                         className={`
-                          text-xl
+                          text-lg
                           font-bold
                           uppercase
                           tracking-tight
                           transition-colors
                           duration-300
-                          sm:text-2xl
+                          sm:text-xl
                           ${isFeatured ? "text-[#FF6A00]" : "text-white group-hover:text-[#FF6A00]"}
                         `}
                       >
@@ -503,7 +506,7 @@ const Prices = () => {
 
                       {/* Price Display */}
                       <div className="mt-5 flex items-baseline gap-2">
-                        <span className="hero-font text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                        <span className="hero-font text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                           {plan.price}
                         </span>
                       </div>

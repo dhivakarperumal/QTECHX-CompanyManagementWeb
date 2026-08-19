@@ -33,13 +33,24 @@ const formatDate = (dateString) => {
   }
 };
 
+const isDeadlinePassed = (dateString) => {
+  if (!dateString) return false;
+  const value = String(dateString);
+  const deadline = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T23:59:59`)
+    : new Date(value);
+  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < Date.now();
+};
+
 const CareerDetail = () => {
   const navigate = useNavigate();
   useEffect(() => {
     AOS.init({
       duration: 1000,
       once: true,
+      easing: "ease-out-cubic",
     });
+    AOS.refresh();
   }, []);
 
   const [jobs, setJobs] = useState([]);
@@ -335,6 +346,7 @@ const CareerDetail = () => {
                   className="
                     group
                     relative
+                    min-h-[360px]
                     flex
                     flex-col
                     justify-between
@@ -346,26 +358,32 @@ const CareerDetail = () => {
                     from-[#171d22]
                     via-[#11171c]
                     to-[#0d1216]
-                    p-6
+                    p-5
                     shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.08)]
                     transition-all
                     duration-500
+                    ease-[cubic-bezier(0.22,1,0.36,1)]
                     hover:-translate-y-2
                     hover:border-[#FF6A00]/50
                     hover:from-[#1d2429]
                     hover:via-[#141b20]
                     hover:to-[#0f1519]
                     hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
-                    sm:p-7
+                    sm:p-6
                   "
                 >
+                  {(() => {
+                    const deadlinePassed = isDeadlinePassed(job.applicationDeadline);
+                    return (
+                      <>
                   {/* Top Laser Line */}
                   <div className="absolute left-0 right-0 top-0 h-[2px] origin-left scale-x-0 bg-[#FF6A00] transition-transform duration-500 group-hover:scale-x-100" />
+                  <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
 
                   <div>
                     {/* Header: Title and Company */}
                     <div className="mb-3 flex items-start justify-between gap-3">
-                      <h3 className="text-lg font-bold text-white transition-colors duration-300 group-hover:text-[#FF6A00] sm:text-xl">
+                      <h3 className="text-lg font-bold text-white transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#FF6A00] sm:text-xl">
                         {job.title}
                       </h3>
                       <span className="shrink-0 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
@@ -380,13 +398,13 @@ const CareerDetail = () => {
 
                     {/* Metadata Badges */}
                     <div className="flex flex-wrap items-center gap-3 text-xs text-white/80">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
                         <Clock size={14} className="text-[#FF6A00]" /> {job.type}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
                         <IndianRupee size={14} className="text-[#FF6A00]" /> {job.salary}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/70">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/70 transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
                         {job.location}
                       </span>
                     </div>
@@ -412,7 +430,8 @@ const CareerDetail = () => {
                     {/* Apply Button */}
                     <button
                       type="button"
-                      onClick={() => handleApplyJob(job.id)}
+                      disabled={deadlinePassed}
+                      onClick={() => !deadlinePassed && handleApplyJob(job.id)}
                       className="
                         mt-5
                         w-full
@@ -427,13 +446,22 @@ const CareerDetail = () => {
                         shadow-[0_0_20px_rgba(255,106,0,0.3)]
                         transition-all
                         duration-300
+                        hover:-translate-y-0.5
                         hover:bg-[#ff781a]
                         hover:shadow-[0_0_30px_rgba(255,106,0,0.45)]
+                        disabled:cursor-not-allowed
+                        disabled:bg-white/10
+                        disabled:text-white/40
+                        disabled:shadow-none
+                        disabled:hover:translate-y-0
                       "
                     >
-                      Apply Now
+                      {deadlinePassed ? "Applications Closed" : "Apply Now"}
                     </button>
                   </div>
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -441,8 +469,8 @@ const CareerDetail = () => {
 
           {/* Notify Modal */}
           {notifyModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-              <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[#1b2228] to-[#0f1418] p-6 text-center shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(255,106,0,0.25)] sm:p-8">
+            <div className="fixed inset-0 z-50 flex animate-[fadeIn_220ms_ease-out] items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+              <div className="relative w-full max-w-sm animate-[modalIn_320ms_cubic-bezier(0.22,1,0.36,1)] overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-[#1b2228] to-[#0f1418] p-6 text-center shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(255,106,0,0.25)] sm:p-8">
                 <div className="absolute left-0 right-0 top-0 h-[2px] bg-[#FF6A00]" />
 
                 {!notifySubmitted ? (

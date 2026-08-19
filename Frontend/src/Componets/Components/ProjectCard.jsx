@@ -1,6 +1,6 @@
 // src/components/ProjectCard.jsx
 import React, { useState } from "react";
-import { FiExternalLink, FiArrowRight } from "react-icons/fi";
+import { FiExternalLink, FiArrowRight, FiEye } from "react-icons/fi";
 
 const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
   const [imageError, setImageError] = useState(false);
@@ -22,22 +22,18 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         h-full
         flex-col
         overflow-hidden
-        rounded-2xl
+        rounded-3xl
         border
-        border-white/10
-        bg-gradient-to-br
-        from-[#171d22]
-        via-[#11171c]
-        to-[#0d1216]
-        shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.08)]
+        border-white/[0.12]
+        bg-gradient-to-b from-[#182127] to-[#0e151a]
+        shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_16px_rgba(255,106,0,0.05)]
         transition-all
         duration-500
+        ease-[cubic-bezier(0.22,1,0.36,1)]
         hover:-translate-y-1.5
         hover:border-[#FF6A00]/50
-        hover:from-[#1d2429]
-        hover:via-[#141b20]
-        hover:to-[#0f1519]
-        hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
+        hover:bg-[#151d22]
+        hover:shadow-[0_14px_34px_rgba(0,0,0,0.45),0_0_24px_rgba(255,106,0,0.14)]
       "
     >
       {/* Top Laser Accent Line */}
@@ -58,15 +54,20 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         "
       />
 
+      {/* Hover light sweep */}
+      <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-20 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.07] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
+
       {/* Image Wrapper */}
       <div
         className="
           relative
-          h-[210px]
+          mx-2
+          h-[175px]
           w-full
           overflow-hidden
+          rounded-2xl
           bg-[#080d11]
-          sm:h-[230px]
+          sm:h-[185px]
         "
       >
         <img
@@ -85,49 +86,51 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         />
 
         {/* Gradient Overlay */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            bg-gradient-to-t
-            from-[#0d1216]
-            via-[#03070a]/30
-            to-transparent
-          "
-        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b1014]/35 via-transparent to-transparent" />
 
         {/* Category Badge */}
         <span
           className="
             absolute
-            left-4
-            top-4
+            left-3
+            top-3
             z-10
-            rounded-full
+            rounded-lg
             border
-            border-[#FF6A00]/50
-            bg-[#03070a]/85
-            px-3
-            py-1
-            text-[10px]
-            font-semibold
+            border-[#FF6A00]/60
+            bg-[#111820]/90
+            px-3.5
+            py-1.5
+            text-[9px]
+            font-bold
             uppercase
-            tracking-wider
-            text-[#FF6A00]
+            tracking-[0.16em]
+            text-[#ff9a4d]
             backdrop-blur-md
-            shadow-[0_0_12px_rgba(255,106,0,0.2)]
+            shadow-[0_6px_16px_rgba(0,0,0,0.35)]
+            transition-all
+            duration-300
+            group-hover:border-[#FF6A00]
+            group-hover:bg-[#FF6A00]
+            group-hover:text-white
+            group-hover:shadow-[0_0_16px_rgba(255,106,0,0.35)]
           "
         >
           {project.category || "Project"}
         </span>
+
+        <div className="pointer-events-none absolute bottom-3 right-3 flex h-8 w-8 translate-y-2 items-center justify-center rounded-full border border-white/20 bg-[#03070a]/70 text-white/70 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 group-hover:border-[#FF6A00]/60 group-hover:text-[#FF6A00] group-hover:opacity-100">
+          <FiArrowRight size={14} />
+        </div>
       </div>
 
       {/* Content Wrapper */}
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
+      <div className="flex min-h-[238px] flex-1 flex-col px-5 pb-5 pt-2 sm:px-5 sm:pb-5">
         {/* Title */}
         <h3
           className="
+            line-clamp-2
+            min-h-[48px]
             text-lg
             font-bold
             tracking-tight
@@ -144,7 +147,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* Orange Accent Bar */}
         <div
           className="
-            mt-2.5
+            mt-1
             h-[2px]
             w-8
             bg-[#FF6A00]
@@ -158,13 +161,13 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* Description */}
         <p
           className="
-            mt-3
-            line-clamp-3
+            mt-2.5
+            line-clamp-2
             text-xs
             leading-relaxed
             text-white/65
             sm:text-sm
-            sm:leading-6
+            sm:leading-5
           "
         >
           {project.description || "Scalable digital solution engineered for modern business performance."}
@@ -200,7 +203,7 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         )}
 
         {/* Footer Actions */}
-        <div className="mt-auto flex items-center justify-between pt-5">
+          <div className="mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
           {project.link && project.link !== "#" ? (
             <a
               href={project.link}
@@ -255,18 +258,20 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
           {onSelect && (
             <button
               onClick={() => onSelect(project)}
+              aria-label={`Quick view ${project.title}`}
+              title="Quick View"
               className="
-                text-[11px]
+                flex h-8 w-8 items-center justify-center rounded-full border border-[#FF6A00]/35 bg-[#FF6A00]/10
                 font-bold
                 uppercase
                 tracking-wider
-                text-white/50
-                transition-colors
-                duration-200
-                hover:text-[#FF6A00]
+                text-[#FFB066]
+                transition-all
+                duration-300
+                hover:-translate-y-0.5 hover:border-[#FF6A00] hover:bg-[#FF6A00] hover:text-white hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
               "
             >
-              Quick View
+              <FiEye size={12} />
             </button>
           )}
         </div>
@@ -277,18 +282,18 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         className="
           pointer-events-none
           absolute
-          -bottom-20
+          -bottom-24
           left-1/2
-          h-36
-          w-36
+          h-28
+          w-28
           -translate-x-1/2
           rounded-full
           bg-[#FF6A00]/10
-          opacity-50
-          blur-[45px]
+          opacity-30
+          blur-[40px]
           transition-all
           duration-500
-          group-hover:bg-[#FF6A00]/25
+          group-hover:bg-[#FF6A00]/20
           group-hover:opacity-100
         "
       />
