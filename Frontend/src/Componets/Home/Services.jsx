@@ -326,6 +326,7 @@ function Services() {
 
                         <p
                           className="
+                          text-justify
         line-clamp-4
         text-sm
         leading-6
