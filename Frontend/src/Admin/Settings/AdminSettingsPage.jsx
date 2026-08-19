@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -45,6 +45,13 @@ const AdminSettingsPage = () => {
       icon: FileText,
       path: '/admin/settings/job-applications',
       accent: 'from-blue-500/20 to-cyan-600/10',
+    },
+    {
+      title: 'Service Requests',
+      description: 'Review project inquiries submitted from service detail pages.',
+      icon: ClipboardList,
+      path: '/admin/settings/service-requests',
+      accent: 'from-orange-500/20 to-rose-600/10',
     },
   ];
 
