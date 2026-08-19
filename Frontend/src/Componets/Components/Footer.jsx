@@ -39,7 +39,7 @@ const Footer = () => {
     { name: "Twitter", icon: FaTwitter, url: "https://x.com/QTechxTpt?t=fmfCt7ZX-5RoQIbHJ-4s_A&s=09" },
     { name: "Email", icon: FaGoogle, url: "mailto:info@qtechx.com" },
     { name: "LinkedIn", icon: FaLinkedinIn, url: "https://www.linkedin.com/in/q-techx-solutions-724346366/" },
-    { name: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/919123589879?text=Hello%20Q-Techx%20Solutions" },
+    { name: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/919597293504?text=Hello%20Q-Techx%20Solutions" },
     { name: "Instagram", icon: FaInstagram, url: "https://www.instagram.com/qtech.x?igsh=MXNsODg2YjA5N21wbA==" },
   ];
 
@@ -263,7 +263,7 @@ const Footer = () => {
                 />
 
                 <span>
-                  +91 91235 89879
+                  +91 95972 93504
                 </span>
 
               </p>
