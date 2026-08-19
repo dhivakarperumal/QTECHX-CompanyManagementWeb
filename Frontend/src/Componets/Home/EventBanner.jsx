@@ -21,7 +21,7 @@ const EventBanner = () => {
       w-full
       overflow-hidden
       border-y
-      border-white/30
+      border-white/10
       bg-[#030303]
       bg-cover
       bg-center
@@ -32,7 +32,7 @@ const EventBanner = () => {
       }}
     >
       {/* Light background blur */}
-      <div className="absolute inset-0 bg-black/5 backdrop-blur-[0.5px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[0.5px]" />
 
       <PageContainer className="relative z-10">
         <div

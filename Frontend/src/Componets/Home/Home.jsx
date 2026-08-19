@@ -14,7 +14,7 @@ const Home = () => {
   return (
     <>
       <Hero />
-      <FeaturedOpenings />
+      {/* <FeaturedOpenings /> */}
       <EventBanner/>
       <Services/>
       <AboutUs/>
