@@ -630,6 +630,9 @@ function StepProject({ formData, set }) {
               ))}
             </select>
           </Field>
+          <Field label="Project description" className="sm:col-span-2">
+            <textarea value={formData.project_description} onChange={e => set("project_description", e.target.value)} placeholder="Brief overview of what the project entails…" className={textareaCls} />
+          </Field>
           <Field label="Delivery timeline" className="sm:col-span-2">
             <input value={formData.delivery_timeline} onChange={e => set("delivery_timeline", e.target.value)} placeholder="e.g. 4 Weeks, 3 Months" className={inputCls} />
           </Field>
@@ -638,11 +641,11 @@ function StepProject({ formData, set }) {
 
       <Section title="Scope &amp; Description" subtitle="Detailed project scope and technologies" icon={FileSpreadsheet}>
         <div className="grid gap-4">
-          <Field label="Project description">
-            <textarea value={formData.project_description} onChange={e => set("project_description", e.target.value)} placeholder="Brief overview of what the project entails…" className={textareaCls} />
-          </Field>
           <Field label="Scope of work">
             <textarea value={formData.scope_of_work} onChange={e => set("scope_of_work", e.target.value)} placeholder="List the features, modules, and deliverables…" className={textareaCls + " min-h-[130px]"} />
+          </Field>
+          <Field label="Client message">
+            <textarea value={formData.client_message} onChange={e => set("client_message", e.target.value)} placeholder="Message to share with the client…" className={textareaCls} />
           </Field>
           <Field label="Technologies used">
             <div className="space-y-3">
@@ -682,9 +685,6 @@ function StepProject({ formData, set }) {
         <div className="grid gap-4">
           <Field label="Internal notes">
             <textarea value={formData.notes} onChange={e => set("notes", e.target.value)} placeholder="Notes for the internal team…" className={textareaCls} />
-          </Field>
-          <Field label="Client message">
-            <textarea value={formData.client_message} onChange={e => set("client_message", e.target.value)} placeholder="Message to share with the client…" className={textareaCls} />
           </Field>
         </div>
       </Section>
