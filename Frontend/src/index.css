@@ -533,3 +533,89 @@ input[type="date"] {
   background: #f97316 !important;
   color: #fff !important;
 }
+
+/* ═══════════════════════════════════════════
+   GLOBAL PRINT STYLES
+   ═══════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  *, *:before, *:after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body, #root {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 11pt;
+  }
+
+  .admin-root, .employee-root {
+    background: #ffffff !important;
+    background-image: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .glass-container {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    min-height: 0 !important;
+  }
+
+  .glass-footer, footer.glass-footer, .floating-element, [data-floating] {
+    display: none !important;
+  }
+
+  .quotation-document {
+    color: #0f172a !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .quotation-document table {
+    page-break-inside: auto;
+  }
+
+  .quotation-document tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .quotation-document thead {
+    display: table-header-group;
+  }
+
+  .quotation-document tfoot {
+    display: table-footer-group;
+  }
+
+  .break-inside-avoid,
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}

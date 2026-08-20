@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
+import QuotationPrintTemplate from "./QuotationPrintTemplate";
 import {
   Plus,
   Search,
@@ -256,6 +258,39 @@ const ProjectQuotationsPage = () => {
   const [viewMode, setViewMode] = useState("table");
   const [showFilters, setShowFilters] = useState(false);
 
+  // ── Direct Print state & hook ──
+  const printRef = useRef(null);
+  const [printQuoteData, setPrintQuoteData] = useState(null);
+
+  const handlePrintTrigger = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: printQuoteData
+      ? `Quotation_${printQuoteData.quotation_number || "Document"}_${printQuoteData.client_name || printQuoteData.company_name || ""}`
+      : "Quotation",
+  });
+
+  const handlePrintQuote = async (quote) => {
+    if (!quote) return;
+    const key = getQuoteKey(quote);
+    try {
+      let fullQuote = quote;
+      try {
+        const { data } = await api.get(`/quotations/${key}`);
+        if (data?.data) {
+          fullQuote = data.data;
+        }
+      } catch (err) {
+        fullQuote = quote;
+      }
+      setPrintQuoteData(fullQuote);
+      setTimeout(() => {
+        handlePrintTrigger();
+      }, 100);
+    } catch (err) {
+      toast.error("Failed to prepare quotation for printing.");
+    }
+  };
+
   // ── Derived (logic unchanged) ──
   const clientOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.company_name || item.client_name).filter(Boolean))), [quotations]);
   const projectOptions = useMemo(() => Array.from(new Set(quotations.map((item) => item.project_name).filter(Boolean))), [quotations]);
@@ -377,20 +412,9 @@ const ProjectQuotationsPage = () => {
 
   const handleQuickAction = async (action, quote) => {
     const key = getQuoteKey(quote);
-    if (action === "pdf") {
-      const { data } = await api.get(`/quotations/${key}/preview`);
-      const printWindow = window.open("", "quotation-preview", "width=900,height=700");
-      if (printWindow) {
-        printWindow.document.write(
-          `<pre style="white-space:pre-wrap;font:14px sans-serif;padding:32px">${JSON.stringify(data.data, null, 2)}</pre>`
-        );
-        printWindow.document.close();
-        printWindow.print();
-      }
-      toast.success("Quotation preview opened for printing.");
-    } else if (action === "print") {
-      window.print();
-      toast.success("Print dialog opened.");
+    if (action === "pdf" || action === "print") {
+      handlePrintQuote(quote);
+      return;
     } else if (action === "whatsapp") {
       const { data } = await api.get(`/quotations/${key}/share`);
       const message = `Hello ${quote.client_name || "there"}, quotation ${quote.quotation_number} for ${quote.project_name} is ready. Total: ${formatCurrency(quote.grand_total, quote.currency)}. View: ${data.data.url}`;
@@ -947,6 +971,9 @@ const ProjectQuotationsPage = () => {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-between">
+                <button onClick={() => handlePrintQuote(activeQuotation)} className="inline-flex items-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/15 text-orange-400 px-4 py-2.5 text-sm font-semibold transition hover:bg-orange-500/25">
+                  <Printer className="h-4 w-4" /> Print
+                </button>
                 <button onClick={() => openEditModal(activeQuotation)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
                   <Pencil className="h-4 w-4" /> Edit
                 </button>
@@ -1041,6 +1068,11 @@ const ProjectQuotationsPage = () => {
         </div>,
         document.body
       )}
+
+      {/* Hidden print container for printing quotations directly from list */}
+      <div className="hidden print:block" ref={printRef}>
+        {printQuoteData && <QuotationPrintTemplate quotation={printQuoteData} />}
+      </div>
     </div>
   );
 };
