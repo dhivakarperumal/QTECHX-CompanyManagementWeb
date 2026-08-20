@@ -197,6 +197,7 @@ const JobOpeningBanner = () => {
     lg:order-1
     lg:grid-cols-1
     lg:gap-2.5
+    
   "
             >
               {highlights.slice(0, 2).map((item) => {
@@ -214,8 +215,11 @@ const JobOpeningBanner = () => {
           border
           border-[#FF6A00]/40
           bg-[#FF6A00]/10
-          px-2.5
-          py-2.5
+          h-[42px]
+px-2
+py-1.5
+sm:h-[46px]
+md:h-[48px]
           shadow-[0_0_15px_rgba(255,106,0,0.05)]
           backdrop-blur-md
           transition-all
@@ -380,8 +384,8 @@ const JobOpeningBanner = () => {
 
               {/* Buttons */}
 
-             <div
-  className="
+              <div
+                className="
     mt-4
     flex
     flex-wrap
@@ -389,12 +393,12 @@ const JobOpeningBanner = () => {
     justify-center
     gap-2
   "
->
-  {/* Explore Careers */}
+              >
+                {/* Explore Careers */}
 
-  <Link
-    to="/career"
-    className="
+                <Link
+                  to="/career"
+                  className="
       group
       inline-flex
       min-h-[30px]
@@ -424,11 +428,11 @@ const JobOpeningBanner = () => {
       sm:px-5
       sm:text-[9px]
     "
-  >
-    <span>View Job Openings</span>
+                >
+                  <span>View Job Openings</span>
 
-    <span
-      className="
+                  <span
+                    className="
         flex
         h-4
         w-4
@@ -449,16 +453,16 @@ const JobOpeningBanner = () => {
         sm:h-5
         sm:w-5
       "
-    >
-      <FiArrowRight size={9} />
-    </span>
-  </Link>
+                  >
+                    <FiArrowRight size={9} />
+                  </span>
+                </Link>
 
-  {/* Contact Us */}
+                {/* Contact Us */}
 
-  <Link
-    to="/contact"
-    className="
+                <Link
+                  to="/contact"
+                  className="
       inline-flex
       min-h-[30px]
       items-center
@@ -485,10 +489,10 @@ const JobOpeningBanner = () => {
       sm:px-5
       sm:text-[9px]
     "
-  >
-    Contact Us
-  </Link>
-</div>
+                >
+                  Contact Us
+                </Link>
+              </div>
             </div>
 
             {/* ===================================================
@@ -520,8 +524,11 @@ const JobOpeningBanner = () => {
           border
           border-[#FF6A00]/40
           bg-[#FF6A00]/10
-          px-2.5
-          py-2.5
+          h-[42px]
+px-2
+py-1.5
+sm:h-[46px]
+md:h-[48px]
           shadow-[0_0_15px_rgba(255,106,0,0.05)]
           backdrop-blur-md
           transition-all
