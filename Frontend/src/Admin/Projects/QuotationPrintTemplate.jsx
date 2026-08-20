@@ -2,7 +2,7 @@ import React from "react";
 import dayjs from "dayjs";
 import { 
   Building2, Mail, Phone, MapPin, Globe, FileText, 
-  Shield, Clock, Layers, Award, Sparkles, CheckCircle2, UserCheck
+  Shield, Clock, Layers, Award, Sparkles, UserCheck, Briefcase, Info
 } from "lucide-react";
 import { amountToWords } from "../../utils/numberToWords";
 
@@ -135,9 +135,53 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </header>
 
-      {/* Client & Quotation Information (2-Column Grid) */}
+      {/* 1. QUOTATION INFORMATION & CLIENT DETAILS (2-Column Grid) */}
       <section className="grid grid-cols-2 gap-4 my-4 break-inside-avoid">
-        {/* Client Details */}
+        {/* Quotation Information Card */}
+        <div className="bg-slate-50/75 border border-slate-200 rounded-lg p-3.5 relative flex flex-col justify-between">
+          <div>
+            <div className="text-[9.5px] font-bold uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+              <Info size={12} />
+              QUOTATION INFORMATION
+            </div>
+            <div className="space-y-1.5 text-[10.5px]">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">QUOTATION NUMBER:</span>
+                <span className="font-bold text-slate-900 text-right">{quotation.quotation_number || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">STATUS:</span>
+                <span className="font-semibold text-slate-800 text-right">{quotation.status || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">QUOTATION DATE:</span>
+                <span className="font-semibold text-slate-800 text-right">{formatDate(quotation.quotation_date)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">VALID UNTIL:</span>
+                <span className="font-semibold text-slate-800 text-right">{formatDate(quotation.valid_until)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">PREPARED BY:</span>
+                <span className="font-semibold text-slate-800 text-right">{quotation.prepared_by || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">SALESPERSON:</span>
+                <span className="font-medium text-slate-800 text-right">{quotation.sales_executive || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">PAYMENT TERMS:</span>
+                <span className="font-medium text-slate-800 text-right">{quotation.payment_terms || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">DELIVERY TIMELINE:</span>
+                <span className="font-semibold text-slate-800 text-right">{quotation.delivery_timeline || "—"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Client Details Card */}
         <div className="bg-slate-50/75 border border-slate-200 rounded-lg p-3.5 relative flex flex-col justify-between">
           <div>
             <div className="text-[9.5px] font-bold uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
@@ -172,57 +216,36 @@ export default function QuotationPrintTemplate({ quotation }) {
             </div>
           </div>
         </div>
-
-        {/* Quotation & Project Details */}
-        <div className="bg-slate-50/75 border border-slate-200 rounded-lg p-3.5 relative flex flex-col justify-between">
-          <div>
-            <div className="text-[9.5px] font-bold uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
-              <FileText size={12} />
-              QUOTATION & PROJECT INFORMATION
-            </div>
-            <div className="space-y-1.5 text-[10.5px]">
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">QUOTATION NUMBER:</span>
-                <span className="font-bold text-slate-900 text-right">{quotation.quotation_number || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">PROJECT NAME:</span>
-                <span className="font-bold text-slate-900 text-right">{quotation.project_name || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">PROJECT TYPE:</span>
-                <span className="font-medium text-slate-800 text-right">{quotation.project_type || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">SERVICE CATEGORY:</span>
-                <span className="font-medium text-slate-800 text-right">{quotation.service_type || quotation.service_category || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">PREPARED BY:</span>
-                <span className="font-semibold text-slate-800 text-right">{quotation.prepared_by || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">SALESPERSON:</span>
-                <span className="font-medium text-slate-800 text-right">{quotation.sales_executive || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px] uppercase">VALID UNTIL:</span>
-                <span className="font-semibold text-slate-800 text-right">{formatDate(quotation.valid_until)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* Scope of Work & Technical Overview */}
+      {/* 2. FULL PROJECT DETAILS SECTION */}
       <section className="border border-slate-200 rounded-lg p-3.5 mb-4 bg-white break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
-          <Sparkles size={11} className="text-orange-500" />
-          SCOPE OF WORK & TECHNICAL OVERVIEW
+          <Briefcase size={11} className="text-orange-500" />
+          PROJECT DETAILS
         </h2>
-        <div className="space-y-2 text-[10.5px] text-slate-700">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3 text-[10.5px]">
           <div>
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase">PROJECT DESCRIPTION</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">PROJECT NAME</p>
+            <p className="font-bold text-slate-900 mt-0.5">{quotation.project_name || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">PROJECT TYPE</p>
+            <p className="font-medium text-slate-800 mt-0.5">{quotation.project_type || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">SERVICE CATEGORY</p>
+            <p className="font-medium text-slate-800 mt-0.5">{quotation.service_type || quotation.service_category || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">PLATFORM</p>
+            <p className="font-medium text-slate-800 mt-0.5">{quotation.platform || "—"}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2 text-[10.5px] text-slate-700 border-t border-slate-100 pt-2">
+          <div>
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase">DESCRIPTION</p>
             <p className="mt-0.5 text-slate-800 leading-relaxed whitespace-pre-wrap">
               {quotation.project_description || "—"}
             </p>
@@ -234,7 +257,7 @@ export default function QuotationPrintTemplate({ quotation }) {
             </p>
           </div>
           <div className="pt-1">
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase mb-1">TECHNOLOGIES USED</p>
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase mb-1">TECHNOLOGIES</p>
             {quotation.technologies_used ? (
               <div className="flex flex-wrap gap-1.5">
                 {quotation.technologies_used.split(/[,;\n]+/).map((tech, idx) => (
@@ -252,8 +275,12 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Commercial Proposal Table */}
+      {/* 3. COMMERCIAL PROPOSAL TABLE */}
       <section className="mb-4 break-inside-avoid">
+        <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-1.5">
+          <FileText size={11} className="text-orange-500" />
+          COMMERCIAL PROPOSAL
+        </h2>
         <div className="border border-slate-200 rounded-lg overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -313,7 +340,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Additional / Third Party Charges Table */}
+      {/* 4. ADDITIONAL / THIRD PARTY CHARGES TABLE */}
       <section className="mb-4 break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
           <Layers size={11} className="text-orange-500" />
@@ -364,7 +391,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Financial Summary & Payment Breakdown */}
+      {/* 5. FINANCIAL TOTALS & PAYMENT BREAKDOWN */}
       <section className="grid grid-cols-12 gap-4 mb-4 break-inside-avoid">
         {/* Left Side: Amount In Words & Payment Milestones */}
         <div className="col-span-7 flex flex-col justify-between">
@@ -432,7 +459,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Project Timeline Phases */}
+      {/* 6. PROJECT TIMELINE PHASES */}
       <section className="mb-4 break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-1.5">
           <Clock size={11} className="text-orange-500" />
@@ -487,7 +514,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Support & Maintenance (Exact 8 Fields as requested) */}
+      {/* 7. SUPPORT & MAINTENANCE */}
       <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-slate-50/40">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2.5 border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
           <Shield size={11} className="text-orange-500" />
@@ -531,7 +558,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Terms and Conditions */}
+      {/* 8. TERMS AND CONDITIONS */}
       <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
           <Award size={11} className="text-orange-500" />
@@ -557,7 +584,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         )}
       </section>
 
-      {/* Approval and Notes (Exact 4 Fields as requested) */}
+      {/* 9. APPROVAL AND NOTES */}
       <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2.5 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
           <UserCheck size={11} className="text-orange-500" />
@@ -583,7 +610,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Signatures & Acceptance Block */}
+      {/* 10. SIGNATURES & ACCEPTANCE BLOCK */}
       <section className="mt-6 pt-4 border-t border-slate-300 break-inside-avoid">
         <div className="grid grid-cols-3 gap-6 text-center text-[10.5px]">
           {/* Prepared By */}
