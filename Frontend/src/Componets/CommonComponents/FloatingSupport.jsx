@@ -1,33 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Phone } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { FiArrowUp } from "react-icons/fi";
 import ChatBot from "./ChatBot";
 import "./FloatingSupport.css";
 
 const FloatingSupport = () => {
   const [chatOpen, setChatOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const { pathname, hash } = useLocation();
   const currentRoute = hash?.startsWith("#") ? hash.slice(1) : pathname;
 
-  const isAuthPage = currentRoute === "/login" || currentRoute === "/register";
   const isAdmin = currentRoute === "/admin" || currentRoute.startsWith("/admin/");
   const isEmployee =
     currentRoute === "/employee" ||
     currentRoute.startsWith("/employee/") ||
     currentRoute === "/trainee" ||
     currentRoute.startsWith("/trainee/");
-  const isPublicPage = !isAuthPage && !isAdmin && !isEmployee;
 
-  // 1. WhatsApp and Call are visible on all public pages (Home, About, Services, Contact, etc.) for both guests & users
-  //    and strictly hidden on admin, employee, and auth pages.
-  const showWhatsAppAndCall = isPublicPage;
+  // User UI pages: any page outside /admin and /employee panels (even if an admin/employee is logged in browsing the site)
+  const isUserUIPage = !isAdmin && !isEmployee;
 
-  // 2. AI ChatBot is ONLY visible on /admin panel routes, and NOT on public pages (even for admin) or employee panel.
+  // 1. WhatsApp, Call, and ScrollNavigator are visible on all User UI pages (including Home, About, Services, Contact, Login, etc.)
+  const showUserUIWidgets = isUserUIPage;
+
+  // 2. AI ChatBot is ONLY visible in /admin panel
   const showChatBot = isAdmin;
 
+  // Scroll detection for Scroll-to-Top button
+  const checkScroll = useCallback(() => {
+    const windowScroll =
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
+    setShowScrollTop(windowScroll > 80);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", checkScroll, { capture: true, passive: true });
+    document.addEventListener("scroll", checkScroll, { capture: true, passive: true });
+    checkScroll();
+
+    return () => {
+      window.removeEventListener("scroll", checkScroll, { capture: true });
+      document.removeEventListener("scroll", checkScroll, { capture: true });
+    };
+  }, [checkScroll]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // If neither should show on this route, render nothing
-  if (!showWhatsAppAndCall && !showChatBot) {
+  if (!showUserUIWidgets && !showChatBot) {
     return null;
   }
 
@@ -50,10 +79,10 @@ const FloatingSupport = () => {
       {/* Chatbot panel – only appears for admin panel */}
       {showChatBot && <ChatBot isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
 
-      {/* Floating button container – always fixed to bottom‑right */}
+      {/* Floating button container – always fixed to bottom-right */}
       <div className="floating-support-container">
-        {/* WhatsApp button - visible on public pages (guests & users) */}
-        {showWhatsAppAndCall && (
+        {/* WhatsApp button - visible on all user UI pages */}
+        {showUserUIWidgets && (
           <div
             className="support-item whatsapp"
             onClick={handleWhatsApp}
@@ -64,8 +93,8 @@ const FloatingSupport = () => {
           </div>
         )}
 
-        {/* Call button - visible on public pages (guests & users) */}
-        {showWhatsAppAndCall && (
+        {/* Call button - visible on all user UI pages */}
+        {showUserUIWidgets && (
           <div
             className="support-item call"
             onClick={handleCall}
@@ -73,6 +102,19 @@ const FloatingSupport = () => {
           >
             <Phone size={22} />
             <span className="tooltip">📞 Call (+91 95972 93504)</span>
+          </div>
+        )}
+
+        {/* ScrollNavigator (Scroll-To-Top) button - placed below the Call button */}
+        {showUserUIWidgets && showScrollTop && (
+          <div
+            className="support-item scroll-top"
+            onClick={scrollToTop}
+            title="Scroll to Top"
+            aria-label="Scroll to top"
+          >
+            <FiArrowUp size={24} strokeWidth={3} />
+            <span className="tooltip">⬆ Scroll to Top</span>
           </div>
         )}
 

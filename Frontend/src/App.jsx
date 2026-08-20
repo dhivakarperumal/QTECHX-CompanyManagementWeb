@@ -5,7 +5,6 @@ import Navbar from "./Componets/CommonComponents/Navbar";
 import Footer from "./Componets/Components/Footer";
 
 import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
-import ScrollNavigator from "./Componets/CommonComponents/ScrollNavigator";
 import FloatingSupport from "./Componets/CommonComponents/FloatingSupport";
 import Loader from "./Componets/CommonComponents/Loader";
 import { useAuth } from "./PrivateRouter/AuthContext";
@@ -37,8 +36,7 @@ function App() {
         </div>
       )}
       <div className="print:hidden">
-        <ScrollToTop/>
-        <ScrollNavigator/>
+        <ScrollToTop />
         <FloatingSupport />
       </div>
       <Outlet />

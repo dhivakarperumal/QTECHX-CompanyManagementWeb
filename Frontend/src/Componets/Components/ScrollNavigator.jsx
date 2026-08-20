@@ -1,34 +1,69 @@
-import React, { useEffect, useState } from "react";
-import { IoIosArrowUp, IoIosArrowDown } from "react-icons/io";
+import React, { useEffect, useState, useCallback } from "react";
+import { FiArrowUp } from "react-icons/fi";
 
 const ScrollNavigator = () => {
   const [showButtons, setShowButtons] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setShowButtons(window.scrollY > 100);
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+  const checkScroll = useCallback(() => {
+    const windowScroll =
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
+
+    let maxElementScroll = 0;
+    const scrollableElements = document.querySelectorAll(
+      'main, .overflow-y-auto, [class*="overflow-y-auto"], .admin-root, .employee-root'
+    );
+    scrollableElements.forEach((el) => {
+      if (el && el.scrollTop > maxElementScroll) {
+        maxElementScroll = el.scrollTop;
+      }
+    });
+
+    const isScrolled = Math.max(windowScroll, maxElementScroll) > 100;
+    setShowButtons(isScrolled);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", checkScroll, { capture: true, passive: true });
+    document.addEventListener("scroll", checkScroll, { capture: true, passive: true });
+
+    checkScroll();
+    const interval = setInterval(checkScroll, 400);
+
+    return () => {
+      window.removeEventListener("scroll", checkScroll, { capture: true });
+      document.removeEventListener("scroll", checkScroll, { capture: true });
+      clearInterval(interval);
+    };
+  }, [checkScroll]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.scrollTo({ top: 0, behavior: "smooth" });
 
-  const scrollToBottom = () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    const scrollableElements = document.querySelectorAll(
+      'main, .overflow-y-auto, [class*="overflow-y-auto"], .admin-root, .employee-root'
+    );
+    scrollableElements.forEach((el) => {
+      if (el && el.scrollTop > 0) {
+        el.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
   };
 
   return (
     showButtons && (
-      <div className="fixed right-4 bottom-5 z-50 flex flex-col gap-3">
+      <div className="fixed right-5.5 bottom-20 z-[999] flex flex-col gap-3 sm:right-6.5 sm:bottom-24 pointer-events-auto print:hidden">
         <button
           onClick={scrollToTop}
-          className="bg-primary text-white p-2 rounded-full shadow-md  transition"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#FF6A00] text-white shadow-[0_8px_22px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:bg-[#e85d00] hover:shadow-[0_10px_26px_rgba(255,106,0,0.45)] focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/50"
           aria-label="Scroll to top"
+          title="Scroll to top"
         >
-          <IoIosArrowUp size={24} />
+          <FiArrowUp size={24} strokeWidth={3} />
         </button>
       </div>
     )
