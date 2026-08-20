@@ -2,11 +2,12 @@ import React from "react";
 import dayjs from "dayjs";
 import { 
   Building2, Mail, Phone, MapPin, Globe, FileText, 
-  Shield, Clock, Layers, Award, Sparkles
+  Shield, Clock, Layers, Award, Sparkles, CheckCircle2, UserCheck
 } from "lucide-react";
 import { amountToWords } from "../../utils/numberToWords";
 
 const formatMoney = (value, currency = "INR") => {
+  if (value === null || value === undefined || value === "") return "—";
   const symbol = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "₹";
   const num = Number(value || 0);
   return `${symbol}${num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -32,7 +33,13 @@ export default function QuotationPrintTemplate({ quotation }) {
   const charges = rawCharges;
 
   const support = quotation.support_details || {};
+  const approval = quotation.approval || {};
   const totalInWords = amountToWords(quotation.grand_total || 0, currency);
+
+  // Format AMC Period
+  const amcPeriod = (support.amc_start_date || support.amc_end_date)
+    ? `${formatDate(support.amc_start_date)} - ${formatDate(support.amc_end_date)}`
+    : "—";
 
   // Status color pill
   const getStatusBadge = (status) => {
@@ -128,79 +135,79 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </header>
 
-      {/* Client & Project Overview Cards */}
+      {/* Client & Quotation Information (2-Column Grid) */}
       <section className="grid grid-cols-2 gap-4 my-4 break-inside-avoid">
-        {/* Client Info */}
+        {/* Client Details */}
         <div className="bg-slate-50/75 border border-slate-200 rounded-lg p-3.5 relative flex flex-col justify-between">
           <div>
             <div className="text-[9.5px] font-bold uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
               <Building2 size={12} />
-              Quotation Prepared For (Client Details)
+              CLIENT DETAILS
             </div>
             <div className="space-y-1.5 text-[10.5px]">
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px]">Company Name:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase">COMPANY:</span>
                 <span className="font-bold text-slate-900">{quotation.company_name || "—"}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px]">Client / Contact:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase">CLIENT NAME:</span>
                 <span className="font-semibold text-slate-800">{quotation.client_name || quotation.contact_person || "—"}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px]">Email Address:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase">EMAIL:</span>
                 <span className="text-slate-800">{quotation.email || "—"}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px]">Phone Number:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase">PHONE:</span>
                 <span className="text-slate-800">{quotation.phone_number || "—"}</span>
               </div>
               <div className="flex items-start gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] mt-0.5">Billing Address:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase mt-0.5">ADDRESS:</span>
                 <span className="text-slate-800 leading-tight">{quotation.address || "—"}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px]">GST / Tax ID:</span>
+                <span className="text-slate-400 font-medium w-24 shrink-0 text-[10px] uppercase">GST NUMBER:</span>
                 <span className="font-medium text-slate-800">{quotation.gst_number || "—"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Project Meta Info */}
+        {/* Quotation & Project Details */}
         <div className="bg-slate-50/75 border border-slate-200 rounded-lg p-3.5 relative flex flex-col justify-between">
           <div>
             <div className="text-[9.5px] font-bold uppercase tracking-wider text-orange-600 mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
               <FileText size={12} />
-              Project & Proposal Details
+              QUOTATION & PROJECT INFORMATION
             </div>
             <div className="space-y-1.5 text-[10.5px]">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Project Name:</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">QUOTATION NUMBER:</span>
+                <span className="font-bold text-slate-900 text-right">{quotation.quotation_number || "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium text-[10px] uppercase">PROJECT NAME:</span>
                 <span className="font-bold text-slate-900 text-right">{quotation.project_name || "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Project Type:</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">PROJECT TYPE:</span>
                 <span className="font-medium text-slate-800 text-right">{quotation.project_type || "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Service Category:</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">SERVICE CATEGORY:</span>
                 <span className="font-medium text-slate-800 text-right">{quotation.service_type || quotation.service_category || "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Prepared By:</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">PREPARED BY:</span>
                 <span className="font-semibold text-slate-800 text-right">{quotation.prepared_by || "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Sales Executive:</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">SALESPERSON:</span>
                 <span className="font-medium text-slate-800 text-right">{quotation.sales_executive || "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Delivery Timeline:</span>
-                <span className="font-semibold text-slate-800 text-right">{quotation.delivery_timeline || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium text-[10px]">Payment Terms:</span>
-                <span className="font-medium text-slate-800 text-right">{quotation.payment_terms || "—"}</span>
+                <span className="text-slate-500 font-medium text-[10px] uppercase">VALID UNTIL:</span>
+                <span className="font-semibold text-slate-800 text-right">{formatDate(quotation.valid_until)}</span>
               </div>
             </div>
           </div>
@@ -211,23 +218,23 @@ export default function QuotationPrintTemplate({ quotation }) {
       <section className="border border-slate-200 rounded-lg p-3.5 mb-4 bg-white break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
           <Sparkles size={11} className="text-orange-500" />
-          Scope of Work & Technical Overview
+          SCOPE OF WORK & TECHNICAL OVERVIEW
         </h2>
         <div className="space-y-2 text-[10.5px] text-slate-700">
           <div>
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase">Project Description</p>
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase">PROJECT DESCRIPTION</p>
             <p className="mt-0.5 text-slate-800 leading-relaxed whitespace-pre-wrap">
               {quotation.project_description || "—"}
             </p>
           </div>
           <div>
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase">Scope & Deliverables</p>
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase">SCOPE OF WORK</p>
             <p className="mt-0.5 text-slate-800 leading-relaxed whitespace-pre-wrap">
               {quotation.scope_of_work || "—"}
             </p>
           </div>
           <div className="pt-1">
-            <p className="text-[9.5px] font-bold text-slate-400 uppercase mb-1">Technologies & Stack</p>
+            <p className="text-[9.5px] font-bold text-slate-400 uppercase mb-1">TECHNOLOGIES USED</p>
             {quotation.technologies_used ? (
               <div className="flex flex-wrap gap-1.5">
                 {quotation.technologies_used.split(/[,;\n]+/).map((tech, idx) => (
@@ -310,7 +317,7 @@ export default function QuotationPrintTemplate({ quotation }) {
       <section className="mb-4 break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
           <Layers size={11} className="text-orange-500" />
-          Additional / Third-Party Charges
+          ADDITIONAL / THIRD-PARTY CHARGES
         </h2>
         <div className="border border-slate-200 rounded-lg overflow-hidden">
           <table className="w-full text-left border-collapse">
@@ -362,7 +369,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         {/* Left Side: Amount In Words & Payment Milestones */}
         <div className="col-span-7 flex flex-col justify-between">
           <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Total Amount in Words</p>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">TOTAL AMOUNT IN WORDS</p>
             <p className="text-[11px] font-bold text-slate-800 mt-1 italic leading-snug">
               {totalInWords || "—"}
             </p>
@@ -371,13 +378,13 @@ export default function QuotationPrintTemplate({ quotation }) {
           {/* Payment Terms Highlights */}
           <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="border border-emerald-200 bg-emerald-50/40 rounded-lg p-2.5">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-800">Advance Required / Paid</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-800">ADVANCE PAID</p>
               <p className="text-sm font-black text-emerald-950 mt-0.5">
                 {quotation.advance_amount !== undefined && quotation.advance_amount !== null ? formatMoney(quotation.advance_amount, currency) : "—"}
               </p>
             </div>
             <div className="border border-blue-200 bg-blue-50/40 rounded-lg p-2.5">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-blue-800">Remaining Balance</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-blue-800">REMAINING AMOUNT</p>
               <p className="text-sm font-black text-blue-950 mt-0.5">
                 {formatMoney(quotation.balance_amount ?? Math.max(Number(quotation.grand_total || 0) - Number(quotation.advance_amount || 0), 0), currency)}
               </p>
@@ -399,7 +406,7 @@ export default function QuotationPrintTemplate({ quotation }) {
               </span>
             </div>
             <div className="flex justify-between text-slate-600">
-              <span>Tax / GST:</span>
+              <span>GST / Tax:</span>
               <span className="font-semibold text-slate-800">
                 {Number(quotation.tax_amount || 0) > 0 ? formatMoney(quotation.tax_amount, currency) : "—"}
               </span>
@@ -419,7 +426,7 @@ export default function QuotationPrintTemplate({ quotation }) {
           </div>
 
           <div className="bg-orange-500 text-white px-3.5 py-2.5 flex justify-between items-center border-t border-orange-600">
-            <span className="font-bold text-xs uppercase tracking-wider">Grand Total:</span>
+            <span className="font-bold text-xs uppercase tracking-wider">GRAND TOTAL:</span>
             <span className="font-black text-base">{quotation.grand_total !== undefined ? formatMoney(quotation.grand_total, currency) : "—"}</span>
           </div>
         </div>
@@ -429,16 +436,17 @@ export default function QuotationPrintTemplate({ quotation }) {
       <section className="mb-4 break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-1.5 flex items-center gap-1.5">
           <Clock size={11} className="text-orange-500" />
-          Project Implementation Timeline & Milestones
+          PROJECT TIMELINE PHASES
         </h2>
         <div className="border border-slate-200 rounded-lg overflow-hidden">
           <table className="w-full text-left border-collapse text-[10px]">
             <thead>
               <tr className="bg-slate-100 text-slate-700 text-[9px] font-bold uppercase tracking-wider border-b border-slate-200">
                 <th className="py-1.5 px-3 w-8 text-center">#</th>
-                <th className="py-1.5 px-3 w-48">Phase / Milestone</th>
-                <th className="py-1.5 px-3">Features & Deliverables</th>
-                <th className="py-1.5 px-3 w-24 text-center">Duration</th>
+                <th className="py-1.5 px-3 w-44">Phase</th>
+                <th className="py-1.5 px-3">Description</th>
+                <th className="py-1.5 px-3">Features / Modules</th>
+                <th className="py-1.5 px-3 w-20 text-center">Duration</th>
                 <th className="py-1.5 px-3 w-24 text-right">Cost</th>
               </tr>
             </thead>
@@ -449,7 +457,9 @@ export default function QuotationPrintTemplate({ quotation }) {
                     <td className="py-1.5 px-3 text-center text-slate-400 font-medium">{idx + 1}</td>
                     <td className="py-1.5 px-3 font-semibold text-slate-800">
                       {phase.phase || phase.phase_name || "—"}
-                      {phase.description ? <p className="text-[9px] text-slate-500 font-normal mt-0.5">{phase.description}</p> : null}
+                    </td>
+                    <td className="py-1.5 px-3 text-slate-600">
+                      {phase.description || "—"}
                     </td>
                     <td className="py-1.5 px-3 text-slate-600">
                       {Array.isArray(phase.features_modules) ? phase.features_modules.join(", ") : phase.features_modules || "—"}
@@ -467,6 +477,7 @@ export default function QuotationPrintTemplate({ quotation }) {
                   <td className="py-1.5 px-3 text-center text-slate-400">1</td>
                   <td className="py-1.5 px-3 text-slate-800">—</td>
                   <td className="py-1.5 px-3 text-slate-800">—</td>
+                  <td className="py-1.5 px-3 text-slate-800">—</td>
                   <td className="py-1.5 px-3 text-center text-slate-800">—</td>
                   <td className="py-1.5 px-3 text-right text-slate-800">—</td>
                 </tr>
@@ -476,31 +487,46 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
       </section>
 
-      {/* Support & Maintenance */}
-      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3 bg-slate-50/40">
-        <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-200 pb-1 flex items-center gap-1.5">
+      {/* Support & Maintenance (Exact 8 Fields as requested) */}
+      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-slate-50/40">
+        <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2.5 border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
           <Shield size={11} className="text-orange-500" />
-          Support, Warranty & AMC Terms
+          SUPPORT & MAINTENANCE
         </h2>
-        <div className="grid grid-cols-4 gap-3 text-[10.5px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10.5px]">
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Complimentary Support</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">FREE SUPPORT</p>
             <p className="font-semibold text-slate-800 mt-0.5">{support.free_support_duration || "—"}</p>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Bug Fix Warranty</p>
-            <p className="font-medium text-slate-700 mt-0.5">{support.bug_fix_terms || "—"}</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">AMC STATUS</p>
+            <p className="font-semibold text-slate-800 mt-0.5">{support.amc_status || "—"}</p>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Deployment Support</p>
-            <p className="font-medium text-slate-700 mt-0.5">{support.deployment_support || "—"}</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">BUG-FIX TERMS</p>
+            <p className="font-medium text-slate-700 mt-0.5 leading-snug whitespace-pre-wrap">{support.bug_fix_terms || "—"}</p>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase">Annual Maintenance (AMC)</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">DEPLOYMENT SUPPORT</p>
+            <p className="font-medium text-slate-700 mt-0.5 leading-snug whitespace-pre-wrap">{support.deployment_support || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">AMC DETAILS</p>
+            <p className="font-medium text-slate-700 mt-0.5 whitespace-pre-wrap">{support.amc_details || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">AMC COST</p>
             <p className="font-semibold text-slate-800 mt-0.5">
-              {support.amc_status || "—"}
-              {Number(support.amc_cost || 0) > 0 ? ` (${formatMoney(support.amc_cost, currency)} / ${support.amc_duration || "Yr"})` : ""}
+              {support.amc_cost !== undefined && support.amc_cost !== null && support.amc_cost !== "" ? formatMoney(support.amc_cost, currency) : "—"}
             </p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">AMC DURATION</p>
+            <p className="font-semibold text-slate-800 mt-0.5">{support.amc_duration || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">AMC PERIOD</p>
+            <p className="font-semibold text-slate-800 mt-0.5">{amcPeriod}</p>
           </div>
         </div>
       </section>
@@ -509,7 +535,7 @@ export default function QuotationPrintTemplate({ quotation }) {
       <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
           <Award size={11} className="text-orange-500" />
-          Terms & Conditions
+          TERMS AND CONDITIONS
         </h2>
         {terms.length > 0 ? (
           <div className="grid grid-cols-2 gap-x-5 gap-y-2 text-[10px] text-slate-600">
@@ -531,12 +557,30 @@ export default function QuotationPrintTemplate({ quotation }) {
         )}
       </section>
 
-      {/* Client Note / Special Message */}
-      <section className="mb-4 break-inside-avoid p-3 bg-amber-50/60 border border-amber-200/80 rounded-lg">
-        <p className="text-[9px] font-bold uppercase tracking-wider text-amber-800">Special Notes & Client Message</p>
-        <p className="text-[10px] text-amber-950 mt-0.5 leading-relaxed whitespace-pre-wrap">
-          {quotation.client_message || quotation.notes || "—"}
-        </p>
+      {/* Approval and Notes (Exact 4 Fields as requested) */}
+      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
+        <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2.5 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+          <UserCheck size={11} className="text-orange-500" />
+          APPROVAL AND NOTES
+        </h2>
+        <div className="grid grid-cols-2 gap-4 text-[10.5px]">
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">APPROVED BY</p>
+            <p className="font-semibold text-slate-800 mt-0.5">{approval.approved_by || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">APPROVAL COMMENTS</p>
+            <p className="font-medium text-slate-700 mt-0.5 whitespace-pre-wrap">{approval.comments || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase">INTERNAL NOTES</p>
+            <p className="font-medium text-slate-700 mt-0.5 whitespace-pre-wrap">{quotation.notes || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-700 uppercase">CLIENT MESSAGE</p>
+            <p className="font-medium text-slate-800 mt-0.5 whitespace-pre-wrap">{quotation.client_message || "—"}</p>
+          </div>
+        </div>
       </section>
 
       {/* Signatures & Acceptance Block */}
