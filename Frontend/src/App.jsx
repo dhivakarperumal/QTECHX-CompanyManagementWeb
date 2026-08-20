@@ -31,10 +31,16 @@ function App() {
   return (
     <section>
       {/* {showPublicChrome && <Header />} */}
-      {showPublicChrome && <Navbar />}
-      <ScrollToTop/>
-      <ScrollNavigator/>
-      <FloatingSupport />
+      {showPublicChrome && (
+        <div className="print:hidden">
+          <Navbar />
+        </div>
+      )}
+      <div className="print:hidden">
+        <ScrollToTop/>
+        <ScrollNavigator/>
+        <FloatingSupport />
+      </div>
       <Outlet />
       <Toaster
         position="top-right"
