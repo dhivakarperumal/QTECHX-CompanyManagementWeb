@@ -17,13 +17,13 @@ const Home = () => {
     <>
       <Hero />
       {/* <FeaturedOpenings /> */}
-      <InnovationHub/>
+      {/* <InnovationHub/>
       <EventBanner/>
       <Services/>
       <AboutUs/>
       <Methodology/>
       <WhyChooseUs />
-      <Projects />
+      <Projects /> */}
        <JobOpeningBanner />
       <Careers />
       <Testimonial />

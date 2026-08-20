@@ -1,196 +1,560 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiArrowRight, FiBriefcase, FiUsers, FiZap } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiBriefcase,
+  FiUsers,
+  FiZap,
+  FiCode,
+} from "react-icons/fi";
+
 import PageContainer from "../CommonComponents/PageContainer";
 
 const JobOpeningBanner = () => {
-    return (
-        <section className="relative w-full overflow-hidden border-y border-[#FF6A00]/20 bg-[#050505]">
+  const highlights = [
+    {
+      icon: FiBriefcase,
+      title: "Opportunities",
+    },
+    {
+      icon: FiUsers,
+      title: "Great Team",
+    },
+    {
+      icon: FiZap,
+      title: "Innovation",
+    },
+    {
+      icon: FiCode,
+      title: "Tech Growth",
+    },
+  ];
 
-            {/* ================= BACKGROUND IMAGE ================= */}
-            <div
-                className="
+  return (
+    <section
+      className="
+        relative
+        w-full
+        overflow-hidden
+        border-y
+        border-white/10
+        bg-[#030303]
+      "
+    >
+      {/* =========================================================
+          FULL BACKGROUND IMAGE
+      ========================================================= */}
+
+      <div
+        className="
           absolute
           inset-0
           bg-cover
           bg-center
           bg-no-repeat
         "
-                style={{
-                    backgroundImage:
-                        "url('/images/jobopening.png')",
-                }}
-            />
+        style={{
+          backgroundImage: "url('/images/jobopening.png')",
+        }}
+      />
 
-            {/* Light dark overlay */}
-            <div className="absolute inset-0 bg-black/10" />
+      {/* =========================================================
+          DARK OVERLAY
+      ========================================================= */}
 
-            {/* Very light orange/black gradient */}
-            <div
-                className="
+      <div className="absolute inset-0 bg-black/30" />
+
+      <div
+        className="
     absolute
     inset-0
     bg-gradient-to-r
-    from-black/45
+    from-black/20
     via-black/15
-    to-transparent
+    to-black/5
   "
-            />
-            {/* ================= CONTENT ================= */}
-            <PageContainer>
-                <div className="relative z-10 flex min-h-[260px] items-center py-10 sm:min-h-[280px]  md:min-h-[300px] ">
+      />
 
-                    <div className="max-w-xl">
+      {/* Bottom fade */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-0
+          h-24
+          bg-gradient-to-t
+          from-black/70
+          to-transparent
+        "
+      />
 
-                        {/* Eyebrow */}
-                        <div className="mb-3 flex items-center gap-2">
-                            <span className="h-[2px] w-7 bg-[#FF6A00]" />
+      {/* =========================================================
+          CENTER ORANGE GLOW
+      ========================================================= */}
 
-                            <span
-                                className="
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-[0.22em]
-                text-[#FF6A00]
-                sm:text-xs
-              "
-                            >
-                                CAREER OPPORTUNITIES
-                            </span>
-                        </div>
+      <div
+        className="
+    pointer-events-none
+    absolute
+    left-1/2
+    top-1/2
+    h-[150px]
+    w-[150px]
+    -translate-x-1/2
+    -translate-y-1/2
+    rounded-full
+    bg-[#FF6A00]/5
+    blur-[55px]
+    sm:h-[190px]
+    sm:w-[190px]
+    sm:blur-[65px]
+    lg:h-[230px]
+    lg:w-[230px]
+    lg:blur-[75px]
+  "
+      />
 
-                        {/* Heading */}
-                        <h2
-                            className="
-              text-2xl
-              font-bold
-              uppercase
-              leading-[1.05]
-              tracking-tight
-              text-white
-              sm:text-3xl
-              md:text-4xl
-              lg:text-[2.7rem]
+      {/* =========================================================
+          TOP LINE
+      ========================================================= */}
+
+      <div
+        className="
+          absolute
+          left-0
+          right-0
+          top-0
+          h-px
+          bg-white/20
+        "
+      />
+
+      <div
+        className="
+          absolute
+          left-1/2
+          top-0
+          h-[2px]
+          w-16
+          -translate-x-1/2
+          bg-[#FF6A00]
+          shadow-[0_0_15px_rgba(255,106,0,0.7)]
+          sm:w-20
+        "
+      />
+
+      {/* =========================================================
+          MAIN AREA
+      ========================================================= */}
+
+      <PageContainer>
+        <div
+          className="
+            relative
+            z-10
+            flex
+            min-h-[275px]
+            items-center
+            justify-center
+            py-7
+            sm:min-h-[300px]
+            sm:py-8
+            md:min-h-[325px]
+            lg:min-h-[345px]
+            lg:py-9
+          "
+        >
+
+          {/* =====================================================
+              RESPONSIVE THREE-COLUMN LAYOUT
+          ===================================================== */}
+
+          <div
+            className="
+              grid
+              w-full
+              grid-cols-1
+              items-center
+              gap-6
+              lg:grid-cols-[170px_minmax(0,1fr)_170px]
+              lg:gap-7
+              xl:grid-cols-[190px_minmax(0,1fr)_190px]
+              xl:gap-10
             "
-                        >
-                            BUILD YOUR
-                            <span className="block text-[#FF6A00]">
-                                FUTURE WITH US
-                            </span>
-                        </h2>
+          >
 
-                        {/* Description */}
-                        <p
-                            className="
-              mt-3
-              max-w-lg
-              text-xs
-              leading-5
-              text-white/70
-              sm:text-sm
-              sm:leading-6
-            "
-                        >
-                            Join our passionate team and work on innovative digital
-                            solutions that shape the future of technology.
-                        </p>
+            {/* ===================================================
+                LEFT CARDS
+            =================================================== */}
 
-                        {/* ================= BUTTONS ================= */}
-
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-
-                            <Link
-                                to="/career"
-                                className="
-                group
-                inline-flex
-                items-center
-                gap-3
-                rounded-lg
-                bg-[#FF6A00]
-                px-5
-                py-2
-                text-xs
-                font-bold
-                uppercase
-                tracking-wide
-                text-white
-                shadow-[0_8px_25px_rgba(255,106,0,0.25)]
-                transition-all
-                duration-300
-                hover:bg-[#ff7618]
-                hover:shadow-[0_10px_30px_rgba(255,106,0,0.4)]
-                active:scale-95
-                sm:px-5
-                sm:py-2
-              "
-                            >
-                                <span>View Openings</span>
-
-                                <span
-                                    className="
-                  flex
-                  h-6
-                  w-6
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/70
-                  transition-all
-                  duration-300
-                  group-hover:translate-x-1
-                  group-hover:bg-white
-                  group-hover:text-[#FF6A00]
-                "
-                                >
-                                    <FiArrowRight size={13} />
-                                </span>
-                            </Link>
-
-                            <Link
-                                to="/contact"
-                                className="
-                inline-flex
-                items-center
+            <div
+              className="
+                order-2
+                grid
+                grid-cols-2
                 gap-2
-                rounded-lg
-                border
-                border-white/20
-                bg-white/[0.04]
-                px-5
-                py-2
-                text-xs
-                font-semibold
-                uppercase
-                tracking-wide
-                text-white/80
-                backdrop-blur-sm
-                transition-all
-                duration-300
-                hover:border-[#FF6A00]/60
-                hover:bg-[#FF6A00]/10
-                hover:text-white
-                sm:px-6
-                sm:py-3
+                lg:order-1
+                lg:grid-cols-1
+                lg:gap-2.5
               "
-                            >
-                                Contact Us
-                            </Link>
+            >
+              {highlights.slice(0, 2).map((item) => {
+                const Icon = item.icon;
 
-                        </div>
+                return (
+                  <div
+                    key={item.title}
+                    className="
+                      group
+                      flex
+                      items-center
+                      gap-2.5
+                      rounded-lg
+                      border
+                      border-white/15
+                      bg-black/55
+                      px-2.5
+                      py-2.5
+                      backdrop-blur-md
+                      transition-all
+                      duration-300
+                      hover:border-[#FF6A00]/60
+                      hover:bg-black/70
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        h-7
+                        w-7
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-md
+                        border
+                        border-[#FF6A00]/40
+                        bg-[#FF6A00]/10
+                        text-[#FF6A00]
+                        transition-all
+                        duration-300
+                        group-hover:border-[#FF6A00]
+                        group-hover:bg-[#FF6A00]
+                        group-hover:text-white
+                      "
+                    >
+                      <Icon size={13} />
                     </div>
 
+                    <span
+                      className="
+                        text-[8px]
+                        font-bold
+                        uppercase
+                        leading-3
+                        tracking-[0.06em]
+                        text-white
+                        sm:text-[9px]
+                      "
+                    >
+                      {item.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
-                </div>
-            </PageContainer>
-            {/* ================= TOP ORANGE LINE ================= */}
+            {/* ===================================================
+                CENTER CONTENT
+            =================================================== */}
 
-            <div className="absolute left-0 right-0 top-0 h-px bg-white/30" />
+            <div
+              className="
+                order-1
+                text-center
+                lg:order-2
+              "
+            >
 
-        </section>
-    );
+              {/* Label */}
+
+              <div
+                className="
+                  mb-2.5
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                "
+              >
+                <span className="h-px w-5 bg-[#FF6A00] sm:w-7" />
+
+                <span
+                  className="
+                    text-[7px]
+                    font-bold
+                    uppercase
+                    tracking-[0.22em]
+                    text-[#FF6A00]
+                    sm:text-[8px]
+                    md:text-[9px]
+                  "
+                >
+                  CAREER OPPORTUNITIES
+                </span>
+
+                <span className="h-px w-5 bg-[#FF6A00] sm:w-7" />
+              </div>
+
+              {/* Heading */}
+
+              <h2
+                className="
+                  mx-auto
+                  max-w-[620px]
+                  text-xl
+                  font-bold
+                  uppercase
+                  leading-[0.98]
+                  tracking-[-0.035em]
+                  text-white
+                  sm:text-2xl
+                  md:text-3xl
+                  lg:text-[2.1rem]
+                  xl:text-[2.3rem]
+                "
+              >
+                BUILD YOUR
+                <br />
+
+                <span className="text-[#FF6A00]">
+                  NEXT CHAPTER.
+                </span>
+              </h2>
+
+              {/* Description */}
+
+              <p
+                className="
+                  mx-auto
+                  mt-3
+                  max-w-[470px]
+                  px-2
+                  text-[9px]
+                  leading-4
+                  text-white/65
+                  sm:text-[10px]
+                  sm:leading-5
+                  md:text-[11px]
+                "
+              >
+                Join Q-Techx Solutions and work with passionate people
+                building modern technology, meaningful products, and
+                innovative digital experiences.
+              </p>
+
+              {/* Buttons */}
+
+              <div
+                className="
+                  mt-4
+                  flex
+                  flex-wrap
+                  items-center
+                  justify-center
+                  gap-2
+                "
+              >
+                {/* Explore Careers */}
+
+                <Link
+                  to="/career"
+                  className="
+                    group
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    border
+                    border-[#FF6A00]
+                    bg-black/85
+                    px-4
+                    py-1.5
+                    text-[8px]
+                    font-bold
+                    uppercase
+                    tracking-[0.07em]
+                    text-[#FF6A00]
+                    transition-all
+                    duration-300
+                    hover:bg-[#FF6A00]
+                    hover:text-black
+                    hover:shadow-[0_0_20px_rgba(255,106,0,0.3)]
+                    active:scale-95
+                    sm:px-5
+                    sm:py-2
+                    sm:text-[9px]
+                  "
+                >
+                  <span>Explore Careers</span>
+
+                  <span
+                    className="
+                      flex
+                      h-4
+                      w-4
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-[#FF6A00]/70
+                      transition-all
+                      duration-300
+                      group-hover:translate-x-1
+                      group-hover:border-black
+                      group-hover:bg-black
+                      group-hover:text-[#FF6A00]
+                      sm:h-5
+                      sm:w-5
+                    "
+                  >
+                    <FiArrowRight size={9} />
+                  </span>
+                </Link>
+
+                {/* Contact */}
+
+                <Link
+                  to="/contact"
+                  className="
+                    inline-flex
+                    items-center
+                    rounded-full
+                    border
+                    border-[#FF6A00]/50
+                    bg-black/80
+                    px-4
+                    py-1.5
+                    text-[8px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.07em]
+                    text-[#FF6A00]
+                    transition-all
+                    duration-300
+                    hover:border-[#FF6A00]
+                    hover:bg-[#FF6A00]
+                    hover:text-black
+                    active:scale-95
+                    sm:px-5
+                    sm:py-2
+                    sm:text-[9px]
+                  "
+                >
+                  Contact Us
+                </Link>
+              </div>
+            </div>
+
+            {/* ===================================================
+                RIGHT CARDS
+            =================================================== */}
+
+            <div
+              className="
+                order-3
+                grid
+                grid-cols-2
+                gap-2
+                lg:grid-cols-1
+                lg:gap-2.5
+              "
+            >
+              {highlights.slice(2, 4).map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="
+                      group
+                      flex
+                      items-center
+                      gap-2.5
+                      rounded-lg
+                      border
+                      border-white/15
+                      bg-black/55
+                      px-2.5
+                      py-2.5
+                      backdrop-blur-md
+                      transition-all
+                      duration-300
+                      hover:border-[#FF6A00]/60
+                      hover:bg-black/70
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        h-7
+                        w-7
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-md
+                        border
+                        border-[#FF6A00]/40
+                        bg-[#FF6A00]/10
+                        text-[#FF6A00]
+                        transition-all
+                        duration-300
+                        group-hover:border-[#FF6A00]
+                        group-hover:bg-[#FF6A00]
+                        group-hover:text-white
+                      "
+                    >
+                      <Icon size={13} />
+                    </div>
+
+                    <span
+                      className="
+                        text-[8px]
+                        font-bold
+                        uppercase
+                        leading-3
+                        tracking-[0.06em]
+                        text-white
+                        sm:text-[9px]
+                      "
+                    >
+                      {item.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        </div>
+      </PageContainer>
+
+      {/* =========================================================
+          BOTTOM LINE ONLY
+      ========================================================= */}
+
+      <div
+        className="
+          absolute
+          bottom-0
+          left-0
+          right-0
+          h-px
+          bg-[#FF6A00]/30
+        "
+      />
+    </section>
+  );
 };
 
 export default JobOpeningBanner;
