@@ -185,19 +185,19 @@ const JobOpeningBanner = () => {
           >
 
             {/* ===================================================
-                LEFT CARDS
-            =================================================== */}
+    LEFT CARDS
+=================================================== */}
 
             <div
               className="
-                order-2
-                grid
-                grid-cols-2
-                gap-2
-                lg:order-1
-                lg:grid-cols-1
-                lg:gap-2.5
-              "
+    order-2
+    grid
+    grid-cols-2
+    gap-2
+    lg:order-1
+    lg:grid-cols-1
+    lg:gap-2.5
+  "
             >
               {highlights.slice(0, 2).map((item) => {
                 const Icon = item.icon;
@@ -206,59 +206,84 @@ const JobOpeningBanner = () => {
                   <div
                     key={item.title}
                     className="
-                      group
-                      flex
-                      items-center
-                      gap-2.5
-                      rounded-lg
-                      border
-                      border-white/15
-                      bg-black/55
-                      px-2.5
-                      py-2.5
-                      backdrop-blur-md
-                      transition-all
-                      duration-300
-                      hover:border-[#FF6A00]/60
-                      hover:bg-black/70
-                    "
+          group
+          flex
+          items-center
+          gap-2.5
+          rounded-lg
+          border
+          border-[#FF6A00]/40
+          bg-[#FF6A00]/10
+          px-2.5
+          py-2.5
+          shadow-[0_0_15px_rgba(255,106,0,0.05)]
+          backdrop-blur-md
+          transition-all
+          duration-300
+          hover:border-[#FF6A00]/70
+          hover:bg-[#FF6A00]/15
+          hover:shadow-[0_0_18px_rgba(255,106,0,0.12)]
+        "
                   >
+                    {/* Icon */}
+
                     <div
                       className="
-                        flex
-                        h-7
-                        w-7
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-md
-                        border
-                        border-[#FF6A00]/40
-                        bg-[#FF6A00]/10
-                        text-[#FF6A00]
-                        transition-all
-                        duration-300
-                        group-hover:border-[#FF6A00]
-                        group-hover:bg-[#FF6A00]
-                        group-hover:text-white
-                      "
+            flex
+            h-7
+            w-7
+            shrink-0
+            items-center
+            justify-center
+            rounded-md
+            border
+            border-[#FF6A00]
+            bg-[#FF6A00]
+            text-black
+            transition-all
+            duration-300
+            group-hover:bg-black
+            group-hover:text-[#FF6A00]
+            sm:h-8
+            sm:w-8
+          "
                     >
                       <Icon size={13} />
                     </div>
 
-                    <span
-                      className="
-                        text-[8px]
-                        font-bold
-                        uppercase
-                        leading-3
-                        tracking-[0.06em]
-                        text-white
-                        sm:text-[9px]
-                      "
-                    >
-                      {item.title}
-                    </span>
+                    {/* Card Text */}
+
+                    <div className="min-w-0">
+                      <span
+                        className="
+              block
+              truncate
+              text-[8px]
+              font-bold
+              uppercase
+              leading-3
+              tracking-[0.06em]
+              text-white
+              sm:text-[9px]
+            "
+                      >
+                        {item.title}
+                      </span>
+
+                      <span
+                        className="
+              mt-0.5
+              hidden
+              text-[7px]
+              uppercase
+              tracking-wider
+              text-[#FF6A00]/60
+              sm:block
+            "
+                      >
+                        Q-Techx Solutions
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -355,120 +380,130 @@ const JobOpeningBanner = () => {
 
               {/* Buttons */}
 
-              <div
-                className="
-                  mt-4
-                  flex
-                  flex-wrap
-                  items-center
-                  justify-center
-                  gap-2
-                "
-              >
-                {/* Explore Careers */}
+             <div
+  className="
+    mt-4
+    flex
+    flex-wrap
+    items-center
+    justify-center
+    gap-2
+  "
+>
+  {/* Explore Careers */}
 
-                <Link
-                  to="/career"
-                  className="
-                    group
-                    inline-flex
-                    items-center
-                    gap-2
-                    rounded-full
-                    border
-                    border-[#FF6A00]
-                    bg-black/85
-                    px-4
-                    py-1.5
-                    text-[8px]
-                    font-bold
-                    uppercase
-                    tracking-[0.07em]
-                    text-[#FF6A00]
-                    transition-all
-                    duration-300
-                    hover:bg-[#FF6A00]
-                    hover:text-black
-                    hover:shadow-[0_0_20px_rgba(255,106,0,0.3)]
-                    active:scale-95
-                    sm:px-5
-                    sm:py-2
-                    sm:text-[9px]
-                  "
-                >
-                  <span>Explore Careers</span>
+  <Link
+    to="/career"
+    className="
+      group
+      inline-flex
+      min-h-[30px]
+      items-center
+      justify-center
+      gap-2
+      rounded-full
+      border
+      border-[#FF6A00]
+      bg-[#FF6A00]
+      px-4
+      py-1.5
+      text-[8px]
+      font-bold
+      uppercase
+      leading-none
+      tracking-[0.07em]
+      text-black
+      shadow-[0_0_15px_rgba(255,106,0,0.15)]
+      transition-all
+      duration-300
+      hover:bg-black
+      hover:text-[#FF6A00]
+      hover:shadow-[0_0_20px_rgba(255,106,0,0.25)]
+      active:scale-95
+      sm:min-h-[32px]
+      sm:px-5
+      sm:text-[9px]
+    "
+  >
+    <span>View Job Openings</span>
 
-                  <span
-                    className="
-                      flex
-                      h-4
-                      w-4
-                      items-center
-                      justify-center
-                      rounded-full
-                      border
-                      border-[#FF6A00]/70
-                      transition-all
-                      duration-300
-                      group-hover:translate-x-1
-                      group-hover:border-black
-                      group-hover:bg-black
-                      group-hover:text-[#FF6A00]
-                      sm:h-5
-                      sm:w-5
-                    "
-                  >
-                    <FiArrowRight size={9} />
-                  </span>
-                </Link>
+    <span
+      className="
+        flex
+        h-4
+        w-4
+        shrink-0
+        items-center
+        justify-center
+        rounded-full
+        border
+        border-black/60
+        bg-black
+        text-[#FF6A00]
+        transition-all
+        duration-300
+        group-hover:translate-x-1
+        group-hover:border-[#FF6A00]
+        group-hover:bg-[#FF6A00]
+        group-hover:text-black
+        sm:h-5
+        sm:w-5
+      "
+    >
+      <FiArrowRight size={9} />
+    </span>
+  </Link>
 
-                {/* Contact */}
+  {/* Contact Us */}
 
-                <Link
-                  to="/contact"
-                  className="
-                    inline-flex
-                    items-center
-                    rounded-full
-                    border
-                    border-[#FF6A00]/50
-                    bg-black/80
-                    px-4
-                    py-1.5
-                    text-[8px]
-                    font-semibold
-                    uppercase
-                    tracking-[0.07em]
-                    text-[#FF6A00]
-                    transition-all
-                    duration-300
-                    hover:border-[#FF6A00]
-                    hover:bg-[#FF6A00]
-                    hover:text-black
-                    active:scale-95
-                    sm:px-5
-                    sm:py-2
-                    sm:text-[9px]
-                  "
-                >
-                  Contact Us
-                </Link>
-              </div>
+  <Link
+    to="/contact"
+    className="
+      inline-flex
+      min-h-[30px]
+      items-center
+      justify-center
+      rounded-full
+      border
+      border-[#FF6A00]/60
+      bg-black/85
+      px-4
+      py-1.5
+      text-[8px]
+      font-semibold
+      uppercase
+      leading-none
+      tracking-[0.07em]
+      text-[#FF6A00]
+      transition-all
+      duration-300
+      hover:border-[#FF6A00]
+      hover:bg-[#FF6A00]
+      hover:text-black
+      active:scale-95
+      sm:min-h-[32px]
+      sm:px-5
+      sm:text-[9px]
+    "
+  >
+    Contact Us
+  </Link>
+</div>
             </div>
 
             {/* ===================================================
-                RIGHT CARDS
-            =================================================== */}
+    RIGHT CARDS
+=================================================== */}
 
             <div
               className="
-                order-3
-                grid
-                grid-cols-2
-                gap-2
-                lg:grid-cols-1
-                lg:gap-2.5
-              "
+    order-3
+    grid
+    grid-cols-2
+    gap-2
+    lg:grid-cols-1
+    lg:gap-2.5
+  "
             >
               {highlights.slice(2, 4).map((item) => {
                 const Icon = item.icon;
@@ -477,59 +512,84 @@ const JobOpeningBanner = () => {
                   <div
                     key={item.title}
                     className="
-                      group
-                      flex
-                      items-center
-                      gap-2.5
-                      rounded-lg
-                      border
-                      border-white/15
-                      bg-black/55
-                      px-2.5
-                      py-2.5
-                      backdrop-blur-md
-                      transition-all
-                      duration-300
-                      hover:border-[#FF6A00]/60
-                      hover:bg-black/70
-                    "
+          group
+          flex
+          items-center
+          gap-2.5
+          rounded-lg
+          border
+          border-[#FF6A00]/40
+          bg-[#FF6A00]/10
+          px-2.5
+          py-2.5
+          shadow-[0_0_15px_rgba(255,106,0,0.05)]
+          backdrop-blur-md
+          transition-all
+          duration-300
+          hover:border-[#FF6A00]/70
+          hover:bg-[#FF6A00]/15
+          hover:shadow-[0_0_18px_rgba(255,106,0,0.12)]
+        "
                   >
+                    {/* Icon */}
+
                     <div
                       className="
-                        flex
-                        h-7
-                        w-7
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-md
-                        border
-                        border-[#FF6A00]/40
-                        bg-[#FF6A00]/10
-                        text-[#FF6A00]
-                        transition-all
-                        duration-300
-                        group-hover:border-[#FF6A00]
-                        group-hover:bg-[#FF6A00]
-                        group-hover:text-white
-                      "
+            flex
+            h-7
+            w-7
+            shrink-0
+            items-center
+            justify-center
+            rounded-md
+            border
+            border-[#FF6A00]
+            bg-[#FF6A00]
+            text-black
+            transition-all
+            duration-300
+            group-hover:bg-black
+            group-hover:text-[#FF6A00]
+            sm:h-8
+            sm:w-8
+          "
                     >
                       <Icon size={13} />
                     </div>
 
-                    <span
-                      className="
-                        text-[8px]
-                        font-bold
-                        uppercase
-                        leading-3
-                        tracking-[0.06em]
-                        text-white
-                        sm:text-[9px]
-                      "
-                    >
-                      {item.title}
-                    </span>
+                    {/* Card Text */}
+
+                    <div className="min-w-0">
+                      <span
+                        className="
+              block
+              truncate
+              text-[8px]
+              font-bold
+              uppercase
+              leading-3
+              tracking-[0.06em]
+              text-white
+              sm:text-[9px]
+            "
+                      >
+                        {item.title}
+                      </span>
+
+                      <span
+                        className="
+              mt-0.5
+              hidden
+              text-[7px]
+              uppercase
+              tracking-wider
+              text-[#FF6A00]/60
+              sm:block
+            "
+                      >
+                        Q-Techx Solutions
+                      </span>
+                    </div>
                   </div>
                 );
               })}
