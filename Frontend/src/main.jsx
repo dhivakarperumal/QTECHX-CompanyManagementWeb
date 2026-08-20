@@ -305,6 +305,10 @@ const router = createHashRouter([
             element: <AllTraineeInterns />,
           },
           {
+            path: 'trainees/pending',
+            element: <PendingTraineeInterns />,
+          },
+          {
             path: 'internships',
             element: <AllTraineeInterns />,
           },
