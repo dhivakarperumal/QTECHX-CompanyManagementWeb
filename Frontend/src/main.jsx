@@ -88,6 +88,7 @@ import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx
 import EmployeeProfile from './Employees/EmployeeProfile.jsx'
 
 import EmployeeAllTraineeInterns from './Employees/Trainees/AllTraineeInterns.jsx'
+import EmployeeAddTraineeIntern from './Employees/Trainees/AddTraineeIntern.jsx'
 import EmployeeTraineeInternAttendancePage from './Employees/Trainees/TraineeInternAttendancePage.jsx'
 import EmployeeTraineeTaskMaster from './Employees/Trainees/TraineeTaskMaster.jsx'
 import EmployeeTraineeTaskAssign from './Employees/Trainees/TraineeTaskAssign.jsx'
@@ -532,6 +533,10 @@ const router = createHashRouter([
           {
             path: 'trainees',
             element: <EmployeeAllTraineeInterns />,
+          },
+          {
+            path: 'trainees/add',
+            element: <EmployeeAddTraineeIntern />,
           },
           {
             path: 'trainees/view/:id',
