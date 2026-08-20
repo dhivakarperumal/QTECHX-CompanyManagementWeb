@@ -377,20 +377,9 @@ const ProjectQuotationsPage = () => {
 
   const handleQuickAction = async (action, quote) => {
     const key = getQuoteKey(quote);
-    if (action === "pdf") {
-      const { data } = await api.get(`/quotations/${key}/preview`);
-      const printWindow = window.open("", "quotation-preview", "width=900,height=700");
-      if (printWindow) {
-        printWindow.document.write(
-          `<pre style="white-space:pre-wrap;font:14px sans-serif;padding:32px">${JSON.stringify(data.data, null, 2)}</pre>`
-        );
-        printWindow.document.close();
-        printWindow.print();
-      }
-      toast.success("Quotation preview opened for printing.");
-    } else if (action === "print") {
-      window.print();
-      toast.success("Print dialog opened.");
+    if (action === "pdf" || action === "print") {
+      navigate(`/admin/myprojects/quotations/view/${key}`);
+      return;
     } else if (action === "whatsapp") {
       const { data } = await api.get(`/quotations/${key}/share`);
       const message = `Hello ${quote.client_name || "there"}, quotation ${quote.quotation_number} for ${quote.project_name} is ready. Total: ${formatCurrency(quote.grand_total, quote.currency)}. View: ${data.data.url}`;
