@@ -301,7 +301,7 @@ const Careers = () => {
 
               {/* Play button */}
 
-              <button
+              {/* <button
                 onClick={() => setIsOpen(true)}
                 aria-label="Play Q-Techx video"
                 className="
@@ -336,11 +336,11 @@ const Careers = () => {
                 >
                   <FaPlay className="ml-1 text-lg" />
                 </span>
-              </button>
+              </button> */}
 
               {/* Bottom label */}
 
-              <div
+              {/* <div
                 className="
                   absolute
                   bottom-5
@@ -360,7 +360,7 @@ const Careers = () => {
                 "
               >
                 Watch Our Story
-              </div>
+              </div> */}
 
             </div>
 
