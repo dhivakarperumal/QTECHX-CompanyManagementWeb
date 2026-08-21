@@ -868,7 +868,6 @@ async function ensureSchema(pool) {
       updated_by VARCHAR(36) NULL,
       PRIMARY KEY (id),
       UNIQUE KEY uq_users_user_id (user_id),
-      UNIQUE KEY uq_users_username (username),
       UNIQUE KEY uq_users_email (email),
       UNIQUE KEY uq_users_mobile (mobile)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
@@ -2440,6 +2439,92 @@ async function ensureServiceRequestsSchema(pool) {
   `);
 }
 
+async function enforceUniqueConstraints(pool) {
+  // Helper to drop index if it exists
+  const dropIndexIfExists = async (tableName, indexName) => {
+    try {
+      const [rows] = await pool.execute(`SHOW INDEXES FROM ${tableName} WHERE Key_name = '${indexName}'`);
+      if (rows.length > 0) {
+        await pool.execute(`ALTER TABLE ${tableName} DROP INDEX ${indexName}`);
+      }
+    } catch(e) {}
+  };
+
+  // Helper to add unique index if it doesn't exist
+  const addUniqueIndexIfNotExists = async (tableName, columns, indexName) => {
+    try {
+      const [rows] = await pool.execute(`SHOW INDEXES FROM ${tableName} WHERE Key_name = '${indexName}'`);
+      if (rows.length === 0) {
+        await pool.execute(`ALTER TABLE ${tableName} ADD UNIQUE INDEX ${indexName} (${columns})`);
+      }
+    } catch(e) {
+      console.error(`Failed to add unique index ${indexName} on ${tableName}:`, e.message);
+    }
+  };
+
+  // Ensure columns exist first
+  const ensureColumn = async (table, column, definition) => {
+    try {
+      const [cols] = await pool.execute(`SHOW COLUMNS FROM ${table} LIKE '${column}'`);
+      if (cols.length === 0) {
+        await pool.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      }
+    } catch(e) {
+      console.error(`Failed to add column ${column} to ${table}:`, e.message);
+    }
+  };
+
+  // Add missing columns across tables
+  await ensureColumn('employees', 'driving_licence_number', 'VARCHAR(50) NULL');
+  await ensureColumn('employees', 'vehicle_registration_number', 'VARCHAR(50) NULL');
+  await ensureColumn('employees', 'referral_code', 'VARCHAR(50) NULL');
+
+  await ensureColumn('trainee_interns', 'driving_licence_number', 'VARCHAR(50) NULL');
+  await ensureColumn('trainee_interns', 'vehicle_registration_number', 'VARCHAR(50) NULL');
+  await ensureColumn('trainee_interns', 'referral_code', 'VARCHAR(50) NULL');
+
+  await ensureColumn('clients', 'customer_id', 'VARCHAR(50) NULL');
+  await ensureColumn('clients', 'gst_number', 'VARCHAR(50) NULL');
+  await ensureColumn('clients', 'business_registration_number', 'VARCHAR(100) NULL');
+  await ensureColumn('clients', 'referral_code', 'VARCHAR(50) NULL');
+
+  // 1. Do NOT make Username a unique field. Remove Username from all database unique constraints.
+  await dropIndexIfExists('users', 'uq_users_username');
+
+  // 2. Add MySQL UNIQUE constraints for the required fields
+  // Employees table
+  await addUniqueIndexIfNotExists('employees', 'pan_number', 'uq_emp_pan');
+  await addUniqueIndexIfNotExists('employees', 'aadhaar_number', 'uq_emp_aadhaar');
+  await addUniqueIndexIfNotExists('employees', 'mobile_number', 'uq_emp_mobile');
+  await addUniqueIndexIfNotExists('employees', 'personal_email', 'uq_emp_email');
+  await addUniqueIndexIfNotExists('employees', 'upi_id', 'uq_emp_upi');
+  await addUniqueIndexIfNotExists('employees', 'account_number, ifsc_code', 'uq_emp_account_ifsc');
+  await addUniqueIndexIfNotExists('employees', 'account_number', 'uq_emp_account');
+  await addUniqueIndexIfNotExists('employees', 'driving_licence_number', 'uq_emp_dl');
+  await addUniqueIndexIfNotExists('employees', 'vehicle_registration_number', 'uq_emp_vehicle');
+  await addUniqueIndexIfNotExists('employees', 'referral_code', 'uq_emp_referral');
+
+  // Trainee Interns table
+  await addUniqueIndexIfNotExists('trainee_interns', 'pan_number', 'uq_trainee_pan');
+  await addUniqueIndexIfNotExists('trainee_interns', 'aadhaar_number', 'uq_trainee_aadhaar');
+  await addUniqueIndexIfNotExists('trainee_interns', 'mobile_number', 'uq_trainee_mobile');
+  await addUniqueIndexIfNotExists('trainee_interns', 'email_address', 'uq_trainee_email');
+  await addUniqueIndexIfNotExists('trainee_interns', 'upi_id', 'uq_trainee_upi');
+  await addUniqueIndexIfNotExists('trainee_interns', 'account_number, ifsc_code', 'uq_trainee_account_ifsc');
+  await addUniqueIndexIfNotExists('trainee_interns', 'account_number', 'uq_trainee_account');
+  await addUniqueIndexIfNotExists('trainee_interns', 'driving_licence_number', 'uq_trainee_dl');
+  await addUniqueIndexIfNotExists('trainee_interns', 'vehicle_registration_number', 'uq_trainee_vehicle');
+  await addUniqueIndexIfNotExists('trainee_interns', 'referral_code', 'uq_trainee_referral');
+
+  // Clients table
+  await addUniqueIndexIfNotExists('clients', 'customer_id', 'uq_client_customer_id');
+  await addUniqueIndexIfNotExists('clients', 'gst_number', 'uq_client_gst');
+  await addUniqueIndexIfNotExists('clients', 'business_registration_number', 'uq_client_business_reg');
+  await addUniqueIndexIfNotExists('clients', 'email', 'uq_client_email');
+  await addUniqueIndexIfNotExists('clients', 'phone_number', 'uq_client_phone');
+  await addUniqueIndexIfNotExists('clients', 'referral_code', 'uq_client_referral');
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2468,6 +2553,7 @@ async function initDB() {
     await ensureIncomesSchema(pool);
     await ensureTraineeEmployeeAssignmentsSchema(pool);
     await seedDefaultUser(pool);
+    await enforceUniqueConstraints(pool);
     console.log("Database connected:", `${dbConfig.user}@${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     return pool;
   } catch (err) {

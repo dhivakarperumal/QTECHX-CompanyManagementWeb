@@ -58,11 +58,29 @@ function getPublicFilePath(filePath) {
 
   const resolved = getStoredFilePath(filePath);
   if (!resolved) return null;
-  const relative = path.relative(UPLOAD_ROOT, resolved);
-  return relative && !relative.startsWith("..")
-    ? `/${path.join("uploads", relative).replace(/\\/g, "/")}`
-    : null;
+  const relative = path.relative(UPLOAD_ROOT, resolved).replace(/\\/g, "/");
+  return `/uploads/${relative}`;
 }
+
+const duplicateMessage = (error) => {
+  if (error.code !== "ER_DUP_ENTRY") return null;
+  const msg = error.message;
+  if (msg.includes("uq_client_customer_id") || msg.includes("customer_id")) return "Customer ID already exists.";
+  if (msg.includes("uq_client_gst") || msg.includes("gst_number")) return "GST Number already registered.";
+  if (msg.includes("uq_client_business_reg") || msg.includes("business_registration_number")) return "Business Registration Number already exists.";
+  if (msg.includes("uq_client_email") || msg.includes("email")) return "Email already registered.";
+  if (msg.includes("uq_client_phone") || msg.includes("phone_number")) return "Phone Number already registered.";
+  if (msg.includes("uq_client_referral") || msg.includes("referral_code")) return "Referral Code already exists.";
+  return "Record already exists.";
+};
+
+const normalizeClientData = (data) => {
+  if (data.email) data.email = String(data.email).trim().toLowerCase();
+  if (data.phone_number) data.phone_number = String(data.phone_number).replace(/[^0-9+]/g, '');
+  if (data.gst_number) data.gst_number = String(data.gst_number).trim().toUpperCase();
+  if (data.business_registration_number) data.business_registration_number = String(data.business_registration_number).trim().toUpperCase();
+  if (data.customer_id) data.customer_id = String(data.customer_id).trim();
+};
 
 function normalizeDocumentPath(filePath) {
   if (!filePath) return null;
@@ -121,10 +139,12 @@ function fail(res, message, statusCode = 500, error = undefined) {
 /** POST /api/clients */
 async function createClientHandler(req, res) {
   try {
+    const actor = req.user?.user_id || "SYSTEM";
+
+    normalizeClientData(req.body);
+
     const {
       company_name, client_name, email, phone_number, contact_person,
-      client_status, service_type, business_name, business_type, requirement,
-      notes_summary, follow_up_date, follow_up_time, next_follow_up_date,
       next_follow_up_time, discussion_summary, follow_up_status, reminder,
     } = req.body;
 
@@ -230,12 +250,14 @@ async function updateClientHandler(req, res) {
       "client_status", "service_type", "business_name", "business_type",
       "requirement", "notes_summary", "follow_up_date", "follow_up_time",
       "next_follow_up_date", "next_follow_up_time", "discussion_summary",
-      "follow_up_status", "reminder",
+      "follow_up_status", "reminder", "customer_id", "gst_number", "business_registration_number", "referral_code"
     ];
     const updates = {};
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
+
+    normalizeClientData(updates);
 
     if (updates.client_status && !CLIENT_STATUSES.includes(updates.client_status)) {
       return fail(res, `Invalid client_status. Allowed: ${CLIENT_STATUSES.join(", ")}`, 400);
@@ -271,7 +293,8 @@ async function updateClientHandler(req, res) {
     return ok(res, { message: "Client updated successfully", data: client });
   } catch (err) {
     console.error("updateClientHandler:", err);
-    return fail(res, "Failed to update client", 500, err.message);
+    const msg = duplicateMessage(err);
+    return fail(res, msg || "Failed to update client", msg ? 409 : 500, err.message);
   }
 }
 
