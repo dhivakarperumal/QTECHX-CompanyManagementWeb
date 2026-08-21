@@ -16,11 +16,9 @@ const Home = () => {
   return (
     <>
       <Hero />
-      {/* <FeaturedOpenings /> */}
-      {/* <InnovationHub/> */}
       <JobOpeningBanner />
-      <EventBanner/>
       <Services/>
+      <EventBanner/>
       <AboutUs/>
       <Methodology/>
       <WhyChooseUs />
@@ -31,4 +29,6 @@ const Home = () => {
   );
 };
 
+      {/* <FeaturedOpenings /> */}
+      {/* <InnovationHub/> */}
 export default Home;

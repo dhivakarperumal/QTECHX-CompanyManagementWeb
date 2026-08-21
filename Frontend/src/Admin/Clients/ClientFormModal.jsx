@@ -232,6 +232,12 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
       setExistingDocs([]);
       if (editClient) {
         refreshExistingDocuments(editClient.uuid);
+        const standardServices = ['Website', 'Mobile App', 'Web App', 'Software'];
+        const rawService = editClient.service_type || '';
+        const isStandard = standardServices.includes(rawService);
+        const initialServiceType = !rawService ? '' : isStandard ? rawService : 'Other';
+        const initialCustomService = !rawService || isStandard || rawService === 'Other' ? '' : rawService;
+
         setForm({
           company_name: editClient.company_name || '',
           client_name: editClient.client_name || '',
@@ -239,8 +245,8 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
           phone_number: editClient.phone_number || '',
           contact_person: editClient.contact_person || '',
           client_status: editClient.client_status || 'Lead',
-          service_type: SERVICE_TYPES.includes(editClient.service_type) ? editClient.service_type : 'Other',
-          custom_service_type: SERVICE_TYPES.includes(editClient.service_type) ? '' : (editClient.service_type || ''),
+          service_type: initialServiceType,
+          custom_service_type: initialCustomService,
           business_name: editClient.business_name || '',
           business_type: editClient.business_type || '',
           requirement: editClient.requirement || '',
@@ -427,6 +433,14 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                   </div>
                 </div>
                 <div>
+                  <FieldLabel icon={Building2} text="Business Name" />
+                  <input className={inp} placeholder="Registered business name" value={form.business_name} onChange={set('business_name')} />
+                </div>
+                <div>
+                  <FieldLabel icon={Briefcase} text="Business Type" />
+                  <input className={inp} placeholder="e.g. Startup, Enterprise" value={form.business_type} onChange={set('business_type')} />
+                </div>
+                <div>
                   <FieldLabel icon={Briefcase} text="Service Type" required />
                   <Select
                     options={SERVICE_TYPES.map(s => ({ value: s, label: s }))}
@@ -446,10 +460,6 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                     isClearable
                   />
                 </div>
-                <div>
-                  <FieldLabel icon={Building2} text="Business Name" />
-                  <input className={inp} placeholder="Registered business name" value={form.business_name} onChange={set('business_name')} />
-                </div>
                 {form.service_type === 'Other' && (
                   <div>
                     <FieldLabel icon={Briefcase} text="Please enter service type" required />
@@ -461,10 +471,6 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                     />
                   </div>
                 )}
-                <div>
-                  <FieldLabel icon={Briefcase} text="Business Type" />
-                  <input className={inp} placeholder="e.g. Startup, Enterprise" value={form.business_type} onChange={set('business_type')} />
-                </div>
                 <div className="sm:col-span-2">
                   <FieldLabel icon={FileText} text="Requirement" />
                   <textarea rows={2} className={inp + ' resize-none'} placeholder="Describe the client's main requirement…" value={form.requirement} onChange={set('requirement')} />

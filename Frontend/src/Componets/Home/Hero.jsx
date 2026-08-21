@@ -18,8 +18,8 @@ const heroSlides = [
       link: "/about",
     },
     secondaryButton: {
-      text: "Book A Call",
-      link: "/booknow",
+      text: "Pricing",
+      link: "/prices",
     },
     image: "/images/hero image.png",
     alt: "Q-Techx Solutions software innovation",
@@ -56,8 +56,8 @@ const heroSlides = [
       link: "/prices",
     },
     secondaryButton: {
-      text: "Book Now",
-      link: "/booknow",
+      text: "About Us",
+      link: "/about",
     },
     image: "/images/hero5.png",
     alt: "Next-Gen Product Engineering",

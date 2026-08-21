@@ -154,8 +154,8 @@ async function createClientHandler(req, res) {
     if (client_status && !CLIENT_STATUSES.includes(client_status)) {
       return fail(res, `Invalid client_status. Allowed: ${CLIENT_STATUSES.join(", ")}`, 400);
     }
-    if (service_type && !SERVICE_TYPES.includes(service_type)) {
-      return fail(res, `Invalid service_type. Allowed: ${SERVICE_TYPES.join(", ")}`, 400);
+    if (service_type && (typeof service_type !== "string" || service_type.length > 255)) {
+      return fail(res, "Invalid service_type format", 400);
     }
     if (follow_up_status && !FOLLOW_UP_STATUSES.includes(follow_up_status)) {
       return fail(res, `Invalid follow_up_status. Allowed: ${FOLLOW_UP_STATUSES.join(", ")}`, 400);
@@ -262,8 +262,8 @@ async function updateClientHandler(req, res) {
     if (updates.client_status && !CLIENT_STATUSES.includes(updates.client_status)) {
       return fail(res, `Invalid client_status. Allowed: ${CLIENT_STATUSES.join(", ")}`, 400);
     }
-    if (updates.service_type && !SERVICE_TYPES.includes(updates.service_type)) {
-      return fail(res, `Invalid service_type. Allowed: ${SERVICE_TYPES.join(", ")}`, 400);
+    if (updates.service_type && (typeof updates.service_type !== "string" || updates.service_type.length > 255)) {
+      return fail(res, "Invalid service_type format", 400);
     }
     if (updates.follow_up_status && !FOLLOW_UP_STATUSES.includes(updates.follow_up_status)) {
       return fail(res, `Invalid follow_up_status. Allowed: ${FOLLOW_UP_STATUSES.join(", ")}`, 400);

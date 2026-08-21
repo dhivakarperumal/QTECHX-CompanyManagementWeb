@@ -175,7 +175,7 @@ const WhoWeWorkWith = () => {
                     <h3 className="text-left text-sm font-bold leading-5 tracking-tight text-white transition-colors duration-300 group-hover:text-[#FF6A00] sm:text-base">
                       {item.title}
                     </h3>
-                    <span className="shrink-0 text-lg text-[#FF6A00]/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-[#FF6A00]" aria-hidden="true">↗</span>
+                    <span className="shrink-0 text-lg text-white transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-[#FF6A00]" aria-hidden="true">↗</span>
                   </div>
                 </div>
               ))}
