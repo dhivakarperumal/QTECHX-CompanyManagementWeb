@@ -14,7 +14,13 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiHelpCircle,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiTag,
+  FiX
 } from "react-icons/fi";
+import { toast, Toaster } from "react-hot-toast";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 import api from "../../api";
@@ -198,6 +204,60 @@ const Prices = () => {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [openFaq, setOpenFaq] = useState(0);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPlanForModal, setSelectedPlanForModal] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+    price_amount: "",
+  });
+
+  const handleOpenModal = (plan) => {
+    setSelectedPlanForModal(plan);
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+      price_amount: plan.price || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPlanForModal(null);
+  };
+
+  const handleFormChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email) {
+      return toast.error("Please fill in your name and email.");
+    }
+    setIsSubmitting(true);
+    try {
+      const { data } = await api.post("/service-requests", {
+        service_title: selectedPlanForModal?.plan_title || "Pricing Plan",
+        ...formData,
+      });
+      if (!data.success) throw new Error(data.message || "Failed to submit request");
+      toast.success("Thank you! Your request has been received.");
+      handleCloseModal();
+    } catch (err) {
+      toast.error("Failed to submit request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     AOS.init({ duration: 900, easing: "ease-out-cubic", once: true, offset: 60 });
@@ -542,9 +602,8 @@ const Prices = () => {
 
                       {/* CTA Button */}
                       <div className="pt-8">
-                        <Link
-                          to="/booknow"
-                          state={{ selectedPlan: plan.plan_title }}
+                        <button
+                          onClick={() => handleOpenModal(plan)}
                           className={`
                             group/btn
                             flex
@@ -573,7 +632,7 @@ const Prices = () => {
                             size={16}
                             className="transition-transform duration-300 group-hover/btn:translate-x-1"
                           />
-                        </Link>
+                        </button>
                       </div>
                     </div>
 
@@ -676,11 +735,164 @@ const Prices = () => {
           </div>
 
         
-        </PageContainer>
+      </PageContainer>
 
         {/* Bottom Orange Line */}
         <div className="h-px w-full bg-[#FF6A00]/60 shadow-[0_0_8px_rgba(255,106,0,0.25)]" />
       </div>
+
+      <Toaster position="top-right" />
+
+      {/* ── MODAL ── */}
+      {isModalOpen && selectedPlanForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseModal} />
+          
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[#FF6A00]/40 bg-gradient-to-br from-[#171d22] via-[#11171c] to-[#080b0e] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(255,106,0,0.15)] sm:p-8 animate-fade-up">
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-[#FF6A00]" />
+            <button
+              onClick={handleCloseModal}
+              className="absolute right-4 top-4 text-white/50 hover:text-[#FF6A00] transition"
+            >
+              <FiX size={20} />
+            </button>
+
+            <div className="mb-6">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#FF6A00]/30 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
+                <FiZap size={12} />
+                <span>Instant Project Inquiry</span>
+              </div>
+              <h3 className="hero-font text-xl font-bold uppercase text-white sm:text-2xl">
+                SEND US A <span className="text-[#FF6A00]">REQUEST</span>
+              </h3>
+              <p className="mt-1.5 text-xs text-white/60">
+                Tell us about your project requirements and our team will get back to you within 24 hours.
+              </p>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto pr-2 custom-scrollbar">
+              {/* Selected service */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Selected Service *
+                </label>
+                <div className="w-full rounded-xl border border-white/10 bg-[#090d10] px-4 py-3 text-sm text-white/70">
+                  {selectedPlanForModal.plan_title}
+                </div>
+              </div>
+
+              {/* Price Amount */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Price Amount *
+                </label>
+                <div className="relative">
+                  <FiTag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#FF6A00]/70" />
+                  <input
+                    type="text"
+                    name="price_amount"
+                    readOnly
+                    value={formData.price_amount}
+                    className="w-full rounded-xl border border-[#FF6A00]/30 bg-[#090d10] py-3 pl-10 pr-4 text-sm text-[#FF6A00] font-bold outline-none cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Your Full Name *
+                </label>
+                <div className="relative">
+                  <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleFormChange}
+                    placeholder="John Doe"
+                    className="w-full rounded-xl border border-white/10 bg-[#090d10] py-3 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    placeholder="john@example.com"
+                    className="w-full rounded-xl border border-white/10 bg-[#090d10] py-3 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Mobile Number
+                </label>
+                <div className="relative">
+                  <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleFormChange}
+                    placeholder="+91 98765 43210"
+                    className="w-full rounded-xl border border-white/10 bg-[#090d10] py-3 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-white/50">
+                  Project Details / Message
+                </label>
+                <div className="relative">
+                  <textarea
+                    name="message"
+                    rows="3"
+                    value={formData.message}
+                    onChange={handleFormChange}
+                    placeholder="Describe your goals, requirements, or timeline..."
+                    className="w-full rounded-xl border border-white/10 bg-[#090d10] p-3 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="group mt-4 flex w-full items-center justify-center gap-2.5 rounded-full bg-[#FF6A00] py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_25px_rgba(255,106,0,0.35)] transition-all duration-300 hover:bg-[#e05e00] hover:shadow-[0_0_35px_rgba(255,106,0,0.55)] disabled:opacity-60 sm:text-sm"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Sending Request...
+                  </span>
+                ) : (
+                  <>
+                    <span>Submit Request</span>
+                    <FiArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── SOCIAL MEDIA FOOTER (MATCHING HOME) ── */}
     </>
