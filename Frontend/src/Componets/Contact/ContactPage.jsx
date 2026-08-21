@@ -512,7 +512,7 @@ const ContactPage = () => {
                   REQUEST SENT SUCCESSFULLY
                 </h3>
                 <p className="mb-6 text-xs leading-relaxed text-white/70 sm:text-sm">
-                  We have received your message. Our specialist team will review your inquiry and get in touch with you shortly.
+                  We have received your message. Our team will review your inquiry and get in touch with you shortly.
                 </p>
 
                 <button
