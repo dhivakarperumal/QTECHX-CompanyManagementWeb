@@ -20,7 +20,7 @@ const Footer = () => {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
-    { name: "Products", path: "/products" },
+    { name: "Projects", path: "/projects" },
     { name: "Career", path: "/career" },
     { name: "Contact", path: "/contact" },
   ];
@@ -29,9 +29,7 @@ const Footer = () => {
     { name: "Why Choose Us", path: "/why-choose-us" },
     { name: "Who We Work", path: "/who-we-work" },
     { name: "What We Do", path: "/what-we-do" },
-    { name: "Our Achievements", path: "/achievements" },
-    { name: "Terms Of Services", path: "/terms" },
-    { name: "Privacy Policy", path: "/privacy-policy" },
+    { name: "Pricing", path: "/prices" },
   ];
 
   const socialLinks = [
