@@ -28,17 +28,11 @@ exports.createExpense = async (req, res) => {
       return res.status(400).json({ success: false, message: "Payment mode is required" });
     }
 
-    // Check available fund
+    // Deduct from available fund (allows fund to go negative)
     const [fundRows] = await connection.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
     let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
     let expenseAmount = parseFloat(amount);
 
-    if (current_fund < expenseAmount) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: "Insufficient funds" });
-    }
-
-    // Deduct fund
     const new_fund = current_fund - expenseAmount;
     await connection.query(
       "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",
@@ -257,20 +251,12 @@ exports.updateExpense = async (req, res) => {
 
     const amountDiff = newAmount - oldAmount;
 
-    // If the amount changed, adjust the available fund
+    // If the amount changed, adjust the available fund (allows fund to go negative)
     if (amountDiff !== 0) {
       const [fundRows] = await connection.query(
         "SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1"
       );
       let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.0;
-
-      if (amountDiff > 0 && current_fund < amountDiff) {
-        await connection.rollback();
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient funds. Need ₹${amountDiff.toFixed(2)} more, but available fund is ₹${current_fund.toFixed(2)}`,
-        });
-      }
 
       const new_fund = current_fund - amountDiff;
       await connection.query(

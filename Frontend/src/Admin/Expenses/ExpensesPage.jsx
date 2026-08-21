@@ -616,22 +616,24 @@ const ExpensesPage = () => {
       {/* ── Stats Overview ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
         {/* Available Fund Stat */}
-        <div className="bg-white/4 border border-emerald-500/20 rounded-2xl p-5 flex flex-col justify-between hover:bg-white/6 transition relative overflow-hidden group">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition duration-500" />
+        <div className={`bg-white/4 border ${parseFloat(fund) < 0 ? 'border-rose-500/30' : 'border-emerald-500/20'} rounded-2xl p-5 flex flex-col justify-between hover:bg-white/6 transition relative overflow-hidden group`}>
+          <div className={`absolute -right-4 -top-4 w-24 h-24 ${parseFloat(fund) < 0 ? 'bg-rose-500/10 group-hover:bg-rose-500/20' : 'bg-emerald-500/10 group-hover:bg-emerald-500/20'} rounded-full blur-xl transition duration-500`} />
           <div className="flex items-center gap-3 mb-2 relative z-10">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-              <DollarSign size={18} className="text-emerald-400" />
+            <div className={`w-10 h-10 rounded-xl ${parseFloat(fund) < 0 ? 'bg-rose-500/15' : 'bg-emerald-500/15'} flex items-center justify-center shrink-0`}>
+              <DollarSign size={18} className={parseFloat(fund) < 0 ? 'text-rose-400' : 'text-emerald-400'} />
             </div>
             <div>
               <p className="text-white/50 text-xs uppercase tracking-wider font-semibold">Available Fund</p>
-              <p className="text-2xl font-bold text-emerald-400 mt-1">₹ {parseFloat(fund).toFixed(2)}</p>
+              <p className={`text-2xl font-bold ${parseFloat(fund) < 0 ? 'text-rose-400' : 'text-emerald-400'} mt-1`}>
+                {parseFloat(fund) < 0 ? `- ₹ ${Math.abs(parseFloat(fund)).toFixed(2)}` : `₹ ${parseFloat(fund).toFixed(2)}`}
+              </p>
             </div>
           </div>
           <div className="mt-4 relative z-10">
             {!showFundForm ? (
               <button
                 onClick={() => setShowFundForm(true)}
-                className="text-xs font-semibold px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition"
+                className={`text-xs font-semibold px-4 py-2 ${parseFloat(fund) < 0 ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'} rounded-lg transition`}
               >
                 Update Fund
               </button>
