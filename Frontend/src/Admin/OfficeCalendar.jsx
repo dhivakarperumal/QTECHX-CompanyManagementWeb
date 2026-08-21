@@ -41,22 +41,22 @@ import {
 const EVENT_TYPES = [
   'Meeting', 'Holiday', 'Office Event', 'Project Deadline', 'Interview'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const STATUSES   = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
-const REMINDERS  = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
+const STATUSES = ['Scheduled', 'Ongoing', 'Completed', 'Cancelled'];
+const REMINDERS = ['At time of event', '10 min before', '30 min before', '1 hour before', '1 day before'];
 
 const EVENT_TYPE_META = {
-  Meeting:          { dot: 'bg-red-500',     light: '#ef4444' },
-  Holiday:          { dot: 'bg-green-500',   light: '#22c55e' },
-  Leave:            { dot: 'bg-violet-500',  light: '#8b5cf6' },
-  Birthday:         { dot: 'bg-pink-500',    light: '#ec4899' },
-  Anniversary:      { dot: 'bg-fuchsia-500', light: '#d946ef' },
-  'Client Meeting': { dot: 'bg-indigo-500',  light: '#6366f1' },
-  Training:         { dot: 'bg-emerald-500', light: '#10b981' },
-  'Office Event':   { dot: 'bg-blue-900',    light: '#1e3a8a' },
-  'Project Deadline':{ dot: 'bg-purple-500', light: '#a855f7' },
-  Reminder:         { dot: 'bg-orange-400',  light: '#f97316' },
-  Interview:        { dot: 'bg-yellow-500',  light: '#eab308' },
-  Other:            { dot: 'bg-slate-400',   light: '#64748b' },
+  Meeting: { dot: 'bg-red-500', light: '#ef4444' },
+  Holiday: { dot: 'bg-green-500', light: '#22c55e' },
+  Leave: { dot: 'bg-violet-500', light: '#8b5cf6' },
+  Birthday: { dot: 'bg-pink-500', light: '#ec4899' },
+  Anniversary: { dot: 'bg-fuchsia-500', light: '#d946ef' },
+  'Client Meeting': { dot: 'bg-indigo-500', light: '#6366f1' },
+  Training: { dot: 'bg-emerald-500', light: '#10b981' },
+  'Office Event': { dot: 'bg-blue-900', light: '#1e3a8a' },
+  'Project Deadline': { dot: 'bg-purple-500', light: '#a855f7' },
+  Reminder: { dot: 'bg-orange-400', light: '#f97316' },
+  Interview: { dot: 'bg-yellow-500', light: '#eab308' },
+  Other: { dot: 'bg-slate-400', light: '#64748b' },
 };
 
 const EVENT_TYPE_COLORS = {
@@ -75,18 +75,18 @@ const EVENT_TYPE_ICON = {
 };
 
 const QUICK_ACTIONS = [
-  { label: 'Add Event',    icon: Plus,        color: 'text-indigo-400 bg-indigo-500/10' },
-  { label: 'Add Meeting',  icon: Users,       color: 'text-blue-400 bg-blue-500/10' },
-  { label: 'Add Task',     icon: CheckSquare, color: 'text-green-400 bg-green-500/10' },
-  { label: 'Add Reminder', icon: Bell,        color: 'text-amber-400 bg-amber-500/10' },
+  { label: 'Add Event', icon: Plus, color: 'text-indigo-400 bg-indigo-500/10' },
+  { label: 'Add Meeting', icon: Users, color: 'text-blue-400 bg-blue-500/10' },
+  { label: 'Add Task', icon: CheckSquare, color: 'text-green-400 bg-green-500/10' },
+  { label: 'Add Reminder', icon: Bell, color: 'text-amber-400 bg-amber-500/10' },
 ];
 
 const LEGEND = [
-  { label: 'Meeting',          color: '#ef4444' },
-  { label: 'Holiday',          color: '#22c55e' },
-  { label: 'Office Event',     color: '#1e3a8a' },
+  { label: 'Meeting', color: '#ef4444' },
+  { label: 'Holiday', color: '#22c55e' },
+  { label: 'Office Event', color: '#1e3a8a' },
   { label: 'Project Deadline', color: '#a855f7' },
-  { label: 'Interview',        color: '#eab308' },
+  { label: 'Interview', color: '#eab308' },
 ];
 
 const defaultForm = {
@@ -107,8 +107,8 @@ const customSelectStyles = {
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -193,29 +193,29 @@ const getEventColor = (eventType, customColor) =>
 
 /* ─────────────────────────────────────── COMPONENT ─────────────────────────────────────── */
 const OfficeCalendar = () => {
-  const [events,         setEvents]         = useState([]);
-  const [allEmployees,   setAllEmployees]   = useState([]);
-  const [apiProjects,    setApiProjects]    = useState([]);
-  const [isLoading,      setIsLoading]      = useState(true);
-  const [isSubmitting,   setIsSubmitting]   = useState(false);
-  const [viewMode,       setViewMode]       = useState('month');
-  const [currentDate,    setCurrentDate]    = useState(dayjs());
-  const [searchText,     setSearchText]     = useState('');
-  const [showFilters,    setShowFilters]    = useState(false);
-  const [showModal,      setShowModal]      = useState(false);
-  const [showDrawer,     setShowDrawer]     = useState(false);
-  const [selectedDate,   setSelectedDate]   = useState(dayjs().format('YYYY-MM-DD'));
-  const [selectedEvent,  setSelectedEvent]  = useState(null);
-  const [mode,           setMode]           = useState('create');
-  const [formData,       setFormData]       = useState(defaultForm);
-  const [filters,        setFilters]        = useState({
+  const [events, setEvents] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [apiProjects, setApiProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState('month');
+  const [currentDate, setCurrentDate] = useState(dayjs());
+  const [searchText, setSearchText] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [mode, setMode] = useState('create');
+  const [formData, setFormData] = useState(defaultForm);
+  const [filters, setFilters] = useState({
     eventType: 'all', project: 'all', department: 'all',
     employee: 'all', priority: 'all', status: 'all',
   });
-  const [draggingEventId,  setDraggingEventId]  = useState(null);
-  const [resizingEventId,  setResizingEventId]  = useState(null);
-  const [miniCalDate,      setMiniCalDate]      = useState(dayjs());
-  const [showEmpSelector,  setShowEmpSelector]  = useState(false);
+  const [draggingEventId, setDraggingEventId] = useState(null);
+  const [resizingEventId, setResizingEventId] = useState(null);
+  const [miniCalDate, setMiniCalDate] = useState(dayjs());
+  const [showEmpSelector, setShowEmpSelector] = useState(false);
 
   /* ── data fetching ── */
   const fetchEmployees = async () => {
@@ -307,12 +307,12 @@ const OfficeCalendar = () => {
       const hay = [ev.title, ev.description, ev.project, depts[0], parts.join(' ')].filter(Boolean).join(' ');
       return (
         (!search || hay.toLowerCase().includes(search)) &&
-        (filters.eventType  === 'all' || ev.eventType  === filters.eventType) &&
-        (filters.project    === 'all' || ev.project    === filters.project) &&
-        (filters.department === 'all' || depts[0]      === filters.department) &&
-        (filters.employee   === 'all' || parts.some(p => p === filters.employee)) &&
-        (filters.priority   === 'all' || ev.priority   === filters.priority) &&
-        (filters.status     === 'all' || ev.status     === filters.status)
+        (filters.eventType === 'all' || ev.eventType === filters.eventType) &&
+        (filters.project === 'all' || ev.project === filters.project) &&
+        (filters.department === 'all' || depts[0] === filters.department) &&
+        (filters.employee === 'all' || parts.some(p => p === filters.employee)) &&
+        (filters.priority === 'all' || ev.priority === filters.priority) &&
+        (filters.status === 'all' || ev.status === filters.status)
       );
     });
   }, [combinedEvents, filters, searchText]);
@@ -339,8 +339,8 @@ const OfficeCalendar = () => {
 
   const monthDays = useMemo(() => {
     const start = currentDate.startOf('month').startOf('week');
-    const end   = currentDate.endOf('month').endOf('week');
-    const days  = []; let cur = start;
+    const end = currentDate.endOf('month').endOf('week');
+    const days = []; let cur = start;
     while (cur.isBefore(end) || cur.isSame(end)) { days.push(cur); cur = cur.add(1, 'day'); }
     return days;
   }, [currentDate]);
@@ -354,7 +354,7 @@ const OfficeCalendar = () => {
     const t = currentDate.format('YYYY-MM-DD');
     return visibleEvents.filter(ev => {
       const s = dayjs(ev.startDate || t).valueOf();
-      const e = dayjs(ev.endDate   || t).valueOf();
+      const e = dayjs(ev.endDate || t).valueOf();
       const d = dayjs(t).startOf('day').valueOf();
       return d >= s && d <= e;
     }).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
@@ -365,7 +365,7 @@ const OfficeCalendar = () => {
       dayjs(`${a.startDate} ${a.startTime || '00:00'}`).valueOf() -
       dayjs(`${b.startDate} ${b.startTime || '00:00'}`).valueOf()
     ).slice(0, 10),
-  [combinedEvents]);
+    [combinedEvents]);
 
   const todayEvents = useMemo(() => {
     const today = dayjs().format('YYYY-MM-DD');
@@ -378,20 +378,20 @@ const OfficeCalendar = () => {
 
   const departments = useMemo(() => Array.from(new Set(combinedEvents.flatMap(ev =>
     Array.isArray(ev.departments) ? ev.departments.filter(Boolean)
-    : typeof ev.departments === 'string' && ev.departments ? [ev.departments] : []
+      : typeof ev.departments === 'string' && ev.departments ? [ev.departments] : []
   ))), [combinedEvents]);
 
-  const projects  = useMemo(() => Array.from(new Set(combinedEvents.map(ev => ev.project).filter(Boolean))), [combinedEvents]);
-  const employees = useMemo(() => Array.from(new Set(combinedEvents.flatMap(ev => 
+  const projects = useMemo(() => Array.from(new Set(combinedEvents.map(ev => ev.project).filter(Boolean))), [combinedEvents]);
+  const employees = useMemo(() => Array.from(new Set(combinedEvents.flatMap(ev =>
     Array.isArray(ev.participants) ? ev.participants.map(p => typeof p === 'object' ? p.name : p).filter(Boolean)
-    : typeof ev.participants === 'string' && ev.participants
-      ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : []
+      : typeof ev.participants === 'string' && ev.participants
+        ? ev.participants.split(',').map(s => s.trim()).filter(Boolean) : []
   ))), [combinedEvents]);
 
   const miniCalDays = useMemo(() => {
     const start = miniCalDate.startOf('month').startOf('week');
-    const end   = miniCalDate.endOf('month').endOf('week');
-    const days  = []; let cur = start;
+    const end = miniCalDate.endOf('month').endOf('week');
+    const days = []; let cur = start;
     while (cur.isBefore(end) || cur.isSame(end)) { days.push(cur); cur = cur.add(1, 'day'); }
     return days;
   }, [miniCalDate]);
@@ -409,13 +409,13 @@ const OfficeCalendar = () => {
 
   const normalizeEvent = (ev) => ({
     ...ev,
-    participants:  ensureArrayField(ev?.participants),
-    departments:        ensureArrayField(ev?.departments),
-    teams:              ensureArrayField(ev?.teams),
-    guestEmailAddresses:ensureArrayField(ev?.guestEmailAddresses),
-    attachments:        ensureArrayField(ev?.attachments),
-    comments:           ensureArrayField(ev?.comments),
-    activity:           ensureArrayField(ev?.activity),
+    participants: ensureArrayField(ev?.participants),
+    departments: ensureArrayField(ev?.departments),
+    teams: ensureArrayField(ev?.teams),
+    guestEmailAddresses: ensureArrayField(ev?.guestEmailAddresses),
+    attachments: ensureArrayField(ev?.attachments),
+    comments: ensureArrayField(ev?.comments),
+    activity: ensureArrayField(ev?.activity),
   });
 
   const openEditModal = (ev) => {
@@ -453,9 +453,9 @@ const OfficeCalendar = () => {
   };
 
   const handleRemoveParticipant = (p) =>
-    setFormData(c => ({ 
-      ...c, 
-      participants: (c.participants || []).filter(x => typeof x === 'object' && typeof p === 'object' ? x.user_id !== p.user_id : x !== p) 
+    setFormData(c => ({
+      ...c,
+      participants: (c.participants || []).filter(x => typeof x === 'object' && typeof p === 'object' ? x.user_id !== p.user_id : x !== p)
     }));
 
   const handleAttachmentChange = (e) => {
@@ -948,9 +948,9 @@ const OfficeCalendar = () => {
                 <input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Search events…" />
               </div>
               <div className="oc-view-tabs">
-                {['month','week','day','agenda'].map(v => (
-                  <button key={v} className={`oc-view-tab${viewMode===v?' active':''}`} onClick={() => setViewMode(v)}>
-                    {v.charAt(0).toUpperCase()+v.slice(1)}
+                {['month', 'week', 'day', 'agenda'].map(v => (
+                  <button key={v} className={`oc-view-tab${viewMode === v ? ' active' : ''}`} onClick={() => setViewMode(v)}>
+                    {v.charAt(0).toUpperCase() + v.slice(1)}
                   </button>
                 ))}
               </div>
@@ -970,12 +970,12 @@ const OfficeCalendar = () => {
           {showFilters && (
             <div className="oc-filter-bar">
               {[
-                { key:'eventType', label:'Type',       opts: EVENT_TYPES.map(t=>({v:t,l:t})) },
-                { key:'priority',  label:'Priority',   opts: PRIORITIES.map(p=>({v:p,l:p})) },
-                { key:'status',    label:'Status',     opts: STATUSES.map(s=>({v:s,l:s})) },
-                { key:'project',   label:'Project',    opts: projects.map(p=>({v:p,l:p})) },
-                { key:'department',label:'Department', opts: departments.map(d=>({v:d,l:d})) },
-                { key:'employee',  label:'Employee',   opts: employees.map(e=>({v:e,l:e})) },
+                { key: 'eventType', label: 'Type', opts: EVENT_TYPES.map(t => ({ v: t, l: t })) },
+                { key: 'priority', label: 'Priority', opts: PRIORITIES.map(p => ({ v: p, l: p })) },
+                { key: 'status', label: 'Status', opts: STATUSES.map(s => ({ v: s, l: s })) },
+                { key: 'project', label: 'Project', opts: projects.map(p => ({ v: p, l: p })) },
+                { key: 'department', label: 'Department', opts: departments.map(d => ({ v: d, l: d })) },
+                { key: 'employee', label: 'Employee', opts: employees.map(e => ({ v: e, l: e })) },
               ].map(({ key, label, opts }) => (
                 <div key={key} className="oc-filter-group">
                   <div className="oc-filter-lbl">{label}</div>
@@ -985,7 +985,7 @@ const OfficeCalendar = () => {
                       control: (provided, state) => ({ ...provided, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: state.isFocused ? '#F8740E' : 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', minHeight: '32px', boxShadow: 'none' })
                     }}
                     value={{ value: filters[key], label: filters[key] === 'all' ? 'All' : (opts.find(o => o.v === filters[key])?.l || filters[key]) }}
-                    onChange={option => setFilters({...filters,[key]:option ? option.value : 'all'})}
+                    onChange={option => setFilters({ ...filters, [key]: option ? option.value : 'all' })}
                     options={[{ value: 'all', label: 'All' }, ...opts.map(o => ({ value: o.v, label: o.l }))]}
                     isSearchable={false}
                   />
@@ -1001,12 +1001,12 @@ const OfficeCalendar = () => {
             {(viewMode === 'month' || viewMode === 'week') && (
               <>
                 <div className="oc-day-hdrs">
-                  {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i) => (
-                    <div key={d} className={`oc-day-hdr${i===0||i===6?' rd':''}`}>{d}</div>
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+                    <div key={d} className={`oc-day-hdr${i === 0 || i === 6 ? ' rd' : ''}`}>{d}</div>
                   ))}
                 </div>
                 <div className="oc-month-grid">
-                  {(viewMode==='week' ? weekDays : monthDays).map(date => {
+                  {(viewMode === 'week' ? weekDays : monthDays).map(date => {
                     const dateStr = date.format('YYYY-MM-DD');
                     const dEvs = visibleEvents.filter(ev => {
                       const s = dayjs(ev.startDate).valueOf(), e = dayjs(ev.endDate).valueOf();
@@ -1020,28 +1020,28 @@ const OfficeCalendar = () => {
                       <div
                         key={dateStr}
                         data-day="true" data-date={dateStr}
-                        className={`oc-day-cell${isToday(date)?' today':''}${isOther?' other-m':''}`}
+                        className={`oc-day-cell${isToday(date) ? ' today' : ''}${isOther ? ' other-m' : ''}`}
                         onDragOver={e => e.preventDefault()}
                         onDrop={() => handleDrop(dateStr)}
                         onClick={() => { setSelectedDate(dateStr); openCreateModal(dateStr); }}
                       >
-                        <span className={`oc-day-num${isToday(date)?' t':''}${!isToday(date)&&isWE&&!isOther?' rd':''}`}>
+                        <span className={`oc-day-num${isToday(date) ? ' t' : ''}${!isToday(date) && isWE && !isOther ? ' rd' : ''}`}>
                           {date.format('D')}
                         </span>
                         {dEvs.length > 0 && <span className="oc-day-count">{dEvs.length}</span>}
-                        {dEvs.slice(0,3).map(ev => {
+                        {dEvs.slice(0, 3).map(ev => {
                           const color = ev.color || (EVENT_TYPE_META[ev.eventType]?.light) || '#3b82f6';
                           // Darken the background color slightly for the chip
                           return (
                             <div
-                              key={ev._id||ev.id}
+                              key={ev._id || ev.id}
                               className="oc-chip"
                               draggable
                               onDragStart={() => setDraggingEventId(ev._id)}
-                              style={{ background:`${color}22`, color, borderColor: `${color}44` }}
+                              style={{ background: `${color}22`, color, borderColor: `${color}44` }}
                               onClick={e => { e.stopPropagation(); setSelectedEvent(ev); setShowDrawer(true); }}
                             >
-                              <span className="oc-chip-dot" style={{ background:color, boxShadow: `0 0 5px ${color}` }} />
+                              <span className="oc-chip-dot" style={{ background: color, boxShadow: `0 0 5px ${color}` }} />
                               <span className="oc-chip-title">{ev.title}</span>
                               {ev.startTime && (
                                 <span className="oc-chip-time">{dayjs(`2000-01-01 ${ev.startTime}`).format('h:mmA')}</span>
@@ -1060,7 +1060,7 @@ const OfficeCalendar = () => {
                             }}
                             style={{ cursor: 'pointer' }}
                           >
-                            +{dEvs.length-3} more
+                            +{dEvs.length - 3} more
                           </div>
                         )}
                       </div>
@@ -1078,14 +1078,14 @@ const OfficeCalendar = () => {
                   : dayEvents.map(ev => {
                     const color = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
                     return (
-                      <div key={ev._id} className="oc-day-row" style={{ borderLeft:`4px solid ${color}` }}
+                      <div key={ev._id} className="oc-day-row" style={{ borderLeft: `4px solid ${color}` }}
                         onClick={() => { setSelectedEvent(ev); setShowDrawer(true); }}>
-                        <div className="oc-day-time">{ev.allDay ? 'All day' : `${ev.startTime||'--:--'} – ${ev.endTime||'--:--'}`}</div>
+                        <div className="oc-day-time">{ev.allDay ? 'All day' : `${ev.startTime || '--:--'} – ${ev.endTime || '--:--'}`}</div>
                         <div className="oc-day-info">
                           <div className="oc-day-title">{ev.title}</div>
-                          <div className="oc-day-desc">{ev.description||'No description.'}</div>
+                          <div className="oc-day-desc">{ev.description || 'No description.'}</div>
                         </div>
-                        <span className="oc-type-badge" style={{ background:`${color}22`, color, borderColor:`${color}55` }}>
+                        <span className="oc-type-badge" style={{ background: `${color}22`, color, borderColor: `${color}55` }}>
                           {ev.eventType}
                         </span>
                       </div>
@@ -1103,22 +1103,22 @@ const OfficeCalendar = () => {
                   : upcomingChronological.map(ev => {
                     const Icon = EVENT_TYPE_ICON[ev.eventType] || CalendarDays;
                     const color = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
-                    const priCls = ev.priority==='Critical'?'oc-pri-critical':ev.priority==='High'?'oc-pri-high':ev.priority==='Low'?'oc-pri-low':'oc-pri-medium';
+                    const priCls = ev.priority === 'Critical' ? 'oc-pri-critical' : ev.priority === 'High' ? 'oc-pri-high' : ev.priority === 'Low' ? 'oc-pri-low' : 'oc-pri-medium';
                     return (
                       <div key={ev._id} className="oc-ag-item" onClick={() => { setSelectedEvent(ev); setShowDrawer(true); }}>
-                        <div className="oc-ag-icon" style={{ background:`${color}22`, border: `1px solid ${color}44` }}>
+                        <div className="oc-ag-icon" style={{ background: `${color}22`, border: `1px solid ${color}44` }}>
                           <Icon size={17} color={color} />
                         </div>
                         <div className="oc-ag-meta">
-                          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <span className="oc-ag-title">{ev.title}</span>
-                            <span className="oc-type-badge" style={{ background:`${color}22`, color, borderColor:`${color}55` }}>{ev.eventType}</span>
+                            <span className="oc-type-badge" style={{ background: `${color}22`, color, borderColor: `${color}55` }}>{ev.eventType}</span>
                           </div>
-                          <div className="oc-ag-desc">{ev.description||'No description.'}</div>
+                          <div className="oc-ag-desc">{ev.description || 'No description.'}</div>
                           <div className="oc-ag-foot">
                             <span className="oc-ag-det">📅 {dayjs(ev.startDate).format('MMM D, YYYY')}</span>
-                            {ev.startTime && <span className="oc-ag-det">⏰ {ev.startTime} – {ev.endTime||'—'}</span>}
-                            {ev.location   && <span className="oc-ag-det">📍 {ev.location}</span>}
+                            {ev.startTime && <span className="oc-ag-det">⏰ {ev.startTime} – {ev.endTime || '—'}</span>}
+                            {ev.location && <span className="oc-ag-det">📍 {ev.location}</span>}
                           </div>
                         </div>
                         <span className={`oc-pri-badge ${priCls}`}>{ev.priority}</span>
@@ -1133,7 +1133,7 @@ const OfficeCalendar = () => {
             <div className="oc-legend">
               {LEGEND.map(({ label, color }) => (
                 <div key={label} className="oc-legend-item">
-                  <span className="oc-legend-dot" style={{ background:color, boxShadow: `0 0 8px ${color}` }} />
+                  <span className="oc-legend-dot" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
                   {label}
                 </div>
               ))}
@@ -1147,37 +1147,37 @@ const OfficeCalendar = () => {
           {/* Mini Calendar */}
           <div>
             <div className="oc-mini-hdr">
-              <button className="oc-mini-nav" onClick={() => setMiniCalDate(d => d.subtract(1,'month'))}><ChevronLeft size={13} /></button>
+              <button className="oc-mini-nav" onClick={() => setMiniCalDate(d => d.subtract(1, 'month'))}><ChevronLeft size={13} /></button>
               <span className="oc-mini-month">{miniCalDate.format('MMMM YYYY')}</span>
-              <button className="oc-mini-nav" onClick={() => setMiniCalDate(d => d.add(1,'month'))}><ChevronRight size={13} /></button>
+              <button className="oc-mini-nav" onClick={() => setMiniCalDate(d => d.add(1, 'month'))}><ChevronRight size={13} /></button>
             </div>
             <div className="oc-mini-day-hdrs">
-              {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d,i) => (
-                <div key={d} className={`oc-mini-dh${i===0||i===6?' rd':''}`}>{d}</div>
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d, i) => (
+                <div key={d} className={`oc-mini-dh${i === 0 || i === 6 ? ' rd' : ''}`}>{d}</div>
               ))}
             </div>
             <div className="oc-mini-days">
               {miniCalDays.map(date => {
                 const isOther = date.month() !== miniCalDate.month();
-                const todM    = isToday(date);
-                const dOW     = date.day();
-                const isRD    = dOW===0||dOW===6;
-                const hasEv   = events.some(e => {
+                const todM = isToday(date);
+                const dOW = date.day();
+                const isRD = dOW === 0 || dOW === 6;
+                const hasEv = events.some(e => {
                   const s = dayjs(e.startDate).format('YYYY-MM-DD');
-                  const en= dayjs(e.endDate).format('YYYY-MM-DD');
-                  const d2= date.format('YYYY-MM-DD');
-                  return s<=d2 && en>=d2;
+                  const en = dayjs(e.endDate).format('YYYY-MM-DD');
+                  const d2 = date.format('YYYY-MM-DD');
+                  return s <= d2 && en >= d2;
                 });
                 return (
                   <button
                     key={date.format('YYYY-MM-DD')}
-                    className={`oc-mini-d${isOther?' other-m':''}${todM?' today-m':''}${!todM&&isRD&&!isOther?' rd-d':''}`}
+                    className={`oc-mini-d${isOther ? ' other-m' : ''}${todM ? ' today-m' : ''}${!todM && isRD && !isOther ? ' rd-d' : ''}`}
                     onClick={() => { setCurrentDate(date); setSelectedDate(date.format('YYYY-MM-DD')); }}
                     title={date.format('MMM D, YYYY')}
                   >
                     {date.format('D')}
                     {hasEv && !todM && !isOther && (
-                      <span style={{ position:'absolute', bottom:2, left:'50%', transform:'translateX(-50%)', width:4, height:4, borderRadius:'50%', background:'#F8740E', display:'block', boxShadow: '0 0 4px #F8740E' }} />
+                      <span style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#F8740E', display: 'block', boxShadow: '0 0 4px #F8740E' }} />
                     )}
                   </button>
                 );
@@ -1211,7 +1211,7 @@ const OfficeCalendar = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
                 {todayEvents.map(ev => {
-                  const color   = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
+                  const color = ev.color || EVENT_TYPE_META[ev.eventType]?.light || '#3b82f6';
                   const TypeIcon = EVENT_TYPE_ICON[ev.eventType] || CalendarRange;
                   return (
                     <div
@@ -1298,12 +1298,12 @@ const OfficeCalendar = () => {
 
       {/* ═══════════════════════ MODAL ═══════════════════════ */}
       {showModal && createPortal(
-        <div className="oc-overlay" onClick={e => e.target===e.currentTarget && setShowModal(false)}>
+        <div className="oc-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="oc-modal">
             <div className="oc-modal-hdr">
               <div>
-                <div className="oc-modal-sub">{mode==='edit'?'Edit Event':'New Event'}</div>
-                <div className="oc-modal-ttl">{mode==='edit'?'Update scheduling details':'Create a new office event'}</div>
+                <div className="oc-modal-sub">{mode === 'edit' ? 'Edit Event' : 'New Event'}</div>
+                <div className="oc-modal-ttl">{mode === 'edit' ? 'Update scheduling details' : 'Create a new office event'}</div>
               </div>
               <button className="oc-modal-close" onClick={() => setShowModal(false)}><X size={15} /></button>
             </div>
@@ -1353,39 +1353,39 @@ const OfficeCalendar = () => {
                     <label className="oc-flbl">Notes</label>
                     <textarea name="notes" value={formData.notes} onChange={handleFieldChange} rows="2" className="oc-ftarea" placeholder="Notes…" />
                   </div>
-                  
+
                   <div className="oc-section-ttl">Participants</div>
                   <div className="oc-full" style={{ position: 'relative' }}>
                     <label className="oc-flbl">Add Employees</label>
-                    
+
                     <div className="oc-chips" style={{ marginBottom: 12 }}>
-                      {(Array.isArray(formData.participants)?formData.participants:[]).map((p,i) => {
+                      {(Array.isArray(formData.participants) ? formData.participants : []).map((p, i) => {
                         const displayName = typeof p === 'object' ? p.name : p;
                         return (
-                        <span key={typeof p === 'object' ? p.user_id : `${p}-${i}`} className="oc-c-chip">
-                          {displayName}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
-                        </span>
+                          <span key={typeof p === 'object' ? p.user_id : `${p}-${i}`} className="oc-c-chip">
+                            {displayName}<button type="button" className="oc-c-chip-rm" onClick={() => handleRemoveParticipant(p)}>×</button>
+                          </span>
                         );
                       })}
-                      <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'rgba(248,116,14,0.15)', color:'#F8740E', border:'1px dashed rgba(248,116,14,0.4)', borderRadius:20, padding:'4px 10px', fontSize:11.5, fontWeight:600, cursor:'pointer' }}>
+                      <button type="button" onClick={() => setShowEmpSelector(!showEmpSelector)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(248,116,14,0.15)', color: '#F8740E', border: '1px dashed rgba(248,116,14,0.4)', borderRadius: 20, padding: '4px 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
                         <Plus size={12} /> Add Employee
                       </button>
                     </div>
 
                     {showEmpSelector && (
-                      <div style={{ position:'absolute', zIndex:999, top:'100%', left:0, right:0, background:'#1e1e24', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:12, boxShadow:'0 10px 30px rgba(0,0,0,0.5)', maxHeight:220, overflowY:'auto' }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Select Employees</div>
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-                          {Array.isArray(allEmployees) ? allEmployees.map((emp,i) => {
+                      <div style={{ position: 'absolute', zIndex: 999, top: '100%', left: 0, right: 0, background: '#1e1e24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 10 }}>Select Employees</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                          {Array.isArray(allEmployees) ? allEmployees.map((emp, i) => {
                             const name = getEmployeeFullName(emp);
                             if (!name) return null;
-                            const isSel = (formData.participants||[]).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
+                            const isSel = (formData.participants || []).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
                             return (
-                              <div key={emp.employee_id||`${name}-${i}`} onClick={() => handleToggleParticipant(emp)} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:isSel?'rgba(248,116,14,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${isSel?'rgba(248,116,14,0.3)':'rgba(255,255,255,0.05)'}`, borderRadius:8, cursor:'pointer', fontSize:12, color:isSel?'#F8740E':'#fff', transition:'all .15s' }}>
-                                <div style={{ width:12, height:12, borderRadius:3, border:`1px solid ${isSel?'#F8740E':'rgba(255,255,255,0.3)'}`, background:isSel?'#F8740E':'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:'bold', color:'#fff' }}>
+                              <div key={emp.employee_id || `${name}-${i}`} onClick={() => handleToggleParticipant(emp)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: isSel ? 'rgba(248,116,14,0.15)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isSel ? 'rgba(248,116,14,0.3)' : 'rgba(255,255,255,0.05)'}`, borderRadius: 8, cursor: 'pointer', fontSize: 12, color: isSel ? '#F8740E' : '#fff', transition: 'all .15s' }}>
+                                <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${isSel ? '#F8740E' : 'rgba(255,255,255,0.3)'}`, background: isSel ? '#F8740E' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 'bold', color: '#fff' }}>
                                   {isSel && '✓'}
                                 </div>
-                                <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                               </div>
                             );
                           }) : null}
@@ -1490,12 +1490,24 @@ const OfficeCalendar = () => {
 
               <div>
                 <label className="oc-flbl">Color</label>
-                <input type="color" name="color" value={formData.color||getEventColor(formData.eventType)} onChange={handleFieldChange} className="oc-finput" style={{ height:42, padding:'4px 8px', cursor:'pointer' }} />
+                <input
+                  type="color"
+                  name="color"
+                  value={formData.color || getEventColor(formData.eventType)}
+                  onChange={handleFieldChange}
+                  className="oc-finput"
+                  style={{
+                    height: 42,
+                    width: '30%',
+                    padding: '4px 8px',
+                    cursor: 'pointer'
+                  }}
+                />
               </div>
               <div className="oc-full">
                 <label className="oc-flbl">Attachments</label>
-                <input type="file" multiple onChange={handleAttachmentChange} className="oc-finput" style={{ cursor:'pointer' }} />
-                {formData.attachments && formData.attachments.length>0 && <div style={{ fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:4 }}>{formData.attachments.join(', ')}</div>}
+                <input type="file" multiple onChange={handleAttachmentChange} className="oc-finput" style={{ cursor: 'pointer' }} />
+                {formData.attachments && formData.attachments.length > 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>{formData.attachments.join(', ')}</div>}
               </div>
 
               <div className="oc-form-actions">
@@ -1503,7 +1515,7 @@ const OfficeCalendar = () => {
                 <button type="submit" disabled={isSubmitting} className="oc-btn-save">
                   {isSubmitting
                     ? <><Loader2 size={14} className="spin" /> Saving…</>
-                    : mode==='edit' ? 'Update Event' : 'Save Event'}
+                    : mode === 'edit' ? 'Update Event' : 'Save Event'}
                 </button>
               </div>
             </form>
