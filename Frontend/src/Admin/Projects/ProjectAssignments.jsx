@@ -94,7 +94,6 @@ const customSelectStyles = {
   }),
 };
 
-const ROLES = ['Project Manager','UI/UX Designer','Frontend Developer','Backend Developer','Tester','DevOps','QA'];
 const AVATAR_COLOURS = ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899','#f97316','#8b5cf6','#ef4444','#22c55e'];
 const initials = (n = '') => n.trim().split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 
@@ -156,7 +155,6 @@ function AssignModal({ onClose, onAssigned, assignments }) {
   const [loadingData, setLoadingData] = useState(true);
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
-  const [selectedRole, setSelectedRole] = useState('');
   const [empSearch, setEmpSearch]   = useState('');
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState('');
@@ -234,7 +232,7 @@ function AssignModal({ onClose, onAssigned, assignments }) {
         <div className="flex items-center justify-between p-5 border-b border-white/8 shrink-0">
           <div>
             <h3 className="text-white font-bold text-lg">Assign Employee to Project</h3>
-            <p className="text-white/40 text-xs mt-0.5">Select a project, employee and their role</p>
+            <p className="text-white/40 text-xs mt-0.5">Select a project and employees</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition">
             <X size={15} />
@@ -271,19 +269,6 @@ function AssignModal({ onClose, onAssigned, assignments }) {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Role selector */}
-              <div>
-                <label className="text-sm font-medium text-white/60 mb-1.5 block">Assign as Role</label>
-                <div className="flex flex-wrap gap-2">
-                  {ROLES.map(r => (
-                    <button key={r} type="button" onClick={() => setSelectedRole(r)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition ${selectedRole === r ? 'bg-orange-500 border-orange-500 text-white' : 'bg-white/[0.04] border-white/10 text-white/50 hover:text-white hover:border-white/25'}`}>
-                      {r}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Employee selector */}
