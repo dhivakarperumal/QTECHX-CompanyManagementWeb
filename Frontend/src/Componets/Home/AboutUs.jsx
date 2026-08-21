@@ -398,12 +398,15 @@ const AboutUs = () => {
           <div
             className="
     order-3
-    flex
-    flex-col
+    grid
+    grid-cols-2
     items-center
-    justify-center
-    gap-4
+    justify-items-center
+    gap-3
     md:order-2
+    md:flex
+    md:flex-col
+    md:gap-4
   "
           >
             <CounterCard
