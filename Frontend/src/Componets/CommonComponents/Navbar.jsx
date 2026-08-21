@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
@@ -90,6 +90,14 @@ const Navbar = () => {
     setOpenMenu((current) => (current === menu ? null : menu));
   };
 
+  const isServicesActive =
+    location.pathname === "/services" || location.pathname.startsWith("/services/");
+
+  const isWhoWeAreActive =
+    whoWeAreLinks.some(
+      (link) => location.pathname === link.path || location.pathname.startsWith(link.path + "/")
+    ) || location.pathname === "/achievements";
+
   const desktopLinkClass = ({ isActive }) =>
     `text-base font-semibold  transition-colors ${isActive ? "text-primary" : "text-white hover:text-primary"
     }`;
@@ -121,15 +129,20 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("services")}
-                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${
+                    isServicesActive ? "text-primary" : "text-white hover:text-primary"
+                  }`}
                 >
                   Services
 
                   <FiChevronDown
-                    className={`text-xs transition-all duration-300 ${openMenu === "services"
-                      ? "rotate-180 text-[#FF6A00]"
-                      : "rotate-0"
-                      }`}
+                    className={`text-xs transition-all duration-300 ${
+                      openMenu === "services"
+                        ? "rotate-180 text-primary"
+                        : isServicesActive
+                        ? "text-primary"
+                        : "rotate-0 text-white/70 group-hover:text-primary"
+                    }`}
                   />
                 </button>
 
@@ -213,15 +226,20 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("whoWeAre")}
-                  className="group flex items-center gap-1 text-base font-semibold text-white transition-all duration-300 hover:text-[#FF6A00]"
+                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${
+                    isWhoWeAreActive ? "text-primary" : "text-white hover:text-primary"
+                  }`}
                 >
                   Who We Are?
 
                   <FiChevronDown
-                    className={`text-xs transition-all duration-300 ${openMenu === "whoWeAre"
-                      ? "rotate-180 text-[#FF6A00]"
-                      : "rotate-0"
-                      }`}
+                    className={`text-xs transition-all duration-300 ${
+                      openMenu === "whoWeAre"
+                        ? "rotate-180 text-primary"
+                        : isWhoWeAreActive
+                        ? "text-primary"
+                        : "rotate-0 text-white/70 group-hover:text-primary"
+                    }`}
                   />
                 </button>
 
@@ -415,10 +433,18 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileSubMenu((prev) => (prev === "services" ? null : "services"))}
-              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-3 text-left text-base font-medium text-white/80"
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${
+                isServicesActive
+                  ? "border-primary/40 bg-primary/10 text-primary font-semibold"
+                  : "border-white/10 bg-white/3 text-white/80 hover:bg-white/5 hover:text-white"
+              }`}
             >
               <span>Services</span>
-              <FiChevronDown className={`text-sm transition ${mobileSubMenu === "services" ? "rotate-180" : ""}`} />
+              <FiChevronDown
+                className={`text-sm transition ${mobileSubMenu === "services" ? "rotate-180" : ""} ${
+                  isServicesActive ? "text-primary" : ""
+                }`}
+              />
             </button>
 
             {mobileSubMenu === "services" && (
@@ -457,10 +483,18 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileSubMenu((prev) => (prev === "whoWeAre" ? null : "whoWeAre"))}
-              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/3 px-3 py-3 text-left text-base font-medium text-white/80"
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${
+                isWhoWeAreActive
+                  ? "border-primary/40 bg-primary/10 text-primary font-semibold"
+                  : "border-white/10 bg-white/3 text-white/80 hover:bg-white/5 hover:text-white"
+              }`}
             >
               <span>Who We Are?</span>
-              <FiChevronDown className={`text-sm transition ${mobileSubMenu === "whoWeAre" ? "rotate-180" : ""}`} />
+              <FiChevronDown
+                className={`text-sm transition ${mobileSubMenu === "whoWeAre" ? "rotate-180" : ""} ${
+                  isWhoWeAreActive ? "text-primary" : ""
+                }`}
+              />
             </button>
 
             {mobileSubMenu === "whoWeAre" && (
