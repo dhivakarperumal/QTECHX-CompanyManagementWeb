@@ -17,6 +17,8 @@ import SectionTitle from "../CommonComponents/SectionTitle";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
+const BACKEND_BASE_URL = (api?.defaults?.baseURL || "http://localhost:5000/api").replace(/\/api$/, "");
+
 const getImageUrl = (image) => {
   if (!image) {
     return "/Project/p1.jpg";
@@ -53,12 +55,18 @@ const getImageUrl = (image) => {
       return trimmed;
     }
 
-    // Absolute path
-    if (trimmed.startsWith("/")) {
-      return trimmed;
+    const normalized = trimmed.replace(/\\/g, "/");
+    if (normalized.startsWith("/uploads/")) {
+      return `${BACKEND_BASE_URL}${normalized}`;
+    }
+    if (normalized.startsWith("uploads/")) {
+      return `${BACKEND_BASE_URL}/${normalized}`;
+    }
+    if (normalized.startsWith("/")) {
+      return normalized;
     }
 
-    return `/${trimmed}`;
+    return `/${normalized}`;
   }
 
   // If object
@@ -95,56 +103,92 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data } = await api.get(
-          "/projects/public/all?limit=100&page=1"
-        );
+        const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
+          api.get("/projects/public/all?limit=500&current_status=Completed"),
+          api.get("/completed-projects/public/all?limit=500")
+        ]);
 
-        if (data.success && Array.isArray(data.data)) {
-          const transformedProjects = data.data.map((project) => {
-            let projectImages = [];
-
-            if (project.project_images) {
-              if (typeof project.project_images === "string") {
-                try {
-                  const parsed = JSON.parse(project.project_images);
-                  projectImages = Array.isArray(parsed) ? parsed : [parsed];
-                } catch {
-                  projectImages = [project.project_images];
-                }
-              } else if (Array.isArray(project.project_images)) {
-                projectImages = project.project_images;
-              } else if (typeof project.project_images === "object") {
-                projectImages = [project.project_images];
-              }
-            }
-
-            const features = project.frontend_tech
-              ? project.frontend_tech
-                .split(",")
-                .map((tech) => tech.trim())
-                .filter(Boolean)
-              : [];
-
-            const imageCandidate = projectImages.length > 0
-              ? projectImages[0]
-              : (project.image || project.file_path || project.project_images);
-
-            return {
-              id: project.uuid || project.id,
-              title: project.project_name || project.title || "Untitled Project",
-              image: getImageUrl(imageCandidate),
-              category:
-                project.project_category || project.category || "General",
-              description:
-                project.description || project.project_description || "",
-              features,
-              link: project.github_link || project.link || "#",
-            };
-          });
-
-          setItems(transformedProjects);
+        let adminList = [];
+        if (adminProjectsRes.status === "fulfilled" && adminProjectsRes.value?.data) {
+          const raw = adminProjectsRes.value.data.data;
+          if (Array.isArray(raw)) {
+            adminList = raw.filter(
+              (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
+            );
+          }
         }
 
+        let completedList = [];
+        if (completedProjectsRes.status === "fulfilled" && completedProjectsRes.value?.data) {
+          const raw = completedProjectsRes.value.data.data;
+          if (Array.isArray(raw)) {
+            completedList = raw;
+          }
+        }
+
+        const seen = new Set();
+        const combined = [];
+        [...completedList, ...adminList].forEach((p) => {
+          const key = p.uuid || p.id || p.project_name;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            combined.push(p);
+          }
+        });
+
+        const transformedProjects = combined.map((project) => {
+          let projectImages = [];
+
+          if (project.project_images) {
+            if (typeof project.project_images === "string") {
+              try {
+                const parsed = JSON.parse(project.project_images);
+                projectImages = Array.isArray(parsed) ? parsed : [parsed];
+              } catch {
+                projectImages = [project.project_images];
+              }
+            } else if (Array.isArray(project.project_images)) {
+              projectImages = project.project_images;
+            } else if (typeof project.project_images === "object") {
+              projectImages = [project.project_images];
+            }
+          }
+
+          let features = [];
+          if (project.frontend_tech) {
+            features = project.frontend_tech
+              .split(",")
+              .map((tech) => tech.trim())
+              .filter(Boolean);
+          } else if (Array.isArray(project.technologies)) {
+            features = project.technologies;
+          } else if (typeof project.technologies === "string") {
+            try {
+              const parsed = JSON.parse(project.technologies);
+              features = Array.isArray(parsed) ? parsed : [parsed];
+            } catch {
+              features = project.technologies.split(",").map((t) => t.trim()).filter(Boolean);
+            }
+          }
+
+          const imageCandidate = projectImages.length > 0
+            ? projectImages[0]
+            : (project.image || project.file_path || project.project_images);
+
+          return {
+            id: project.uuid || project.id,
+            title: project.project_name || project.title || "Untitled Project",
+            image: getImageUrl(imageCandidate),
+            category:
+              project.category || project.project_category || "General",
+            description:
+              project.description || project.project_description || "",
+            features,
+            link: project.url || project.project_url || project.github_link || project.link || "#",
+          };
+        });
+
+        setItems(transformedProjects);
         setLoading(false);
       } catch (err) {
         setError(
