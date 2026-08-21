@@ -101,13 +101,12 @@ const EventBanner = () => {
               lg:text-[2.7rem]
             "
             >
-              STUDENT
+              INTERN
               <br />
 
               <span className="text-[#FF6A00]">
-                EVENT
+                REGISTRATION
               </span>{" "}
-              BOOKING
             </h2>
 
             {/* Description */}
@@ -128,9 +127,7 @@ const EventBanner = () => {
               md:mx-0
             "
             >
-              Join us for an exciting series of workshops,
-              seminars, and activities designed exclusively
-              for students.
+              Join our internship programs and gain hands-on experience, industry knowledge, and valuable skills to kickstart your career.
             </p>
 
             {/* ================= BOOK NOW BUTTON ================= */}
@@ -170,7 +167,7 @@ const EventBanner = () => {
               "
               >
                 <span>
-                  Book Now
+                  Register Intern
                 </span>
 
                 <span
