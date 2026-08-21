@@ -11,6 +11,7 @@ import Button from "../Components/Button";
 import { BsArrowRight } from "react-icons/bs";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
+import { useNavigate } from "react-router-dom";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -137,6 +138,7 @@ const CounterCard = ({
 };
 
 const AboutUs = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -359,6 +361,7 @@ const AboutUs = () => {
             {/* Read More Button */}
 
             <div
+              onClick={()=>navigate("/about")}
               className="
                 mt-6
                 flex
@@ -368,7 +371,7 @@ const AboutUs = () => {
               data-aos="fade-up"
               data-aos-delay="300"
             >
-              <Button>
+              <Button >
                 <span
                   className="
                     flex
