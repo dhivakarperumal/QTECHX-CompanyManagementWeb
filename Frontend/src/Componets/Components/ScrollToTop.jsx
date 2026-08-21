@@ -10,10 +10,17 @@ const ScrollToTop = () => {
     document.body.scrollTo({ top: 0, behavior: "instant" });
 
     const scrollableElements = document.querySelectorAll(
-      'main, .overflow-y-auto, [class*="overflow-y-auto"], .admin-root, .employee-root'
+      'main, main .overflow-y-auto, main [class*="overflow-y-auto"], .admin-root main, .employee-root main'
     );
     scrollableElements.forEach((el) => {
-      if (el && el.scrollTop > 0) {
+      if (
+        el &&
+        el.scrollTop > 0 &&
+        !el.closest('aside') &&
+        !el.closest('nav') &&
+        !el.hasAttribute('data-sidebar') &&
+        !el.closest('[data-sidebar]')
+      ) {
         el.scrollTo({ top: 0, behavior: "instant" });
       }
     });

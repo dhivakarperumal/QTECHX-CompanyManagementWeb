@@ -172,6 +172,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const navRef = useRef(null);
+
+  /* ===== PRESERVE SIDEBAR SCROLL POSITION ===== */
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem("admin_sidebar_scroll");
+    if (savedScroll !== null && navRef.current) {
+      navRef.current.scrollTop = Number(savedScroll);
+    }
+  }, [location.pathname]);
+
+  const handleNavScroll = (e) => {
+    sessionStorage.setItem("admin_sidebar_scroll", e.currentTarget.scrollTop);
+  };
 
   /* ===== FETCH PENDING COUNT ===== */
   useEffect(() => {
@@ -222,6 +235,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
       {/* ========== SIDEBAR ========== */}
       <aside
+        data-sidebar="admin-sidebar"
         className={`
           fixed top-0 left-0 z-50 h-full flex flex-col
           bg-[#0d0d12] bg-[radial-gradient(circle_at_top,_rgba(248,116,14,0.12),transparent_25%),radial-gradient(circle_at_85%_20%,_rgba(255,255,255,0.06),transparent_30%)]
@@ -260,7 +274,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto scrollbar-hide">
+        <nav
+          ref={navRef}
+          onScroll={handleNavScroll}
+          data-sidebar="admin-nav"
+          className="flex-1 px-3 py-4 space-y-2 overflow-y-auto scrollbar-hide"
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
 

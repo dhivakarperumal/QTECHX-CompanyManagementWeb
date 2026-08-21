@@ -13,10 +13,17 @@ const ScrollNavigator = () => {
 
     let maxElementScroll = 0;
     const scrollableElements = document.querySelectorAll(
-      'main, .overflow-y-auto, [class*="overflow-y-auto"], .admin-root, .employee-root'
+      'main, main .overflow-y-auto, main [class*="overflow-y-auto"], .admin-root main, .employee-root main'
     );
     scrollableElements.forEach((el) => {
-      if (el && el.scrollTop > maxElementScroll) {
+      if (
+        el &&
+        el.scrollTop > maxElementScroll &&
+        !el.closest('aside') &&
+        !el.closest('nav') &&
+        !el.hasAttribute('data-sidebar') &&
+        !el.closest('[data-sidebar]')
+      ) {
         maxElementScroll = el.scrollTop;
       }
     });
@@ -26,10 +33,14 @@ const ScrollNavigator = () => {
   }, []);
 
   useEffect(() => {
+    // Listen to scroll events on window, document, and capture all container scrolls
     window.addEventListener("scroll", checkScroll, { capture: true, passive: true });
     document.addEventListener("scroll", checkScroll, { capture: true, passive: true });
 
+    // Initial check
     checkScroll();
+
+    // Check periodically on active user interaction
     const interval = setInterval(checkScroll, 400);
 
     return () => {
@@ -40,15 +51,24 @@ const ScrollNavigator = () => {
   }, [checkScroll]);
 
   const scrollToTop = () => {
+    // Scroll window / html / body
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
     document.body.scrollTo({ top: 0, behavior: "smooth" });
 
+    // Scroll all scrollable container elements (e.g. main in Admin & Employee panels)
     const scrollableElements = document.querySelectorAll(
-      'main, .overflow-y-auto, [class*="overflow-y-auto"], .admin-root, .employee-root'
+      'main, main .overflow-y-auto, main [class*="overflow-y-auto"], .admin-root main, .employee-root main'
     );
     scrollableElements.forEach((el) => {
-      if (el && el.scrollTop > 0) {
+      if (
+        el &&
+        el.scrollTop > 0 &&
+        !el.closest('aside') &&
+        !el.closest('nav') &&
+        !el.hasAttribute('data-sidebar') &&
+        !el.closest('[data-sidebar]')
+      ) {
         el.scrollTo({ top: 0, behavior: "smooth" });
       }
     });

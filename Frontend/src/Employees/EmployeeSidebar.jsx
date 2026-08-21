@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -109,6 +109,19 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { userProfile } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
+  const navRef = useRef(null);
+
+  /* ===== PRESERVE SIDEBAR SCROLL POSITION ===== */
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem("employee_sidebar_scroll");
+    if (savedScroll !== null && navRef.current) {
+      navRef.current.scrollTop = Number(savedScroll);
+    }
+  }, [location.pathname]);
+
+  const handleNavScroll = (e) => {
+    sessionStorage.setItem("employee_sidebar_scroll", e.currentTarget.scrollTop);
+  };
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
   useEffect(() => {
@@ -161,6 +174,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
       {/* ========== SIDEBAR ========== */}
       <aside
+        data-sidebar="employee-sidebar"
         className={`
           fixed top-0 left-0 z-50 h-full flex flex-col
           bg-[#0d0d12] border-r border-white/10
@@ -202,7 +216,12 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-hide">
+        <nav
+          ref={navRef}
+          onScroll={handleNavScroll}
+          data-sidebar="employee-nav"
+          className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-hide"
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
 
