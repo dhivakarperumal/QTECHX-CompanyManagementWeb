@@ -2,6 +2,8 @@ import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import Select from 'react-select';
+import dayjs from 'dayjs';
+import { toast } from 'react-hot-toast';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -161,22 +163,82 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
   const [checklistItems, setChecklistItems] = useState(() => normalizeChecklist(initialData?.checklistItems));
   const [documentFile, setDocumentFile] = useState(null);
 
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const currentTimeStr = dayjs().format('HH:mm');
+  const isToday = formData.planDate === todayStr;
+
   useEffect(() => {
     if (open) {
-      setFormData(initialData || {});
+      const data = { ...(initialData || {}) };
+      // Ensure planDate is not in the past
+      if (data.planDate && dayjs(data.planDate).isBefore(dayjs().startOf('day'))) {
+        data.planDate = todayStr;
+      }
+      setFormData(data);
       setChecklistItems(normalizeChecklist(initialData?.checklistItems));
     }
     if (!open) {
       setDocumentFile(null);
     }
-  }, [open, initialData]);
+  }, [open, initialData, todayStr]);
 
   const handleChange = (name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      // If date changed to today and startTime is earlier than current time, adjust
+      if (name === 'planDate' && value === todayStr) {
+        if (updated.startTime && updated.startTime < currentTimeStr) {
+          updated.startTime = currentTimeStr;
+        }
+      }
+      // If startTime is after endTime, update endTime
+      if (name === 'startTime' && updated.endTime && updated.endTime < value) {
+        updated.endTime = value;
+      }
+      return updated;
+    });
+  };
+
+  const getMin = (field) => {
+    if (field.name === 'planDate') {
+      return todayStr;
+    }
+    if (field.name === 'startTime') {
+      if (isToday) {
+        return currentTimeStr;
+      }
+      return undefined;
+    }
+    if (field.name === 'endTime') {
+      if (isToday) {
+        return formData.startTime ? (formData.startTime > currentTimeStr ? formData.startTime : currentTimeStr) : currentTimeStr;
+      }
+      return formData.startTime || undefined;
+    }
+    return field.min;
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (formData.planDate && dayjs(formData.planDate).isBefore(dayjs().startOf('day'))) {
+      toast.error('Plan date cannot be in the past');
+      return;
+    }
+
+    if (formData.planDate === todayStr) {
+      const curTime = dayjs().format('HH:mm');
+      if (formData.startTime && formData.startTime < curTime) {
+        toast.error('Start time cannot be in the past');
+        return;
+      }
+    }
+
+    if (formData.startTime && formData.endTime && formData.endTime < formData.startTime) {
+      toast.error('End time must be after start time');
+      return;
+    }
+
     const submissionData = {
       ...formData,
       checklistItems: sanitizeChecklist(checklistItems),
@@ -251,13 +313,13 @@ export default function MyCalendarEventModal({ open, onClose, initialData, onSav
                 ) : (
                   <input
                     type={field.type}
-                    min={field.min}
+                    min={getMin(field)}
                     max={field.max}
                     step={field.step}
                     placeholder={placeholder}
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value)}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all scheme-dark"
                   />
                 )}
               </div>

@@ -72,6 +72,8 @@ const MonthView = ({ currentDate, selectedDate, setSelectedDate, events, onDayCl
     return day.isBetween(start, end, 'day', '[]');
   });
 
+  const now = dayjs();
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="grid grid-cols-7 border-b border-white/10 pb-3 mb-2">
@@ -82,18 +84,28 @@ const MonthView = ({ currentDate, selectedDate, setSelectedDate, events, onDayCl
       <div className="flex-1 min-h-0 grid grid-cols-7 gap-px bg-white/5 border border-white/10 rounded-2xl overflow-hidden" style={{ gridAutoRows: 'minmax(0, 1fr)' }}>
         {calendarDays.map((day, i) => {
           const isCurrentMonth = day.isSame(currentDate, 'month');
-          const isToday = day.isSame(dayjs(), 'day');
+          const isToday = day.isSame(now, 'day');
+          const isPast = day.isBefore(now.startOf('day'));
           const isSelected = day.isSame(selectedDate, 'day');
           const dayEvents = getEventsForDay(day).slice(0, 3);
           const moreCount = getEventsForDay(day).length - 3;
           return (
             <div
               key={i}
-              onClick={() => { setSelectedDate(day); onDayClick && onDayClick(day.format('YYYY-MM-DD')); }}
-              className={`bg-[#0d0d12] p-1.5 flex flex-col hover:bg-white/5 transition-colors cursor-pointer border-r border-b border-white/5 group ${isSelected ? 'ring-1 ring-inset ring-primary/40' : ''}`}
+              onClick={() => {
+                setSelectedDate(day);
+                if (!isPast) {
+                  onDayClick && onDayClick(day.format('YYYY-MM-DD'));
+                }
+              }}
+              className={`p-1.5 flex flex-col transition-colors border-r border-b border-white/5 group ${
+                isPast
+                  ? 'bg-[#08090d]/60 opacity-40 cursor-default'
+                  : 'bg-[#0d0d12] hover:bg-white/5 cursor-pointer'
+              } ${isSelected ? 'ring-1 ring-inset ring-primary/40' : ''}`}
             >
               <div className={`text-xs font-semibold mb-1 flex items-center justify-center w-6 h-6 rounded-full self-start ml-0.5
-                ${!isCurrentMonth ? 'text-white/20' : 'text-white/70'}
+                ${!isCurrentMonth ? 'text-white/20' : isPast ? 'text-white/30' : 'text-white/70'}
                 ${isToday ? 'bg-primary text-white shadow-md' : isSelected ? 'text-primary' : 'group-hover:text-white'}`}>
                 {day.format('D')}
               </div>
@@ -122,17 +134,23 @@ const WeekView = ({ currentDate, events, onSlotClick, onEventClick }) => {
     return h === hour;
   });
 
+  const now = dayjs();
+  const currentHour = now.hour();
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
       <div className="grid grid-cols-8 border-b border-white/10 pb-2 mb-2">
         <div className="text-xs text-white/30 text-right pr-3">Time</div>
-        {weekDays.map((d, i) => (
-          <div key={i} className={`text-center ${d.isSame(dayjs(), 'day') ? 'text-primary font-bold' : 'text-white/60'}`}>
-            <div className="text-xs font-semibold uppercase">{d.format('ddd')}</div>
-            <div className={`text-lg font-bold w-9 h-9 flex items-center justify-center rounded-full mx-auto ${d.isSame(dayjs(), 'day') ? 'bg-primary text-white' : ''}`}>{d.format('D')}</div>
-          </div>
-        ))}
+        {weekDays.map((d, i) => {
+          const isPastDay = d.isBefore(now.startOf('day'));
+          return (
+            <div key={i} className={`text-center ${d.isSame(now, 'day') ? 'text-primary font-bold' : isPastDay ? 'text-white/30' : 'text-white/60'}`}>
+              <div className="text-xs font-semibold uppercase">{d.format('ddd')}</div>
+              <div className={`text-lg font-bold w-9 h-9 flex items-center justify-center rounded-full mx-auto ${d.isSame(now, 'day') ? 'bg-primary text-white' : ''}`}>{d.format('D')}</div>
+            </div>
+          );
+        })}
       </div>
       {/* Grid */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
@@ -142,12 +160,21 @@ const WeekView = ({ currentDate, events, onSlotClick, onEventClick }) => {
               {hour === 0 ? '' : dayjs().hour(hour).minute(0).format('h A')}
             </div>
             {weekDays.map((day, di) => {
+              const isPastSlot = day.isBefore(now.startOf('day')) || (day.isSame(now, 'day') && hour < currentHour);
               const slotEvents = getEventsForDayHour(day, hour);
               return (
                 <div
                   key={di}
-                  onClick={() => onSlotClick && onSlotClick(day.format('YYYY-MM-DD'))}
-                  className="border-l border-white/5 p-0.5 hover:bg-white/5 transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (!isPastSlot) {
+                      onSlotClick && onSlotClick(day.format('YYYY-MM-DD'), hour);
+                    }
+                  }}
+                  className={`border-l border-white/5 p-0.5 transition-colors ${
+                    isPastSlot
+                      ? 'opacity-30 bg-black/30 cursor-default'
+                      : 'hover:bg-white/5 cursor-pointer'
+                  }`}
                 >
                   {slotEvents.map((evt, idx) => <EventChip key={idx} evt={evt} onClick={onEventClick} />)}
                 </div>
@@ -169,11 +196,15 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick }) => {
   const allDayEvents = dayEvents.filter(e => e.allDay);
   const timedEvents = dayEvents.filter(e => !e.allDay).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
+  const now = dayjs();
+  const isPastDay = currentDate.isBefore(now.startOf('day'));
+  const currentHour = now.hour();
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Day header */}
       <div className="flex items-center gap-4 border-b border-white/10 pb-3 mb-2">
-        <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${currentDate.isSame(dayjs(), 'day') ? 'bg-primary' : 'bg-white/5'}`}>
+        <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${currentDate.isSame(now, 'day') ? 'bg-primary' : 'bg-white/5'}`}>
           <span className="text-[10px] font-semibold uppercase opacity-70">{currentDate.format('ddd')}</span>
           <span className="text-2xl font-bold leading-none">{currentDate.format('D')}</span>
         </div>
@@ -181,12 +212,14 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick }) => {
           <div className="font-semibold">{currentDate.format('MMMM YYYY')}</div>
           <div className="text-xs text-white/50">{dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''} today</div>
         </div>
-        <button
-          onClick={() => onSlotClick && onSlotClick(currentDate.format('YYYY-MM-DD'))}
-          className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-all"
-        >
-          <Plus size={14} /> Add event
-        </button>
+        {!isPastDay && (
+          <button
+            onClick={() => onSlotClick && onSlotClick(currentDate.format('YYYY-MM-DD'))}
+            className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-all"
+          >
+            <Plus size={14} /> Add event
+          </button>
+        )}
       </div>
 
       {allDayEvents.length > 0 && (
@@ -198,6 +231,7 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick }) => {
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         {HOURS.map(hour => {
+          const isPastSlot = isPastDay || (currentDate.isSame(now, 'day') && hour < currentHour);
           const slotEvents = timedEvents.filter(e => parseInt((e.startTime || '00:00').split(':')[0]) === hour);
           return (
             <div key={hour} className="flex gap-3 border-b border-white/5 min-h-[56px] group">
@@ -205,8 +239,16 @@ const DayView = ({ currentDate, events, onSlotClick, onEventClick }) => {
                 {hour === 0 ? '12 AM' : dayjs().hour(hour).minute(0).format('h A')}
               </div>
               <div
-                className="flex-1 py-0.5 hover:bg-white/5 cursor-pointer transition-colors rounded-lg"
-                onClick={() => onSlotClick && onSlotClick(currentDate.format('YYYY-MM-DD'))}
+                className={`flex-1 py-0.5 transition-colors rounded-lg ${
+                  isPastSlot
+                    ? 'opacity-30 bg-black/30 cursor-default'
+                    : 'hover:bg-white/5 cursor-pointer'
+                }`}
+                onClick={() => {
+                  if (!isPastSlot) {
+                    onSlotClick && onSlotClick(currentDate.format('YYYY-MM-DD'), hour);
+                  }
+                }}
               >
                 {slotEvents.map((e, i) => <EventChip key={i} evt={e} onClick={onEventClick} />)}
               </div>
@@ -333,17 +375,42 @@ const MyCalendar = () => {
     }
   };
 
-  const createEmptyModalData = (date) => ({
-    planTitle: '', description: '', planDate: date || selectedDate.format('YYYY-MM-DD'),
-    startTime: '09:00', endTime: '10:00', estimatedDuration: '', category: '',
-    priority: 'Medium', status: 'Pending', project: '', module: '', task: '',
-    dailyGoal: '', expectedOutcome: '', checklistItems: [], reminderDate: '',
-    reminderTime: '', location: '', meetingLink: '', notes: '', tags: [],
-    progress: 0, plannedHours: '', workedHours: '', breakStartTime: '', breakEndTime: '',
-    energyLevel: 'Medium', todaysAchievement: '', challenges: '', tomorrowsPlan: '',
-  });
+  const createEmptyModalData = (date, hour) => {
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    const validDate = date && !dayjs(date).isBefore(dayjs().startOf('day')) ? date : todayStr;
+    const isToday = validDate === todayStr;
+    const now = dayjs();
 
-  const openNewEventModal = (date) => { setModalData(createEmptyModalData(date)); setShowModal(true); };
+    let startT = '09:00';
+    let endT = '10:00';
+
+    if (hour !== undefined && hour !== null) {
+      const hStr = String(hour).padStart(2, '0');
+      startT = `${hStr}:00`;
+      endT = `${String(Math.min(23, hour + 1)).padStart(2, '0')}:00`;
+    }
+
+    if (isToday) {
+      const curTime = now.format('HH:mm');
+      if (startT < curTime) {
+        const nextHour = now.minute() > 0 ? now.add(1, 'hour').startOf('hour') : now;
+        startT = nextHour.format('HH:mm');
+        endT = nextHour.add(1, 'hour').format('HH:mm');
+      }
+    }
+
+    return {
+      planTitle: '', description: '', planDate: validDate,
+      startTime: startT, endTime: endT, estimatedDuration: '', category: '',
+      priority: 'Medium', status: 'Pending', project: '', module: '', task: '',
+      dailyGoal: '', expectedOutcome: '', checklistItems: [], reminderDate: '',
+      reminderTime: '', location: '', meetingLink: '', notes: '', tags: [],
+      progress: 0, plannedHours: '', workedHours: '', breakStartTime: '', breakEndTime: '',
+      energyLevel: 'Medium', todaysAchievement: '', challenges: '', tomorrowsPlan: '',
+    };
+  };
+
+  const openNewEventModal = (date, hour) => { setModalData(createEmptyModalData(date, hour)); setShowModal(true); };
   const openEditEventModal = (evt) => { setShowViewModal(false); setModalData({ ...evt }); setShowModal(true); };
   const openViewModal = (evt) => { setViewModalData(evt); setShowViewModal(true); };
   const closeModal = () => { setShowModal(false); setModalData(null); };
@@ -458,7 +525,10 @@ const MyCalendar = () => {
       {/* ───── RIGHT SIDEBAR ───── */}
       <div className="w-full xl:w-[300px] flex-shrink-0 flex flex-col gap-5 min-h-0 overflow-y-auto scrollbar-hide pb-4">
 
-        <button onClick={() => openNewEventModal(selectedDate.format('YYYY-MM-DD'))}
+        <button onClick={() => {
+          const targetDate = selectedDate.isBefore(dayjs().startOf('day')) ? dayjs().format('YYYY-MM-DD') : selectedDate.format('YYYY-MM-DD');
+          openNewEventModal(targetDate);
+        }}
           className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-3.5 rounded-2xl font-semibold shadow-lg shadow-primary/25 transition-all">
           <Plus size={18} /> New Event
         </button>
@@ -483,6 +553,7 @@ const MyCalendar = () => {
             {miniDays.map(date => {
               const isOther = date.month() !== miniCalDate.month();
               const isSelected = date.isSame(selectedDate, 'day');
+              const isPast = date.isBefore(dayjs().startOf('day'));
               const dOW = date.day();
               const isWeekend = dOW === 0 || dOW === 6;
               const hasEv = events.some(e => {
@@ -495,8 +566,8 @@ const MyCalendar = () => {
                   key={date.format('YYYY-MM-DD')}
                   onClick={() => { setCurrentDate(date); setSelectedDate(date); }}
                   className={`relative w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold mx-auto transition-all
-                    ${isOther ? 'text-white/20' : isSelected ? 'bg-primary text-white shadow-[0_0_12px_rgba(248,116,14,0.4)]' : 'hover:bg-white/10 text-white/80'}
-                    ${!isSelected && !isOther && isWeekend ? 'text-rose-500' : ''}
+                    ${isPast ? 'text-white/20 opacity-50' : isOther ? 'text-white/20' : isSelected ? 'bg-primary text-white shadow-[0_0_12px_rgba(248,116,14,0.4)]' : 'hover:bg-white/10 text-white/80'}
+                    ${!isSelected && !isOther && !isPast && isWeekend ? 'text-rose-500' : ''}
                   `}
                 >
                   {date.format('D')}
