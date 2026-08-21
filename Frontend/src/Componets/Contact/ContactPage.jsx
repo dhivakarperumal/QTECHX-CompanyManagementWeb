@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 import emailjs from "@emailjs/browser";
+import api from "../../api";
 
 const ContactPage = () => {
   const [popup, setPopup] = useState(false);
@@ -23,28 +24,39 @@ const ContactPage = () => {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     setLoading(true);
 
-    emailjs
-      .send(
-        "service_bs2ofiq", // 👉 EmailJS service ID
-        "template_2watukw", // 👉 EmailJS template ID
-        data,
-        "PGkFp8TEtPWxWmOMo" // 👉 EmailJS public key
-      )
-      .then(
-        () => {
-          setLoading(false);
-          setPopup(true);
-          reset();
-        },
-        (error) => {
-          setLoading(false);
-          console.error("FAILED...", error.text);
-          alert("Something went wrong. Please try again later.");
-        }
-      );
+    try {
+      // 1. Save contact request to backend database
+      await api.post("/contacts", {
+        name: data.name,
+        email: data.email,
+        mobile: data.mobile,
+        subject: data.subject,
+        message: data.message,
+      });
+
+      // 2. Also send EmailJS if configured
+      try {
+        await emailjs.send(
+          "service_bs2ofiq", // 👉 EmailJS service ID
+          "template_2watukw", // 👉 EmailJS template ID
+          data,
+          "PGkFp8TEtPWxWmOMo" // 👉 EmailJS public key
+        );
+      } catch (emailErr) {
+        console.warn("EmailJS delivery note:", emailErr);
+      }
+
+      setLoading(false);
+      setPopup(true);
+      reset();
+    } catch (error) {
+      setLoading(false);
+      console.error("Submission error:", error);
+      alert(error?.response?.data?.message || "Something went wrong. Please try again later.");
+    }
   };
 
   useEffect(() => {
@@ -107,7 +119,7 @@ const ContactPage = () => {
             subtitle="CONNECT WITH US"
             title="GET IN TOUCH"
             highlight="WITH US"
-            description="Have a question or need a custom quote? Our team is ready to help. Reach out now — we’ll respond within 24 hours with the answers and support you need."
+            description="Our team is always ready to help with your questions and support needs."
           />
 
           {/* Contact Cards Grid */}
