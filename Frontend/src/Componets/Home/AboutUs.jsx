@@ -353,7 +353,7 @@ const AboutUs = () => {
               "
             >
               Backed by a team of innovative thinkers and skilled developers,
-              we ensure 24/7 support, rapid delivery, and uncompromising
+              we ensure support, rapid delivery, and uncompromising
               quality across every project.
             </p>
 
@@ -413,7 +413,7 @@ const AboutUs = () => {
   "
           >
             <CounterCard
-              end={5}
+              end={3}
               suffix="+"
               label="Years"
               description="Industry Experience"

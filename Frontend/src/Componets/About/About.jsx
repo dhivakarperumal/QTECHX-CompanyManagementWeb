@@ -284,7 +284,7 @@ const About = () => {
               <p className="text-justify text-sm leading-relaxed text-white/75 sm:text-base sm:leading-7">
                 Q-Techx Solutions delivers cutting-edge IT solutions globally,
                 from web and mobile applications to digital marketing, UI/UX
-                design, and enterprise systems. With 4+ years of expertise and
+                design, and enterprise systems. With 3+ years of expertise and
                 hundreds of completed projects, we blend creativity, engineering
                 rigor, and on-time execution to help companies scale confidently.
               </p>
@@ -474,7 +474,7 @@ const About = () => {
                     </div>
                     <div>
                       <p className="hero-font text-xl font-bold leading-none text-white sm:text-2xl">
-                        4+ <span className="text-[#FF6A00]">Years</span>
+                        3+ <span className="text-[#FF6A00]">Years</span>
                       </p>
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/60 sm:text-xs">
                         Proven Excellence
@@ -903,7 +903,7 @@ const About = () => {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {/* Card 1 */}
             <Counter
-              end={5}
+              end={3}
               suffix="+"
               label="Years"
               description="Industry Experience"
