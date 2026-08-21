@@ -20,8 +20,8 @@ async function createExpense(expenseData) {
 async function getExpenseById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT * FROM expenses WHERE id = ? OR expense_id = ?`,
-    [id, id]
+    `SELECT * FROM expenses WHERE expense_id = ?`,
+    [id]
   );
   return rows[0] || null;
 }
@@ -42,10 +42,9 @@ async function updateExpense(id, expenseData) {
   const setClause = fields.map(key => `${key} = ?`).join(", ");
   const values = fields.map(key => expenseData[key]);
   values.push(id);
-  values.push(id); // For matching either id or expense_id
   
   await db.execute(
-    `UPDATE expenses SET ${setClause} WHERE id = ? OR expense_id = ?`,
+    `UPDATE expenses SET ${setClause} WHERE expense_id = ?`,
     values
   );
   return getExpenseById(id);
@@ -54,8 +53,8 @@ async function updateExpense(id, expenseData) {
 async function deleteExpense(id) {
   const db = getDB();
   const [result] = await db.execute(
-    `DELETE FROM expenses WHERE id = ? OR expense_id = ?`,
-    [id, id]
+    `DELETE FROM expenses WHERE expense_id = ?`,
+    [id]
   );
   return result.affectedRows > 0;
 }

@@ -86,9 +86,9 @@ const customSelectStyles = {
     padding: '6px',
   }),
 };
-import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
-import { Receipt, DollarSign, PlusCircle, CheckCircle2, AlertCircle, Loader2, X, Download } from "lucide-react";
+import { Receipt, DollarSign, PlusCircle, CheckCircle2, AlertCircle, Loader2, X, Download, Edit2, Trash2 } from "lucide-react";
+import api, { API_URL } from "../../api";
 import ModalPortal from "../../Componets/CommonComponents/ModalPortal";
 
 function Modal({ open, onClose, title, children }) {
@@ -136,7 +136,7 @@ const ExpensesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Form states
+  // Add Form states
   const [fundAmount, setFundAmount] = useState("");
   const [expenseData, setExpenseData] = useState({
     expense_type: "",
@@ -150,11 +150,29 @@ const ExpensesPage = () => {
   const [customExpenseType, setCustomExpenseType] = useState("");
   const [billFile, setBillFile] = useState(null);
 
+  // Edit Form states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editExpenseData, setEditExpenseData] = useState({
+    expense_type: "",
+    date_of_payment: "",
+    amount: "",
+    payment_type: "",
+    paid_to: "",
+    description: "",
+    invoice_number: "",
+  });
+  const [editCustomExpenseType, setEditCustomExpenseType] = useState("");
+  const [editBillFile, setEditBillFile] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Delete State
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   const fetchFund = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/fund", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const { data } = await api.get("/fund");
       if (data.success) {
         setFund(data.available_fund);
       }
@@ -166,11 +184,9 @@ const ExpensesPage = () => {
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("http://localhost:5000/api/expenses", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const { data } = await api.get("/expenses");
       if (data.success) {
-        setExpenses(data.expenses);
+        setExpenses(data.expenses || []);
       }
     } catch (error) {
       console.error("Error fetching expenses", error);
@@ -181,9 +197,7 @@ const ExpensesPage = () => {
 
   const fetchEmployees = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/employees", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const { data } = await api.get("/employees");
       if (data?.data) {
         setEmployees(data.data);
       }
@@ -201,10 +215,7 @@ const ExpensesPage = () => {
   const handleUpdateFund = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("http://localhost:5000/api/fund",
-        { available_fund: parseFloat(fundAmount) },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
+      const { data } = await api.post("/fund", { available_fund: parseFloat(fundAmount) });
       if (data.success) {
         toast.success("Fund updated successfully", {
           style: { background: '#10b981', color: '#fff' },
@@ -247,11 +258,8 @@ const ExpensesPage = () => {
     }
 
     try {
-      const { data } = await axios.post("http://localhost:5000/api/expenses", formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "multipart/form-data"
-        }
+      const { data } = await api.post("/expenses", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
       if (data.success) {
         toast.success("Expense added successfully", {
@@ -276,6 +284,96 @@ const ExpensesPage = () => {
       toast.error(error.response?.data?.message || "Error adding expense", {
         style: { background: '#ef4444', color: '#fff' },
       });
+    }
+  };
+
+  const openEditModal = (exp) => {
+    const isStandardType = expenseFormTypeOptions.includes(exp.expense_type);
+    setEditingExpense(exp);
+    setEditExpenseData({
+      expense_type: isStandardType ? exp.expense_type : "Other",
+      date_of_payment: exp.date_of_payment ? new Date(exp.date_of_payment).toISOString().slice(0, 10) : "",
+      amount: exp.amount || "",
+      payment_type: exp.payment_type || "Cash",
+      paid_to: exp.paid_to || "",
+      description: exp.description || "",
+      invoice_number: exp.invoice_number || "",
+    });
+    setEditCustomExpenseType(isStandardType ? "" : (exp.expense_type || ""));
+    setEditBillFile(null);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateExpense = async (e) => {
+    e.preventDefault();
+    if (!editingExpense) return;
+
+    const finalExpenseType = editExpenseData.expense_type === "Other"
+      ? editCustomExpenseType.trim()
+      : editExpenseData.expense_type;
+
+    if (!finalExpenseType) {
+      toast.error("Please enter an expense type");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("expense_type", finalExpenseType);
+    formData.append("date_of_payment", editExpenseData.date_of_payment);
+    formData.append("amount", editExpenseData.amount);
+    formData.append("payment_type", editExpenseData.payment_type);
+    formData.append("paid_to", editExpenseData.paid_to);
+    formData.append("description", editExpenseData.description);
+    formData.append("invoice_number", editExpenseData.invoice_number);
+    if (editBillFile) {
+      formData.append("upload_bill", editBillFile);
+    }
+
+    setSavingEdit(true);
+    try {
+      const expenseId = editingExpense.expense_id || editingExpense.id;
+      const { data } = await api.put(`/expenses/${expenseId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      if (data.success) {
+        toast.success("Expense updated successfully", {
+          style: { background: '#10b981', color: '#fff' },
+        });
+        setShowEditModal(false);
+        setEditingExpense(null);
+        setEditBillFile(null);
+        fetchFund();
+        fetchExpenses();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error updating expense", {
+        style: { background: '#ef4444', color: '#fff' },
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const expenseId = deleteTarget.expense_id || deleteTarget.id;
+      const { data } = await api.delete(`/expenses/${expenseId}`);
+      if (data.success) {
+        toast.success("Expense deleted successfully", {
+          style: { background: '#10b981', color: '#fff' },
+        });
+        setDeleteTarget(null);
+        fetchFund();
+        fetchExpenses();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error deleting expense", {
+        style: { background: '#ef4444', color: '#fff' },
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -634,6 +732,199 @@ const ExpensesPage = () => {
         </form>
       </Modal>
 
+      {/* ── Edit Expense Modal ── */}
+      <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Expense Details">
+        <form onSubmit={handleUpdateExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
+            <Select
+              options={[
+                ...expenseFormTypeOptions.map(option => ({ value: option, label: option }))
+              ]}
+              value={editExpenseData.expense_type ? { value: editExpenseData.expense_type, label: editExpenseData.expense_type } : null}
+              onChange={(option) => {
+                const value = option ? option.value : "";
+                setEditExpenseData((prev) => ({ ...prev, expense_type: value }));
+                if (value !== "Other") {
+                  setEditCustomExpenseType("");
+                }
+              }}
+              styles={customSelectStyles}
+              placeholder="Select Expense Type"
+              isSearchable={true}
+            />
+            {editExpenseData.expense_type === "Other" && (
+              <div className="mt-2">
+                <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Custom Expense Type</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+                  placeholder="Enter expense type"
+                  value={editCustomExpenseType}
+                  onChange={(e) => setEditCustomExpenseType(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Paid To</label>
+            <input
+              type="text"
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="e.g. Amazon Web Services"
+              value={editExpenseData.paid_to}
+              onChange={(e) => setEditExpenseData({ ...editExpenseData, paid_to: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">From</label>
+            <input
+              type="text"
+              disabled
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/50 placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              value={editingExpense?.from_name || "Q-Techx Solutions"}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Date of Payment</label>
+            <input
+              type="date"
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition scheme-dark"
+              value={editExpenseData.date_of_payment}
+              onChange={(e) => setEditExpenseData({ ...editExpenseData, date_of_payment: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Amount (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="0.00"
+              value={editExpenseData.amount}
+              onChange={(e) => setEditExpenseData({ ...editExpenseData, amount: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
+            <Select
+              options={[
+                { value: 'Cash', label: 'Cash' },
+                { value: 'Bank Transfer', label: 'Bank Transfer' },
+                { value: 'Credit Card', label: 'Credit Card' },
+                { value: 'UPI', label: 'UPI' },
+                { value: 'Cheque', label: 'Cheque' }
+              ]}
+              value={editExpenseData.payment_type ? { value: editExpenseData.payment_type, label: editExpenseData.payment_type } : null}
+              onChange={(option) => setEditExpenseData({ ...editExpenseData, payment_type: option ? option.value : "" })}
+              styles={customSelectStyles}
+              placeholder="Select Payment Type"
+              isSearchable={false}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Invoice Number</label>
+            <input
+              type="text"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="Optional"
+              value={editExpenseData.invoice_number}
+              onChange={(e) => setEditExpenseData({ ...editExpenseData, invoice_number: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Description</label>
+            <textarea
+              rows="2"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition"
+              placeholder="Additional notes about this expense..."
+              value={editExpenseData.description}
+              onChange={(e) => setEditExpenseData({ ...editExpenseData, description: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">
+              Upload New Bill / Receipt (Optional)
+            </label>
+            {editingExpense?.upload_bill && (
+              <div className="flex items-center gap-2 mb-2 p-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/70">
+                <span className="text-white/40">Current bill:</span>
+                <a
+                  href={`${API_URL}/uploads/expenses/${editingExpense.upload_bill}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline font-medium truncate max-w-xs"
+                >
+                  {editingExpense.upload_bill}
+                </a>
+              </div>
+            )}
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 transition cursor-pointer"
+              onChange={(e) => setEditBillFile(e.target.files[0])}
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end gap-3 mt-2 border-t border-white/5 pt-5">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              disabled={savingEdit}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingEdit}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-90 transition flex items-center gap-2"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+            >
+              {savingEdit ? <Loader2 size={15} className="animate-spin" /> : null}
+              {savingEdit ? "Updating..." : "Update Expense"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteTarget && (
+        <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Delete Expense">
+          <div className="space-y-4">
+            <p className="text-white/70 text-sm">
+              Are you sure you want to delete this expense of <span className="text-rose-400 font-bold">₹ {parseFloat(deleteTarget.amount || 0).toFixed(2)}</span> ({deleteTarget.expense_type})?
+            </p>
+            <p className="text-white/40 text-xs">
+              Deleting this expense will automatically restore the spent amount back to your Available Fund.
+            </p>
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteExpense}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition flex items-center gap-2"
+              >
+                {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                {deleting ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       <div className="bg-[#111318] border border-white/10 rounded-2xl p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-wrap gap-3">
@@ -735,14 +1026,20 @@ const ExpensesPage = () => {
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">S.No</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Date</th>
                   <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Expense Details</th>
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Payment Mode</th>
-                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Amount</th>
-                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Bill</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Payment Mode</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Amount</th>
+                  <th className="text-left text-[10px] font-bold text-white/35 uppercase tracking-widest px-4 py-3.5">Bill</th>
+                  <th className="text-right text-[10px] font-bold text-white/35 uppercase tracking-widest px-5 py-3.5">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedExpenses.map((exp, i) => (
-                  <tr key={exp.expense_id} className="border-b border-white/4 hover:bg-white/2.5 transition-colors">
+                  <tr
+                    key={exp.expense_id || exp.id}
+                    className="border-b border-white/4 hover:bg-white/2.5 transition-colors cursor-pointer"
+                    onDoubleClick={() => openEditModal(exp)}
+                    title="Double click to edit expense"
+                  >
                     <td className="px-5 py-4 text-white/60">{(currentPage - 1) * itemsPerPage + i + 1}</td>
                     <td className="px-5 py-4">
                       <p className="text-white/80 font-medium text-sm">
@@ -768,16 +1065,38 @@ const ExpensesPage = () => {
                       </p>
                       <p className="text-[10px] text-white/30 mt-1">{isCreditEntry(exp) ? "Added" : "Spent"}</p>
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-4 py-4">
                       {exp.upload_bill ? (
-                        <a href={`http://localhost:5000/uploads/expenses/${exp.upload_bill}`} target="_blank" rel="noreferrer"
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition"
-                          title="View Bill">
-                          <Download size={14} />
+                        <a
+                          href={exp.upload_bill.startsWith("http") ? exp.upload_bill : `${API_URL}/uploads/expenses/${exp.upload_bill}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition text-xs"
+                          title="View Bill"
+                        >
+                          <Download size={13} /> Bill
                         </a>
                       ) : (
                         <span className="text-[10px] text-white/20 italic">No bill</span>
                       )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => openEditModal(exp)}
+                          className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary border border-transparent hover:border-primary/30 flex items-center justify-center transition"
+                          title="Edit Expense"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(exp)}
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                          title="Delete Expense"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
