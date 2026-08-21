@@ -52,6 +52,12 @@ const customSelectStyles = {
     border: '1px solid rgba(255,255,255,.1)',
     borderRadius: '12px',
     overflow: 'hidden',
+    zIndex: 99999,
+  }),
+
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 99999,
   }),
 
   menuList: (provided) => ({
@@ -127,6 +133,7 @@ const ExpensesPage = () => {
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({
+    search: "",
     expenseType: "",
     paymentMethod: "",
     datePreset: "all",
@@ -239,7 +246,14 @@ const ExpensesPage = () => {
       : expenseData.expense_type;
 
     if (!finalExpenseType) {
-      toast.error("Please enter a custom expense type", {
+      toast.error("Please enter an expense type", {
+        style: { background: '#ef4444', color: '#fff' },
+      });
+      return;
+    }
+
+    if (!expenseData.payment_type || !expenseData.payment_type.trim()) {
+      toast.error("Please select a payment mode", {
         style: { background: '#ef4444', color: '#fff' },
       });
       return;
@@ -294,7 +308,7 @@ const ExpensesPage = () => {
       expense_type: isStandardType ? exp.expense_type : "Other",
       date_of_payment: exp.date_of_payment ? new Date(exp.date_of_payment).toISOString().slice(0, 10) : "",
       amount: exp.amount || "",
-      payment_type: exp.payment_type || "Cash",
+      payment_type: exp.payment_type || "",
       paid_to: exp.paid_to || "",
       description: exp.description || "",
       invoice_number: exp.invoice_number || "",
@@ -314,6 +328,13 @@ const ExpensesPage = () => {
 
     if (!finalExpenseType) {
       toast.error("Please enter an expense type");
+      return;
+    }
+
+    if (!editExpenseData.payment_type || !editExpenseData.payment_type.trim()) {
+      toast.error("Please select a payment mode", {
+        style: { background: '#ef4444', color: '#fff' },
+      });
       return;
     }
 
@@ -462,10 +483,27 @@ const ExpensesPage = () => {
   };
 
   const filteredExpenses = expenses.filter((exp) => {
-    const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
-
     if (filters.expenseType && exp.expense_type !== filters.expenseType) return false;
     if (filters.paymentMethod && exp.payment_type !== filters.paymentMethod) return false;
+
+    if (filters.search && filters.search.trim()) {
+      const q = filters.search.trim().toLowerCase();
+      const haystack = [
+        exp.expense_type,
+        exp.paid_to,
+        exp.from_name,
+        exp.payment_type,
+        exp.invoice_number,
+        exp.description,
+        exp.amount ? String(exp.amount) : '',
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    if (filters.datePreset === "all") return true;
+
+    const expenseDate = exp.date_of_payment ? new Date(exp.date_of_payment) : null;
+    if (!expenseDate || isNaN(expenseDate.getTime())) return false;
 
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -473,36 +511,32 @@ const ExpensesPage = () => {
 
     let dateMatch = true;
     if (filters.datePreset === "today") {
-      dateMatch = Boolean(expenseDate && expenseDate >= startOfToday && expenseDate <= endOfToday);
+      dateMatch = Boolean(expenseDate >= startOfToday && expenseDate <= endOfToday);
     } else if (filters.datePreset === "yesterday") {
       const yesterday = new Date(startOfToday);
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayEnd = new Date(startOfToday);
       yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
       yesterdayEnd.setHours(23, 59, 59, 999);
-      dateMatch = Boolean(expenseDate && expenseDate >= yesterday && expenseDate <= yesterdayEnd);
+      dateMatch = Boolean(expenseDate >= yesterday && expenseDate <= yesterdayEnd);
     } else if (filters.datePreset === "this_week") {
       const weekStart = new Date(startOfToday);
       weekStart.setDate(startOfToday.getDate() - startOfToday.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
-      dateMatch = Boolean(expenseDate && expenseDate >= weekStart && expenseDate <= weekEnd);
+      dateMatch = Boolean(expenseDate >= weekStart && expenseDate <= weekEnd);
     } else if (filters.datePreset === "this_month") {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-      dateMatch = Boolean(expenseDate && expenseDate >= monthStart && expenseDate <= monthEnd);
+      dateMatch = Boolean(expenseDate >= monthStart && expenseDate <= monthEnd);
     } else if (filters.datePreset === "custom") {
       const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
       const toDate = filters.dateTo ? new Date(filters.dateTo) : null;
-      if (fromDate) {
-        fromDate.setHours(0, 0, 0, 0);
-      }
-      if (toDate) {
-        toDate.setHours(23, 59, 59, 999);
-      }
-      if (fromDate && expenseDate && expenseDate < fromDate) dateMatch = false;
-      if (toDate && expenseDate && expenseDate > toDate) dateMatch = false;
+      if (fromDate) fromDate.setHours(0, 0, 0, 0);
+      if (toDate) toDate.setHours(23, 59, 59, 999);
+      if (fromDate && expenseDate < fromDate) dateMatch = false;
+      if (toDate && expenseDate > toDate) dateMatch = false;
     }
 
     return dateMatch;
@@ -649,6 +683,7 @@ const ExpensesPage = () => {
                 }
               }}
               styles={customSelectStyles}
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
               placeholder="Select Expense Type"
               isSearchable={true}
             />
@@ -693,7 +728,9 @@ const ExpensesPage = () => {
               value={expenseData.amount} onChange={(e) => setExpenseData({ ...expenseData, amount: e.target.value })} />
           </div>
           <div>
-            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">
+              Payment Mode <span className="text-orange-400 font-bold">*</span>
+            </label>
             <Select
               options={[
                 { value: 'Cash', label: 'Cash' },
@@ -705,8 +742,10 @@ const ExpensesPage = () => {
               value={expenseData.payment_type ? { value: expenseData.payment_type, label: expenseData.payment_type } : null}
               onChange={(option) => setExpenseData({ ...expenseData, payment_type: option ? option.value : "" })}
               styles={customSelectStyles}
-              placeholder="Select Payment Type"
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+              placeholder="Select Payment Mode *"
               isSearchable={false}
+              required
             />
           </div>
           <div>
@@ -761,6 +800,7 @@ const ExpensesPage = () => {
                 }
               }}
               styles={customSelectStyles}
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
               placeholder="Select Expense Type"
               isSearchable={true}
             />
@@ -821,7 +861,9 @@ const ExpensesPage = () => {
             />
           </div>
           <div>
-            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">Payment Type</label>
+            <label className="block text-[11px] text-white/40 uppercase tracking-wider font-semibold mb-1">
+              Payment Mode <span className="text-orange-400 font-bold">*</span>
+            </label>
             <Select
               options={[
                 { value: 'Cash', label: 'Cash' },
@@ -833,8 +875,10 @@ const ExpensesPage = () => {
               value={editExpenseData.payment_type ? { value: editExpenseData.payment_type, label: editExpenseData.payment_type } : null}
               onChange={(option) => setEditExpenseData({ ...editExpenseData, payment_type: option ? option.value : "" })}
               styles={customSelectStyles}
-              placeholder="Select Payment Type"
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+              placeholder="Select Payment Mode *"
               isSearchable={false}
+              required
             />
           </div>
           <div>
@@ -940,6 +984,16 @@ const ExpensesPage = () => {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="flex flex-wrap gap-3">
             <div>
+              <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Search</label>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+                placeholder="Search expense, payee, from..."
+                className="w-52 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
+              />
+            </div>
+            <div>
               <label className="block text-[10px] text-white/35 uppercase tracking-wider font-semibold mb-1">Expense Type</label>
               <Select
                 options={[
@@ -1002,7 +1056,7 @@ const ExpensesPage = () => {
             )}
             <button
               type="button"
-              onClick={() => setFilters({ expenseType: "", paymentMethod: "", datePreset: "all", dateFrom: "", dateTo: "" })}
+              onClick={() => setFilters({ search: "", expenseType: "", paymentMethod: "", datePreset: "all", dateFrom: "", dateTo: "" })}
               className="text-sm text-white/60 hover:text-white transition"
             >
               Clear
@@ -1131,30 +1185,95 @@ const ExpensesPage = () => {
                 ))}
               </tbody>
             </table>
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 bg-[#111318] border-t border-white/10 text-white/70 text-sm">
-                <p>{filteredExpenses.length} record{filteredExpenses.length === 1 ? '' : 's'} total</p>
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 bg-[#111318] border-t border-white/10 text-white/70 text-sm">
+              <p className="text-xs text-white/50">
+                Showing {filteredExpenses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, filteredExpenses.length)} of {filteredExpenses.length} entries (10 per page)
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(1)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${
+                      currentPage === 1
+                        ? "border-white/5 text-white/20 bg-white/2 cursor-not-allowed"
+                        : "border-white/10 text-white/70 bg-white/5 hover:bg-white/10 hover:text-white"
+                    } transition`}
+                    title="First Page"
+                  >
+                    First
+                  </button>
                   <button
                     type="button"
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    className={`px-3 py-2 rounded-lg border ${currentPage === 1 ? 'border-white/10 text-white/30 bg-white/5 cursor-not-allowed' : 'border-white/20 text-white/80 bg-white/5 hover:bg-white/10'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                      currentPage === 1
+                        ? "border-white/5 text-white/20 bg-white/2 cursor-not-allowed"
+                        : "border-white/10 text-white/70 bg-white/5 hover:bg-white/10 hover:text-white"
+                    } transition`}
                   >
                     Prev
                   </button>
-                  <span>Page {currentPage} of {totalPages}</span>
+                  <div className="flex items-center gap-1 mx-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((page) => {
+                        return (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        );
+                      })
+                      .map((page, idx, arr) => {
+                        const showEllipsis = idx > 0 && page - arr[idx - 1] > 1;
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsis && <span className="px-1 text-white/30 text-xs">...</span>}
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                                currentPage === page
+                                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                                  : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
                   <button
                     type="button"
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    className={`px-3 py-2 rounded-lg border ${currentPage === totalPages ? 'border-white/10 text-white/30 bg-white/5 cursor-not-allowed' : 'border-white/20 text-white/80 bg-white/5 hover:bg-white/10'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                      currentPage === totalPages
+                        ? "border-white/5 text-white/20 bg-white/2 cursor-not-allowed"
+                        : "border-white/10 text-white/70 bg-white/5 hover:bg-white/10 hover:text-white"
+                    } transition`}
                   >
                     Next
                   </button>
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${
+                      currentPage === totalPages
+                        ? "border-white/5 text-white/20 bg-white/2 cursor-not-allowed"
+                        : "border-white/10 text-white/70 bg-white/5 hover:bg-white/10 hover:text-white"
+                    } transition`}
+                    title="Last Page"
+                  >
+                    Last
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

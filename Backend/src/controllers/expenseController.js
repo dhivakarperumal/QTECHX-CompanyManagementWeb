@@ -19,7 +19,13 @@ exports.createExpense = async (req, res) => {
     } = req.body;
 
     if (!amount || isNaN(amount)) {
+      await connection.rollback();
       return res.status(400).json({ success: false, message: "Valid amount is required" });
+    }
+
+    if (!payment_type || !payment_type.toString().trim()) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "Payment mode is required" });
     }
 
     // Check available fund
@@ -57,7 +63,7 @@ exports.createExpense = async (req, res) => {
         actor,
         date_of_payment || null,
         expenseAmount,
-        payment_type || '',
+        payment_type ? payment_type.toString().trim() : '',
         paid_to || '',
         description || '',
         invoice_number || '',
@@ -80,7 +86,7 @@ exports.createExpense = async (req, res) => {
 exports.getExpenses = async (req, res) => {
   try {
     const pool = getDB();
-    const [rows] = await pool.query("SELECT * FROM expenses ORDER BY created_at DESC");
+    const [rows] = await pool.query("SELECT * FROM expenses ORDER BY COALESCE(date_of_payment, created_at) DESC, id DESC");
 
     // Enrich rows for Project Payments, Incomes, and Salaries
     const enrichedRows = await Promise.all(

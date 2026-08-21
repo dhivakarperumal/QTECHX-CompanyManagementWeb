@@ -245,7 +245,7 @@ export default function Incomes() {
     e.preventDefault();
     if (!formData.income_type) { setError('Please select an income type'); return; }
     if (formData.income_type === 'Internship Payment' && !formData.intern_id) { setError('Please select an intern'); return; }
-    if (formData.income_type === 'Other' && !formData.income_reason) { setError('Please enter income reason'); return; }
+    if (formData.income_type === 'Other' && !formData.income_reason) { setError('Please enter income from'); return; }
     if (!formData.amount || formData.amount <= 0) { setError('Amount must be greater than 0'); return; }
 
     setLoading(true); setError(''); setSuccess('');
@@ -431,7 +431,7 @@ export default function Incomes() {
 
             {formData.income_type === 'Other' && (
               <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Income Reason *</span>
+                <span className="mb-1.5 block font-medium">Income From *</span>
                 <input type="text" className={fieldClass} name="income_reason" value={formData.income_reason} onChange={handleChange} placeholder="e.g. Server Reimbursement" required />
               </label>
             )}
