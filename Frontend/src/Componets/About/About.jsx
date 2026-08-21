@@ -900,39 +900,46 @@ const About = () => {
             className="mb-12 sm:mb-14"
           />
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div data-aos="zoom-in" data-aos-delay="100">
-              <Counter
-                end={5}
-                suffix="+"
-                label="Years Of Experience"
-                icon={FiClock}
-              />
-            </div>
-            <div data-aos="zoom-in" data-aos-delay="200">
-              <Counter
-                end={150}
-                suffix="+"
-                label="Trained & Mentored"
-                icon={FiUsers}
-              />
-            </div>
-            <div data-aos="zoom-in" data-aos-delay="300">
-              <Counter
-                end={50}
-                suffix="+"
-                label="Happy Clients"
-                icon={FiAward}
-              />
-            </div>
-            <div data-aos="zoom-in" data-aos-delay="400">
-              <Counter
-                end={40}
-                suffix="+"
-                label="Completed Projects"
-                icon={FiTrendingUp}
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {/* Card 1 */}
+            <Counter
+              end={5}
+              suffix="+"
+              label="Years"
+              description="Industry Experience"
+              icon={FiClock}
+              delay={100}
+            />
+
+            {/* Card 2 */}
+            <Counter
+              end={150}
+              suffix="+"
+              label="Projects"
+              description="Completed"
+              icon={FiTrendingUp}
+              delay={200}
+            />
+
+            {/* Card 3 */}
+            <Counter
+              end={50}
+              suffix="+"
+              label="Clients"
+              description="Happy Clients"
+              icon={FiUsers}
+              delay={300}
+            />
+
+            {/* Card 4 */}
+            <Counter
+              end={99}
+              suffix="%"
+              label="Delivery"
+              description="On-Time Delivery"
+              icon={FiAward}
+              delay={400}
+            />
           </div>
         </PageContainer>
       </section>
