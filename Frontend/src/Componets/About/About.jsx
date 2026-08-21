@@ -170,7 +170,7 @@ const About = () => {
       highlights: [
         "Accelerating time-to-market with agile delivery methodologies",
         "Building scalable systems ready for exponential user growth",
-        "Providing dedicated 24/7 support and strategic tech consulting",
+        "Providing dedicated support and strategic tech consulting",
       ],
     },
   };
@@ -234,7 +234,7 @@ const About = () => {
     },
     {
       icon: FiClock,
-      title: "24/7 Dedicated Support",
+      title: "Dedicated Support",
       description:
         "Round-the-clock technical monitoring, maintenance, and support teams to keep your mission-critical operations smooth.",
     },
@@ -301,7 +301,7 @@ const About = () => {
                 {[
                   "Custom Web & Mobile Engineering",
                   "Secure & Scalable Architectures",
-                  "Dedicated 24/7 Technical Support",
+                  "Dedicated Technical Support",
                   "On-Time Delivery Guarantee",
                 ].map((item, idx) => (
                   <div
