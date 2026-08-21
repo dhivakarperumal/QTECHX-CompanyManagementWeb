@@ -184,7 +184,7 @@ const ProjectPage = () => {
         id: proj.uuid || proj.id,
         title: proj.project_name || proj.title || "Untitled Project",
         image: getImageUrl(imageCandidate),
-        link: proj.url || proj.project_url || proj.github_link || proj.link || "#",
+        link: proj.url || proj.project_url || proj.domain_name || proj.sub_domain_name || proj.github_link || proj.link || "#",
         category: proj.category || proj.project_category || "General",
         description: proj.description || proj.project_description || "",
         features,

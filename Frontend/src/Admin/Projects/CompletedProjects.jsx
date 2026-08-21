@@ -95,6 +95,14 @@ const customSelectStyles = {
   }),
 };
 
+const normalizeUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === '#' || trimmed === '-' || trimmed === '—') return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 const formatCurrency = (value) => {
   if (!value) return '—';
   const num = Number(value);
@@ -282,6 +290,15 @@ export default function CompletedProjects() {
       setStatusModalError(err?.response?.data?.message || err.message || 'Failed to update status');
     } finally {
       setStatusModalLoading(false);
+    }
+  };
+
+  const handleOpenProjectUrl = (p) => {
+    const url = normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link);
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(`/admin/myprojects/view/${p.uuid}`);
     }
   };
 
@@ -703,9 +720,21 @@ export default function CompletedProjects() {
                     <td className="px-5 py-3.5 text-[13px] text-white/55 whitespace-nowrap">{(page - 1) * limit + i + 1}</td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <Avatar name={p.project_name} index={i} />
+                        <div
+                          onClick={() => handleOpenProjectUrl(p)}
+                          className="cursor-pointer"
+                          title={normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link) ? `Visit ${normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link)}` : "View project"}
+                        >
+                          <Avatar name={p.project_name} index={i} />
+                        </div>
                         <div>
-                          <div className="text-white font-semibold text-sm leading-tight">{p.project_name}</div>
+                          <div
+                            onClick={() => handleOpenProjectUrl(p)}
+                            className="text-white font-semibold text-sm leading-tight hover:text-orange-400 cursor-pointer transition-colors"
+                            title={normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link) ? `Visit ${normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link)}` : "View project"}
+                          >
+                            {p.project_name}
+                          </div>
                           {p.client_name && (
                             <p className="text-white/35 text-xs mt-0.5 flex items-center gap-1">
                               <Building2 size={9} /> {p.client_name}
@@ -768,10 +797,14 @@ export default function CompletedProjects() {
               title="Double click to update project status"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="flex items-center gap-3 min-w-0 cursor-pointer"
+                  onClick={() => handleOpenProjectUrl(p)}
+                  title={normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link) ? `Visit ${normalizeUrl(p.url || p.domain_name || p.sub_domain_name || p.github_link)}` : "View project"}
+                >
                   <Avatar name={p.project_name} index={i} />
                   <div className="min-w-0">
-                    <p className="text-white font-semibold text-sm leading-tight truncate">{p.project_name}</p>
+                    <p className="text-white font-semibold text-sm leading-tight truncate hover:text-orange-400 transition-colors">{p.project_name}</p>
                     {p.client_name && <p className="text-white/35 text-xs mt-0.5 truncate flex items-center gap-1"><Building2 size={9} /> {p.client_name}</p>}
                   </div>
                 </div>

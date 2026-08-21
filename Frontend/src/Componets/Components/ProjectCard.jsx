@@ -1,8 +1,16 @@
 // src/components/ProjectCard.jsx
 import React, { useState } from "react";
-import { FiExternalLink, FiArrowRight, FiEye } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 
-const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
+const normalizeUrl = (url) => {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === "#" || trimmed === "-" || trimmed === "—") return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
+const ProjectCard = ({ project, aosDelay = 0 }) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = () => {
@@ -10,6 +18,20 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
   };
 
   const imageSrc = imageError || !project.image ? "/Project/p1.jpg" : project.image;
+  const targetUrl = normalizeUrl(
+    project.link ||
+    project.url ||
+    project.project_url ||
+    project.domain_name ||
+    project.sub_domain_name ||
+    project.github_link
+  );
+
+  const handleOpenUrl = () => {
+    if (targetUrl) {
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <div
@@ -75,7 +97,8 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
       {/* ================= IMAGE ================= */}
 
       <div
-        className="
+        onClick={handleOpenUrl}
+        className={`
         relative
         mx-2
         h-[175px]
@@ -84,7 +107,8 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         rounded-2xl
         bg-[#080d11]
         sm:h-[185px]
-      "
+        ${targetUrl ? "cursor-pointer" : ""}
+      `}
       >
         <img
           src={imageSrc}
@@ -160,10 +184,9 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
         {/* ================= TITLE ================= */}
 
         <h3
-          onClick={() => onSelect(project)}
-          className="
+          onClick={handleOpenUrl}
+          className={`
           line-clamp-2
-          cursor-pointer
           min-h-[37px]
           text-lg
           font-bold
@@ -171,9 +194,9 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
           text-white
           transition-colors
           duration-300
-          group-hover:text-[#FF6A00]
           sm:text-xl
-        "
+          ${targetUrl ? "cursor-pointer hover:text-[#FF6A00] group-hover:text-[#FF6A00]" : ""}
+        `}
         >
           {project.title}
         </h3>
@@ -251,67 +274,56 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
 
         {/* ================= FOOTER ACTIONS ================= */}
 
-        <div
-          className="
-          mt-auto
-          flex
-          items-center
-          justify-between
-          border-t
-          border-[#FF6A00]/20
-          pt-4
-        "
-        >
+        {targetUrl ? (
+          <div
+            onClick={handleOpenUrl}
+            className="
+            mt-auto
+            flex
+            items-center
+            justify-between
+            border-t
+            border-[#FF6A00]/20
+            pt-4
+            cursor-pointer
+          "
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-[#FF6A00] group-hover:text-white transition-colors flex items-center gap-2">
+              <span className="truncate max-w-[200px]">{targetUrl.replace(/^https?:\/\//i, "").replace(/\/$/, "")}</span>
+            </span>
 
-          {/* View Project */}
-
-          {project.link && project.link !== "#" ? (
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
+            <span
               className="
-              group/btn
-              inline-flex
+              flex
+              h-7
+              w-7
               items-center
-              gap-2.5
-              text-xs
-              font-bold
-              uppercase
-              tracking-wider
+              justify-center
+              rounded-full
+              border
+              border-[#FF6A00]/40
+              bg-[#FF6A00]/10
               text-[#FF6A00]
               transition-all
               duration-300
-              hover:text-white
+              group-hover:border-[#FF6A00]
+              group-hover:bg-[#FF6A00]
+              group-hover:text-white
+              group-hover:shadow-[0_0_12px_rgba(255,106,0,0.5)]
             "
             >
-              <span>View Project</span>
-
-              <span
-                className="
-                flex
-                h-7
-                w-7
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-[#FF6A00]/40
-                bg-[#FF6A00]/10
-                text-[#FF6A00]
-                transition-all
-                duration-300
-                group-hover/btn:translate-x-1
-                group-hover/btn:border-[#FF6A00]
-                group-hover/btn:bg-[#FF6A00]
-                group-hover/btn:text-white
-                group-hover/btn:shadow-[0_0_12px_rgba(255,106,0,0.5)]
-              "
-              >
-                <FiExternalLink size={12} />
-              </span>
-            </a>
-          ) : (
+              <FiExternalLink size={12} />
+            </span>
+          </div>
+        ) : (
+          <div
+            className="
+            mt-auto
+            border-t
+            border-[#FF6A00]/20
+            pt-4
+          "
+          >
             <span
               className="
               text-xs
@@ -323,44 +335,9 @@ const ProjectCard = ({ project, aosDelay = 0, onSelect }) => {
             >
               Internal Enterprise Project
             </span>
-          )}
+          </div>
+        )}
 
-          {/* Quick View */}
-
-          {onSelect && (
-            <button
-              onClick={() => onSelect(project)}
-              aria-label={`Quick view ${project.title}`}
-              title="Quick View"
-              className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-[#FF6A00]
-              bg-[#FF6A00]
-              text-white
-              hover:border-[#FF6A00]/50
-              hover:bg-[#FF6A00]/10
-              font-bold
-              uppercase
-              tracking-wider
-              cursor-pointer
-              transition-all
-              duration-300
-              hover:-translate-y-0.5
-              
-              hover:shadow-[0_0_16px_rgba(255,106,0,0.3)]
-            "
-            >
-              <FiEye size={12} />
-            </button>
-          )}
-
-        </div>
       </div>
 
       {/* ================= BOTTOM ORANGE GLOW ================= */}
