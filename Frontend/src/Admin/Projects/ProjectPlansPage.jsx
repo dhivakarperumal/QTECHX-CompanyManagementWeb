@@ -989,10 +989,7 @@ function ProjectPlansPage() {
             <option value="nameAsc">Name A-Z</option>
             <option value="nameDesc">Name Z-A</option>
           </select>
-          <div className="flex items-center bg-[#14151a] border border-white/5 rounded-xl p-1 h-11 shrink-0">
-            <button className="h-full px-2.5 rounded-lg bg-[#ff6b00] text-white flex items-center justify-center shadow-sm"><List size={16} /></button>
-            <button className="h-full px-2.5 rounded-lg text-white/40 hover:text-white flex items-center justify-center transition"><LayoutGrid size={16} /></button>
-          </div>
+          
         </div>
       </div>
 
