@@ -604,12 +604,7 @@ export default function CompletedProjects() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 md:w-auto w-full">
-          <div className="flex bg-[#0d1016] border border-white/10 p-1 rounded-xl">
-            <button onClick={() => setViewMode('card')} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${viewMode === 'card' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80'}`}><LayoutGrid size={15} /></button>
-            <button onClick={() => setViewMode('table')} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/80'}`}><List size={15} /></button>
-          </div>
-        </div>
+     
         <div className="w-[160px]">
           <Select
             styles={customSelectStyles}
