@@ -65,11 +65,24 @@ async function createProjectPayment(req, res) {
       ]
     );
 
+    const clientName = (paymentData.client_name || project.client_name || '').trim();
+    const projectName = (paymentData.project_name || project.project_name || '').trim();
+    let fromName = '';
+    if (clientName && projectName) {
+      fromName = `${clientName} (${projectName})`;
+    } else if (clientName) {
+      fromName = clientName;
+    } else if (projectName) {
+      fromName = projectName;
+    } else {
+      fromName = 'Client';
+    }
+
     const expenseId = require('uuid').v4();
     await connection.query(
       `INSERT INTO expenses (
-        expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, upload_bill
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, from_name, upload_bill
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expenseId,
         'Project Payment',
@@ -78,9 +91,10 @@ async function createProjectPayment(req, res) {
         paymentData.date_of_payment,
         parseFloat(paymentData.amount_paid),
         paymentData.payment_mode || '',
-        paymentData.paid_to || '',
-        paymentData.reason_for_payment || `Project payment for ${project.project_name}`,
+        paymentData.paid_to || 'Q-Techx Solutions',
+        paymentData.reason_for_payment || `Project payment for ${projectName}`,
         '',
+        fromName,
         null
       ]
     );

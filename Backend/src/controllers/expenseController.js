@@ -81,7 +81,113 @@ exports.getExpenses = async (req, res) => {
   try {
     const pool = getDB();
     const [rows] = await pool.query("SELECT * FROM expenses ORDER BY created_at DESC");
-    res.status(200).json({ success: true, expenses: rows });
+
+    // Enrich rows for Project Payments, Incomes, and Salaries
+    const enrichedRows = await Promise.all(
+      rows.map(async (exp) => {
+        const type = String(exp.expense_type || "").trim().toLowerCase();
+
+        // 1. Project Payment
+        if (type === "project payment") {
+          if (!exp.from_name || exp.from_name === "Q-Techx Solutions" || exp.from_name === "Client") {
+            try {
+              const [payRows] = await pool.query(
+                `SELECT client_name, project_name FROM project_payments 
+                 WHERE ROUND(amount_paid, 2) = ROUND(?, 2) AND DATE(date_of_payment) = DATE(?) 
+                 ORDER BY created_at DESC LIMIT 1`,
+                [exp.amount, exp.date_of_payment]
+              );
+              if (payRows.length > 0) {
+                const { client_name, project_name } = payRows[0];
+                if (client_name && project_name) {
+                  exp.from_name = `${client_name} (${project_name})`;
+                } else if (client_name) {
+                  exp.from_name = client_name;
+                } else if (project_name) {
+                  exp.from_name = project_name;
+                }
+              }
+            } catch (err) {
+              // ignore
+            }
+          }
+          if (!exp.paid_to || exp.paid_to === "Client") {
+            exp.paid_to = "Q-Techx Solutions";
+          }
+        }
+
+        // 2. Income / Internship Payment
+        else if (type === "income" || type === "internship payment") {
+          let internDisplayName = exp.from_name;
+          if (!internDisplayName || internDisplayName === "Q-Techx Solutions" || internDisplayName === "Intern") {
+            try {
+              const [incRows] = await pool.query(
+                `SELECT i.intern_name, i.income_reason, t.full_name 
+                 FROM incomes i 
+                 LEFT JOIN trainee_intern t ON (i.intern_id = t.id OR i.intern_id = t.uuid OR i.intern_id = t.intern_id)
+                 WHERE ROUND(i.amount, 2) = ROUND(?, 2) AND DATE(i.date_of_payment) = DATE(?) 
+                 ORDER BY i.created_at DESC LIMIT 1`,
+                [exp.amount, exp.date_of_payment]
+              );
+              if (incRows.length > 0) {
+                internDisplayName =
+                  incRows[0].intern_name ||
+                  incRows[0].full_name ||
+                  incRows[0].income_reason ||
+                  "Intern";
+              }
+            } catch (err) {
+              // ignore
+            }
+          }
+
+          if (internDisplayName && !internDisplayName.toLowerCase().includes("(intern)") && internDisplayName !== "Q-Techx Solutions") {
+            internDisplayName = `${internDisplayName} (Intern)`;
+          }
+
+          exp.from_name = internDisplayName || "Intern";
+          if (!exp.paid_to) {
+            exp.paid_to = "Q-Techx Solutions";
+          }
+        }
+
+        // 3. Salary
+        else if (type === "salary") {
+          try {
+            const [empRows] = await pool.query(
+              `SELECT first_name, last_name, employee_code, employee_id 
+               FROM employees 
+               WHERE employee_id = ? OR id = ? OR employee_code = ? 
+               LIMIT 1`,
+              [exp.paid_to, exp.paid_to, exp.paid_to]
+            );
+            if (empRows.length > 0) {
+              const emp = empRows[0];
+              const fullName = [emp.first_name, emp.last_name].filter(Boolean).join(" ").trim();
+              const code = emp.employee_code || "";
+              exp.paid_to = code ? `${fullName} (${code})` : fullName;
+            } else {
+              const [userRows] = await pool.query(
+                `SELECT name, username FROM users WHERE user_id = ? OR id = ? LIMIT 1`,
+                [exp.paid_to, exp.paid_to]
+              );
+              if (userRows.length > 0 && userRows[0].name) {
+                exp.paid_to = userRows[0].name;
+              }
+            }
+          } catch (err) {
+            // ignore
+          }
+          if (!exp.from_name) {
+            exp.from_name = "Q-Techx Solutions";
+          }
+        }
+
+        return exp;
+      })
+    );
+
+    res.status(200).json({ success: true, expenses: enrichedRows });
   } catch (error) {
     console.error("Error fetching expenses:", error);
     res.status(500).json({ success: false, message: "Server Error" });

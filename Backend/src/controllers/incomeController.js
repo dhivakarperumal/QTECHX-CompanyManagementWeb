@@ -70,11 +70,32 @@ exports.createIncome = async (req, res) => {
       ]
     );
 
+    // Determine intern name / from_name
+    let fromName = intern_name || null;
+    if (!fromName && intern_id) {
+      try {
+        const [internRows] = await connection.query(
+          "SELECT full_name FROM trainee_intern WHERE id = ? OR uuid = ? OR intern_id = ? LIMIT 1",
+          [intern_id, intern_id, intern_id]
+        );
+        if (internRows.length > 0 && internRows[0].full_name) {
+          fromName = internRows[0].full_name;
+        }
+      } catch (err) {
+        console.warn("Could not find intern name:", err.message);
+      }
+    }
+    if (fromName && !fromName.toLowerCase().includes("(intern)")) {
+      fromName = `${fromName} (Intern)`;
+    } else if (!fromName) {
+      fromName = income_reason ? `${income_reason} (Intern)` : 'Intern';
+    }
+
     const expense_id = uuidv4();
     await connection.query(
       `INSERT INTO expenses 
-       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, upload_bill)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, from_name, upload_bill)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expense_id,
         'Income',
@@ -83,9 +104,10 @@ exports.createIncome = async (req, res) => {
         date_of_payment || null,
         incomeAmount,
         payment_type || '',
-        paid_to || '',
-        income_reason || `Income entry for ${intern_name || intern_id || 'unknown'}`,
-        '',
+        paid_to || 'Q-Techx Solutions',
+        income_reason || `Income entry for ${fromName}`,
+        nextInvoiceNumber || '',
+        fromName,
         null
       ]
     );

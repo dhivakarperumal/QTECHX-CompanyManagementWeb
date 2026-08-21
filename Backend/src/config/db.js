@@ -1428,6 +1428,64 @@ async function ensureExpenseSchema(pool) {
   );
 
   await pool.execute(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS from_name VARCHAR(255) NULL AFTER invoice_number`);
+
+  // Safe backfill for Project Payments, Incomes, and Salaries in expenses table
+  try {
+    await pool.execute(`
+      UPDATE expenses e
+      JOIN project_payments p ON (
+        ROUND(e.amount, 2) = ROUND(p.amount_paid, 2) 
+        AND DATE(e.date_of_payment) = DATE(p.date_of_payment)
+      )
+      SET e.from_name = CASE 
+        WHEN p.client_name IS NOT NULL AND p.client_name != '' AND p.project_name IS NOT NULL AND p.project_name != '' 
+          THEN CONCAT(p.client_name, ' (', p.project_name, ')')
+        WHEN p.client_name IS NOT NULL AND p.client_name != '' 
+          THEN p.client_name
+        WHEN p.project_name IS NOT NULL AND p.project_name != '' 
+          THEN p.project_name
+        ELSE 'Client'
+      END,
+      e.paid_to = 'Q-Techx Solutions'
+      WHERE e.expense_type = 'Project Payment' 
+        AND (e.from_name IS NULL OR e.from_name = '' OR e.from_name = 'Q-Techx Solutions');
+    `);
+  } catch (err) {
+    // ignore
+  }
+
+  try {
+    await pool.execute(`
+      UPDATE expenses e
+      JOIN incomes i ON (
+        ROUND(e.amount, 2) = ROUND(i.amount, 2) 
+        AND DATE(e.date_of_payment) = DATE(i.date_of_payment)
+      )
+      LEFT JOIN trainee_intern t ON (i.intern_id = t.id OR i.intern_id = t.uuid OR i.intern_id = t.intern_id)
+      SET e.from_name = CONCAT(COALESCE(NULLIF(i.intern_name, ''), NULLIF(t.full_name, ''), NULLIF(i.income_reason, ''), 'Intern'), ' (Intern)'),
+          e.paid_to = 'Q-Techx Solutions'
+      WHERE e.expense_type = 'Income' 
+        AND (e.from_name IS NULL OR e.from_name = '' OR e.from_name = 'Q-Techx Solutions' OR e.from_name NOT LIKE '%(Intern)%');
+    `);
+  } catch (err) {
+    // ignore
+  }
+
+  try {
+    await pool.execute(`
+      UPDATE expenses e
+      JOIN employees emp ON (e.paid_to = emp.employee_id OR e.paid_to = emp.id OR e.paid_to = emp.employee_code)
+      SET e.paid_to = CASE 
+        WHEN emp.employee_code IS NOT NULL AND emp.employee_code != '' 
+          THEN CONCAT(TRIM(CONCAT(emp.first_name, ' ', COALESCE(emp.last_name, ''))), ' (', emp.employee_code, ')')
+        ELSE TRIM(CONCAT(emp.first_name, ' ', COALESCE(emp.last_name, '')))
+      END,
+      e.from_name = 'Q-Techx Solutions'
+      WHERE e.expense_type = 'Salary' AND (e.paid_to LIKE '%-%' OR LENGTH(e.paid_to) > 20);
+    `);
+  } catch (err) {
+    // ignore
+  }
 }
 
 async function ensureSalarySchema(pool) {

@@ -116,15 +116,40 @@ exports.paySalary = async (req, res) => {
       [new_fund, actor]
     );
 
+    // Resolve employee name and employee code
+    let employeeName = employee_id;
+    try {
+      const [empRows] = await connection.query(
+        "SELECT first_name, last_name, employee_code, employee_id FROM employees WHERE employee_id = ? OR id = ? OR employee_code = ? LIMIT 1",
+        [employee_id, employee_id, employee_id]
+      );
+      if (empRows.length > 0) {
+        const emp = empRows[0];
+        const fullName = [emp.first_name, emp.last_name].filter(Boolean).join(" ").trim();
+        const code = emp.employee_code || "";
+        employeeName = code ? `${fullName} (${code})` : fullName;
+      } else {
+        const [userRows] = await connection.query(
+          "SELECT name, username FROM users WHERE user_id = ? OR id = ? LIMIT 1",
+          [employee_id, employee_id]
+        );
+        if (userRows.length > 0) {
+          employeeName = userRows[0].name || userRows[0].username || employee_id;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not resolve employee name for salary expense:", err.message);
+    }
+
     // Create an Expense record
     const expense_id = uuidv4();
     const date_of_payment = new Date().toISOString().slice(0, 10);
-    const description = `Salary for Employee ${employee_id} - ${month}/${year}`;
+    const description = `Salary for Employee ${employeeName} - ${month}/${year}`;
 
     await connection.query(
       `INSERT INTO expenses 
-       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (expense_id, expense_type, created_by, updated_by, date_of_payment, amount, payment_type, paid_to, description, invoice_number, from_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         expense_id,
         'Salary',
@@ -133,9 +158,10 @@ exports.paySalary = async (req, res) => {
         date_of_payment,
         tSalary,
         'Bank Transfer', // assuming bank transfer for salary
-        employee_id,
+        employeeName,
         description,
-        ''
+        '',
+        'Q-Techx Solutions'
       ]
     );
 

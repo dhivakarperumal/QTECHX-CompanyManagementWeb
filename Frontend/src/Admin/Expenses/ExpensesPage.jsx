@@ -447,7 +447,18 @@ const ExpensesPage = () => {
 
   const isCreditEntry = (entry) => {
     const type = String(entry?.expense_type || "").trim().toLowerCase();
-    return type === "income" || type === "project payment";
+    return type === "income" || type === "project payment" || type === "internship payment";
+  };
+
+  const isEditableExpense = (entry) => {
+    const type = String(entry?.expense_type || "").trim().toLowerCase();
+    return (
+      type !== "income" &&
+      type !== "project payment" &&
+      type !== "internship payment" &&
+      type !== "salary" &&
+      !isCreditEntry(entry)
+    );
   };
 
   const filteredExpenses = expenses.filter((exp) => {
@@ -1036,9 +1047,13 @@ const ExpensesPage = () => {
                 {paginatedExpenses.map((exp, i) => (
                   <tr
                     key={exp.expense_id || exp.id}
-                    className="border-b border-white/4 hover:bg-white/2.5 transition-colors cursor-pointer"
-                    onDoubleClick={() => openEditModal(exp)}
-                    title="Double click to edit expense"
+                    className={`border-b border-white/4 hover:bg-white/2.5 transition-colors ${
+                      isEditableExpense(exp) ? "cursor-pointer" : ""
+                    }`}
+                    onDoubleClick={() => {
+                      if (isEditableExpense(exp)) openEditModal(exp);
+                    }}
+                    title={isEditableExpense(exp) ? "Double click to edit expense" : undefined}
                   >
                     <td className="px-5 py-4 text-white/60">{(currentPage - 1) * itemsPerPage + i + 1}</td>
                     <td className="px-5 py-4">
@@ -1048,8 +1063,18 @@ const ExpensesPage = () => {
                     </td>
                     <td className="px-5 py-4">
                       <p className="text-white font-semibold text-sm leading-tight">{exp.expense_type}</p>
-                      <p className="text-white/40 text-xs mt-0.5">Paid to: {exp.paid_to}</p>
-                      <p className="text-white/40 text-xs mt-0.5">From: {exp.from_name || "Q-Techx Solutions"}</p>
+                      <p className="text-white/40 text-xs mt-0.5">
+                        <span className="text-white/30">Paid to:</span>{" "}
+                        <span className="text-white/80 font-medium">
+                          {exp.paid_to || (isCreditEntry(exp) ? "Q-Techx Solutions" : "—")}
+                        </span>
+                      </p>
+                      <p className="text-white/40 text-xs mt-0.5">
+                        <span className="text-white/30">From:</span>{" "}
+                        <span className="text-white/80 font-medium">
+                          {exp.from_name || (isCreditEntry(exp) ? (exp.expense_type === "Project Payment" ? "Client" : "Intern (Intern)") : "Q-Techx Solutions")}
+                        </span>
+                      </p>
                     </td>
                     <td className="px-5 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-white/5 text-white/60 border border-white/10">
@@ -1081,22 +1106,26 @@ const ExpensesPage = () => {
                       )}
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => openEditModal(exp)}
-                          className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary border border-transparent hover:border-primary/30 flex items-center justify-center transition"
-                          title="Edit Expense"
-                        >
-                          <Edit2 size={13} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(exp)}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
-                          title="Delete Expense"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                      {isEditableExpense(exp) ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => openEditModal(exp)}
+                            className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/25 text-primary border border-transparent hover:border-primary/30 flex items-center justify-center transition"
+                            title="Edit Expense"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(exp)}
+                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400 border border-transparent hover:border-rose-500/25 flex items-center justify-center transition"
+                            title="Delete Expense"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-white/20 text-xs">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
