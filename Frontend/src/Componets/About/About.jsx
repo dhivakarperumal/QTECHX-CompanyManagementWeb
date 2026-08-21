@@ -307,11 +307,103 @@ const About = () => {
                   <div
                     key={idx}
                     data-aos="fade-up"
-                    data-aos-delay={idx * 80}
-                    className="group flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-2.5 text-xs font-semibold text-white/90 transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00]/35 hover:bg-[#FF6A00]/[0.06] sm:text-sm"
+                    data-aos-delay={idx * 150}
+                    className="
+        group
+        relative
+        flex
+        items-center
+        gap-2.5
+        overflow-hidden
+        rounded-lg
+        border
+        border-white/10
+        bg-white/[0.02]
+        p-2.5
+        text-[11px]
+        font-medium
+        text-white/80
+
+        transition-all
+        duration-[800ms]
+        ease-in-out
+
+        hover:border-[#FF6A00]/50
+        hover:bg-[#FF6A00]/[0.06]
+        hover:shadow-[0_8px_25px_rgba(255,106,0,0.12)]
+
+        sm:text-xs
+      "
                   >
-                    <FiCheckCircle className="shrink-0 text-[#FF6A00] transition-transform duration-300 group-hover:scale-110" size={16} />
-                    <span>{item}</span>
+                    {/* Orange Left Indicator */}
+                    <div
+                      className="
+          pointer-events-none
+          absolute
+          left-0
+          top-0
+          h-full
+          w-[2px]
+          bg-[#FF6A00]
+          opacity-0
+          transition-opacity
+          duration-[800ms]
+          ease-in-out
+          group-hover:opacity-100
+        "
+                    />
+
+                    {/* Icon */}
+                    <div
+                      className="
+          flex
+          h-6
+          w-6
+          shrink-0
+          items-center
+          justify-center
+          rounded-md
+          border
+          border-[#FF6A00]/25
+          bg-[#FF6A00]/10
+          text-[#FF6A00]
+
+          transition-all
+          duration-[800ms]
+          ease-in-out
+
+          group-hover:border-[#FF6A00]
+          group-hover:bg-[#FF6A00]
+          group-hover:text-white
+          group-hover:shadow-[0_0_15px_rgba(255,106,0,0.35)]
+        "
+                    >
+                      <FiCheckCircle size={13} />
+                    </div>
+
+                    {/* Text - NO MOVEMENT */}
+                    <span className="relative z-10">
+                      {item}
+                    </span>
+
+                    {/* Bottom Glow */}
+                    <div
+                      className="
+          pointer-events-none
+          absolute
+          -bottom-8
+          right-4
+          h-12
+          w-20
+          rounded-full
+          bg-[#FF6A00]/0
+          blur-2xl
+          transition-all
+          duration-[800ms]
+          ease-in-out
+          group-hover:bg-[#FF6A00]/20
+        "
+                    />
                   </div>
                 ))}
               </div>
