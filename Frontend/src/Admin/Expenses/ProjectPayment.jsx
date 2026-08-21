@@ -281,7 +281,7 @@ export default function ProjectPayment() {
       const payload = {
         project_id: formData.project_id,
         client_name: selectedProjectDetails?.client_name,
-        paid_to: user?.username || user?.name || 'Admin',
+        paid_to: 'Q-Techx Solutions',
         amount_paid: parseFloat(formData.amount_paid),
         payment_mode: formData.payment_mode,
         reason_for_payment: formData.reason_for_payment,

@@ -91,7 +91,7 @@ async function createProjectPayment(req, res) {
         paymentData.date_of_payment,
         parseFloat(paymentData.amount_paid),
         paymentData.payment_mode || '',
-        paymentData.paid_to || 'Q-Techx Solutions',
+        'Q-Techx Solutions',
         paymentData.reason_for_payment || `Project payment for ${projectName}`,
         '',
         fromName,

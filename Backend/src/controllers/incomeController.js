@@ -71,24 +71,30 @@ exports.createIncome = async (req, res) => {
     );
 
     // Determine intern name / from_name
-    let fromName = intern_name || null;
-    if (!fromName && intern_id) {
-      try {
-        const [internRows] = await connection.query(
-          "SELECT full_name FROM trainee_intern WHERE id = ? OR uuid = ? OR intern_id = ? LIMIT 1",
-          [intern_id, intern_id, intern_id]
-        );
-        if (internRows.length > 0 && internRows[0].full_name) {
-          fromName = internRows[0].full_name;
+    let fromName = "";
+    if (String(income_type || "").trim() === "Internship Payment") {
+      let internDisplayName = intern_name || null;
+      if (!internDisplayName && intern_id) {
+        try {
+          const [internRows] = await connection.query(
+            "SELECT full_name FROM trainee_intern WHERE id = ? OR uuid = ? OR intern_id = ? LIMIT 1",
+            [intern_id, intern_id, intern_id]
+          );
+          if (internRows.length > 0 && internRows[0].full_name) {
+            internDisplayName = internRows[0].full_name;
+          }
+        } catch (err) {
+          console.warn("Could not find intern name:", err.message);
         }
-      } catch (err) {
-        console.warn("Could not find intern name:", err.message);
       }
-    }
-    if (fromName && !fromName.toLowerCase().includes("(intern)")) {
-      fromName = `${fromName} (Intern)`;
-    } else if (!fromName) {
-      fromName = income_reason ? `${income_reason} (Intern)` : 'Intern';
+      if (internDisplayName) {
+        const cleanName = internDisplayName.replace(/\s*\(intern\)/gi, "").trim();
+        fromName = `${cleanName} (Intern)`;
+      } else {
+        fromName = "Intern";
+      }
+    } else {
+      fromName = income_reason ? income_reason.replace(/\s*\(intern\)/gi, "").trim() : "Other Income";
     }
 
     const expense_id = uuidv4();
@@ -191,7 +197,7 @@ exports.updateIncome = async (req, res) => {
     const newAmount = parseFloat(amount);
 
     // Fetch existing income to find the old amount
-    const [existing] = await connection.query("SELECT amount FROM incomes WHERE income_id = ?", [id]);
+    const [existing] = await connection.query("SELECT amount, invoice_number FROM incomes WHERE income_id = ?", [id]);
     if (existing.length === 0) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: "Income record not found" });
@@ -232,6 +238,52 @@ exports.updateIncome = async (req, res) => {
       ]
     );
 
+    // Sync to expenses table
+    let fromName = "";
+    if (String(income_type || "").trim() === "Internship Payment") {
+      let internDisplayName = intern_name || null;
+      if (!internDisplayName && intern_id) {
+        try {
+          const [internRows] = await connection.query(
+            "SELECT full_name FROM trainee_intern WHERE id = ? OR uuid = ? OR intern_id = ? LIMIT 1",
+            [intern_id, intern_id, intern_id]
+          );
+          if (internRows.length > 0 && internRows[0].full_name) {
+            internDisplayName = internRows[0].full_name;
+          }
+        } catch (err) {
+          console.warn("Could not find intern name:", err.message);
+        }
+      }
+      if (internDisplayName) {
+        const cleanName = internDisplayName.replace(/\s*\(intern\)/gi, "").trim();
+        fromName = `${cleanName} (Intern)`;
+      } else {
+        fromName = "Intern";
+      }
+    } else {
+      fromName = income_reason ? income_reason.replace(/\s*\(intern\)/gi, "").trim() : "Other Income";
+    }
+
+    if (existing[0].invoice_number) {
+      await connection.query(
+        `UPDATE expenses SET 
+           date_of_payment = ?, amount = ?, payment_type = ?, paid_to = ?, 
+           from_name = ?, description = ?, updated_by = ?
+         WHERE invoice_number = ?`,
+        [
+          date_of_payment || null,
+          newAmount,
+          payment_type || '',
+          paid_to || 'Q-Techx Solutions',
+          fromName,
+          income_reason || `Income entry for ${fromName}`,
+          actor,
+          existing[0].invoice_number
+        ]
+      );
+    }
+
     await connection.commit();
     res.status(200).json({ success: true, message: "Income updated successfully" });
   } catch (error) {
@@ -252,7 +304,7 @@ exports.deleteIncome = async (req, res) => {
     const actor = req.user?.user_id || req.body.updated_by || null;
 
     // Fetch existing income to deduct the amount from funds
-    const [existing] = await connection.query("SELECT amount FROM incomes WHERE income_id = ?", [id]);
+    const [existing] = await connection.query("SELECT amount, invoice_number FROM incomes WHERE income_id = ?", [id]);
     if (existing.length === 0) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: "Income record not found" });
@@ -272,6 +324,11 @@ exports.deleteIncome = async (req, res) => {
 
     // Delete the income record
     await connection.query("DELETE FROM incomes WHERE income_id = ?", [id]);
+
+    // Delete matching expenses record
+    if (existing[0].invoice_number) {
+      await connection.query("DELETE FROM expenses WHERE invoice_number = ?", [existing[0].invoice_number]);
+    }
 
     await connection.commit();
     res.status(200).json({ success: true, message: "Income deleted successfully" });

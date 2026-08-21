@@ -117,18 +117,28 @@ exports.getExpenses = async (req, res) => {
               // ignore
             }
           }
-          if (!exp.paid_to || exp.paid_to === "Client") {
-            exp.paid_to = "Q-Techx Solutions";
-          }
+          exp.paid_to = "Q-Techx Solutions";
         }
 
         // 2. Income / Internship Payment
         else if (type === "income" || type === "internship payment") {
-          let internDisplayName = exp.from_name;
-          if (!internDisplayName || internDisplayName === "Q-Techx Solutions" || internDisplayName === "Intern") {
-            try {
+          let incomeRecord = null;
+          try {
+            if (exp.invoice_number) {
               const [incRows] = await pool.query(
-                `SELECT i.intern_name, i.income_reason, t.full_name 
+                `SELECT i.income_type, i.intern_name, i.income_reason, t.full_name 
+                 FROM incomes i 
+                 LEFT JOIN trainee_intern t ON (i.intern_id = t.id OR i.intern_id = t.uuid OR i.intern_id = t.intern_id)
+                 WHERE i.invoice_number = ? LIMIT 1`,
+                [exp.invoice_number]
+              );
+              if (incRows.length > 0) {
+                incomeRecord = incRows[0];
+              }
+            }
+            if (!incomeRecord) {
+              const [incRows] = await pool.query(
+                `SELECT i.income_type, i.intern_name, i.income_reason, t.full_name 
                  FROM incomes i 
                  LEFT JOIN trainee_intern t ON (i.intern_id = t.id OR i.intern_id = t.uuid OR i.intern_id = t.intern_id)
                  WHERE ROUND(i.amount, 2) = ROUND(?, 2) AND DATE(i.date_of_payment) = DATE(?) 
@@ -136,25 +146,32 @@ exports.getExpenses = async (req, res) => {
                 [exp.amount, exp.date_of_payment]
               );
               if (incRows.length > 0) {
-                internDisplayName =
-                  incRows[0].intern_name ||
-                  incRows[0].full_name ||
-                  incRows[0].income_reason ||
-                  "Intern";
+                incomeRecord = incRows[0];
               }
-            } catch (err) {
-              // ignore
+            }
+          } catch (err) {
+            // ignore
+          }
+
+          if (incomeRecord) {
+            const incType = String(incomeRecord.income_type || '').trim().toLowerCase();
+            if (incType === 'internship payment' || type === 'internship payment') {
+              const name = (incomeRecord.intern_name || incomeRecord.full_name || 'Intern').replace(/\s*\(intern\)/gi, '').trim();
+              exp.from_name = `${name} (Intern)`;
+            } else {
+              const reason = (incomeRecord.income_reason || exp.from_name || 'Other Income').replace(/\s*\(intern\)/gi, '').trim();
+              exp.from_name = reason;
+            }
+          } else {
+            if (type === 'internship payment') {
+              const name = (exp.from_name || 'Intern').replace(/\s*\(intern\)/gi, '').trim();
+              exp.from_name = `${name} (Intern)`;
+            } else if (exp.from_name) {
+              exp.from_name = exp.from_name.replace(/\s*\(intern\)/gi, '').trim();
             }
           }
 
-          if (internDisplayName && !internDisplayName.toLowerCase().includes("(intern)") && internDisplayName !== "Q-Techx Solutions") {
-            internDisplayName = `${internDisplayName} (Intern)`;
-          }
-
-          exp.from_name = internDisplayName || "Intern";
-          if (!exp.paid_to) {
-            exp.paid_to = "Q-Techx Solutions";
-          }
+          exp.paid_to = "Q-Techx Solutions";
         }
 
         // 3. Salary
