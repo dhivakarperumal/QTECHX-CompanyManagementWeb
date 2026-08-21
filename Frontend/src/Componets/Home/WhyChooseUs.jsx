@@ -10,8 +10,10 @@ import SectionTitle from "../CommonComponents/SectionTitle";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
+import {useNavigate} from "react-router-dom"
 
 const WhyChooseUs = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -321,6 +323,7 @@ const WhyChooseUs = () => {
               {/* Button */}
 
               <div
+                onClick={()=>navigate("/whychooseus")}
                 className="
                   relative
                   z-10
