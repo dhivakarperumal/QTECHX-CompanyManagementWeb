@@ -172,12 +172,14 @@ function StatusPill({ value, colourMap }) {
 }
 
 const DEFAULT_FORM = {
+  customer_id: '',
   company_name: '', client_name: '', email: '', phone_number: '',
   contact_person: '', client_status: 'Lead', service_type: '', custom_service_type: '',
   business_name: '', business_type: '', requirement: '',
   notes_summary: '', follow_up_date: '', follow_up_time: '',
   next_follow_up_date: '', next_follow_up_time: '', discussion_summary: '',
   follow_up_status: 'Pending', reminder: false,
+  gst_number: '', business_registration_number: '', referral_code: ''
 };
 
 export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient }) {
@@ -239,6 +241,7 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
         const initialCustomService = !rawService || isStandard || rawService === 'Other' ? '' : rawService;
 
         setForm({
+          customer_id: editClient.customer_id || '',
           company_name: editClient.company_name || '',
           client_name: editClient.client_name || '',
           email: editClient.email || '',
@@ -257,7 +260,10 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
           next_follow_up_time: editClient.next_follow_up_time || '',
           discussion_summary: editClient.discussion_summary || '',
           follow_up_status: editClient.follow_up_status || 'Pending',
-          reminder: !!editClient.reminder,
+          reminder: Boolean(editClient.reminder),
+          gst_number: editClient.gst_number || '',
+          business_registration_number: editClient.business_registration_number || '',
+          referral_code: editClient.referral_code || ''
         });
       } else {
         setForm(DEFAULT_FORM);
@@ -269,7 +275,12 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
 
   const set = (field) => (e) => {
     setError('');
-    setForm(f => ({ ...f, [field]: e.target.value }));
+    let val = e.target.value;
+    if (field === 'gst_number' || field === 'business_registration_number') val = val.toUpperCase().trim();
+    if (field === 'phone_number') val = val.replace(/[^0-9+]/g, '');
+    if (field === 'email') val = val.trim();
+    
+    setForm(f => ({ ...f, [field]: val }));
   };
   const toggleReminder = () => setForm(f => ({ ...f, reminder: !f.reminder }));
 
@@ -407,6 +418,22 @@ export default function ClientFormModal({ isOpen, onClose, onSuccess, editClient
                 <div>
                   <FieldLabel icon={User} text="Contact Person" />
                   <input className={inp} placeholder="Primary point of contact" value={form.contact_person} onChange={set('contact_person')} />
+                </div>
+                <div>
+                  <FieldLabel icon={User} text="Customer ID" />
+                  <input className={inp} placeholder="e.g. CUST-1234" value={form.customer_id} onChange={set('customer_id')} />
+                </div>
+                <div>
+                  <FieldLabel icon={Building2} text="GST Number" />
+                  <input className={inp} placeholder="e.g. 22AAAAA0000A1Z5" value={form.gst_number} onChange={set('gst_number')} />
+                </div>
+                <div>
+                  <FieldLabel icon={Building2} text="Business Registration Number" />
+                  <input className={inp} placeholder="e.g. U72900MH2020PTC123456" value={form.business_registration_number} onChange={set('business_registration_number')} />
+                </div>
+                <div>
+                  <FieldLabel icon={User} text="Referral Code" />
+                  <input className={inp} placeholder="e.g. REF-XYZ" value={form.referral_code} onChange={set('referral_code')} />
                 </div>
                 <div>
                   <FieldLabel icon={ShieldCheck} text="Client Status" />

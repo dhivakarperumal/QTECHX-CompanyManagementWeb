@@ -26,6 +26,30 @@ function getUploadedFiles(req) {
   return uploadedFiles;
 }
 
+const duplicateMessage = (error) => {
+  if (error.code !== "ER_DUP_ENTRY") return null;
+  const msg = error.message;
+  if (msg.includes("uq_trainee_pan") || msg.includes("pan_number")) return "PAN Number already exists.";
+  if (msg.includes("uq_trainee_aadhaar") || msg.includes("aadhaar_number")) return "Aadhaar Number already exists.";
+  if (msg.includes("uq_trainee_mobile") || msg.includes("mobile_number")) return "Mobile Number already registered.";
+  if (msg.includes("uq_trainee_email") || msg.includes("email_address")) return "Personal Email already registered.";
+  if (msg.includes("uq_trainee_upi") || msg.includes("upi_id")) return "UPI ID already exists.";
+  if (msg.includes("uq_trainee_account_ifsc")) return "This Account Number and IFSC Code combination is already registered.";
+  if (msg.includes("uq_trainee_account") || msg.includes("account_number")) return "Account Number already exists.";
+  if (msg.includes("person_code")) return "Person Code already exists.";
+  return "Record already exists.";
+};
+
+const normalizeTraineeData = (data) => {
+  if (data.pan_number) data.pan_number = String(data.pan_number).trim().toUpperCase();
+  if (data.aadhaar_number) data.aadhaar_number = String(data.aadhaar_number).replace(/\s+/g, '');
+  if (data.mobile_number) data.mobile_number = String(data.mobile_number).replace(/[^0-9+]/g, '');
+  if (data.email_address) data.email_address = String(data.email_address).trim().toLowerCase();
+  if (data.official_email) data.official_email = String(data.official_email).trim().toLowerCase();
+  if (data.account_number) data.account_number = String(data.account_number).trim();
+  if (data.upi_id) data.upi_id = String(data.upi_id).trim().toLowerCase();
+};
+
 const bcrypt = require('bcrypt');
 const { createUser, updateUser, findByEmail } = require('../models/userModel');
 
@@ -42,6 +66,8 @@ async function createTraineeInternHandler(req, res) {
     const traineeData = { ...req.body };
     delete traineeData.password;
     delete traineeData.confirm_password;
+
+    normalizeTraineeData(traineeData);
 
     const trainee = await createTraineeIntern({
       uuid: uuidv4(),
@@ -60,19 +86,19 @@ async function createTraineeInternHandler(req, res) {
         if (userEmail) {
           const existingUser = await findByEmail(userEmail);
           if (existingUser) {
-            console.warn(`User with email ${userEmail} already exists, skipping user creation`);
+            console.warn(`User with email ${userEmail} already exists, skipping user creation.`);
           } else {
             const hashedPassword = await bcrypt.hash(userPassword, 12);
             await createUser({
-              user_id: trainee.uuid || null, // Fixed: use returned trainee's uuid
-              username: username || null,
+              user_id: trainee.uuid,
+              username,
               email: userEmail,
-              mobile: traineeData.mobile_number || null,
+              mobile: traineeData.mobile_number,
               password: hashedPassword,
-              role: traineeData.type || 'Trainee',
+              role: traineeData.role || 'Trainee',
               status: traineeData.status || 'Active',
-              created_by: actor || null,
-              updated_by: actor || null,
+              created_by: actor,
+              updated_by: actor,
             });
           }
         }
@@ -81,10 +107,11 @@ async function createTraineeInternHandler(req, res) {
       }
     }
 
-    return ok(res, { message: 'Trainee/Intern created successfully', data: trainee }, 201);
-  } catch (err) {
-    console.error('createTraineeInternHandler:', err);
-    return fail(res, 'Trainee/Intern creation failed', 500, err.message);
+    return ok(res, { message: 'Trainee/Intern created successfully', trainee }, 201);
+  } catch (error) {
+    console.error('Create Trainee/Intern Error:', error);
+    const msg = duplicateMessage(error);
+    return fail(res, msg || 'Failed to create Trainee/Intern', msg ? 409 : 500, error.message);
   }
 }
 

@@ -12,11 +12,27 @@ const {
 
 const duplicateMessage = (error) => {
   if (error.code !== "ER_DUP_ENTRY") return null;
-  if (error.message.includes("employee_id")) return "Employee ID already exists";
-  if (error.message.includes("employee_code")) return "Employee Code already exists";
-  if (error.message.includes("personal_email")) return "Email is already registered";
-  if (error.message.includes("mobile_number")) return "Mobile number is already registered";
-  return "Employee already exists";
+  const msg = error.message;
+  if (msg.includes("uq_emp_pan") || msg.includes("pan_number")) return "PAN Number already exists.";
+  if (msg.includes("uq_emp_aadhaar") || msg.includes("aadhaar_number")) return "Aadhaar Number already exists.";
+  if (msg.includes("uq_emp_mobile") || msg.includes("mobile_number")) return "Mobile Number already registered.";
+  if (msg.includes("uq_emp_email") || msg.includes("personal_email") || msg.includes("email")) return "Personal Email already registered.";
+  if (msg.includes("uq_emp_upi") || msg.includes("upi_id")) return "UPI ID already exists.";
+  if (msg.includes("uq_emp_account_ifsc")) return "This Account Number and IFSC Code combination is already registered.";
+  if (msg.includes("uq_emp_account") || msg.includes("account_number")) return "Account Number already exists.";
+  if (msg.includes("employee_id")) return "Employee ID already exists.";
+  if (msg.includes("employee_code")) return "Employee Code already exists.";
+  return "Record already exists.";
+};
+
+const normalizeEmployeeData = (data) => {
+  if (data.pan_number) data.pan_number = String(data.pan_number).trim().toUpperCase();
+  if (data.aadhaar_number) data.aadhaar_number = String(data.aadhaar_number).replace(/\s+/g, '');
+  if (data.mobile_number) data.mobile_number = String(data.mobile_number).replace(/[^0-9+]/g, '');
+  if (data.personal_email) data.personal_email = String(data.personal_email).trim().toLowerCase();
+  if (data.official_email) data.official_email = String(data.official_email).trim().toLowerCase();
+  if (data.account_number) data.account_number = String(data.account_number).trim();
+  if (data.upi_id) data.upi_id = String(data.upi_id).trim().toLowerCase();
 };
 
 async function generateEmployeeCodeHandler(req, res) {
@@ -60,6 +76,8 @@ async function create(req, res) {
     const userPassword = employeeData.password || employeeData.mobile_number;
     delete employeeData.password;
     delete employeeData.confirm_password;
+
+    normalizeEmployeeData(employeeData);
 
     const employee = await createEmployee(employeeData);
 
@@ -152,6 +170,9 @@ async function update(req, res) {
     // Admin updates should not change employee passwords via this endpoint
     delete updates.password;
     delete updates.confirm_password;
+    delete updates.created_at;
+
+    normalizeEmployeeData(updates);
 
     const employee = await updateEmployee(req.params.employeeId, updates);
 

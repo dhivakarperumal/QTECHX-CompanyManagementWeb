@@ -18,11 +18,10 @@ const publicUser = (user) => {
 
 const duplicateMessage = (error) => {
   if (error.code !== "ER_DUP_ENTRY") return null;
-  if (error.message.includes("email")) return "Email is already registered";
-  if (error.message.includes("mobile")) return "Mobile number is already registered";
-  if (error.message.includes("user_id")) return "User ID already exists";
-  if (error.message.includes("username")) return "Username is already registered";
-  return "User already exists";
+  if (error.message.includes("email")) return "Personal Email already registered.";
+  if (error.message.includes("mobile")) return "Mobile Number already registered.";
+  if (error.message.includes("user_id")) return "User ID already exists.";
+  return "Record already exists.";
 };
 
 async function create(req, res) {

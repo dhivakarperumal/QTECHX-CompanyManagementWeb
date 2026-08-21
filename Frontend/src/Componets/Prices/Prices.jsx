@@ -528,15 +528,7 @@ const Prices = () => {
                     />
                     <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
 
-                    {/* Popular Badge */}
-                    {isFeatured && (
-                      <div className="absolute right-4 top-4 z-20">
-                        <span className="flex items-center gap-1.5 rounded-full border border-[#FF6A00] bg-[#FF6A00] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-[0_0_15px_rgba(255,106,0,0.5)]">
-                          <FiZap size={11} />
-                          <span>MOST POPULAR</span>
-                        </span>
-                      </div>
-                    )}
+                    
 
                     <div className="flex flex-1 flex-col p-5 sm:p-6">
                       {/* Plan Title */}
