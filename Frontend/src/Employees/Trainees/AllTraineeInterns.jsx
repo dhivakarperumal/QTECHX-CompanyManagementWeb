@@ -379,45 +379,6 @@ export default function AllTraineeInterns() {
           <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
             <Users size={30} className="opacity-40" />
           </div>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
-          >
-            <option value="" className="bg-black text-white">
-              All Types
-            </option>
-
-            {TYPE_OPTIONS.map((option) => (
-              <option
-                key={option}
-                value={option}
-                className="bg-black text-white"
-              >
-                {option}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black text-white px-3 py-2.5 text-sm outline-none focus:border-orange-500/50"
-          >
-            <option value="" className="bg-black text-white">
-              All Status
-            </option>
-
-            {STATUS_OPTIONS.map((option) => (
-              <option
-                key={option}
-                value={option}
-                className="bg-black text-white"
-              >
-                {option}
-              </option>
-            ))}
-          </select>
         </div>
       )}
 
