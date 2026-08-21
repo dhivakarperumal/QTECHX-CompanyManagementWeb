@@ -18,6 +18,8 @@ import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 import api from "../../api";
 
+const BACKEND_BASE_URL = (api?.defaults?.baseURL || "http://localhost:5000/api").replace(/\/api$/, "");
+
 const getImageUrl = (image) => {
   if (!image) return "/Project/p1.jpg";
 
@@ -47,11 +49,18 @@ const getImageUrl = (image) => {
       return trimmed;
     }
 
-    if (trimmed.startsWith("/")) {
-      return trimmed;
+    const normalized = trimmed.replace(/\\/g, "/");
+    if (normalized.startsWith("/uploads/")) {
+      return `${BACKEND_BASE_URL}${normalized}`;
+    }
+    if (normalized.startsWith("uploads/")) {
+      return `${BACKEND_BASE_URL}/${normalized}`;
+    }
+    if (normalized.startsWith("/")) {
+      return normalized;
     }
 
-    return `/${trimmed}`;
+    return `/${normalized}`;
   }
 
   if (typeof image === "object") {
@@ -83,9 +92,42 @@ const ProjectPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get("/projects/public/all?limit=100&page=1");
-      const projectList = Array.isArray(data?.data) ? data.data : [];
-      setProjects(projectList);
+      const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
+        api.get("/projects/public/all?limit=500&current_status=Completed"),
+        api.get("/completed-projects/public/all?limit=500")
+      ]);
+
+      let adminList = [];
+      if (adminProjectsRes.status === "fulfilled" && adminProjectsRes.value?.data) {
+        const raw = adminProjectsRes.value.data.data;
+        if (Array.isArray(raw)) {
+          // Strictly only include projects where status is Completed
+          adminList = raw.filter(
+            (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
+          );
+        }
+      }
+
+      let completedList = [];
+      if (completedProjectsRes.status === "fulfilled" && completedProjectsRes.value?.data) {
+        const raw = completedProjectsRes.value.data.data;
+        if (Array.isArray(raw)) {
+          completedList = raw;
+        }
+      }
+
+      // Combine both lists (avoiding duplicates by uuid/id)
+      const seen = new Set();
+      const combined = [];
+      [...completedList, ...adminList].forEach((p) => {
+        const key = p.uuid || p.id || p.project_name;
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          combined.push(p);
+        }
+      });
+
+      setProjects(combined);
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -121,21 +163,34 @@ const ProjectPage = () => {
         }
       }
 
-      const features = proj.frontend_tech
-        ? proj.frontend_tech
-            .split(",")
-            .map((f) => f.trim())
-            .filter(Boolean)
-        : [];
+      let features = [];
+      if (proj.frontend_tech) {
+        features = proj.frontend_tech
+          .split(",")
+          .map((f) => f.trim())
+          .filter(Boolean);
+      } else if (Array.isArray(proj.technologies)) {
+        features = proj.technologies;
+      } else if (typeof proj.technologies === "string") {
+        try {
+          const parsed = JSON.parse(proj.technologies);
+          features = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          features = proj.technologies.split(",").map((f) => f.trim()).filter(Boolean);
+        }
+      }
 
       return {
         id: proj.uuid || proj.id,
         title: proj.project_name || proj.title || "Untitled Project",
         image: getImageUrl(imageCandidate),
-        link: proj.github_link || proj.link || "#",
-        category: proj.project_category || proj.category || "General",
+        link: proj.url || proj.project_url || proj.domain_name || proj.sub_domain_name || proj.github_link || proj.link || "#",
+        category: proj.category || proj.project_category || "General",
         description: proj.description || proj.project_description || "",
         features,
+        client_name: proj.client_name || proj.clientName || "",
+        client_details: proj.client_details || proj.clientDetails || null,
+        status: proj.status || proj.current_status || "Completed",
       };
     });
   }, [projects]);

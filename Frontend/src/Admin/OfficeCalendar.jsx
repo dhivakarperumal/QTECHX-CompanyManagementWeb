@@ -425,7 +425,13 @@ const OfficeCalendar = () => {
 
   const handleFieldChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(c => ({ ...c, [name]: type === 'checkbox' ? checked : value }));
+    setFormData(c => {
+      const updated = { ...c, [name]: type === 'checkbox' ? checked : value };
+      if (name === 'startTime' && updated.endTime && updated.endTime < value) {
+        updated.endTime = value;
+      }
+      return updated;
+    });
   };
 
   const handleArrayInput = (e, field) => {
@@ -470,6 +476,22 @@ const OfficeCalendar = () => {
     }
     if (dayjs(formData.endDate).isBefore(dayjs(formData.startDate))) {
       toast.error('End date before start date.'); return;
+    }
+    if (formData.startTime) {
+      if (formData.startTime < '09:00' || formData.startTime > '20:00') {
+        toast.error('Start time must be between 9:00 AM and 8:00 PM.');
+        return;
+      }
+    }
+    if (formData.endTime) {
+      if (formData.endTime < '09:00' || formData.endTime > '20:00') {
+        toast.error('End time must be between 9:00 AM and 8:00 PM.');
+        return;
+      }
+    }
+    if (formData.startTime && formData.endTime && formData.endTime < formData.startTime) {
+      toast.error('End time must be after start time.');
+      return;
     }
     setIsSubmitting(true);
     try {
@@ -922,7 +944,21 @@ const OfficeCalendar = () => {
         .spin { animation: spin 1s linear infinite; }
       `}</style>
 
-      <Toaster position="top-right" toastOptions={{ style: { background: '#13141a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'Poppins,sans-serif', borderRadius: '12px', fontSize: '13px' } }} />
+      <Toaster
+        position="top-right"
+        containerStyle={{ zIndex: 999999 }}
+        toastOptions={{
+          style: {
+            background: '#13141a',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            fontFamily: 'Poppins,sans-serif',
+            borderRadius: '12px',
+            fontSize: '13px',
+            zIndex: 999999,
+          },
+        }}
+      />
 
       <div className="oc">
         {/* ═══════════════════════ MAIN CALENDAR ═══════════════════════ */}
@@ -1339,11 +1375,11 @@ const OfficeCalendar = () => {
                   </div>
                   <div>
                     <label className="oc-flbl">Start Time</label>
-                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="startTime" min="09:00" max="20:00" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">End Time</label>
-                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="endTime" min={formData.startTime && formData.startTime >= "09:00" && formData.startTime <= "20:00" ? formData.startTime : "09:00"} max="20:00" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div className="oc-full">
                     <label className="oc-flbl">Meeting Purpose</label>
@@ -1425,11 +1461,11 @@ const OfficeCalendar = () => {
                   </div>
                   <div>
                     <label className="oc-flbl">Start Time</label>
-                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="startTime" min="09:00" max="20:00" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">End Time</label>
-                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="endTime" min={formData.startTime && formData.startTime >= "09:00" && formData.startTime <= "20:00" ? formData.startTime : "09:00"} max="20:00" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div className="oc-full">
                     <label className="oc-flbl">Description</label>
@@ -1450,11 +1486,11 @@ const OfficeCalendar = () => {
                   </div>
                   <div>
                     <label className="oc-flbl">Start Time</label>
-                    <input type="time" name="startTime" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="startTime" min="09:00" max="20:00" value={formData.startTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">End Time</label>
-                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="endTime" min={formData.startTime && formData.startTime >= "09:00" && formData.startTime <= "20:00" ? formData.startTime : "09:00"} max="20:00" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                 </>
               )}
@@ -1479,7 +1515,7 @@ const OfficeCalendar = () => {
                   </div>
                   <div>
                     <label className="oc-flbl">Deadline Time</label>
-                    <input type="time" name="endTime" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
+                    <input type="time" name="endTime" min="09:00" max="20:00" value={formData.endTime} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div className="oc-full">
                     <label className="oc-flbl">Description</label>

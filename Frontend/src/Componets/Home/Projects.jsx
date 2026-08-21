@@ -17,6 +17,8 @@ import SectionTitle from "../CommonComponents/SectionTitle";
 
 const Slider = SliderLib.default ? SliderLib.default : SliderLib;
 
+const BACKEND_BASE_URL = (api?.defaults?.baseURL || "http://localhost:5000/api").replace(/\/api$/, "");
+
 const getImageUrl = (image) => {
   if (!image) {
     return "/Project/p1.jpg";
@@ -53,12 +55,18 @@ const getImageUrl = (image) => {
       return trimmed;
     }
 
-    // Absolute path
-    if (trimmed.startsWith("/")) {
-      return trimmed;
+    const normalized = trimmed.replace(/\\/g, "/");
+    if (normalized.startsWith("/uploads/")) {
+      return `${BACKEND_BASE_URL}${normalized}`;
+    }
+    if (normalized.startsWith("uploads/")) {
+      return `${BACKEND_BASE_URL}/${normalized}`;
+    }
+    if (normalized.startsWith("/")) {
+      return normalized;
     }
 
-    return `/${trimmed}`;
+    return `/${normalized}`;
   }
 
   // If object
@@ -80,6 +88,14 @@ const getImageUrl = (image) => {
   return "/Project/p1.jpg";
 };
 
+const normalizeUrl = (url) => {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === "#" || trimmed === "-" || trimmed === "—") return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 const Projects = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,56 +111,92 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data } = await api.get(
-          "/projects/public/all?limit=100&page=1"
-        );
+        const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
+          api.get("/projects/public/all?limit=500&current_status=Completed"),
+          api.get("/completed-projects/public/all?limit=500")
+        ]);
 
-        if (data.success && Array.isArray(data.data)) {
-          const transformedProjects = data.data.map((project) => {
-            let projectImages = [];
-
-            if (project.project_images) {
-              if (typeof project.project_images === "string") {
-                try {
-                  const parsed = JSON.parse(project.project_images);
-                  projectImages = Array.isArray(parsed) ? parsed : [parsed];
-                } catch {
-                  projectImages = [project.project_images];
-                }
-              } else if (Array.isArray(project.project_images)) {
-                projectImages = project.project_images;
-              } else if (typeof project.project_images === "object") {
-                projectImages = [project.project_images];
-              }
-            }
-
-            const features = project.frontend_tech
-              ? project.frontend_tech
-                .split(",")
-                .map((tech) => tech.trim())
-                .filter(Boolean)
-              : [];
-
-            const imageCandidate = projectImages.length > 0
-              ? projectImages[0]
-              : (project.image || project.file_path || project.project_images);
-
-            return {
-              id: project.uuid || project.id,
-              title: project.project_name || project.title || "Untitled Project",
-              image: getImageUrl(imageCandidate),
-              category:
-                project.project_category || project.category || "General",
-              description:
-                project.description || project.project_description || "",
-              features,
-              link: project.github_link || project.link || "#",
-            };
-          });
-
-          setItems(transformedProjects);
+        let adminList = [];
+        if (adminProjectsRes.status === "fulfilled" && adminProjectsRes.value?.data) {
+          const raw = adminProjectsRes.value.data.data;
+          if (Array.isArray(raw)) {
+            adminList = raw.filter(
+              (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
+            );
+          }
         }
 
+        let completedList = [];
+        if (completedProjectsRes.status === "fulfilled" && completedProjectsRes.value?.data) {
+          const raw = completedProjectsRes.value.data.data;
+          if (Array.isArray(raw)) {
+            completedList = raw;
+          }
+        }
+
+        const seen = new Set();
+        const combined = [];
+        [...completedList, ...adminList].forEach((p) => {
+          const key = p.uuid || p.id || p.project_name;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            combined.push(p);
+          }
+        });
+
+        const transformedProjects = combined.map((project) => {
+          let projectImages = [];
+
+          if (project.project_images) {
+            if (typeof project.project_images === "string") {
+              try {
+                const parsed = JSON.parse(project.project_images);
+                projectImages = Array.isArray(parsed) ? parsed : [parsed];
+              } catch {
+                projectImages = [project.project_images];
+              }
+            } else if (Array.isArray(project.project_images)) {
+              projectImages = project.project_images;
+            } else if (typeof project.project_images === "object") {
+              projectImages = [project.project_images];
+            }
+          }
+
+          let features = [];
+          if (project.frontend_tech) {
+            features = project.frontend_tech
+              .split(",")
+              .map((tech) => tech.trim())
+              .filter(Boolean);
+          } else if (Array.isArray(project.technologies)) {
+            features = project.technologies;
+          } else if (typeof project.technologies === "string") {
+            try {
+              const parsed = JSON.parse(project.technologies);
+              features = Array.isArray(parsed) ? parsed : [parsed];
+            } catch {
+              features = project.technologies.split(",").map((t) => t.trim()).filter(Boolean);
+            }
+          }
+
+          const imageCandidate = projectImages.length > 0
+            ? projectImages[0]
+            : (project.image || project.file_path || project.project_images);
+
+          return {
+            id: project.uuid || project.id,
+            title: project.project_name || project.title || "Untitled Project",
+            image: getImageUrl(imageCandidate),
+            category:
+              project.category || project.project_category || "General",
+            description:
+              project.description || project.project_description || "",
+            features,
+            link: project.url || project.project_url || project.domain_name || project.sub_domain_name || project.github_link || project.link || "#",
+          };
+        });
+
+        setItems(transformedProjects);
         setLoading(false);
       } catch (err) {
         setError(
@@ -650,43 +702,54 @@ const Projects = () => {
                 </div>
               ) : (
                 <Slider {...settings}>
-                  {filteredProjects.map(
-                    (project, index) => (
+                  {filteredProjects.map((project, index) => {
+                    const targetUrl = normalizeUrl(
+                      project.link ||
+                      project.url ||
+                      project.project_url ||
+                      project.domain_name ||
+                      project.sub_domain_name ||
+                      project.github_link
+                    );
+
+                    const handleOpenUrl = () => {
+                      if (targetUrl) {
+                        window.open(targetUrl, "_blank", "noopener,noreferrer");
+                      }
+                    };
+
+                    return (
                       <div
                         key={project.id}
                         className="px-2 pb-2"
                       >
-
                         {/* =================================
                             PROJECT CARD
                         ================================== */}
-
                         <div
                           className="
-  group
-  relative
-  overflow-hidden
-  rounded-2xl
-  border
-  border-[#FF6A00]/60
-  bg-gradient-to-br
-  from-[#171d22]
-  via-[#11171c]
-  to-[#0d1216]
-  shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.10)]
-  transition-all
-  duration-500
-  hover:-translate-y-1
-  hover:border-[#FF6A00]/50
-  hover:from-[#1d2429]
-  hover:via-[#141b20]
-  hover:to-[#0f1519]
-  hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
-"
+                            group
+                            relative
+                            overflow-hidden
+                            rounded-2xl
+                            border
+                            border-[#FF6A00]/60
+                            bg-gradient-to-br
+                            from-[#171d22]
+                            via-[#11171c]
+                            to-[#0d1216]
+                            shadow-[0_12px_35px_rgba(0,0,0,0.75),0_0_20px_rgba(255,106,0,0.10)]
+                            transition-all
+                            duration-500
+                            hover:-translate-y-1
+                            hover:border-[#FF6A00]/50
+                            hover:from-[#1d2429]
+                            hover:via-[#141b20]
+                            hover:to-[#0f1519]
+                            hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
+                          "
                         >
-
                           {/* Orange top line */}
-
                           <div
                             className="
                               absolute
@@ -705,36 +768,33 @@ const Projects = () => {
                           />
 
                           {/* =================================
-    IMAGE
-================================= */}
-
+                              IMAGE
+                          ================================== */}
                           <div
-                            className="
-    relative
-    h-[170px]
-    overflow-hidden
-    bg-[#080d11]
-    sm:h-[180px]
-  "
+                            onClick={handleOpenUrl}
+                            className={`
+                              relative
+                              h-[170px]
+                              overflow-hidden
+                              bg-[#080d11]
+                              sm:h-[180px]
+                              ${targetUrl ? "cursor-pointer" : ""}
+                            `}
                           >
                             <img
                               src={project.image}
                               alt={project.title}
                               className="
-      h-full
-      w-full
-      object-contain
-      p-2
-      transition-transform
-      duration-700
-      group-hover:scale-105
-    "
+                                h-full
+                                w-full
+                                object-contain
+                                p-2
+                                transition-transform
+                                duration-700
+                                group-hover:scale-105
+                              "
                               onError={(e) => {
-                                console.error(
-                                  "❌ Project image failed:",
-                                  project.image
-                                );
-
+                                console.error("❌ Project image failed:", project.image);
                                 if (!e.currentTarget.dataset.fallback) {
                                   e.currentTarget.dataset.fallback = "true";
                                   e.currentTarget.src = "/Project/p1.jpg";
@@ -743,75 +803,84 @@ const Projects = () => {
                             />
                           </div>
 
+                          {/* =================================
+                              PROJECT NAME + CATEGORY + DESCRIPTION
+                          ================================== */}
+                          <div className="px-4 py-4 text-left">
+                            {/* Project Name */}
+                            <h3
+                              onClick={handleOpenUrl}
+                              className={`
+                                min-h-[24px]
+                                text-base
+                                font-semibold
+                                leading-6
+                                text-white
+                                transition-colors
+                                duration-300
+                                sm:text-lg
+                                ${targetUrl ? "cursor-pointer hover:text-[#FF6A00] group-hover:text-[#FF6A00]" : ""}
+                              `}
+                            >
+                              {project.title}
+                            </h3>
 
-                        {/* =================================
-    PROJECT NAME + CATEGORY + DESCRIPTION
-================================= */}
+                            {/* Category */}
+                            <span
+                              className="
+                                mt-2
+                                inline-flex
+                                items-center
+                                rounded-full
+                                border
+                                border-[#FF6A00]/40
+                                bg-[#FF6A00]/10
+                                px-2.5
+                                py-1
+                                text-[9px]
+                                font-semibold
+                                uppercase
+                                tracking-[0.12em]
+                                text-[#FF6A00]
+                                transition-all
+                                duration-300
+                                group-hover:border-[#FF6A00]/70
+                                group-hover:bg-[#FF6A00]/15
+                              "
+                            >
+                              {project.category}
+                            </span>
 
-<div className="px-4 py-4 text-left">
+                            {/* Description */}
+                            <p
+                              className="
+                                mt-3
+                                h-[40px]
+                                overflow-hidden
+                                line-clamp-2
+                                text-xs
+                                leading-5
+                                text-white/55
+                                sm:text-sm
+                                sm:leading-5
+                              "
+                            >
+                              {project.description ||
+                                "Scalable digital solution engineered for modern business performance."}
+                            </p>
 
-  {/* Project Name */}
-  <h3
-    className="
-      min-h-[24px]
-      text-base
-      font-semibold
-      leading-6
-      text-white
-      transition-colors
-      duration-300
-      group-hover:text-[#FF6A00]
-      sm:text-lg
-    "
-  >
-    {project.title}
-  </h3>
-
-  {/* Category */}
-  <span
-    className="
-      mt-2
-      inline-flex
-      items-center
-      rounded-full
-      border
-      border-[#FF6A00]/40
-      bg-[#FF6A00]/10
-      px-2.5
-      py-1
-      text-[9px]
-      font-semibold
-      uppercase
-      tracking-[0.12em]
-      text-[#FF6A00]
-      transition-all
-      duration-300
-      group-hover:border-[#FF6A00]/70
-      group-hover:bg-[#FF6A00]/15
-    "
-  >
-    {project.category}
-  </span>
-
-  {/* Description */}
-  <p
-    className="
-      mt-3
-      h-[40px]
-      overflow-hidden
-      line-clamp-2
-      text-xs
-      leading-5
-      text-white/55
-      sm:text-sm
-      sm:leading-5
-    "
-  >
-    {project.description ||
-      "Scalable digital solution engineered for modern business performance."}
-  </p>
-
-</div>
+                            {/* {targetUrl && (
+                              <div
+                                onClick={handleOpenUrl}
+                                className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5 cursor-pointer text-[#FF6A00] group-hover:text-white transition-colors"
+                              >
+                                <span className="text-[11px] font-bold uppercase tracking-wider truncate max-w-[170px]">
+                                  {targetUrl.replace(/^https?:\/\//i, "").replace(/\/$/, "")}
+                                </span>
+                                <FiExternalLink size={12} className="shrink-0" />
+                              </div>
+                            )} */}
+                          </div>
                           {/* Bottom glow */}
 
                           <div
@@ -836,8 +905,8 @@ const Projects = () => {
 
                         </div>
                       </div>
-                    )
-                  )}
+                    );
+                  })}
                 </Slider>
               )}
 
