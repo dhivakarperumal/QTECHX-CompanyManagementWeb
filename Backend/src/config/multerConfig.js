@@ -12,6 +12,7 @@ const taskUploadDir = path.join(uploadDir, "tasks");
 const myEventUploadDir = path.join(uploadDir, "myevents");
 const serviceUploadDir = path.join(uploadDir, "services");
 const jobUploadDir = path.join(uploadDir, "jobs");
+const completedProjectsUploadDir = path.join(uploadDir, "completedprojects");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -43,6 +44,9 @@ if (!fs.existsSync(serviceUploadDir)) {
 if (!fs.existsSync(jobUploadDir)) {
   fs.mkdirSync(jobUploadDir, { recursive: true });
 }
+if (!fs.existsSync(completedProjectsUploadDir)) {
+  fs.mkdirSync(completedProjectsUploadDir, { recursive: true });
+}
 
 const projectImagesDir = path.join(projectUploadDir, "images");
 const projectImagesZipDir = path.join(projectUploadDir, "ProjectImageZip");
@@ -73,6 +77,8 @@ const storage = multer.diskStorage({
       destinationDir = taskUploadDir;
     } else if (req.baseUrl?.includes("/myevents")) {
       destinationDir = myEventUploadDir;
+    } else if (requestPath.includes("/completedprojects") || requestPath.includes("/completed-projects")) {
+      destinationDir = completedProjectsUploadDir;
     } else if (req.baseUrl?.includes("/projects") || req.baseUrl?.includes("/project-plans")) {
       if (file.fieldname === "plan_document" || file.fieldname === "project_plans") {
         destinationDir = projectPlanUploadDir;

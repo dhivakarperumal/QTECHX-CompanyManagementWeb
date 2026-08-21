@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail, FolderKanban } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -31,6 +31,13 @@ const AdminSettingsPage = () => {
       icon: BriefcaseBusiness,
       path: '/admin/settings/reviews',
       accent: 'from-violet-500/20 to-violet-600/10',
+    },
+    {
+      title: 'Completed Projects',
+      description: 'Manage portfolio showcase of completed projects, client details, and live URLs.',
+      icon: FolderKanban,
+      path: '/admin/settings/completed-projects',
+      accent: 'from-emerald-500/20 to-teal-600/10',
     },
     {
       title: 'Post Jobs',

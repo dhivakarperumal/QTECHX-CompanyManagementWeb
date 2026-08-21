@@ -47,6 +47,7 @@ const reviewRouter = require("./src/routers/reviewRouter");
 const jobRouter = require("./src/routers/jobRouter");
 const jobApplicationRouter = require("./src/routers/jobApplicationRouter");
 const contactRequestRouter = require("./src/routers/contactRequestRouter");
+const completedProjectRouter = require("./src/routers/completedProjectRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -111,6 +112,8 @@ app.use("/api/job-applications", jobApplicationRouter);
 app.use("/api/contacts", contactRequestRouter);
 app.use("/api/contact-requests", contactRequestRouter);
 app.use("/api/trainee-assignments", traineeAssignmentRouter);
+app.use("/api/completedprojects", completedProjectRouter);
+app.use("/api/completed-projects", completedProjectRouter);
 
 app.post("/api/upload", upload.any(), (req, res) => {
   const files = Array.isArray(req.files) ? req.files : [];

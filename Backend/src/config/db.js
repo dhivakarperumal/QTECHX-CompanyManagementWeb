@@ -2543,6 +2543,36 @@ async function ensureContactRequestsSchema(pool) {
   `);
 }
 
+async function ensureCompletedProjectsSchema(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS completed_projects (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid CHAR(36) NOT NULL,
+      project_name VARCHAR(255) NOT NULL,
+      category VARCHAR(100) NULL,
+      image VARCHAR(500) NULL,
+      description TEXT NULL,
+      url VARCHAR(500) NULL,
+      client_id INT UNSIGNED NULL,
+      client_name VARCHAR(255) NULL,
+      client_details JSON NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'Completed',
+      technologies JSON NULL,
+      completion_date DATE NULL,
+      created_by VARCHAR(36) NULL,
+      updated_by VARCHAR(36) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_completed_projects_uuid (uuid),
+      KEY idx_completed_projects_category (category),
+      KEY idx_completed_projects_status (status),
+      KEY idx_completed_projects_client_id (client_id),
+      KEY idx_completed_projects_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2557,6 +2587,7 @@ async function initDB() {
     await ensureServicesSchema(pool);
     await ensureServiceRequestsSchema(pool);
     await ensureContactRequestsSchema(pool);
+    await ensureCompletedProjectsSchema(pool);
     await ensurePricingSchema(pool);
     await ensureReviewsSchema(pool);
     await ensureJobsSchema(pool);
