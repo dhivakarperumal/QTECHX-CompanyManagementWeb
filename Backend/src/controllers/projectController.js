@@ -100,7 +100,7 @@ async function createProjectHandler(req, res) {
 async function getAllProjectsHandler(req, res) {
   try {
     const page  = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const { search, current_status, project_manager } = req.query;
     const result = await listProjects({ page, limit, search, current_status, project_manager });
     return ok(res, {

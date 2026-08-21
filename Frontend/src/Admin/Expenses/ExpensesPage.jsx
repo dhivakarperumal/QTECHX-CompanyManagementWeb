@@ -593,7 +593,7 @@ const ExpensesPage = () => {
               <p className="text-2xl font-bold text-emerald-400 mt-1">₹ {parseFloat(fund).toFixed(2)}</p>
             </div>
           </div>
-          {/* <div className="mt-4 relative z-10">
+          <div className="mt-4 relative z-10">
             {!showFundForm ? (
               <button
                 onClick={() => setShowFundForm(true)}
@@ -613,7 +613,7 @@ const ExpensesPage = () => {
                 <button type="button" onClick={() => setShowFundForm(false)} className="px-3 py-1.5 bg-white/5 text-white/60 rounded-lg hover:text-white hover:bg-white/10">X</button>
               </form>
             )}
-          </div> */}
+          </div>
         </div>
 
         {/* Total Spent Stat */}

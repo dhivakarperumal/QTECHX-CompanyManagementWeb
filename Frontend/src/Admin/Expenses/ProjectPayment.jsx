@@ -61,6 +61,12 @@ const customSelectStyles = {
     border: '1px solid rgba(255,255,255,.1)',
     borderRadius: '12px',
     overflow: 'hidden',
+    zIndex: 99999,
+  }),
+
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 99999,
   }),
 
   menuList: (provided) => ({
@@ -177,41 +183,39 @@ export default function ProjectPayment() {
       : "Receipt",
   });
 
-  // Fetch assigned projects on mount
+  const fetchProjects = async () => {
+    setProjectsLoading(true);
+    try {
+      const { data } = await api.get('/projects?limit=500&page=1');
+      const rows = Array.isArray(data.data) ? data.data : (data.data?.rows || []);
+      const uniqueProjects = rows.map((row) => ({
+        id: row.id,
+        uuid: row.uuid,
+        project_name: row.project_name,
+        project_code: row.project_code,
+        client_name: row.client_name,
+        company_name: row.company_name,
+        total_project_cost: row.total_project_cost,
+        current_status: row.current_status,
+        overall_progress: row.overall_progress,
+        project_start_date: row.project_start_date,
+        estimated_completion_date: row.estimated_completion_date,
+      })).sort((a, b) => {
+        const nameA = (a.project_name || '').toString().toLowerCase();
+        const nameB = (b.project_name || '').toString().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      setProjects(uniqueProjects);
+    } catch (err) {
+      console.warn('Failed to load projects:', err);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  // Fetch projects and payment history on mount
   useEffect(() => {
-    (async () => {
-      setProjectsLoading(true);
-      try {
-        const { data } = await api.get('/projects/assignments/all?limit=500&page=1');
-        const rows = data.data || [];
-        const uniqueProjects = Array.from(
-          new Map(rows.map((row) => [
-            String(row.project_id || ''),
-            {
-              id: row.project_id,
-              uuid: row.project_uuid,
-              project_name: row.project_name,
-              project_code: row.project_code,
-              client_name: row.client_name,
-              total_project_cost: row.total_project_cost,
-              current_status: row.current_status,
-              overall_progress: row.overall_progress,
-              project_start_date: row.project_start_date,
-              estimated_completion_date: row.estimated_completion_date,
-            },
-          ])).values()
-        ).sort((a, b) => {
-          const nameA = (a.project_name || '').toString().toLowerCase();
-          const nameB = (b.project_name || '').toString().toLowerCase();
-          return nameA.localeCompare(nameB);
-        });
-        setProjects(uniqueProjects);
-      } catch (err) {
-        console.warn('Failed to load assigned projects:', err);
-      } finally {
-        setProjectsLoading(false);
-      }
-    })();
+    fetchProjects();
     fetchHistory();
   }, []);
 
@@ -447,6 +451,7 @@ export default function ProjectPayment() {
               setShowForm(true);
               setError("");
               setSuccess("");
+              fetchProjects();
             }
           }}
           className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 self-start"
@@ -470,17 +475,20 @@ export default function ProjectPayment() {
                 <span className="mb-1.5 block font-medium">Project *</span>
                 <Select
                   styles={customSelectStyles}
+                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                   name="project_id"
                   value={formData.project_id ? {
                     value: formData.project_id,
-                    label: projects.find(p => String(p.id) === String(formData.project_id))
-                      ? `${projects.find(p => String(p.id) === String(formData.project_id)).project_name} (${projects.find(p => String(p.id) === String(formData.project_id)).project_code})`
-                      : formData.project_id
+                    label: (() => {
+                      const proj = projects.find(p => String(p.id) === String(formData.project_id));
+                      if (!proj) return formData.project_id;
+                      return `${proj.project_name || 'Untitled'}${proj.project_code ? ` (${proj.project_code})` : ''}${proj.client_name ? ` - ${proj.client_name}` : ''}`;
+                    })()
                   } : null}
                   onChange={(option) => handleChange({ target: { name: 'project_id', value: option ? option.value : '' } })}
                   options={projects.map((proj) => ({
                     value: proj.id,
-                    label: `${proj.project_name || 'Untitled Project'}${proj.project_code ? ` (${proj.project_code})` : ''}`,
+                    label: `${proj.project_name || 'Untitled Project'}${proj.project_code ? ` (${proj.project_code})` : ''}${proj.client_name ? ` - ${proj.client_name}` : ''}`,
                   }))}
                   placeholder="Select Project"
                   isLoading={projectsLoading}
@@ -543,6 +551,7 @@ export default function ProjectPayment() {
                 <span className="mb-1.5 block font-medium">Payment Mode *</span>
                 <Select
                   styles={customSelectStyles}
+                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                   name="payment_mode"
                   value={formData.payment_mode ? { value: formData.payment_mode, label: formData.payment_mode } : null}
                   onChange={(option) => handleChange({ target: { name: 'payment_mode', value: option ? option.value : '' } })}
