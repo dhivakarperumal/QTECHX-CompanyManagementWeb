@@ -218,7 +218,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
   const handleLogout = () => {
     logout();
     setActiveDropdown(null);
-    window.location.hash = "#/login";
+    window.location.hash = "#/";
   };
 
   const handleSearch = (e) => {

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiMenu, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
@@ -32,7 +32,7 @@ const Navbar = () => {
   const handleConfirmLogout = () => {
     logout();
     setShowLogoutConfirm(false);
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   useEffect(() => {

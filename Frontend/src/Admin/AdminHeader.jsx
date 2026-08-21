@@ -194,7 +194,7 @@ const Header = ({ onMenuClick }) => {
   const handleLogout = () => {
     logout();
     setActiveDropdown(null);
-    window.location.hash = "#/login";
+    window.location.hash = "#/";
   };
 
   /* icon button helper */
