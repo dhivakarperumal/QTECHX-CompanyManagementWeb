@@ -243,6 +243,9 @@ const EmployeeAdd = () => {
     account_number: "",
     ifsc_code: "",
     upi_id: "",
+    driving_licence_number: "",
+    vehicle_registration_number: "",
+    referral_code: "",
     resume_url: "",
     aadhaar_url: "",
     pan_url: "",
@@ -380,6 +383,9 @@ const EmployeeAdd = () => {
             account_number: emp.account_number || "",
             ifsc_code: emp.ifsc_code || "",
             upi_id: emp.upi_id || "",
+            driving_licence_number: emp.driving_licence_number || "",
+            vehicle_registration_number: emp.vehicle_registration_number || "",
+            referral_code: emp.referral_code || "",
             profile_photo: "",
             resume_url: "",
             aadhaar_url: "",
@@ -486,6 +492,11 @@ const EmployeeAdd = () => {
     const errors = {};
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    if (!data.first_name?.trim()) errors.first_name = "First name is required.";
+    if (!data.last_name?.trim()) errors.last_name = "Last name is required.";
+    if (!data.department?.trim()) errors.department = "Department is required.";
+    if (!data.joining_date) errors.joining_date = "Joining date is required.";
+
     if (!data.mobile_number?.trim()) {
       errors.mobile_number = "Mobile number is required.";
     } else {
@@ -552,14 +563,19 @@ const EmployeeAdd = () => {
 
     if (!data.account_number?.trim()) {
       errors.account_number = "Account number is required.";
+    } else if (!/^\d{6,20}$/.test(data.account_number)) {
+      errors.account_number = "Account number must be 6–20 digits.";
     }
 
     if (!data.ifsc_code?.trim()) {
       errors.ifsc_code = "IFSC code is required.";
+    } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(data.ifsc_code)) {
+      errors.ifsc_code = "IFSC must be 11 characters like SBIN0001234.";
     }
 
-    if (!data.upi_id?.trim()) {
-      errors.upi_id = "UPI ID is required.";
+    // UPI ID is optional, but validate format if provided
+    if (data.upi_id?.trim() && !/^[A-Za-z0-9._-]{2,}@[A-Za-z0-9.-]{2,}$/.test(data.upi_id)) {
+      errors.upi_id = "UPI ID should look like name@bank.";
     }
 
     if (!isEditMode) {
@@ -672,8 +688,9 @@ const EmployeeAdd = () => {
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
-      const errorMessages = Object.values(validationErrors).join(" | ");
-      setError(errorMessages);
+      // Show only the first validation error at the top for clarity
+      const firstError = Object.values(validationErrors)[0];
+      setError(firstError);
       setLoading(false);
       return;
     }
@@ -1012,9 +1029,24 @@ const EmployeeAdd = () => {
               {fieldErrors.ifsc_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.ifsc_code}</p>}
             </div>
             <div>
-              <label className={labelClass}>UPI ID <span className="text-red-500">*</span></label>
-              <input type="text" name="upi_id" required value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
+              <label className={labelClass}>UPI ID <span className="text-white/40 text-xs font-normal">(optional)</span></label>
+              <input type="text" name="upi_id" value={formData.upi_id} onChange={handleChange} className={inputClass} placeholder="name@bank" />
               {fieldErrors.upi_id && <p className="mt-1 text-xs text-red-400">{fieldErrors.upi_id}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Driving Licence Number <span className="text-white/40 text-xs font-normal">(optional)</span></label>
+              <input type="text" name="driving_licence_number" value={formData.driving_licence_number} onChange={handleChange} className={inputClass} placeholder="e.g. MH0120200012345" />
+              {fieldErrors.driving_licence_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.driving_licence_number}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Vehicle Registration Number <span className="text-white/40 text-xs font-normal">(optional)</span></label>
+              <input type="text" name="vehicle_registration_number" value={formData.vehicle_registration_number} onChange={handleChange} className={inputClass} placeholder="e.g. MH01AB1234" />
+              {fieldErrors.vehicle_registration_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.vehicle_registration_number}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Referral Code <span className="text-white/40 text-xs font-normal">(optional)</span></label>
+              <input type="text" name="referral_code" value={formData.referral_code} onChange={handleChange} className={inputClass} placeholder="e.g. REF-XYZ" />
+              {fieldErrors.referral_code && <p className="mt-1 text-xs text-red-400">{fieldErrors.referral_code}</p>}
             </div>
           </div>
         </div>

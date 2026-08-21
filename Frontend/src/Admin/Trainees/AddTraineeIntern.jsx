@@ -101,6 +101,8 @@ const BLANK = {
   emergency_contact_name: '', emergency_contact_number: '', college_university: '', course: '',
   academic_department: '', year_semester: '', college_id_number: '', guide_name: '',
   profile_photo: '', resume: '', college_id_doc: '', offer_letter: '', internship_letter: '',
+  pan_number: '', aadhaar_number: '', account_number: '', ifsc_code: '', upi_id: '',
+  driving_licence_number: '', vehicle_registration_number: '', referral_code: '',
   username: '', official_email: '', password: ''
 };
 
@@ -110,6 +112,9 @@ const toForm = (item) => ({
   emergency_contact_name: item.emergency_contact_name || '', emergency_contact_number: item.emergency_contact_number || '', college_university: item.college_university || '', course: item.course || '',
   academic_department: item.academic_department || '', year_semester: item.year_semester || '', college_id_number: item.college_id_number || '', guide_name: item.guide_name || '',
   profile_photo: item.profile_photo || '', resume: item.resume || '', college_id_doc: item.college_id_doc || '', offer_letter: item.offer_letter || '', internship_letter: item.internship_letter || '',
+  pan_number: item.pan_number || '', aadhaar_number: item.aadhaar_number || '',
+  account_number: item.account_number || '', ifsc_code: item.ifsc_code || '', upi_id: item.upi_id || '',
+  driving_licence_number: item.driving_licence_number || '', vehicle_registration_number: item.vehicle_registration_number || '', referral_code: item.referral_code || '',
   username: item.username || '', official_email: item.official_email || item.email_address || '', password: ''
 });
 
@@ -180,20 +185,34 @@ export default function AddTraineeIntern() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let sanitizedValue = value;
+
+    if (name === 'pan_number' || name === 'ifsc_code' || name === 'driving_licence_number' || name === 'vehicle_registration_number') {
+      sanitizedValue = value.toUpperCase().trim();
+    } else if (name === 'aadhaar_number') {
+      sanitizedValue = value.replace(/\s+/g, '');
+    } else if (name === 'account_number' || name === 'email_address' || name === 'official_email') {
+      sanitizedValue = value.trim();
+    } else if (name === 'upi_id') {
+      sanitizedValue = value.trim().toLowerCase();
+    } else if (name === 'mobile_number' || name === 'emergency_contact_number') {
+      sanitizedValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+
     setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
+      const newData = { ...prev, [name]: sanitizedValue };
       if (!isEdit) {
         if (name === 'full_name') {
-          const parts = value.trim().split(/\s+/);
+          const parts = sanitizedValue.trim().split(/\s+/);
           const first = parts[0] || '';
           const last = parts.length > 1 ? parts[parts.length - 1] : '';
           newData.username = `${first.toLowerCase()}${last ? '.' + last.toLowerCase() : ''}`.replace(/[^a-z0-9.]/g, '');
         }
         if (name === 'email_address') {
-          newData.official_email = value;
+          newData.official_email = sanitizedValue;
         }
         if (name === 'mobile_number') {
-          newData.password = value;
+          newData.password = sanitizedValue;
         }
       }
       return newData;
@@ -207,11 +226,24 @@ export default function AddTraineeIntern() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.full_name?.trim()) {
-      setError('Full name is required.');
-      return;
+    setError(''); setSuccess('');
+
+    // Frontend validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.full_name?.trim()) { setError('Full name is required.'); return; }
+    if (!formData.mobile_number?.trim()) { setError('Mobile number is required.'); return; }
+    if (!/^[6-9]\d{9}$/.test(formData.mobile_number)) { setError('Mobile number must be 10 digits starting with 6-9.'); return; }
+    if (formData.email_address && !emailPattern.test(formData.email_address)) { setError('Email address is not valid.'); return; }
+    if (formData.aadhaar_number && !/^\d{12}$/.test(formData.aadhaar_number)) { setError('Aadhaar must be exactly 12 digits.'); return; }
+    if (formData.pan_number && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(formData.pan_number)) { setError('PAN must be in format ABCDE1234F.'); return; }
+    if (formData.ifsc_code && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(formData.ifsc_code)) { setError('IFSC must be 11 characters like SBIN0001234.'); return; }
+    if (formData.account_number && !/^\d{6,20}$/.test(formData.account_number)) { setError('Account number must be 6–20 digits.'); return; }
+    if (formData.upi_id && !/^[A-Za-z0-9._-]{2,}@[A-Za-z0-9.-]{2,}$/.test(formData.upi_id)) { setError('UPI ID should look like name@bank.'); return; }
+    if (!isEdit) {
+      if (!formData.username?.trim()) { setError('Username is required.'); return; }
     }
-    setLoading(true); setError(''); setSuccess('');
+
+    setLoading(true);
     try {
       const form = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
@@ -229,7 +261,8 @@ export default function AddTraineeIntern() {
       setSuccess(isEdit ? 'Member updated successfully!' : 'Member created successfully!');
       setTimeout(() => navigate('/admin/trainees'), 1400);
     } catch (err) {
-      setError(err?.response?.data?.message || err.message || 'Failed to save member');
+      const msg = err?.response?.data?.message || err.message || 'Failed to save member';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -336,6 +369,23 @@ export default function AddTraineeIntern() {
             <label className="text-sm text-white/60 md:col-span-2"><span className="mb-1.5 block font-medium">Current Address</span><textarea className={`${fieldClass} min-h-20 resize-y`} name="current_address" value={formData.current_address} onChange={handleChange} placeholder="Current address" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Name</span><input className={fieldClass} name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} placeholder="Emergency contact name" /></label>
             <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Emergency Contact Number</span><input className={fieldClass} name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} placeholder="9876543210" /></label>
+          </div>
+        </section>
+
+        <section className={sectionClass}>
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center"><FileText size={15} className="text-orange-400" /></div>
+            <h2 className="text-base font-bold text-white">Identity & Financial Details</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">PAN Number</span><input className={fieldClass} name="pan_number" value={formData.pan_number} onChange={handleChange} placeholder="e.g. ABCDE1234F" maxLength={10} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Aadhaar Number</span><input className={fieldClass} name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} placeholder="12-digit number" maxLength={12} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Bank Account Number</span><input className={fieldClass} name="account_number" value={formData.account_number} onChange={handleChange} placeholder="Account number" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">IFSC Code</span><input className={fieldClass} name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} placeholder="e.g. SBIN0001234" maxLength={11} /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">UPI ID</span><input className={fieldClass} name="upi_id" value={formData.upi_id} onChange={handleChange} placeholder="e.g. name@upi" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Driving Licence Number</span><input className={fieldClass} name="driving_licence_number" value={formData.driving_licence_number} onChange={handleChange} placeholder="e.g. MH0120200012345" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Vehicle Registration Number</span><input className={fieldClass} name="vehicle_registration_number" value={formData.vehicle_registration_number} onChange={handleChange} placeholder="e.g. MH01AB1234" /></label>
+            <label className="text-sm text-white/60"><span className="mb-1.5 block font-medium">Referral Code</span><input className={fieldClass} name="referral_code" value={formData.referral_code} onChange={handleChange} placeholder="e.g. REF-XYZ" /></label>
           </div>
         </section>
 

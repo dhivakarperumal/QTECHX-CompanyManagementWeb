@@ -161,7 +161,6 @@ async function createClientHandler(req, res) {
       return fail(res, `Invalid follow_up_status. Allowed: ${FOLLOW_UP_STATUSES.join(", ")}`, 400);
     }
 
-    const actor = req.user?.user_id || "SYSTEM";
     const client = await createClient({
       uuid: uuidv4(),
       company_name, client_name, email, phone_number, contact_person,

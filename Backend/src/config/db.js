@@ -2461,6 +2461,28 @@ async function ensureServiceRequestsSchema(pool) {
   `);
 }
 
+async function ensureContactRequestsSchema(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS contact_requests (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid CHAR(36) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NULL,
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NULL,
+      status ENUM('New', 'Contacted', 'In Progress', 'Resolved', 'Closed') NOT NULL DEFAULT 'New',
+      admin_notes TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_contact_requests_uuid (uuid),
+      KEY idx_contact_requests_status (status),
+      KEY idx_contact_requests_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
 async function enforceUniqueConstraints(pool) {
   // Helper to drop index if it exists
   const dropIndexIfExists = async (tableName, indexName) => {
