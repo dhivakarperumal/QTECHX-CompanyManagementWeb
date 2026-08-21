@@ -19,16 +19,15 @@ const Footer = () => {
   const quickLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
     { name: "Projects", path: "/projects" },
     { name: "Career", path: "/career" },
     { name: "Contact", path: "/contact" },
   ];
 
   const featureLinks = [
-    { name: "Why Choose Us", path: "/why-choose-us" },
-    { name: "Who We Work", path: "/who-we-work" },
-    { name: "What We Do", path: "/what-we-do" },
+    { name: "Why Choose Us", path: "/whychooseus" },
+    { name: "Who We Work", path: "/whoweworkwith" },
+    { name: "What We Do", path: "/whatwedo" },
     { name: "Pricing", path: "/prices" },
   ];
 
