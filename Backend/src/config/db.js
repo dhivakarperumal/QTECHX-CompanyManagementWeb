@@ -850,6 +850,26 @@ async function ensureProjectExpirySchema(pool) {
   `);
 }
 
+async function ensureClientsSchema(pool) {
+  try {
+    const [existingTables] = await pool.execute("SHOW TABLES LIKE 'clients'");
+    if (!existingTables.length) return;
+
+    const [columns] = await pool.execute("SHOW COLUMNS FROM clients");
+    const serviceTypeCol = columns.find((c) => c.Field === "service_type");
+    if (serviceTypeCol && serviceTypeCol.Type.toLowerCase().startsWith("enum")) {
+      await pool.execute("ALTER TABLE clients MODIFY COLUMN service_type VARCHAR(100) NULL");
+    }
+
+    const followUpCol = columns.find((c) => c.Field === "follow_up_status");
+    if (followUpCol && followUpCol.Type.toLowerCase().startsWith("enum")) {
+      await pool.execute("ALTER TABLE clients MODIFY COLUMN follow_up_status VARCHAR(50) NOT NULL DEFAULT 'Pending'");
+    }
+  } catch (err) {
+    console.error("ensureClientsSchema error:", err.message);
+  }
+}
+
 async function ensureSchema(pool) {
   // ── Users ────────────────────────────────────────────────────────────────
   await pool.execute(
@@ -885,7 +905,7 @@ async function ensureSchema(pool) {
       phone_number         VARCHAR(20)  NULL,
       contact_person       VARCHAR(255) NULL,
       client_status        ENUM('Active','Inactive','Lead','Prospect','Converted','Closed') NOT NULL DEFAULT 'Lead',
-      service_type         ENUM('Website','Mobile App','Web App','Software','Other') NULL,
+      service_type         VARCHAR(100) NULL,
       business_name        VARCHAR(255) NULL,
       business_type        VARCHAR(255) NULL,
       requirement          TEXT NULL,
@@ -895,7 +915,7 @@ async function ensureSchema(pool) {
       next_follow_up_date  DATE NULL,
       next_follow_up_time  TIME NULL,
       discussion_summary   TEXT NULL,
-      follow_up_status     ENUM('Pending','Completed','Rescheduled','Cancelled') NOT NULL DEFAULT 'Pending',
+      follow_up_status     VARCHAR(50) NOT NULL DEFAULT 'Pending',
       reminder             TINYINT(1) NOT NULL DEFAULT 0,
       created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -909,6 +929,8 @@ async function ensureSchema(pool) {
       INDEX idx_clients_follow_up_status (follow_up_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
   );
+
+  await ensureClientsSchema(pool);
 
   // ── Client Documents ─────────────────────────────────────────────────────
   await pool.execute(
@@ -2440,6 +2462,29 @@ async function ensureServiceRequestsSchema(pool) {
   `);
 }
 
+async function ensureContactRequestsSchema(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS contact_requests (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      uuid CHAR(36) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      mobile VARCHAR(50) NULL,
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      status ENUM('New', 'Contacted', 'In Progress', 'Resolved', 'Closed') NOT NULL DEFAULT 'New',
+      admin_notes TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_contact_requests_uuid (uuid),
+      KEY idx_contact_requests_status (status),
+      KEY idx_contact_requests_email (email),
+      KEY idx_contact_requests_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2453,6 +2498,7 @@ async function initDB() {
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
     await ensureServiceRequestsSchema(pool);
+    await ensureContactRequestsSchema(pool);
     await ensurePricingSchema(pool);
     await ensureReviewsSchema(pool);
     await ensureJobsSchema(pool);

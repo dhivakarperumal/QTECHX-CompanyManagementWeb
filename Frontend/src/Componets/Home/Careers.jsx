@@ -6,6 +6,7 @@ import career from "/images/chouse.jpg";
 import Button from "../Components/Button";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
+import {useNavigate} from "react-router-dom";
 
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -13,6 +14,7 @@ import "aos/dist/aos.css";
 import logo from "/images/logo.png";
 
 const Careers = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const videoContainerRef = useRef(null);
 
@@ -299,69 +301,6 @@ const Careers = () => {
                 "
               />
 
-              {/* Play button */}
-
-              <button
-                onClick={() => setIsOpen(true)}
-                aria-label="Play Q-Techx video"
-                className="
-                  absolute
-                  inset-0
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-                <span
-                  className="
-                    flex
-                    h-16
-                    w-16
-                    items-center
-                    justify-center
-                    rounded-full
-                    border
-                    border-[#FF6A00]/70
-                    bg-[#03070a]/80
-                    text-[#FF6A00]
-                    shadow-[0_0_30px_rgba(255,106,0,0.25)]
-                    backdrop-blur-sm
-                    transition-all
-                    duration-300
-                    group-hover:scale-110
-                    group-hover:bg-[#FF6A00]
-                    group-hover:text-white
-                    group-hover:shadow-[0_0_40px_rgba(255,106,0,0.4)]
-                  "
-                >
-                  <FaPlay className="ml-1 text-lg" />
-                </span>
-              </button>
-
-              {/* Bottom label */}
-
-              <div
-                className="
-                  absolute
-                  bottom-5
-                  left-5
-                  rounded-full
-                  border
-                  border-white/10
-                  bg-[#03070a]/75
-                  px-4
-                  py-2
-                  text-[9px]
-                  font-bold
-                  uppercase
-                  tracking-[0.15em]
-                  text-white/80
-                  backdrop-blur-md
-                "
-              >
-                Watch Our Story
-              </div>
-
             </div>
 
           </div>
@@ -450,6 +389,7 @@ const Careers = () => {
               {/* Button */}
 
               <div
+                onClick={()=>navigate("/career")}
                 data-aos="fade-left"
                 data-aos-delay="650"
                 className="mt-7 flex justify-center lg:justify-start"

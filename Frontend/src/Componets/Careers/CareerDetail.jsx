@@ -338,12 +338,14 @@ const CareerDetail = () => {
             </div>
           ) : (
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {jobs.map((job, i) => (
-                <div
-                  data-aos="fade-up"
-                  data-aos-delay={(i % 3) * 100}
-                  key={job.id ?? i}
-                  className="
+              {jobs
+                .filter((job) => !isDeadlinePassed(job.applicationDeadline))
+                .map((job, i) => (
+                  <div
+                    data-aos="fade-up"
+                    data-aos-delay={(i % 3) * 100}
+                    key={job.id ?? i}
+                    className="
                     group
                     relative
                     min-h-[360px]
@@ -371,68 +373,68 @@ const CareerDetail = () => {
                     hover:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_32px_rgba(255,106,0,0.20)]
                     sm:p-6
                   "
-                >
-                  {(() => {
-                    const deadlinePassed = isDeadlinePassed(job.applicationDeadline);
-                    return (
-                      <>
-                  {/* Top Laser Line */}
-                  <div className="absolute left-0 right-0 top-0 h-[2px] origin-left scale-x-0 bg-[#FF6A00] transition-transform duration-500 group-hover:scale-x-100" />
-                  <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
+                  >
+                    {(() => {
+                      const deadlinePassed = isDeadlinePassed(job.applicationDeadline);
+                      return (
+                        <>
+                          {/* Top Laser Line */}
+                          <div className="absolute left-0 right-0 top-0 h-[2px] origin-left scale-x-0 bg-[#FF6A00] transition-transform duration-500 group-hover:scale-x-100" />
+                          <div className="pointer-events-none absolute inset-y-0 -left-1/2 z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[430%]" />
 
-                  <div>
-                    {/* Header: Title and Company */}
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <h3 className="text-lg font-bold text-white transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#FF6A00] sm:text-xl">
-                        {job.title}
-                      </h3>
-                      <span className="shrink-0 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
-                        {job.company}
-                      </span>
-                    </div>
+                          <div>
+                            {/* Header: Title and Company */}
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <h3 className="text-lg font-bold text-white transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#FF6A00] sm:text-xl">
+                                {job.title}
+                              </h3>
+                              <span className="shrink-0 rounded-full border border-[#FF6A00]/40 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
+                                {job.company}
+                              </span>
+                            </div>
 
-                    {/* Description */}
-                    <p className="mb-4 text-xs leading-relaxed text-white/65 line-clamp-3 sm:text-sm">
-                      {job.desc}
-                    </p>
+                            {/* Description */}
+                            <p className="mb-4 text-xs leading-relaxed text-white/65 line-clamp-3 sm:text-sm">
+                              {job.desc}
+                            </p>
 
-                    {/* Metadata Badges */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-white/80">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
-                        <Clock size={14} className="text-[#FF6A00]" /> {job.type}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
-                        <IndianRupee size={14} className="text-[#FF6A00]" /> {job.salary}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/70 transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
-                        {job.location}
-                      </span>
-                    </div>
-                  </div>
+                            {/* Metadata Badges */}
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-white/80">
+                              <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
+                                <Clock size={14} className="text-[#FF6A00]" /> {job.type}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
+                                <IndianRupee size={14} className="text-[#FF6A00]" /> {job.salary}
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-white/70 transition-all duration-300 group-hover:border-[#FF6A00]/25 group-hover:bg-[#FF6A00]/[0.06]">
+                                {job.location}
+                              </span>
+                            </div>
+                          </div>
 
-                  {/* Dates and Vacancies Footer */}
-                  <div className="mt-6 border-t border-white/10 pt-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/60">
-                      <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
-                        <Calendar size={12} className="text-[#FF6A00]" />
-                        <span>Start: <strong className="text-white">{formatDate(job.applicationStartDate)}</strong></span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
-                        <Calendar size={12} className="text-red-400" />
-                        <span>Due: <strong className="text-white">{formatDate(job.applicationDeadline)}</strong></span>
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
-                        <Users size={12} className="text-emerald-400" />
-                        <span><strong className="text-emerald-400">{job.vacancies}</strong> Openings</span>
-                      </span>
-                    </div>
+                          {/* Dates and Vacancies Footer */}
+                          <div className="mt-6 border-t border-white/10 pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/60">
+                              <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
+                                <Calendar size={12} className="text-[#FF6A00]" />
+                                <span>Start: <strong className="text-white">{formatDate(job.applicationStartDate)}</strong></span>
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
+                                <Calendar size={12} className="text-red-400" />
+                                <span>Due: <strong className="text-white">{formatDate(job.applicationDeadline)}</strong></span>
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-2 py-1">
+                                <Users size={12} className="text-emerald-400" />
+                                <span><strong className="text-emerald-400">{job.vacancies}</strong> Openings</span>
+                              </span>
+                            </div>
 
-                    {/* Apply Button */}
-                    <button
-                      type="button"
-                      disabled={deadlinePassed}
-                      onClick={() => !deadlinePassed && handleApplyJob(job.id)}
-                      className="
+                            {/* Apply Button */}
+                            <button
+                              type="button"
+                              disabled={deadlinePassed}
+                              onClick={() => !deadlinePassed && handleApplyJob(job.id)}
+                              className="
                         mt-5
                         w-full
                         rounded-xl
@@ -455,15 +457,15 @@ const CareerDetail = () => {
                         disabled:shadow-none
                         disabled:hover:translate-y-0
                       "
-                    >
-                      {deadlinePassed ? "Applications Closed" : "Apply Now"}
-                    </button>
+                            >
+                              {deadlinePassed ? "Applications Closed" : "Apply Now"}
+                            </button>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              ))}
+                ))}
             </div>
           )}
 

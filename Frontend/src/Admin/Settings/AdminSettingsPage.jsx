@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
@@ -52,6 +52,13 @@ const AdminSettingsPage = () => {
       icon: ClipboardList,
       path: '/admin/settings/service-requests',
       accent: 'from-orange-500/20 to-rose-600/10',
+    },
+    {
+      title: 'Contact Requests',
+      description: 'Review and manage inquiries and messages submitted via the Contact Us page.',
+      icon: Mail,
+      path: '/admin/settings/contacts',
+      accent: 'from-pink-500/20 to-rose-600/10',
     },
   ];
 

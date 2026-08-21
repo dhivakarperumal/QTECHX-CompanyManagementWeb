@@ -116,8 +116,8 @@ const WhatWeDo = () => {
               data-aos-delay="200"
               className="mx-auto mt-4 text-justify text-xs leading-[25px] text-white/70 sm:text-sm sm:text-center md:text-base"
             >
-              With over 11 years of experience, Q-Techx Solutions has successfully
-              delivered 300+ projects across various industries. We empower businesses
+              With over 3 years of experience, Q-Techx Solutions has successfully
+              delivered 150+ projects across various industries. We empower businesses
               with data-driven insights and innovative solutions that add real value,
               helping our clients achieve their goals efficiently and effectively.
             </p>
