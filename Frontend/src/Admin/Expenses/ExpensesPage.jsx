@@ -1120,13 +1120,13 @@ const ExpensesPage = () => {
                       <p className="text-white/40 text-xs mt-0.5">
                         <span className="text-white/30">Paid to:</span>{" "}
                         <span className="text-white/80 font-medium">
-                          {exp.paid_to || (isCreditEntry(exp) ? "Q-Techx Solutions" : "—")}
+                          {isCreditEntry(exp) ? "Q-Techx Solutions" : (exp.paid_to || "—")}
                         </span>
                       </p>
                       <p className="text-white/40 text-xs mt-0.5">
                         <span className="text-white/30">From:</span>{" "}
                         <span className="text-white/80 font-medium">
-                          {exp.from_name || (isCreditEntry(exp) ? (exp.expense_type === "Project Payment" ? "Client" : "Intern (Intern)") : "Q-Techx Solutions")}
+                          {exp.from_name || (isCreditEntry(exp) ? (exp.expense_type === "Project Payment" ? "Client" : "Income") : "Q-Techx Solutions")}
                         </span>
                       </p>
                     </td>

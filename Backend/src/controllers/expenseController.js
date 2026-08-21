@@ -86,7 +86,7 @@ exports.createExpense = async (req, res) => {
 exports.getExpenses = async (req, res) => {
   try {
     const pool = getDB();
-    const [rows] = await pool.query("SELECT * FROM expenses ORDER BY COALESCE(date_of_payment, created_at) DESC, id DESC");
+    const [rows] = await pool.query("SELECT * FROM expenses ORDER BY COALESCE(date_of_payment, created_at) DESC, created_at DESC");
 
     // Enrich rows for Project Payments, Incomes, and Salaries
     const enrichedRows = await Promise.all(
