@@ -337,7 +337,15 @@ const TraineeTaskAssign = () => {
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{ zIndex: 999999 }}
+        toastOptions={{
+          style: {
+            zIndex: 999999,
+          },
+        }}
+      />
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
