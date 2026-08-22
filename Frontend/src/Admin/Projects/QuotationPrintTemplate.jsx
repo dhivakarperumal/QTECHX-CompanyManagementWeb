@@ -299,7 +299,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         <div className="border border-slate-200 rounded-lg overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-900 text-white text-[9.5px] font-bold uppercase tracking-wider">
+              <tr className="bg-slate-100/70 text-black text-[9.5px] font-bold uppercase tracking-wider">
                 <th className="py-2.5 px-3 w-8 text-center">#</th>
                 <th className="py-2.5 px-3">Item / Service Description</th>
                 <th className="py-2.5 px-3 w-16 text-center">Qty</th>
@@ -467,7 +467,7 @@ export default function QuotationPrintTemplate({ quotation }) {
             </div>
           </div>
 
-          <div className="bg-orange-500 text-white px-3.5 py-2.5 flex justify-between items-center border-t border-orange-600">
+          <div className="bg-slate-100/70 text-black px-3.5 py-2.5 flex justify-between items-center border-t border-orange-600">
             <span className="font-bold text-xs uppercase tracking-wider">GRAND TOTAL:</span>
             <span className="font-black text-base">{quotation.grand_total !== undefined ? formatMoney(quotation.grand_total, currency) : "—"}</span>
           </div>
