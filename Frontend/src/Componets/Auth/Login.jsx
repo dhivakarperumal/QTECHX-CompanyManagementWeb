@@ -4,7 +4,7 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import { getRoleHome } from "../../PrivateRouter/roleUtils";
 import api from "../../api";
 import Logo from '/images/logo.png';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, Users, BarChart3, ArrowRight, ArrowLeft } from "lucide-react";
+import { User, Lock, Eye, EyeOff, ShieldCheck, Users, BarChart3, ArrowRight, ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const Login = () => {
 
   const validate = () => {
     let newErrors = {};
-    if (!formData.username) newErrors.username = "Email Address is required";
+    if (!formData.username.trim()) newErrors.username = "Username, Email, or Mobile is required";
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
@@ -43,7 +43,7 @@ const Login = () => {
     setServerError("");
   };
 
-  // Auto-login when credentials (username + 6+ char password) are typed correctly
+  // Auto-login when credentials (identifier + 6+ char password) are typed correctly
   useEffect(() => {
     const username = formData.username?.trim();
     const password = formData.password;
@@ -184,23 +184,26 @@ const Login = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 relative overflow-y-auto">
         <div className="w-full max-w-[480px] min-h-[550px] bg-[#181a1f] p-8 md:p-12 rounded-[2rem] border border-gray-800 shadow-2xl relative z-20 flex flex-col justify-center">
           <h2 className="text-3xl font-bold text-white mb-2">Sign In</h2>
-          <p className="text-gray-400 text-sm mb-6">Enter your credentials to access your account</p>
+          <p className="text-gray-400 text-sm mb-6">Enter your <span className="text-white/70">username</span>, <span className="text-white/70">email</span>, or <span className="text-white/70">mobile number</span> with your password</p>
           <div className="w-10 h-1 bg-primary rounded-full mb-8"></div>
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-            {/* Email */}
+            {/* Identifier */}
             <div>
-              <label className="block text-sm font-medium text-white mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-white mb-1">
+                Email
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
-                  <Mail size={20} />
+                  <User size={20} />
                 </div>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="admin@company.com"
+                  placeholder="e.g. john@company.com"
+                  autoComplete="username"
                   className={`w-full bg-[#101215] text-white text-base border ${errors.username ? 'border-red-500' : 'border-gray-700'} rounded-xl py-3.5 pl-12 pr-4 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors`}
                 />
               </div>

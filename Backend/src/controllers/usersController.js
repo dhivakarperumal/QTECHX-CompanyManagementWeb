@@ -110,9 +110,17 @@ async function remove(req, res) {
 
 async function login(req, res) {
   try {
-    const user = await findForLogin(req.body.identifier);
+    const identifier = (req.body.identifier || '').trim();
+    if (!identifier) {
+      return res.status(400).json({ message: "Username, email, or mobile number is required." });
+    }
+    if (!req.body.password) {
+      return res.status(400).json({ message: "Password is required." });
+    }
+
+    const user = await findForLogin(identifier);
     if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials. Please check your username, email, or mobile and password." });
     }
 
     const token = jwt.sign(
