@@ -413,9 +413,7 @@ export default function QuotationDetailsPage() {
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-slate-800/80">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white font-bold text-sm">
-                    Q
-                  </div>
+                  <img src="/images/logo.png" alt="Q-TechX" className="h-8 w-8 object-contain" />
                   <div>
                     <h3 className="font-bold text-white text-sm">Print Preview — Quotation A4 Document</h3>
                     <p className="text-[10px] text-white/50">{quotation.quotation_number} | {quotation.client_name || quotation.company_name}</p>

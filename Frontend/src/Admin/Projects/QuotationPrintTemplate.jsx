@@ -60,52 +60,67 @@ export default function QuotationPrintTemplate({ quotation }) {
   };
 
   return (
-    <div className="quotation-document bg-white text-slate-900 font-sans p-6 sm:p-8 max-w-[210mm] mx-auto print:max-w-none print:p-0 print:m-0 print:w-full print:bg-white text-[11px] leading-relaxed select-text">
-      {/* Top Accent Strip */}
-      <div className="h-2 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 rounded-t-sm mb-6 print:mb-5 print:h-1.5"></div>
+    <div className="quotation-document relative bg-white text-slate-900 font-sans p-6 sm:p-8 max-w-[210mm] mx-auto print:max-w-none print:p-0 print:m-0 print:w-full print:bg-white text-[11px] leading-relaxed select-text overflow-hidden">
+      {/* Background Watermark Logo */}
+      <div 
+        className="quotation-watermark pointer-events-none select-none absolute inset-0 flex items-center justify-center z-0 overflow-hidden" 
+        aria-hidden="true"
+      >
+        <img
+          src="/images/logo.png"
+          alt=""
+          className="w-[450px] max-w-[70%] object-contain opacity-[0.06] select-none"
+        />
+      </div>
 
-      {/* Header Section */}
-      <header className="flex justify-between items-start pb-5 border-b border-slate-200 gap-6">
-        {/* Company Identity */}
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-orange-500 text-white rounded-lg flex items-center justify-center font-black text-xl shadow-sm print:shadow-none shrink-0">
-              Q
+      <div className="relative z-10">
+        {/* Top Accent Strip */}
+        <div className="h-2 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 rounded-t-sm mb-6 print:mb-5 print:h-1.5"></div>
+
+        {/* Header Section */}
+        <header className="flex justify-between items-start pb-5 border-b border-slate-200 gap-6">
+          {/* Company Identity */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <img 
+                src="/images/logo.png" 
+                alt="Q-TechX Solutions" 
+                className="w-10 h-10 object-contain shrink-0" 
+              />
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-none">
+                  Q-TECHX SOLUTIONS
+                </h1>
+                <p className="text-[10px] font-semibold tracking-wider text-orange-600 uppercase mt-0.5">
+                  Technology & Software Solutions
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-none">
-                Q-TECHX SOLUTIONS
-              </h1>
-              <p className="text-[10px] font-semibold tracking-wider text-orange-600 uppercase mt-0.5">
-                Technology & Software Solutions
-              </p>
+
+            <div className="mt-2.5 space-y-1 text-slate-600 text-[10.5px]">
+              <div className="flex items-start gap-1.5">
+                <MapPin size={12} className="text-orange-500 shrink-0 mt-0.5" />
+                <span>123, Tech Park, Coimbatore, Tamil Nadu - 641 014, India</span>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Mail size={12} className="text-orange-500 shrink-0" />
+                  contact@qtechx.com
+                </span>
+                <span className="flex items-center gap-1">
+                  <Phone size={12} className="text-orange-500 shrink-0" />
+                  +91 95972 93504 / +91 98765 43210
+                </span>
+                <span className="flex items-center gap-1">
+                  <Globe size={12} className="text-orange-500 shrink-0" />
+                  www.qtechx.com
+                </span>
+              </div>
+              {quotation.company_gst && (
+                <p className="text-[10px] text-slate-500 font-medium">GSTIN: {quotation.company_gst}</p>
+              )}
             </div>
           </div>
-
-          <div className="mt-2.5 space-y-1 text-slate-600 text-[10.5px]">
-            <div className="flex items-start gap-1.5">
-              <MapPin size={12} className="text-orange-500 shrink-0 mt-0.5" />
-              <span>123, Tech Park, Coimbatore, Tamil Nadu - 641 014, India</span>
-            </div>
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className="flex items-center gap-1">
-                <Mail size={12} className="text-orange-500 shrink-0" />
-                contact@qtechx.com
-              </span>
-              <span className="flex items-center gap-1">
-                <Phone size={12} className="text-orange-500 shrink-0" />
-                +91 95972 93504 / +91 98765 43210
-              </span>
-              <span className="flex items-center gap-1">
-                <Globe size={12} className="text-orange-500 shrink-0" />
-                www.qtechx.com
-              </span>
-            </div>
-            {quotation.company_gst && (
-              <p className="text-[10px] text-slate-500 font-medium">GSTIN: {quotation.company_gst}</p>
-            )}
-          </div>
-        </div>
 
         {/* Quotation Badge & Reference */}
         <div className="text-right shrink-0">
@@ -219,7 +234,7 @@ export default function QuotationPrintTemplate({ quotation }) {
       </section>
 
       {/* 2. FULL PROJECT DETAILS SECTION */}
-      <section className="border border-slate-200 rounded-lg p-3.5 mb-4 bg-white break-inside-avoid">
+      <section className="border border-slate-200 rounded-lg p-3.5 mb-4 bg-white/80 break-inside-avoid">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
           <Briefcase size={11} className="text-orange-500" />
           PROJECT DETAILS
@@ -297,7 +312,7 @@ export default function QuotationPrintTemplate({ quotation }) {
             <tbody className="divide-y divide-slate-200 text-[10.5px]">
               {items.length > 0 ? (
                 items.map((item, idx) => (
-                  <tr key={item.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}>
+                  <tr key={item.id || idx} className={idx % 2 === 0 ? "bg-white/80" : "bg-slate-50/60"}>
                     <td className="py-2 px-3 text-center text-slate-400 font-medium">{idx + 1}</td>
                     <td className="py-2 px-3">
                       <p className="font-bold text-slate-900">{item.service_name || item.item_component || "—"}</p>
@@ -325,7 +340,7 @@ export default function QuotationPrintTemplate({ quotation }) {
                   </tr>
                 ))
               ) : (
-                <tr className="bg-white">
+                <tr className="bg-white/80">
                   <td className="py-2 px-3 text-center text-slate-400">1</td>
                   <td className="py-2 px-3 text-slate-800">—</td>
                   <td className="py-2 px-3 text-center text-slate-800">—</td>
@@ -360,7 +375,7 @@ export default function QuotationPrintTemplate({ quotation }) {
             <tbody className="divide-y divide-slate-100 text-[10px]">
               {charges.length > 0 ? (
                 charges.map((charge, idx) => (
-                  <tr key={charge.id || idx} className="bg-white">
+                  <tr key={charge.id || idx} className="bg-white/80">
                     <td className="py-1.5 px-3 text-center text-slate-400">{idx + 1}</td>
                     <td className="py-1.5 px-3">
                       <span className="font-semibold text-slate-800">{charge.service_name || "—"}</span>
@@ -378,7 +393,7 @@ export default function QuotationPrintTemplate({ quotation }) {
                   </tr>
                 ))
               ) : (
-                <tr className="bg-white">
+                <tr className="bg-white/80">
                   <td className="py-1.5 px-3 text-center text-slate-400">1</td>
                   <td className="py-1.5 px-3 text-slate-800">—</td>
                   <td className="py-1.5 px-3 text-center text-slate-800">—</td>
@@ -420,7 +435,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         </div>
 
         {/* Right Side: Calculation Totals Card */}
-        <div className="col-span-5 border border-slate-200 rounded-lg overflow-hidden bg-white">
+        <div className="col-span-5 border border-slate-200 rounded-lg overflow-hidden bg-white/85">
           <div className="p-3 space-y-1.5 text-[10.5px]">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal:</span>
@@ -480,7 +495,7 @@ export default function QuotationPrintTemplate({ quotation }) {
             <tbody className="divide-y divide-slate-100">
               {phases.length > 0 ? (
                 phases.map((phase, idx) => (
-                  <tr key={phase.id || idx} className="bg-white">
+                  <tr key={phase.id || idx} className="bg-white/80">
                     <td className="py-1.5 px-3 text-center text-slate-400 font-medium">{idx + 1}</td>
                     <td className="py-1.5 px-3 font-semibold text-slate-800">
                       {phase.phase || phase.phase_name || "—"}
@@ -500,7 +515,7 @@ export default function QuotationPrintTemplate({ quotation }) {
                   </tr>
                 ))
               ) : (
-                <tr className="bg-white">
+                <tr className="bg-white/80">
                   <td className="py-1.5 px-3 text-center text-slate-400">1</td>
                   <td className="py-1.5 px-3 text-slate-800">—</td>
                   <td className="py-1.5 px-3 text-slate-800">—</td>
@@ -559,7 +574,7 @@ export default function QuotationPrintTemplate({ quotation }) {
       </section>
 
       {/* 8. TERMS AND CONDITIONS */}
-      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
+      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white/80">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2 border-b border-slate-100 pb-1 flex items-center gap-1.5">
           <Award size={11} className="text-orange-500" />
           TERMS AND CONDITIONS
@@ -585,7 +600,7 @@ export default function QuotationPrintTemplate({ quotation }) {
       </section>
 
       {/* 9. APPROVAL AND NOTES */}
-      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white">
+      <section className="mb-4 break-inside-avoid border border-slate-200 rounded-lg p-3.5 bg-white/80">
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-800 mb-2.5 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
           <UserCheck size={11} className="text-orange-500" />
           APPROVAL AND NOTES
@@ -649,6 +664,7 @@ export default function QuotationPrintTemplate({ quotation }) {
         <span>Q-Techx Solutions | This quotation is computer generated.</span>
         <span className="font-medium text-slate-400">Page 1 of 1</span>
       </footer>
+      </div>
     </div>
   );
 }

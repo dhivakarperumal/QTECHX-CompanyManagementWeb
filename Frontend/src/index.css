@@ -586,6 +586,7 @@ input[type="date"] {
   }
 
   .quotation-document {
+    position: relative !important;
     color: #0f172a !important;
     background: #ffffff !important;
     box-shadow: none !important;
@@ -594,6 +595,29 @@ input[type="date"] {
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
+  }
+
+  .quotation-watermark {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .quotation-watermark img {
+    width: 450px !important;
+    max-width: 70% !important;
+    opacity: 0.06 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .quotation-document table {
