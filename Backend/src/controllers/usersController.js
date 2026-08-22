@@ -115,6 +115,10 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    if (user.status === "Inactive" || user.emp_status === "Inactive" || user.emp_employment_status === "Inactive") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
     const token = jwt.sign(
       {
         user_id: user.user_id,

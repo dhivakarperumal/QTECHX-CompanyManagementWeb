@@ -35,7 +35,7 @@ async function getAllLeaves() {
   const db = getDB();
   // Join with employees table to get employee details
   const [rows] = await db.execute(
-    `SELECT el.*, e.first_name, e.last_name, e.employee_code, e.profile_photo 
+    `SELECT el.*, e.first_name, e.last_name, e.employee_code, e.profile_photo, e.status AS employee_status, e.employment_status AS employee_employment_status 
      FROM employee_leaves el
      LEFT JOIN employees e ON el.employee_id = e.employee_id
      ORDER BY el.created_at DESC`

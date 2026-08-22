@@ -78,8 +78,8 @@ const EmployeeView = () => {
             </Link>
             <h1 className="text-2xl font-bold text-slate-100">Employee Profile</h1>
           </div>
-          <span className={`px-3 py-1 rounded-full border text-sm font-medium ${employee.employment_status === 'Active' ? 'bg-green-900/30 text-green-400 border-green-800' : 'bg-red-900/30 text-red-400 border-red-800'}`}>
-            {employee.employment_status}
+          <span className={`px-3 py-1 rounded-full border text-sm font-medium ${(employee.status || employee.employment_status) === 'Active' ? 'bg-green-900/30 text-green-400 border-green-800' : 'bg-red-900/30 text-red-400 border-red-800'}`}>
+            {employee.status || employee.employment_status || 'Active'}
           </span>
         </div>
 

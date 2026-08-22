@@ -47,10 +47,14 @@ async function findForLogin(identifier) {
   const fields = publicFields.split(', ').map((field) => `u.${field}`).join(', ');
   const [rows] = await db.execute(
     `SELECT ${fields}, u.password,
-            e.employee_id AS emp_code, e.employee_code AS emp_code2
+            e.employee_id AS emp_code, e.employee_code AS emp_code2, e.status AS emp_status, e.employment_status AS emp_employment_status
      FROM users u
-     LEFT JOIN employees e ON e.official_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci
-     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ? OR u.mobile COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
+     LEFT JOIN employees e ON (
+       e.employee_id = u.user_id
+       OR (e.official_email IS NOT NULL AND e.official_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci)
+       OR (e.personal_email IS NOT NULL AND e.personal_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci)
+     )
+     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ? OR u.mobile COLLATE utf8mb4_unicode_ci = ?)
      LIMIT 1`,
     [identifier, identifier, identifier]
   );
