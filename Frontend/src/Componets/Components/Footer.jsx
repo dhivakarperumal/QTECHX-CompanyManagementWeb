@@ -242,8 +242,7 @@ const Footer = () => {
                 />
 
                 <span>
-                  Tirupattur, Tamil Nadu,
-                  India, 635 653.
+                  No.58 Vaitheeshwaran Nagar, Tirupattur - 635653
                 </span>
 
               </p>

@@ -613,9 +613,9 @@ input[type="date"] {
   }
 
   .quotation-watermark img {
-    width: 450px !important;
-    max-width: 70% !important;
-    opacity: 0.06 !important;
+    width: 520px !important;
+    max-width: 80% !important;
+    opacity: 0.10 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
