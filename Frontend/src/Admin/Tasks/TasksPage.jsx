@@ -575,9 +575,29 @@ export default function TasksPage({ initialPageKey = null }) {
     const loadEmployees = async () => {
       setProjectEmployeesLoading(true);
       try {
-        const list =
-          data.assignedEmployees || data.project?.assignedEmployees || data.project?.employees || data.data || [];
-        setAssignedEmployees(list.filter(e => (e.status || e.employment_status) !== 'Inactive'));
+        const [projRes, allEmpsRes] = await Promise.all([
+          api.get(`/projects/${assignForm.project_id}/assignments`),
+          api.get('/employees?limit=500&status=Active')
+        ]);
+        const projList =
+          projRes.data.assignedEmployees ||
+          projRes.data.project?.assignedEmployees ||
+          projRes.data.project?.employees ||
+          projRes.data.data ||
+          [];
+        const activeProjEmps = projList.filter(e => {
+          const empStatus = (e.employee_status || e.employment_status || '').toLowerCase();
+          return empStatus !== 'inactive';
+        });
+        const allActiveEmps = (allEmpsRes.data?.data || allEmpsRes.data || []).filter(
+          e => (e.status || e.employment_status) === 'Active'
+        );
+
+        if (activeProjEmps.length > 0) {
+          setAssignedEmployees(activeProjEmps);
+        } else {
+          setAssignedEmployees(allActiveEmps);
+        }
       } catch (err) {
         console.error('Failed to load employees for project', err);
         setAssignedEmployees([]);

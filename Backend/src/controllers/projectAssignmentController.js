@@ -1,4 +1,4 @@
-﻿const { findProjectById, findProjectByUUID } = require('../models/projectModel');
+const { findProjectById, findProjectByUUID } = require('../models/projectModel');
 const {
   assignEmployeesToProject,
   syncProjectAssignments,
@@ -158,7 +158,8 @@ function buildAssignmentEnvelope(project, assignments = []) {
     team_lead: row.team_lead || null,
     joining_date: row.joining_date || null,
     confirmation_date: row.confirmation_date || null,
-    employment_status: row.employment_status || 'Active',
+    employee_status: row.employee_status || row.employment_status || 'Active',
+    employment_status: row.employment_status || row.employee_status || 'Active',
     role: row.role || null,
     status: row.status || 'Assigned',
     assigned_date: row.assigned_date || row.created_at || new Date().toISOString(),

@@ -152,12 +152,11 @@ async function hydrateEmployeeAssignments(assignments = [], rowAssignedDate = nu
     const alternate_mobile = dbEmployee.alternate_mobile ?? employee.alternate_mobile ?? null;
     const designation  = dbEmployee.designation  ?? dbEmployee.role ?? employee.designation ?? employee.role ?? null;
     const employee_code = dbEmployee.employee_code ?? employee.employee_code ?? null;
-    const employment_status = dbEmployee.employment_status ?? employee.employment_status ?? 'Active';
     const email = dbEmployee.personal_email ?? dbEmployee.official_email ?? employee.personal_email ?? employee.email ?? null;
     const full_name = [first_name, last_name].filter(Boolean).join(' ').trim() || null;
-
-    // For assigned_date: prefer blob value, then fall back to the parent row timestamps
     const assigned_date = employee.assigned_date || rowAssignedDate || rowCreatedAt || null;
+    const employee_status = dbEmployee.status || dbEmployee.employment_status || 'Active';
+    const employment_status = dbEmployee.employment_status || dbEmployee.status || 'Active';
 
     return {
       ...employee,
@@ -174,6 +173,7 @@ async function hydrateEmployeeAssignments(assignments = [], rowAssignedDate = nu
       alternate_mobile,
       designation,
       role: employee.role ?? designation ?? null,
+      employee_status,
       employment_status,
       status: employee.status || 'Assigned',
       assigned_date,
