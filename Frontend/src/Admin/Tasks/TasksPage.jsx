@@ -575,10 +575,9 @@ export default function TasksPage({ initialPageKey = null }) {
     const loadEmployees = async () => {
       setProjectEmployeesLoading(true);
       try {
-        const { data } = await api.get(`/projects/${assignForm.project_id}/assignments`);
-        setAssignedEmployees(
-          data.assignedEmployees || data.project?.assignedEmployees || data.project?.employees || data.data || []
-        );
+        const list =
+          data.assignedEmployees || data.project?.assignedEmployees || data.project?.employees || data.data || [];
+        setAssignedEmployees(list.filter(e => (e.status || e.employment_status) !== 'Inactive'));
       } catch (err) {
         console.error('Failed to load employees for project', err);
         setAssignedEmployees([]);

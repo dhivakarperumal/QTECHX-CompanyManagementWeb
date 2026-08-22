@@ -133,7 +133,7 @@ async function hydrateEmployeeAssignments(assignments = [], rowAssignedDate = nu
   const [employeeRows] = await db.execute(
     `SELECT employee_id, employee_code, first_name, last_name, profile_photo,
             designation, role, personal_email, official_email,
-            mobile_number, alternate_mobile, employment_status
+            mobile_number, alternate_mobile, status, employment_status
      FROM employees
      WHERE employee_id IN (${placeholders})`,
     employeeIds
@@ -459,7 +459,7 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
   const db = getDB();
   const term = `%${(search || '').trim()}%`;
   const [rows] = await db.execute(
-    `SELECT e.employee_id, e.employee_code, e.first_name, e.last_name, e.profile_photo, e.designation, e.role, e.personal_email, e.official_email, e.mobile_number, e.alternate_mobile, e.employment_status,
+    `SELECT e.employee_id, e.employee_code, e.first_name, e.last_name, e.profile_photo, e.designation, e.role, e.personal_email, e.official_email, e.mobile_number, e.alternate_mobile, e.status, e.employment_status,
       COALESCE(
         (SELECT COUNT(DISTINCT pa.project_id)
          FROM project_assignments pa
@@ -470,7 +470,9 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
         ), 0
       ) AS active_project_count
      FROM employees e
-     WHERE e.employment_status = ?
+     WHERE (e.status = ? OR e.employment_status = ?)
+       AND e.status != 'Inactive'
+       AND e.employment_status != 'Inactive'
        AND (
          LOWER(CONCAT(e.first_name, ' ', COALESCE(e.last_name, ''))) LIKE LOWER(?) OR
          LOWER(e.employee_id) LIKE LOWER(?) OR
@@ -491,7 +493,7 @@ async function searchEmployeesForProject({ search = '', status = 'Active' }) {
        ) < 3
      ORDER BY e.first_name, e.last_name
      LIMIT 50`,
-    [status, term, term, term, term, term, term, term, term]
+    [status, status, term, term, term, term, term, term, term, term]
   );
   return rows;
 }

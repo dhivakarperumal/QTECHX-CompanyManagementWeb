@@ -390,12 +390,14 @@ export default function EmployeeSalary() {
 
   const filteredEmployees = useMemo(() => {
     const search = employeeSearch.trim().toLowerCase();
-    return employees.filter((emp) => {
-      if (!search) return true;
-      const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
-      const code = (emp.employee_code || '').toLowerCase();
-      return fullName.includes(search) || code.includes(search);
-    });
+    return employees
+      .filter((emp) => (emp.status || emp.employment_status) === 'Active')
+      .filter((emp) => {
+        if (!search) return true;
+        const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
+        const code = (emp.employee_code || '').toLowerCase();
+        return fullName.includes(search) || code.includes(search);
+      });
   }, [employees, employeeSearch]);
 
   const filteredSalaryHistory = useMemo(() => {
@@ -506,10 +508,12 @@ export default function EmployeeSalary() {
                 <span className="mb-1.5 block font-medium">Employee *</span>
                 <Select
                   options={[
-                    ...employees.map(emp => ({
-                      value: emp.employee_id,
-                      label: `${emp.first_name} ${emp.last_name} (${emp.employee_code || 'No Code'})`
-                    }))
+                    ...employees
+                      .filter(emp => (emp.status || emp.employment_status) === 'Active' || emp.employee_id === formData.employee_id)
+                      .map(emp => ({
+                        value: emp.employee_id,
+                        label: `${emp.first_name} ${emp.last_name} (${emp.employee_code || 'No Code'})`
+                      }))
                   ]}
                   value={formData.employee_id ? {
                     value: formData.employee_id,

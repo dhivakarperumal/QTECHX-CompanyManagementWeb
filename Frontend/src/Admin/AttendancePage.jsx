@@ -595,7 +595,7 @@ const AttendancePage = () => {
                   <div className="md:col-span-2">
                     <label className="mb-2 block text-sm text-white/70">Select Employee</label>
                     <Select
-                      options={employeeData.map((emp) => ({
+                      options={employeeData.filter(emp => (emp.status || emp.employment_status) === 'Active').map((emp) => ({
                         value: emp.employee_id,
                         label: `${emp.first_name} ${emp.last_name} (${emp.employee_code})`
                       }))}

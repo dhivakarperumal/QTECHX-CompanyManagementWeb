@@ -177,6 +177,9 @@ function AssignModal({ onClose, onAssigned, assignments }) {
   }, []);
 
   const filteredEmps = employees.filter(e => {
+    if ((e.status || e.employment_status) === 'Inactive') {
+      return false;
+    }
     const activeAssignments = (assignments || []).filter(a => 
       a.employee_id === e.employee_id && 
       !['Completed', 'Cancelled', 'Inactive'].includes(a.current_status || a.status)

@@ -204,7 +204,7 @@ export default function AssignTaskPage() {
           data.project?.employees ||
           data.data ||
           [];
-        setAssignedEmployees(list);
+        setAssignedEmployees(list.filter(e => (e.status || e.employment_status) !== 'Inactive'));
       })
       .catch(() => setAssignedEmployees([]))
       .finally(() => setProjectEmployeesLoading(false));
