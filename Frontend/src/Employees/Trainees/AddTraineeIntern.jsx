@@ -297,7 +297,7 @@ export default function AddTraineeIntern() {
               <Select
                 value={formData.reporting_manager ? { value: formData.reporting_manager, label: formData.reporting_manager } : null}
                 onChange={(opt) => handleChange({ target: { name: 'reporting_manager', value: opt ? opt.value : '' } })}
-                options={employees.map(emp => ({ value: `${emp.first_name || ''} ${emp.last_name || ''}`.trim(), label: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }))}
+                options={employees.filter(emp => (emp.status || emp.employment_status) === 'Active').map(emp => ({ value: `${emp.first_name || ''} ${emp.last_name || ''}`.trim(), label: `${emp.first_name || ''} ${emp.last_name || ''}`.trim() }))}
                 styles={customSelectStyles}
                 placeholder="Select reporting manager"
                 isSearchable={true}
