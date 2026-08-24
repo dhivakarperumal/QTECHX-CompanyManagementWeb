@@ -333,7 +333,7 @@ const EmployeeAdd = () => {
     const fetchEmployee = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await api.get('/employees/generate-code');
+        const response = await api.get(`/employees/${id}`);
         const data = response.data;
 
         const emp = data.employee;
