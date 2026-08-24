@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiArrowLeft, FiSave, FiEye, FiEyeOff } from "react-icons/fi";
 import Select from 'react-select';
+import api from '../../api';
 
 const customSelectStyles = {
   control: (provided, state) => ({
@@ -292,7 +293,7 @@ const EmployeeAdd = () => {
     if (cleanPath.startsWith('/')) {
       cleanPath = cleanPath.substring(1);
     }
-    return `http://localhost:5000/${cleanPath}`;
+    return `https://qtechx.com/${cleanPath}`;
   };
 
   useEffect(() => {
@@ -303,17 +304,9 @@ const EmployeeAdd = () => {
     const fetchEmployeeCode = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/employees/generate-code", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await api.get('/employees/generate-code');
+        const data = response.data;
 
-        if (!response.ok) {
-          throw new Error("Failed to generate employee code");
-        }
-
-        const data = await response.json();
         if (!ignore && data.employee_code) {
           setFormData((prev) => ({ ...prev, employee_code: data.employee_code }));
         }
@@ -340,17 +333,9 @@ const EmployeeAdd = () => {
     const fetchEmployee = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await api.get(`/employees/${id}`);
+        const data = response.data;
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch employee details");
-        }
-
-        const data = await response.json();
         const emp = data.employee;
 
         if (emp) {
@@ -715,23 +700,14 @@ const EmployeeAdd = () => {
       });
 
       const url = isEditMode
-        ? `http://localhost:5000/api/employees/${id}`
-        : "http://localhost:5000/api/employees";
+        ? `/employees/${id}`
+        : '/employees';
 
       const method = isEditMode ? "PUT" : "POST";
 
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: submitData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to ${isEditMode ? "update" : "create"} employee`);
-      }
+      const response = isEditMode
+        ? await api.put(url, submitData)
+        : await api.post(url, submitData);
 
       alert(`Employee ${isEditMode ? "updated" : "created"} successfully!`);
       navigate("/admin/employees");

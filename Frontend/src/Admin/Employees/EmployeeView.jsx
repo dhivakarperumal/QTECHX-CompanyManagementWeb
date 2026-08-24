@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FiArrowLeft, FiUser, FiBriefcase, FiDollarSign, FiFileText } from "react-icons/fi";
+import api from "../../api";
+
+const BACKEND_URL = (api.defaults.baseURL || "/api").replace(/\/api\/?$/, "");
 
 const EmployeeView = () => {
   const { id } = useParams();
@@ -11,18 +14,8 @@ const EmployeeView = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch employee details");
-        }
-
-        const data = await response.json();
+        const response = await api.get(`/employees/${id}`);
+        const data = response.data;
         setEmployee(data.employee);
       } catch (err) {
         setError(err.message);
@@ -51,7 +44,7 @@ const EmployeeView = () => {
     <div className="mb-4 flex flex-col">
       <h4 className="text-xs font-semibold uppercase text-slate-400">{label}</h4>
       {url ? (
-        <a href={`http://localhost:5000${url}`} target="_blank" rel="noreferrer" className="mt-1 font-medium text-blue-400 hover:underline">
+        <a href={`${BACKEND_URL}${url}`} target="_blank" rel="noreferrer" className="mt-1 font-medium text-blue-400 hover:underline">
           View Document
         </a>
       ) : (
@@ -89,7 +82,7 @@ const EmployeeView = () => {
           <div className="rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-xl text-center">
             <div className="mx-auto h-32 w-32 overflow-hidden rounded-full border-4 border-slate-700 mb-4 bg-slate-900 flex items-center justify-center">
               {employee.profile_photo ? (
-                <img src={`http://localhost:5000${employee.profile_photo}`} alt="Profile" className="h-full w-full object-cover" />
+                <img src={`${BACKEND_URL}${employee.profile_photo}`} alt="Profile" className="h-full w-full object-cover" />
               ) : (
                 <FiUser className="h-16 w-16 text-slate-500" />
               )}
