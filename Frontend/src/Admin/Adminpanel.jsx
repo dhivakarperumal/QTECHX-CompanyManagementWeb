@@ -53,7 +53,7 @@ const AdminLayout = () => {
       >
         {/* Header */}
         {!isPrintPage && (
-          <div className="print:hidden">
+          <div className="sticky top-0 z-40 print:hidden">
             <Header onMenuClick={() => setSidebarOpen(true)} />
           </div>
         )}

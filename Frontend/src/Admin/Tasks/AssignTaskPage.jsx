@@ -195,16 +195,32 @@ export default function AssignTaskPage() {
     if (!assignForm.project_id) return;
 
     setProjectEmployeesLoading(true);
-    setAssignedEmployees([]);
-    api.get(`/projects/${assignForm.project_id}/assignments`)
-      .then(({ data }) => {
-        const list =
-          data.assignedEmployees ||
-          data.project?.assignedEmployees ||
-          data.project?.employees ||
-          data.data ||
+    Promise.all([
+      api.get(`/projects/${assignForm.project_id}/assignments`),
+      api.get('/employees?limit=500&status=Active')
+    ])
+      .then(([projRes, allEmpsRes]) => {
+        const projList =
+          projRes.data.assignedEmployees ||
+          projRes.data.project?.assignedEmployees ||
+          projRes.data.project?.employees ||
+          projRes.data.data ||
           [];
-        setAssignedEmployees(list);
+        
+        const activeProjEmps = projList.filter(e => {
+          const empStatus = (e.employee_status || e.employment_status || '').toLowerCase();
+          return empStatus !== 'inactive';
+        });
+
+        const allActiveEmps = (allEmpsRes.data?.data || allEmpsRes.data || []).filter(
+          e => (e.status || e.employment_status) === 'Active'
+        );
+
+        if (activeProjEmps.length > 0) {
+          setAssignedEmployees(activeProjEmps);
+        } else {
+          setAssignedEmployees(allActiveEmps);
+        }
       })
       .catch(() => setAssignedEmployees([]))
       .finally(() => setProjectEmployeesLoading(false));

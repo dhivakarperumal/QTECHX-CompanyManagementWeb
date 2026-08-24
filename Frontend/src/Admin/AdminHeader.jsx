@@ -221,7 +221,7 @@ const Header = ({ onMenuClick }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-[#0d0d12]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
+      <header className="w-full bg-[#0d0d12]/95 backdrop-blur-xl border-b border-white/10 shadow-[0_1px_20px_rgba(0,0,0,0.4)]">
         <div className="flex items-center gap-3 px-4 sm:px-6 h-18" ref={dropdownRef}>
 
           {/* ── HAMBURGER (mobile) ── */}

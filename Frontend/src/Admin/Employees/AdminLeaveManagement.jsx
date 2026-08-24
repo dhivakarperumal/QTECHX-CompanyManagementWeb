@@ -668,8 +668,8 @@ const AdminLeaveManagement = () => {
                       <tr className="border-t border-white/10 hover:bg-white/2">
                         <td className="px-4 py-3 text-white/70">{index + 1}</td>
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
-                          <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                          <div className="font-semibold text-white">{(leave.first_name || leave.last_name) ? `${leave.first_name || ''} ${leave.last_name || ''}`.trim() : (leave.employee_code || leave.employee_id || 'Employee')}</div>
+                          <div className="text-white/40 text-xs">{leave.employee_code || '—'}</div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="font-medium text-white">{leave.leave_type}</div>
@@ -737,7 +737,7 @@ const AdminLeaveManagement = () => {
                               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                 <div>
                                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Name</p>
-                                  <p className="mt-1 font-semibold text-white">{leave.first_name} {leave.last_name}</p>
+                                  <p className="mt-1 font-semibold text-white">{(leave.first_name || leave.last_name) ? `${leave.first_name || ''} ${leave.last_name || ''}`.trim() : (leave.employee_code || leave.employee_id || 'Employee')}</p>
                                 </div>
                                 <div>
                                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Code</p>
@@ -794,8 +794,8 @@ const AdminLeaveManagement = () => {
                         <User size={16} className="text-white/60" />
                       </div>
                       <div>
-                        <div className="font-bold text-white text-base leading-tight">{leave.first_name} {leave.last_name}</div>
-                        <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                        <div className="font-bold text-white text-base leading-tight">{(leave.first_name || leave.last_name) ? `${leave.first_name || ''} ${leave.last_name || ''}`.trim() : (leave.employee_code || leave.employee_id || 'Employee')}</div>
+                        <div className="text-white/40 text-xs">{leave.employee_code || '—'}</div>
                       </div>
                     </div>
                     <button
@@ -884,7 +884,7 @@ const AdminLeaveManagement = () => {
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Name</p>
-                          <p className="mt-1 font-semibold text-white">{leave.first_name} {leave.last_name}</p>
+                          <p className="mt-1 font-semibold text-white">{(leave.first_name || leave.last_name) ? `${leave.first_name || ''} ${leave.last_name || ''}`.trim() : (leave.employee_code || leave.employee_id || 'Employee')}</p>
                         </div>
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Employee Code</p>
@@ -1271,7 +1271,7 @@ const AdminLeaveManagement = () => {
 
               <div className="mb-4 rounded-xl border border-white/10 bg-white/4 p-4">
                 <p className="text-sm text-white font-semibold mb-1">
-                  {selectedLeave?.first_name} {selectedLeave?.last_name} <span className="text-white/40">({selectedLeave?.employee_code})</span>
+                  {(selectedLeave?.first_name || selectedLeave?.last_name) ? `${selectedLeave?.first_name || ''} ${selectedLeave?.last_name || ''}`.trim() : (selectedLeave?.employee_code || selectedLeave?.employee_id || 'Employee')} <span className="text-white/40">({selectedLeave?.employee_code || '—'})</span>
                 </p>
                 <p className="text-sm text-white/70 mb-1">
                   <span className="font-medium text-white/50">Type:</span> {selectedLeave?.leave_type} ({selectedLeave?.no_of_days} days)
@@ -1374,8 +1374,8 @@ const AdminLeaveManagement = () => {
                           </td>
                           <td className="px-4 py-3 text-white/70">{index + 1}</td>
                           <td className="px-4 py-3">
-                            <div className="font-semibold text-white">{leave.first_name} {leave.last_name}</div>
-                            <div className="text-white/40 text-xs">{leave.employee_code}</div>
+                            <div className="font-semibold text-white">{(leave.first_name || leave.last_name) ? `${leave.first_name || ''} ${leave.last_name || ''}`.trim() : (leave.employee_code || leave.employee_id || 'Employee')}</div>
+                            <div className="text-white/40 text-xs">{leave.employee_code || '—'}</div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="font-medium text-white">{leave.leave_type}</div>

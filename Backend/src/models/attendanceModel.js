@@ -63,7 +63,8 @@ async function getAttendanceSummary({ startDate, endDate }) {
      FROM employees e
      LEFT JOIN attendance a
        ON a.employee_id = e.employee_id AND a.attendance_date BETWEEN ? AND ?
-     WHERE e.employment_status = 'Active'
+     WHERE ((e.status = 'Active' OR e.employment_status = 'Active') AND e.status != 'Inactive' AND e.employment_status != 'Inactive')
+        OR a.id IS NOT NULL
      GROUP BY e.employee_id, e.employee_code, e.first_name, e.last_name
      ORDER BY e.first_name, e.last_name`,
     [startDate, endDate]

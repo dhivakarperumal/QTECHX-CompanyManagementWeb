@@ -96,7 +96,7 @@ const EmployeeList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [roleFilter, setRoleFilter] = useState("");
 
   const fetchEmployees = async () => {
@@ -140,14 +140,15 @@ const EmployeeList = () => {
     return employees.filter((emp) => {
       const fullName = `${emp.first_name || ""} ${emp.last_name || ""}`.toLowerCase();
       const matchSearch = !term || fullName.includes(term) || (emp.employee_code || "").toLowerCase().includes(term) || (emp.personal_email || "").toLowerCase().includes(term);
-      const matchStatus = !statusFilter || emp.employment_status === statusFilter;
+      const currentStatus = emp.status || emp.employment_status || "Active";
+      const matchStatus = !statusFilter || currentStatus === statusFilter || emp.employment_status === statusFilter;
       const matchRole = !roleFilter || emp.role === roleFilter;
       return matchSearch && matchStatus && matchRole;
     });
   }, [employees, search, statusFilter, roleFilter]);
 
   const handleDelete = async (employeeId) => {
-    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+    if (!window.confirm("Are you sure you want to deactivate this employee? This will change their status to Inactive and disable login.")) return;
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:5000/api/employees/${employeeId}`, {
@@ -158,13 +159,19 @@ const EmployeeList = () => {
       });
 
       if (response.ok) {
-        setEmployees(employees.filter((emp) => emp.employee_id !== employeeId));
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.employee_id === employeeId
+              ? { ...emp, status: "Inactive", employment_status: "Inactive" }
+              : emp
+          )
+        );
       } else {
-        alert("Failed to delete employee");
+        alert("Failed to deactivate employee");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting employee");
+      alert("Error deactivating employee");
     }
   };
 
@@ -193,8 +200,8 @@ const EmployeeList = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total", value: employees.length, icon: Users, cls: "text-blue-400", bg: "bg-blue-500/15" },
-          { label: "Active", value: employees.filter((item) => item.employment_status === "Active").length, icon: UserCheck, cls: "text-emerald-400", bg: "bg-emerald-500/15" },
-          { label: "Inactive", value: employees.filter((item) => item.employment_status === "Inactive").length, icon: UserX, cls: "text-rose-400", bg: "bg-rose-500/15" },
+          { label: "Active", value: employees.filter((item) => (item.status || item.employment_status) === "Active").length, icon: UserCheck, cls: "text-emerald-400", bg: "bg-emerald-500/15" },
+          { label: "Inactive", value: employees.filter((item) => (item.status || item.employment_status) === "Inactive").length, icon: UserX, cls: "text-rose-400", bg: "bg-rose-500/15" },
           { label: "Roles", value: new Set(employees.map((item) => item.role).filter(Boolean)).size, icon: Briefcase, cls: "text-violet-400", bg: "bg-violet-500/15" },
         ].map((item) => {
           const Icon = item.icon;
@@ -281,6 +288,8 @@ const EmployeeList = () => {
                   <th className="px-4 py-3 text-left">Employee Code</th>
                   <th className="px-4 py-3 text-left">Name</th>
                   <th className="px-4 py-3 text-left">Mobile</th>
+                  <th className="px-4 py-3 text-left">Role</th>
+                  <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -304,11 +313,25 @@ const EmployeeList = () => {
                     <td className="px-4 py-3 font-medium text-white">{emp.employee_code || "N/A"}</td>
                     <td className="px-4 py-3"><div className="font-semibold text-white">{`${emp.first_name} ${emp.last_name || ""}`}</div><div className="text-white/40 text-xs">{emp.designation || "—"}</div></td>
                     <td className="px-4 py-3 text-white/70">{emp.mobile_number}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-orange-300">
+                        {emp.role || "Employee"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                        (emp.status || emp.employment_status) === "Active"
+                          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
+                          : "bg-rose-500/15 text-rose-400 border-rose-500/25"
+                      }`}>
+                        {emp.status || emp.employment_status || "Active"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Link to={`/admin/employees/view/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10"><Eye size={14} /></Link>
                         <Link to={`/admin/employees/edit/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-2 text-white/60 hover:text-white hover:bg-white/10"><Edit2 size={14} /></Link>
-                        <button onClick={() => handleDelete(emp.employee_id)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
+                        <button onClick={() => handleDelete(emp.employee_id)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10" title="Deactivate Employee"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -357,14 +380,18 @@ const EmployeeList = () => {
                     <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-300">
                       {emp.role}
                     </span>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${emp.employment_status === "Active" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" : emp.employment_status === "Inactive" ? "bg-rose-500/15 text-rose-400 border-rose-500/25" : "bg-white/10 text-white/60 border-white/15"}`}>
-                      {emp.employment_status}
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
+                      (emp.status || emp.employment_status) === "Active"
+                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
+                        : "bg-rose-500/15 text-rose-400 border-rose-500/25"
+                    }`}>
+                      {emp.status || emp.employment_status || "Active"}
                     </span>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Link to={`/admin/employees/view/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/60 hover:text-white hover:bg-white/10"><Eye size={14} /></Link>
                     <Link to={`/admin/employees/edit/${emp.employee_id}`} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/60 hover:text-white hover:bg-white/10"><Edit2 size={14} /></Link>
-                    <button onClick={() => handleDelete(emp.employee_id)} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"><Trash2 size={14} /></button>
+                    <button onClick={() => handleDelete(emp.employee_id)} className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10" title="Deactivate Employee"><Trash2 size={14} /></button>
                   </div>
                 </div>
               </div>

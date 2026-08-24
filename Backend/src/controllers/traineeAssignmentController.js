@@ -72,7 +72,9 @@ exports.getAvailableEmployees = async (req, res) => {
       SELECT 
         employee_id, employee_code, first_name, last_name, official_email, mobile_number, designation
       FROM employees 
-      WHERE employment_status = 'Active' OR employment_status IS NULL
+      WHERE (status = 'Active' OR employment_status = 'Active')
+        AND status != 'Inactive'
+        AND employment_status != 'Inactive'
     `);
 
     // Fetch active assignment counts

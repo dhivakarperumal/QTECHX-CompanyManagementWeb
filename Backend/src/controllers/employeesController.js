@@ -77,6 +77,10 @@ async function create(req, res) {
     delete employeeData.password;
     delete employeeData.confirm_password;
 
+    const initialStatus = employeeData.status || employeeData.employment_status || "Active";
+    employeeData.status = initialStatus;
+    employeeData.employment_status = initialStatus;
+
     normalizeEmployeeData(employeeData);
 
     const employee = await createEmployee(employeeData);
@@ -92,7 +96,7 @@ async function create(req, res) {
           mobile: employeeData.mobile_number,
           password: hashedPassword,
           role: employeeData.role,
-          status: employeeData.employment_status || "Active",
+          status: initialStatus,
           created_by: actor,
           updated_by: actor,
         });
@@ -154,6 +158,13 @@ async function update(req, res) {
     }
     updates.updated_by = req.user?.user_id || "SYSTEM";
     
+    // Sync status and employment_status
+    if (updates.status || updates.employment_status) {
+      const syncStatus = updates.status || updates.employment_status;
+      updates.status = syncStatus;
+      updates.employment_status = syncStatus;
+    }
+
     // Process uploaded files
     if (req.files) {
       Object.keys(req.files).forEach(key => {
@@ -177,14 +188,15 @@ async function update(req, res) {
     const employee = await updateEmployee(req.params.employeeId, updates);
 
     // Update User record
-    if (updates.username || updates.official_email || updates.role || updates.employment_status || updates.mobile_number) {
+    if (updates.username || updates.official_email || updates.role || updates.status || updates.employment_status || updates.mobile_number) {
       try {
         const userUpdates = {};
         if (updates.username) userUpdates.username = updates.username;
         if (updates.official_email) userUpdates.email = updates.official_email;
         if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
         if (updates.role) userUpdates.role = updates.role;
-        if (updates.employment_status) userUpdates.status = updates.employment_status;
+        if (updates.status || updates.employment_status) userUpdates.status = updates.status || updates.employment_status;
+        userUpdates.updated_by = updates.updated_by;
         // Password changes must be done by the employee via their panel
         await updateUser(req.params.employeeId, userUpdates);
       } catch (err) {
@@ -204,8 +216,14 @@ async function remove(req, res) {
   try {
     const existing = await findByEmployeeId(req.params.employeeId);
     if (!existing) return res.status(404).json({ message: "Employee not found" });
-    await deleteEmployee(req.params.employeeId);
-    return res.json({ message: "Employee deleted successfully" });
+    const actor = req.user?.user_id || "SYSTEM";
+    await deleteEmployee(req.params.employeeId, actor);
+    try {
+      await updateUser(req.params.employeeId, { status: "Inactive", updated_by: actor });
+    } catch (userErr) {
+      console.error("Failed to deactivate associated user on employee delete:", userErr);
+    }
+    return res.json({ message: "Employee deactivated successfully" });
   } catch (error) {
     console.error("Delete Employee Error:", error);
     return res.status(500).json({ message: "Failed to delete employee" });

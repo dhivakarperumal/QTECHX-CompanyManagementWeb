@@ -125,6 +125,7 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
   const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id || user?.uuid || '';
 
   const [assignments, setAssignments] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(defaultOpenForm);
@@ -157,12 +158,14 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
         traineeParams.append('employee_id', employeeId);
         assignmentParams.append('employee_id', employeeId);
       }
-      const [assignmentsRes, traineesRes] = await Promise.all([
+      const [assignmentsRes, tasksRes, traineesRes] = await Promise.all([
         api.get(`/trainee-task-assignments${assignmentParams.toString() ? `?${assignmentParams.toString()}` : ''}`),
+        api.get('/trainee-tasks'),
         api.get(`/trainee-intern${traineeParams.toString() ? `?${traineeParams.toString()}` : ''}`)
       ]);
-      setAssignments(assignmentsRes.data);
-      setTrainees(traineesRes.data.data || traineesRes.data);
+      setAssignments(assignmentsRes.data || []);
+      setTasks(tasksRes.data || []);
+      setTrainees(traineesRes.data.data || traineesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load data');
@@ -270,6 +273,13 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
     });
   }, [assignments, searchTerm, typeFilter, statusFilter, taskFilter]);
 
+  const taskOptions = useMemo(() => {
+    return tasks.map((t) => ({
+      value: t.uuid,
+      label: t.task_name || 'Untitled Task',
+    }));
+  }, [tasks]);
+
   const assignedTaskOptions = useMemo(() => {
     const uniqueTasks = new Map();
     assignments.forEach((assignment) => {
@@ -282,7 +292,15 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
 
   return (
     <div className={isModal || defaultOpenForm ? 'space-y-5 text-white' : 'space-y-5 pb-10 text-white min-h-screen'}>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{ zIndex: 999999 }}
+        toastOptions={{
+          style: {
+            zIndex: 999999,
+          },
+        }}
+      />
 
       {!(isModal || defaultOpenForm) && (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -317,8 +335,8 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
             <div>
               <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
               <Select
-                options={assignedTaskOptions}
-                value={selectedTask ? assignedTaskOptions.find(task => task.value === selectedTask) || null : null}
+                options={taskOptions}
+                value={selectedTask ? taskOptions.find(task => task.value === selectedTask) || null : null}
                 onChange={(option) => setSelectedTask(option ? option.value : '')}
                 styles={customSelectStyles}
                 isSearchable
@@ -375,8 +393,8 @@ const TraineeTaskAssign = ({ isModal = false, defaultOpenForm = false }) => {
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-1.5">Select Task *</label>
                 <Select
-                  options={assignedTaskOptions}
-                  value={selectedTask ? assignedTaskOptions.find(task => task.value === selectedTask) || null : null}
+                  options={taskOptions}
+                  value={selectedTask ? taskOptions.find(task => task.value === selectedTask) || null : null}
                   onChange={(option) => setSelectedTask(option ? option.value : '')}
                   styles={customSelectStyles}
                   isSearchable

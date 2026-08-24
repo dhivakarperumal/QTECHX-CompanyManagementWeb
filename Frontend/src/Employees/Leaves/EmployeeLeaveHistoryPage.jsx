@@ -238,7 +238,9 @@ const EmployeeLeaveHistoryPage = () => {
       return new Date(a.from_date) - new Date(b.from_date);
     });
 
-  const employeeName = employee?.first_name ? `${employee.first_name} ${employee.last_name || ''}`.trim() : `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
+  const employeeName = employee?.first_name
+    ? `${employee.first_name} ${employee.last_name || ''}`.trim()
+    : (user?.first_name ? `${user?.first_name || ''} ${user?.last_name || ''}`.trim() : (employee?.employee_code || 'Employee'));
 
   return (
     <div className="space-y-5 pb-10 text-white min-h-screen">
@@ -282,7 +284,14 @@ const EmployeeLeaveHistoryPage = () => {
               <User size={20} className="text-orange-500" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">{employeeName || 'Employee details'}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-white">{employeeName || 'Employee details'}</h2>
+                {(employee?.status || employee?.employment_status) && (
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${(employee.status || employee.employment_status) === 'Active' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' : 'bg-rose-500/15 text-rose-400 border-rose-500/25'}`}>
+                    {employee.status || employee.employment_status}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-white/40">{employee?.employee_code || user?.employee_code || '—'}</p>
             </div>
           </div>

@@ -54,18 +54,25 @@ async function resolveEmployeeId(value) {
   if (value === undefined || value === null || value === '') return null;
 
   const db = getDB();
-  const [rows] = await db.execute(
-    `SELECT e.employee_id
-       FROM employees e
-       LEFT JOIN users u ON u.email COLLATE utf8mb4_unicode_ci = e.official_email COLLATE utf8mb4_unicode_ci
-      WHERE e.employee_id = ?
-         OR CAST(e.id AS CHAR) = ?
-         OR u.user_id = ?
-      LIMIT 1`,
-    [value, value, value],
+  const [empRows] = await db.execute(
+    `SELECT employee_id FROM employees WHERE employee_id = ? OR CAST(id AS CHAR) = ? LIMIT 1`,
+    [value, value]
   );
+  if (empRows.length) return empRows[0].employee_id;
 
-  return rows[0]?.employee_id || null;
+  const [userRows] = await db.execute(
+    `SELECT email FROM users WHERE user_id = ? LIMIT 1`,
+    [value]
+  );
+  if (userRows.length && userRows[0].email) {
+    const [empByEmail] = await db.execute(
+      `SELECT employee_id FROM employees WHERE official_email = ? OR personal_email = ? LIMIT 1`,
+      [userRows[0].email, userRows[0].email]
+    );
+    if (empByEmail.length) return empByEmail[0].employee_id;
+  }
+
+  return null;
 }
 
 /* ─── GET ALL ─── */
@@ -77,18 +84,9 @@ async function getAllTasksHandler(req, res) {
     let { assigned_to } = req.query;
     let { project_id } = req.query;
 
-    // Older tokens contain the users.user_id value in employee_id. Resolve it
-    // to the employees.employee_id value used by tasks.assigned_to.
     if (assigned_to) {
-      const [employeeRows] = await getDB().execute(
-        `SELECT e.employee_id
-           FROM employees e
-           LEFT JOIN users u ON u.email COLLATE utf8mb4_unicode_ci = e.official_email COLLATE utf8mb4_unicode_ci
-          WHERE e.employee_id = ? OR u.user_id = ?
-          LIMIT 1`,
-        [assigned_to, assigned_to],
-      );
-      assigned_to = employeeRows[0]?.employee_id || assigned_to;
+      const resolved = await resolveEmployeeId(assigned_to);
+      if (resolved) assigned_to = resolved;
     }
 
     if (project_id && typeof project_id === 'string' && project_id.length === 36) {
