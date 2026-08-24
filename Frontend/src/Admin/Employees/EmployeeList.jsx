@@ -2,14 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Plus, Search, RefreshCw, Eye, Edit2, Trash2, Loader2, UserCheck, UserX, Briefcase, List, LayoutGrid, Phone, Mail } from "lucide-react";
 import Select from "react-select";
+import api from '../../api';
 
 const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
     border: `1px solid ${state.isFocused
-        ? '#f97316'
-        : 'rgba(255,255,255,0.1)'
+      ? '#f97316'
+      : 'rgba(255,255,255,0.1)'
       }`,
     boxShadow: 'none',
     outline: 'none',
@@ -102,21 +103,21 @@ const EmployeeList = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/employees", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      setError(null);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch employees");
+      const { data } = await api.get("/employees");
+
+      if (data.success === false) {
+        throw new Error(data.message || "Failed to fetch employees");
       }
 
-      const data = await response.json();
       setEmployees(data.data || []);
     } catch (err) {
-      setError(err.message);
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to fetch employees"
+      );
     } finally {
       setLoading(false);
     }
@@ -148,30 +149,35 @@ const EmployeeList = () => {
   }, [employees, search, statusFilter, roleFilter]);
 
   const handleDelete = async (employeeId) => {
-    if (!window.confirm("Are you sure you want to deactivate this employee? This will change their status to Inactive and disable login.")) return;
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/employees/${employeeId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    if (
+      !window.confirm(
+        "Are you sure you want to deactivate this employee? This will change their status to Inactive and disable login."
+      )
+    ) {
+      return;
+    }
 
-      if (response.ok) {
-        setEmployees((prev) =>
-          prev.map((emp) =>
-            emp.employee_id === employeeId
-              ? { ...emp, status: "Inactive", employment_status: "Inactive" }
-              : emp
-          )
-        );
-      } else {
-        alert("Failed to deactivate employee");
-      }
+    try {
+      await api.delete(`/employees/${employeeId}`);
+
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.employee_id === employeeId
+            ? {
+              ...emp,
+              status: "Inactive",
+              employment_status: "Inactive",
+            }
+            : emp
+        )
+      );
     } catch (err) {
       console.error(err);
-      alert("Error deactivating employee");
+
+      alert(
+        err?.response?.data?.message ||
+        "Error deactivating employee"
+      );
     }
   };
 
@@ -319,11 +325,10 @@ const EmployeeList = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                        (emp.status || emp.employment_status) === "Active"
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${(emp.status || emp.employment_status) === "Active"
                           ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
                           : "bg-rose-500/15 text-rose-400 border-rose-500/25"
-                      }`}>
+                        }`}>
                         {emp.status || emp.employment_status || "Active"}
                       </span>
                     </td>
@@ -380,11 +385,10 @@ const EmployeeList = () => {
                     <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-300">
                       {emp.role}
                     </span>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
-                      (emp.status || emp.employment_status) === "Active"
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${(emp.status || emp.employment_status) === "Active"
                         ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
                         : "bg-rose-500/15 text-rose-400 border-rose-500/25"
-                    }`}>
+                      }`}>
                       {emp.status || emp.employment_status || "Active"}
                     </span>
                   </div>
