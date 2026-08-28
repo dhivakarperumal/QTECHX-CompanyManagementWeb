@@ -140,7 +140,7 @@ const PrivacyPolicy = () => {
                   key={idx}
                   data-aos="fade-up"
                   data-aos-delay={idx * 100}
-                  className="group relative rounded-2xl border border-white/10 bg-[#11171c]/70 p-6 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6A00]/50 hover:bg-[#11171c] hover:shadow-[0_10px_30px_rgba(255,106,0,0.15)]"
+                  className="group relative rounded-2xl border border-white/10 bg-[#11171c]/70 p-6 backdrop-blur-md transition-all duration-[1500ms] ease-in-out hover:border-[#FF6A00]/50 hover:bg-[#11171c] hover:shadow-[0_10px_30px_rgba(255,106,0,0.15)]" 
                 >
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#FF6A00]/10 text-xl text-[#FF6A00] transition-colors group-hover:border-[#FF6A00] group-hover:bg-[#FF6A00] group-hover:text-white">
                     <Icon />
