@@ -1414,7 +1414,7 @@ const OfficeCalendar = () => {
                       <div style={{ position: 'absolute', zIndex: 999, top: '100%', left: 0, right: 0, background: '#1e1e24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 10 }}>Select Employees</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-                          {Array.isArray(allEmployees) ? allEmployees.map((emp, i) => {
+                          {Array.isArray(allEmployees) ? allEmployees.filter(emp => (emp.status || emp.employment_status) === 'Active').map((emp, i) => {
                             const name = getEmployeeFullName(emp);
                             if (!name) return null;
                             const isSel = (formData.participants || []).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);

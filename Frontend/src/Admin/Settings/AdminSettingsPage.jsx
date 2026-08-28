@@ -1,7 +1,6 @@
 import React from 'react';
 import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail, FolderKanban, UserCog } from 'lucide-react';
 
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail, FolderKanban } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {

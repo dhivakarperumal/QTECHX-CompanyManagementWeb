@@ -1149,14 +1149,13 @@ const ExpensesPage = () => {
                     <td className="px-4 py-4">
                       {exp.upload_bill ? (
                         <a
-                          href={exp.upload_bill.startsWith("http") ? exp.upload_bill : buildBackendUrl(`/uploads/expenses/${exp.upload_bill}`)}
+                          href={exp.upload_bill.startsWith("http") ? exp.upload_bill : `${API_URL}/uploads/expenses/${exp.upload_bill}`}
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition text-xs"
                           title="View Bill"
                         >
                           <Download size={13} /> Bill
-                        </a>
                         </a>
                       ) : (
                         <span className="text-[10px] text-white/20 italic">No bill</span>
@@ -1372,6 +1371,7 @@ const ExpensesPage = () => {
 
 
     </div>
+    
   );
 };
 

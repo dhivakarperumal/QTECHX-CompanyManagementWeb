@@ -28,11 +28,6 @@ const Footer = () => {
     { name: "Why Choose Us", path: "/whychooseus" },
     { name: "Who We Work", path: "/whoweworkwith" },
     { name: "What We Do", path: "/whatwedo" },
-    { name: "Our Achievements", path: "/achievements" },
-    { name: "Terms Of Services", path: "/terms" },
-    { name: "Why Choose Us", path: "/whychooseus" },
-    { name: "Who We Work", path: "/whoweworkwith" },
-    { name: "What We Do", path: "/whatwedo" },
     { name: "Pricing", path: "/prices" },
 
     { name: "Privacy Policy", path: "/privacy-policy" },
