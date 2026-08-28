@@ -201,6 +201,24 @@ async function changePassword(req, res) {
     console.error("Change password error:", error);
     return res.status(500).json({ message: "Failed to change password" });
   }
+async function deleteOwnAccount(req, res) {
+  try {
+    const userId = req.user?.user_id || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const existing = await findByUserId(userId);
+    if (!existing) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = await softDeleteUser(userId, userId);
+    return res.json({ message: "Account deleted successfully", user: publicUser(user) });
+  } catch (error) {
+    console.error("Delete own account error:", error);
+    return res.status(500).json({ message: "Failed to delete account" });
+  }
 }
 
-module.exports = { create, getAll, getOne, update, remove, login, addTrainee, changePassword };
+module.exports = { create, getAll, getOne, update, remove, login, addTrainee, changePassword, deleteOwnAccount };

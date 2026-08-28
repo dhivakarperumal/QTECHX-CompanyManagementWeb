@@ -16,6 +16,10 @@ const administrators = authorize("Super Admin", "Admin");
 
 router.post("/login", loginRules, validateRequest, controller.login);
 router.post("/change-password", authenticate, controller.changePassword);
+router.delete("/delete-account", authenticate, controller.deleteOwnAccount);
+router.post("/delete-account", authenticate, controller.deleteOwnAccount);
+router.delete("/me", authenticate, controller.deleteOwnAccount);
+router.post("/delete-me", authenticate, controller.deleteOwnAccount);
 router.post("/", authenticate, userManagers, createUserRules, validateRequest, controller.create);
 router.get("/", authenticate, userManagers, listRules, validateRequest, controller.getAll);
 router.get("/:userId", authenticate, userManagers, userIdRule, validateRequest, controller.getOne);
