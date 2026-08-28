@@ -37,6 +37,7 @@ import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import JobApply from "./Admin/JobApply/JobApply.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import Booknow from "./Componets/BookingForm/Booknow.jsx";
+import PrivacyPolicy from "./Componets/PrivacyPolicy/PrivacyPolicy.jsx";
 
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
@@ -142,6 +143,8 @@ const router = createHashRouter([
       { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/booknow", element: <Booknow /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
+      { path: "/privacy", element: <PrivacyPolicy /> },
       {
         path: 'login',
         element: <Login />,
