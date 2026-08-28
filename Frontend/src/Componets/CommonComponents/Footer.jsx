@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import PageContainer from './PageContainer'
 
 const Footer = () => {
@@ -11,9 +12,8 @@ const Footer = () => {
             <p className="text-sm text-slate-300">Building modern web experiences with React and Node.</p>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-            <span>Contact</span>
-            <span>Privacy</span>
-            <span>Terms</span>
+            <Link to="/contact" className="hover:text-white transition">Contact</Link>
+            <Link to="/privacy-policy" className="hover:text-white transition">Privacy</Link>
           </div>
         </div>
       </PageContainer>

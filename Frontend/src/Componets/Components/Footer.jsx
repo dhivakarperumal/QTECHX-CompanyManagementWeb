@@ -29,6 +29,7 @@ const Footer = () => {
     { name: "Who We Work", path: "/whoweworkwith" },
     { name: "What We Do", path: "/whatwedo" },
     { name: "Pricing", path: "/prices" },
+    { name: "Privacy Policy", path: "/privacy-policy" },
   ];
 
   const socialLinks = [
