@@ -46,6 +46,39 @@ const normalizeEmployeeData = (data) => {
   return "Record already exists.";
 };
 
+const missingRequiredEmployeeFields = (data, files = {}) => {
+  const requiredFields = [
+    "first_name", "last_name", "gender", "dob", "blood_group", "marital_status",
+    "nationality", "aadhaar_number", "pan_number", "mobile_number", "personal_email",
+    "permanent_address", "emergency_contact_person", "emergency_contact_number",
+    "emergency_relationship", "department", "team_lead", "joining_date",
+    "confirmation_date", "employment_status", "role", "salary_type", "basic_salary",
+    "bank_name", "account_number", "ifsc_code", "upi_id", "username", "official_email",
+  ];
+  const missing = requiredFields.filter((field) => !String(data[field] ?? "").trim());
+
+  ["profile_photo", "resume_url", "aadhaar_url", "pan_url"].forEach((field) => {
+    if (!files[field]?.length) missing.push(field);
+  });
+
+  let education;
+  try {
+    education = typeof data.educational_details === "string"
+      ? JSON.parse(data.educational_details)
+      : data.educational_details;
+  } catch {
+    education = null;
+  }
+  if (!Array.isArray(education) || !education.length || education.some((row) =>
+    [row.course, row.institution, row.percentage, row.year_of_passing]
+      .some((value) => !String(value ?? "").trim())
+  )) {
+    missing.push("educational_details");
+  }
+
+  return missing;
+};
+
 async function generateEmployeeCodeHandler(req, res) {
   try {
     const employeeCode = await generateEmployeeCode();
@@ -60,6 +93,13 @@ async function create(req, res) {
   try {
     const actor = req.user?.user_id || "SYSTEM";
     const employeeData = { ...req.body };
+    const missingFields = missingRequiredEmployeeFields(employeeData, req.files);
+    if (missingFields.length) {
+      return res.status(400).json({
+        message: `Please provide all required employee fields: ${missingFields.join(", ")}`,
+      });
+    }
+
     // map department (frontend) -> designation (db)
     if (employeeData.department) {
       employeeData.designation = employeeData.department;
