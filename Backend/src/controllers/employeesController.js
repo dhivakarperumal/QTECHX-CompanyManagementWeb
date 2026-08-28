@@ -46,16 +46,6 @@ const normalizeEmployeeData = (data) => {
   return "Record already exists.";
 };
 
-const normalizeEmployeeData = (data) => {
-  if (data.pan_number) data.pan_number = String(data.pan_number).trim().toUpperCase();
-  if (data.aadhaar_number) data.aadhaar_number = String(data.aadhaar_number).replace(/\s+/g, '');
-  if (data.mobile_number) data.mobile_number = String(data.mobile_number).replace(/[^0-9+]/g, '');
-  if (data.personal_email) data.personal_email = String(data.personal_email).trim().toLowerCase();
-  if (data.official_email) data.official_email = String(data.official_email).trim().toLowerCase();
-  if (data.account_number) data.account_number = String(data.account_number).trim();
-  if (data.upi_id) data.upi_id = String(data.upi_id).trim().toLowerCase();
-};
-
 async function generateEmployeeCodeHandler(req, res) {
   try {
     const employeeCode = await generateEmployeeCode();
