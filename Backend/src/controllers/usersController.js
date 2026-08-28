@@ -81,10 +81,20 @@ async function update(req, res) {
     const existing = await findByUserId(req.params.userId);
     if (!existing) return res.status(404).json({ message: "User not found" });
 
+    if (req.body.status !== undefined) {
+      const normalizedStatus = String(req.body.status).trim().toLowerCase() === "active" ? "Active" : "Inactive";
+      if (normalizedStatus === "Inactive" && existing.user_id === req.user.user_id) {
+        return res.status(400).json({ message: "You cannot deactivate your own account" });
+      }
+    }
+
     const updates = {};
-    ["username", "email", "mobile", "role", "status"].forEach((field) => {
+    ["username", "email", "mobile", "role"].forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
+    if (req.body.status !== undefined) {
+      updates.status = String(req.body.status).trim().toLowerCase() === "active" ? "Active" : "Inactive";
+    }
     if (req.body.password !== undefined) updates.password = await bcrypt.hash(req.body.password, 12);
     updates.updated_by = req.user.user_id;
 
@@ -115,7 +125,16 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (user.status === "Inactive" || user.emp_status === "Inactive" || user.emp_employment_status === "Inactive") {
+    const userStatus = String(user.status || "").trim().toLowerCase();
+    if (userStatus !== "active") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
+    if (user.emp_status && String(user.emp_status).trim().toLowerCase() === "inactive") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
+    if (user.emp_employment_status && String(user.emp_employment_status).trim().toLowerCase() === "inactive") {
       return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
     }
 
