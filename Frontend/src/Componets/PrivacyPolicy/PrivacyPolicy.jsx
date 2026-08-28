@@ -130,15 +130,6 @@ const PrivacyPolicy = () => {
             align="center"
           />
 
-          {/* Last Updated Badge */}
-          <div data-aos="fade-up" className="flex items-center justify-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#FF6A00]/30 bg-[#11171c]/90 text-xs sm:text-sm text-white/80 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-              <span className="h-2 w-2 rounded-full bg-[#FF6A00] animate-pulse" />
-              <span>
-                Effective Date: <strong className="text-white">January 1, 2026</strong> | Version <strong className="text-[#FF6A00]">2.4</strong>
-              </span>
-            </div>
-          </div>
 
           {/* Quick Highlights Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
@@ -184,16 +175,14 @@ const PrivacyPolicy = () => {
                         key={sec.id}
                         type="button"
                         onClick={() => scrollToSection(sec.id)}
-                        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm font-medium transition-all duration-200 ${
-                          isActive
+                        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm font-medium transition-all duration-200 ${isActive
                             ? "border border-[#FF6A00]/40 bg-[#FF6A00]/15 text-[#FF6A00] font-semibold"
                             : "text-white/70 hover:bg-white/[0.04] hover:text-white"
-                        }`}
+                          }`}
                       >
                         <SecIcon
-                          className={`text-base shrink-0 transition-colors ${
-                            isActive ? "text-[#FF6A00]" : "text-white/40 group-hover:text-[#FF6A00]"
-                          }`}
+                          className={`text-base shrink-0 transition-colors ${isActive ? "text-[#FF6A00]" : "text-white/40 group-hover:text-[#FF6A00]"
+                            }`}
                         />
                         <span className="truncate">{sec.label}</span>
                       </button>
@@ -327,7 +316,7 @@ const PrivacyPolicy = () => {
                       { title: "Service Delivery & Execution", text: "Architecting, developing, deploying, and maintaining tailored software, web applications, and IT consulting solutions." },
                       { title: "Client Communication", text: "Providing project updates, sprint reviews, milestone deliveries, quotation estimates, and administrative billing." },
                       { title: "Talent Acquisition", text: "Evaluating qualifications, conducting candidate reviews, and scheduling interviews for open career positions." },
-                      { title: "Platform Security & Maintenance", text: "Monitoring web traffic, preventing unauthorized access, mitigating DDoS attacks, and debugging application errors." },
+                      { title: "Platform Security & Maintenance", text: "We take appropriate security measures to protect our platform, prevent unauthorized access, monitor suspicious activity, and promptly address technical issues." },
                       { title: "Legal & Regulatory Compliance", text: "Complying with applicable tax, financial, and data retention regulations under governing legal frameworks." },
                       { title: "Experience Optimization", text: "Enhancing user interface responsiveness, navigation structure, and delivering relevant technical content." },
                     ].map((useCase, index) => (
@@ -365,7 +354,7 @@ const PrivacyPolicy = () => {
                   <ul className="space-y-2.5 text-xs sm:text-sm">
                     <li className="flex items-start gap-2.5">
                       <FiCheckCircle className="text-[#FF6A00] mt-1 shrink-0" />
-                      <span><strong className="text-white">Cryptographic Protection:</strong> Transport Layer Security (TLS 1.3) encryption in transit and AES-256 encryption at rest for all database repositories.</span>
+                      <span><strong className="text-white">Cryptographic Protection:</strong> We use encryption to protect your information while it is being transmitted and stored, helping keep your data secure from unauthorized access.</span>
                     </li>
                     <li className="flex items-start gap-2.5">
                       <FiCheckCircle className="text-[#FF6A00] mt-1 shrink-0" />
@@ -573,9 +562,9 @@ const PrivacyPolicy = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/10">
-                  <span className="text-xs text-white/50">
+                  {/* <span className="text-xs text-white/50">
                     Response timeline: Typically within 24 to 48 business hours.
-                  </span>
+                  </span> */}
                   <Link
                     to="/contact"
                     className="inline-flex items-center gap-2 rounded-xl bg-[#FF6A00] px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:bg-[#ff7e1d] hover:shadow-[0_4px_20px_rgba(255,106,0,0.4)]"
