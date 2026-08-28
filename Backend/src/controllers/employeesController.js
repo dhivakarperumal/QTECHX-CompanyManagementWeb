@@ -33,27 +33,6 @@ const normalizeEmployeeData = (data) => {
   if (data.official_email) data.official_email = String(data.official_email).trim().toLowerCase();
   if (data.account_number) data.account_number = String(data.account_number).trim();
   if (data.upi_id) data.upi_id = String(data.upi_id).trim().toLowerCase();
-  const msg = error.message;
-  if (msg.includes("uq_emp_pan") || msg.includes("pan_number")) return "PAN Number already exists.";
-  if (msg.includes("uq_emp_aadhaar") || msg.includes("aadhaar_number")) return "Aadhaar Number already exists.";
-  if (msg.includes("uq_emp_mobile") || msg.includes("mobile_number")) return "Mobile Number already registered.";
-  if (msg.includes("uq_emp_email") || msg.includes("personal_email") || msg.includes("email")) return "Personal Email already registered.";
-  if (msg.includes("uq_emp_upi") || msg.includes("upi_id")) return "UPI ID already exists.";
-  if (msg.includes("uq_emp_account_ifsc")) return "This Account Number and IFSC Code combination is already registered.";
-  if (msg.includes("uq_emp_account") || msg.includes("account_number")) return "Account Number already exists.";
-  if (msg.includes("employee_id")) return "Employee ID already exists.";
-  if (msg.includes("employee_code")) return "Employee Code already exists.";
-  return "Record already exists.";
-};
-
-const normalizeEmployeeData = (data) => {
-  if (data.pan_number) data.pan_number = String(data.pan_number).trim().toUpperCase();
-  if (data.aadhaar_number) data.aadhaar_number = String(data.aadhaar_number).replace(/\s+/g, '');
-  if (data.mobile_number) data.mobile_number = String(data.mobile_number).replace(/[^0-9+]/g, '');
-  if (data.personal_email) data.personal_email = String(data.personal_email).trim().toLowerCase();
-  if (data.official_email) data.official_email = String(data.official_email).trim().toLowerCase();
-  if (data.account_number) data.account_number = String(data.account_number).trim();
-  if (data.upi_id) data.upi_id = String(data.upi_id).trim().toLowerCase();
 };
 
 async function generateEmployeeCodeHandler(req, res) {
