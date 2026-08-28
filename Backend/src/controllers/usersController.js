@@ -201,6 +201,8 @@ async function changePassword(req, res) {
     console.error("Change password error:", error);
     return res.status(500).json({ message: "Failed to change password" });
   }
+}
+
 async function deleteOwnAccount(req, res) {
   try {
     const userId = req.user?.user_id || req.user?.id;
