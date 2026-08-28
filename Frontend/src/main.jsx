@@ -114,6 +114,9 @@ import AdminContactRequestsPage from './Admin/Settings/AdminContactRequestsPage.
 import AdminCompletedProjectsSettingsPage from './Admin/Settings/AdminCompletedProjectsSettingsPage.jsx';
 import AdminUsersSettingsPage from './Admin/Settings/AdminUsersSettingsPage.jsx';
 
+import AdminContactRequestsPage from './Admin/Settings/AdminContactRequestsPage.jsx';
+import AdminCompletedProjectsSettingsPage from './Admin/Settings/AdminCompletedProjectsSettingsPage.jsx';
+
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
 const EmployeeSalary = lazy(() => import('./Admin/Expenses/EmployeeSalary.jsx'))
