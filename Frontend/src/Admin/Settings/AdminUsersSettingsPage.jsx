@@ -67,7 +67,7 @@ const AdminUsersSettingsPage = () => {
     else setLoading(true);
 
     try {
-      const res = await api.get('/users?limit=500');
+      const res = await api.get('/users?limit=100');
       const list = res.data?.data || [];
       setUsers(list);
     } catch (error) {

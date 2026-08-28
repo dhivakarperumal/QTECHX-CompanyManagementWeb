@@ -49,7 +49,7 @@ async function create(req, res) {
 async function getAll(req, res) {
   try {
     const page = Number(req.query.page || 1);
-    const limit = Number(req.query.limit || 20);
+    const limit = Math.min(Math.max(Number(req.query.limit || 100), 1), 500);
     const result = await listUsers({
       page,
       limit,
