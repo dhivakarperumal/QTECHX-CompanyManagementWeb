@@ -140,7 +140,7 @@ const PrivacyPolicy = () => {
                   key={idx}
                   data-aos="fade-up"
                   data-aos-delay={idx * 100}
-                  className="group relative rounded-2xl border border-white/10 bg-[#11171c]/70 p-6 backdrop-blur-md transition-all duration-[1500ms] ease-in-out hover:border-[#FF6A00]/50 hover:bg-[#11171c] hover:shadow-[0_10px_30px_rgba(255,106,0,0.15)]" 
+                  className="group relative rounded-2xl border border-white/10 bg-[#11171c]/70 p-6 backdrop-blur-md transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[#FF6A00]/70 hover:bg-[#11171c] hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_28px_rgba(255,106,0,0.18)]"
                 >
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[#FF6A00]/30 bg-[#FF6A00]/10 text-xl text-[#FF6A00] transition-colors group-hover:border-[#FF6A00] group-hover:bg-[#FF6A00] group-hover:text-white">
                     <Icon />
@@ -176,8 +176,8 @@ const PrivacyPolicy = () => {
                         type="button"
                         onClick={() => scrollToSection(sec.id)}
                         className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm font-medium transition-all duration-200 ${isActive
-                            ? "border border-[#FF6A00]/40 bg-[#FF6A00]/15 text-[#FF6A00] font-semibold"
-                            : "text-white/70 hover:bg-white/[0.04] hover:text-white"
+                          ? "border border-[#FF6A00]/40 bg-[#FF6A00]/15 text-[#FF6A00] font-semibold"
+                          : "text-white/70 hover:bg-white/[0.04] hover:text-white"
                           }`}
                       >
                         <SecIcon
