@@ -733,7 +733,15 @@ const EmployeeAdd = () => {
       alert(`Employee ${isEditMode ? "updated" : "created"} successfully!`);
       navigate("/admin/employees");
     } catch (err) {
-      setError(err.message);
+      const serverMessage = err.response?.data?.message || err.message;
+      setError(serverMessage);
+      if (err.response?.data?.field) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          [err.response.data.field]: serverMessage,
+        }));
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
     }

@@ -156,6 +156,69 @@ async function existsByEmailOrMobile(email, mobile) {
   return rows[0] || null;
 }
 
+async function findConflictUser({ emails = [], mobile, username, excludeUserId = null }) {
+  const db = getDB();
+  const emailList = (Array.isArray(emails) ? emails : [emails])
+    .map((e) => String(e || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  const cleanMobile = mobile ? String(mobile).replace(/[\s\-\+]/g, "").slice(-10) : "";
+  const cleanUsername = username ? String(username).trim().toLowerCase() : "";
+
+  if (emailList.length > 0) {
+    const placeholders = emailList.map(() => "?").join(", ");
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE LOWER(TRIM(email)) IN (${placeholders})`;
+    const params = [...emailList];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "email", value: rows[0].email, user: rows[0] };
+    }
+  }
+
+  // Check mobile
+  if (cleanMobile) {
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE RIGHT(REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '-', ''), '+', ''), 10) = ?`;
+    const params = [cleanMobile];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "mobile", value: rows[0].mobile, user: rows[0] };
+    }
+  }
+
+  // Check username
+  if (cleanUsername) {
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE LOWER(TRIM(username)) = ?`;
+    const params = [cleanUsername];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "username", value: rows[0].username, user: rows[0] };
+    }
+  }
+
+  return null;
+}
+
+async function hardDeleteUser(userId) {
+  const db = getDB();
+  await db.execute("DELETE FROM users WHERE user_id = ?", [userId]);
+  return true;
+}
+
 module.exports = {
   createUser,
   findByUserId,
@@ -165,4 +228,7 @@ module.exports = {
   updateUser,
   softDeleteUser,
   existsByEmailOrMobile,
+  findConflictUser,
+  hardDeleteUser,
 };
+
