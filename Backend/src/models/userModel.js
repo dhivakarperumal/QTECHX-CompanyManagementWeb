@@ -165,6 +165,7 @@ async function findConflictUser({ emails = [], mobile, username, excludeUserId =
   const cleanMobile = mobile ? String(mobile).replace(/[\s\-\+]/g, "").slice(-10) : "";
   const cleanUsername = username ? String(username).trim().toLowerCase() : "";
 
+  // Check emails
   if (emailList.length > 0) {
     const placeholders = emailList.map(() => "?").join(", ");
     let query = `SELECT id, user_id, username, email, mobile FROM users WHERE LOWER(TRIM(email)) IN (${placeholders})`;
