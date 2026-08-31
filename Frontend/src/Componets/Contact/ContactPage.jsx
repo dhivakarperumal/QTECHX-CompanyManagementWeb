@@ -240,7 +240,7 @@ const ContactPage = () => {
                 Phone Number
               </p>
               <p className="text-sm font-semibold text-white group-hover:text-[#FF6A00] transition-colors md:text-base">
-                +91 95972 93504
+                +91 96591 33504
               </p>
             </div>
           </div>

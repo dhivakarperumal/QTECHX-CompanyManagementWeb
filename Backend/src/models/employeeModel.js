@@ -106,5 +106,124 @@ async function deleteEmployee(employeeId, updatedBy = null) {
   return true;
 }
 
-module.exports = { createEmployee, findByEmployeeId, listEmployees, updateEmployee, deleteEmployee, generateEmployeeCode };
+async function hardDeleteEmployee(employeeId) {
+  const db = getDB();
+  await db.execute("DELETE FROM employees WHERE employee_id = ?", [employeeId]);
+  return true;
+}
+
+async function findConflictEmployee({ emails = [], mobile, username, pan, aadhaar, excludeEmployeeId = null }) {
+  const db = getDB();
+  const emailList = (Array.isArray(emails) ? emails : [emails])
+    .map((e) => String(e || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  const cleanMobile = mobile ? String(mobile).replace(/[\s\-\+]/g, "").slice(-10) : "";
+  const cleanUsername = username ? String(username).trim().toLowerCase() : "";
+  const cleanPan = pan ? String(pan).trim().toUpperCase() : "";
+  const cleanAadhaar = aadhaar ? String(aadhaar).replace(/\D/g, "") : "";
+
+  // Check emails (against personal_email and official_email)
+  if (emailList.length > 0) {
+    const placeholders = emailList.map(() => "?").join(", ");
+    let query = `SELECT id, employee_id, employee_code, first_name, last_name, personal_email, official_email, mobile_number, username 
+                 FROM employees 
+                 WHERE (LOWER(TRIM(personal_email)) IN (${placeholders}) OR LOWER(TRIM(official_email)) IN (${placeholders}))`;
+    const params = [...emailList, ...emailList];
+    if (excludeEmployeeId) {
+      query += " AND employee_id != ?";
+      params.push(excludeEmployeeId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      const match = rows[0];
+      const matchedEmail =
+        emailList.find(
+          (e) =>
+            (match.personal_email && match.personal_email.toLowerCase() === e) ||
+            (match.official_email && match.official_email.toLowerCase() === e)
+        ) || match.personal_email || match.official_email;
+      return { field: "email", value: matchedEmail, employee: match };
+    }
+  }
+
+  // Check mobile
+  if (cleanMobile) {
+    let query = `SELECT id, employee_id, employee_code, first_name, last_name, personal_email, official_email, mobile_number, username 
+                 FROM employees 
+                 WHERE RIGHT(REPLACE(REPLACE(REPLACE(mobile_number, ' ', ''), '-', ''), '+', ''), 10) = ?`;
+    const params = [cleanMobile];
+    if (excludeEmployeeId) {
+      query += " AND employee_id != ?";
+      params.push(excludeEmployeeId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "mobile", value: rows[0].mobile_number, employee: rows[0] };
+    }
+  }
+
+  // Check username
+  if (cleanUsername) {
+    let query = `SELECT id, employee_id, employee_code, first_name, last_name, personal_email, official_email, mobile_number, username 
+                 FROM employees 
+                 WHERE LOWER(TRIM(username)) = ?`;
+    const params = [cleanUsername];
+    if (excludeEmployeeId) {
+      query += " AND employee_id != ?";
+      params.push(excludeEmployeeId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "username", value: rows[0].username, employee: rows[0] };
+    }
+  }
+
+  // Check PAN
+  if (cleanPan) {
+    let query = `SELECT id, employee_id, employee_code, pan_number FROM employees WHERE UPPER(TRIM(pan_number)) = ?`;
+    const params = [cleanPan];
+    if (excludeEmployeeId) {
+      query += " AND employee_id != ?";
+      params.push(excludeEmployeeId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "pan", value: rows[0].pan_number, employee: rows[0] };
+    }
+  }
+
+  // Check Aadhaar
+  if (cleanAadhaar) {
+    let query = `SELECT id, employee_id, employee_code, aadhaar_number FROM employees WHERE REPLACE(aadhaar_number, ' ', '') = ?`;
+    const params = [cleanAadhaar];
+    if (excludeEmployeeId) {
+      query += " AND employee_id != ?";
+      params.push(excludeEmployeeId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "aadhaar", value: rows[0].aadhaar_number, employee: rows[0] };
+    }
+  }
+
+  return null;
+}
+
+module.exports = {
+  createEmployee,
+  findByEmployeeId,
+  listEmployees,
+  updateEmployee,
+  deleteEmployee,
+  hardDeleteEmployee,
+  findConflictEmployee,
+  generateEmployeeCode,
+};
+
 

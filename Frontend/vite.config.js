@@ -15,7 +15,12 @@ export default defineConfig({
         secure: false,
       },
       '/uploads': {
+<<<<<<< HEAD
        target:"https://qtechx.com",
+=======
+        // target: 'http://localhost:5000',
+        target:"https://qtechx.com",
+>>>>>>> f28c91fa4682e35c6be271d1eb2ef600bfd43ed1
         changeOrigin: true,
         secure: false,
       },
