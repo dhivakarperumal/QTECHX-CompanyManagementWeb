@@ -22,7 +22,7 @@ const FloatingWhatsApp = () => {
       >
         <div className="flex flex-col text-right">
           <span className="font-semibold text-white">Chat on WhatsApp</span>
-          <span className="text-[11px] text-[#25D366]">+91 96591 33504</span>
+          <span className="text-[11px] text-[#FF6A00]">+91 96591 33504</span>
         </div>
         {/* Tooltip arrow pointing right */}
         <span className="absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rotate-45 border-t border-r border-white/10 bg-[#11171c]/95" />
@@ -36,7 +36,7 @@ const FloatingWhatsApp = () => {
         title="Chat with us on WhatsApp (+91 96591 33504)"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_25px_rgba(37,211,102,0.45)] transition-all duration-300 hover:scale-110 hover:bg-[#20bd5a] hover:shadow-[0_10px_30px_rgba(37,211,102,0.65)] focus:outline-none focus:ring-4 focus:ring-[#25D366]/40 sm:h-14 sm:w-14"
+        className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6A00] text-white shadow-[0_8px_25px_rgba(255,106,0,0.45)] transition-all duration-300 hover:scale-110 hover:bg-[#e05e00] hover:shadow-[0_10px_30px_rgba(255,106,0,0.65)] focus:outline-none focus:ring-4 focus:ring-[#FF6A00]/40 sm:h-14 sm:w-14"
       >
 
         {/* WhatsApp Icon */}
@@ -44,8 +44,8 @@ const FloatingWhatsApp = () => {
 
         {/* Online indicator dot */}
         <span className="absolute top-0 right-0 flex h-3.5 w-3.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-          <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-300 opacity-75" />
+          <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-orange-500" />
         </span>
       </a>
     </aside>
