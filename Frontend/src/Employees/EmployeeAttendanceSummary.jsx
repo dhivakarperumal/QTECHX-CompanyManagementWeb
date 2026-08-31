@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import Select from 'react-select';
@@ -102,6 +103,7 @@ const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
 
 const EmployeeAttendanceSummary = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -357,6 +359,41 @@ const EmployeeAttendanceSummary = () => {
     );
   };
 
+  const openAttendanceModal = useCallback((customForm = {}) => {
+    const now = new Date().toTimeString().slice(0, 5);
+    const nextForm = {
+      date: todayDate,
+      check_in_time: now,
+      check_out_time: '',
+      break_start_time: '',
+      break_end_time: '',
+      attendance_status: 'Present',
+      location: '',
+      ...customForm,
+    };
+
+    setForm(nextForm);
+    setMetrics(calculateMetrics(
+      nextForm.check_in_time,
+      nextForm.check_out_time,
+      nextForm.break_start_time,
+      nextForm.break_end_time
+    ));
+    setError(null);
+    setIsModalOpen(true);
+  }, [todayDate]);
+
+  useEffect(() => {
+    const shouldOpenQuickCheckin = new URLSearchParams(location.search).get('checkin') === 'true';
+    if (!shouldOpenQuickCheckin) return;
+    if (hasMarkedToday || todayHoliday || approvedLeaveToday) {
+      return;
+    }
+
+    openAttendanceModal({ check_in_time: new Date().toTimeString().slice(0, 5), attendance_status: 'Present' });
+    handleLocation();
+  }, [location.search, hasMarkedToday, todayHoliday, approvedLeaveToday, openAttendanceModal]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!isWithinRadius) {
@@ -371,7 +408,7 @@ const EmployeeAttendanceSummary = () => {
 
       await api.post("/attendance", {
         employee_id: employee_id,
-        date: form.date, // always today
+        date: form.date,
         check_in_time: form.check_in_time,
         check_out_time: form.check_out_time,
         break_start_time: form.break_start_time,
@@ -451,8 +488,14 @@ const EmployeeAttendanceSummary = () => {
                 alert("Attendance cannot be marked today because approved leave exists for this date.");
                 return;
               }
-              setMetrics(calculateMetrics(form.check_in_time, form.check_out_time));
-              setIsModalOpen(true);
+              openAttendanceModal({
+                check_in_time: new Date().toTimeString().slice(0, 5),
+                check_out_time: '',
+                break_start_time: '',
+                break_end_time: '',
+                attendance_status: 'Present',
+              });
+              handleLocation();
             }}
             disabled={hasMarkedToday || todayHoliday || approvedLeaveToday}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition ${hasMarkedToday || todayHoliday || approvedLeaveToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}

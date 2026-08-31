@@ -2,6 +2,14 @@ const { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAtt
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
 
+async function checkin(req, res) {
+  return clockIn(req, res);
+}
+
+async function checkout(req, res) {
+  return clockOut(req, res);
+}
+
 async function clockIn(req, res) {
   try {
     const payload = req.body;
@@ -462,5 +470,5 @@ async function getByEmployeeDate(req, res) {
   }
 }
 
-module.exports = { create, summary, employeeAttendance, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };
+module.exports = { create, summary, employeeAttendance, checkin, checkout, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };
 

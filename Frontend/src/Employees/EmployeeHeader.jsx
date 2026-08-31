@@ -229,6 +229,11 @@ const EmployeeHeader = ({ onMenuClick }) => {
     setSearchQuery("");
   };
 
+  const handleCheckin = () => {
+    navigate('/employee/attendance/summary?checkin=true');
+    setActiveDropdown(null);
+  };
+
   /* icon button */
   const IconBtn = ({ name, badge, title, children }) => (
     <button
@@ -369,6 +374,14 @@ const EmployeeHeader = ({ onMenuClick }) => {
             )}
 
             <div className="w-px h-6 bg-white/10 mx-1" />
+
+            <button
+              onClick={handleCheckin}
+              className="inline-flex items-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-3 h-9 text-sm font-medium text-orange-200 transition hover:bg-orange-500/20"
+            >
+              <Timer size={14} />
+              <span className="hidden sm:inline">Checkin</span>
+            </button>
 
             {/* Profile */}
             <div className="relative">
