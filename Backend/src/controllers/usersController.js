@@ -138,10 +138,15 @@ async function login(req, res) {
       return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
     }
 
+    const safeUser = publicUser(user);
+    const employeeId = user.emp_code || user.employee_id || user.user_id;
+    safeUser.employee_id = employeeId;
+    safeUser.employeeId = employeeId;
+
     const token = jwt.sign(
       {
         user_id: user.user_id,
-        employee_id: user.emp_code || user.user_id,
+        employee_id: employeeId,
         employee_code: user.emp_code2 || user.emp_code || null,
         id: user.user_id,
         username: user.username,
@@ -151,7 +156,7 @@ async function login(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
-    return res.json({ message: "Login successful", token, user: publicUser(user) });
+    return res.json({ message: "Login successful", token, user: safeUser });
   } catch (error) {
     console.error('[UsersController] login error:', error);
     return res.status(500).json({ message: "Login failed", error: error.message });
