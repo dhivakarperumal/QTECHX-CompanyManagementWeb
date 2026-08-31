@@ -117,6 +117,7 @@ const EmployeeAttendanceSummary = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [hasMarkedToday, setHasMarkedToday] = useState(false);
+  const [todayRecord, setTodayRecord] = useState(null);
   const [approvedLeaveToday, setApprovedLeaveToday] = useState(false);
   const [todayHoliday, setTodayHoliday] = useState(false);
 
@@ -161,16 +162,15 @@ const EmployeeAttendanceSummary = () => {
       const dateStr = new Date().toISOString().slice(0, 10);
 
       if (attendanceRes.data && attendanceRes.data.data) {
-        // the backend already filters for this employee
         const myData = attendanceRes.data.data;
-        // sort by date descending
         myData.sort((a, b) => new Date(b.date || b.attendance_date) - new Date(a.date || a.attendance_date));
         setHistory(myData);
 
-        // Check if marked today
-        const todayRecord = myData.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
-        setHasMarkedToday(Boolean(todayRecord));
+        const foundTodayRecord = myData.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
+        setTodayRecord(foundTodayRecord || null);
+        setHasMarkedToday(Boolean(foundTodayRecord));
       } else {
+        setTodayRecord(null);
         setHasMarkedToday(false);
       }
 
@@ -194,6 +194,27 @@ const EmployeeAttendanceSummary = () => {
   useEffect(() => {
     fetchMyAttendance();
   }, [fetchMyAttendance]);
+
+  useEffect(() => {
+    if (!todayRecord || isModalOpen) return;
+
+    const recordDate = todayRecord.date || todayRecord.attendance_date || todayDate;
+    setForm({
+      date: recordDate,
+      check_in_time: todayRecord.check_in_time || '',
+      check_out_time: todayRecord.check_out_time || '',
+      break_start_time: todayRecord.break_start_time || '',
+      break_end_time: todayRecord.break_end_time || '',
+      attendance_status: todayRecord.attendance_status || 'Present',
+      location: todayRecord.location || '',
+    });
+    setMetrics(calculateMetrics(
+      todayRecord.check_in_time,
+      todayRecord.check_out_time,
+      todayRecord.break_start_time,
+      todayRecord.break_end_time
+    ));
+  }, [todayRecord, isModalOpen, todayDate]);
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -360,15 +381,14 @@ const EmployeeAttendanceSummary = () => {
   };
 
   const openAttendanceModal = useCallback((customForm = {}) => {
-    const now = new Date().toTimeString().slice(0, 5);
     const nextForm = {
       date: todayDate,
-      check_in_time: now,
-      check_out_time: '',
-      break_start_time: '',
-      break_end_time: '',
-      attendance_status: 'Present',
-      location: '',
+      check_in_time: todayRecord?.check_in_time || '',
+      check_out_time: todayRecord?.check_out_time || '',
+      break_start_time: todayRecord?.break_start_time || '',
+      break_end_time: todayRecord?.break_end_time || '',
+      attendance_status: todayRecord?.attendance_status || 'Present',
+      location: todayRecord?.location || '',
       ...customForm,
     };
 
@@ -381,7 +401,7 @@ const EmployeeAttendanceSummary = () => {
     ));
     setError(null);
     setIsModalOpen(true);
-  }, [todayDate]);
+  }, [todayDate, todayRecord]);
 
   useEffect(() => {
     const shouldOpenQuickCheckin = new URLSearchParams(location.search).get('checkin') === 'true';
@@ -406,8 +426,8 @@ const EmployeeAttendanceSummary = () => {
       const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
       const employee_id = possibleIds.find(id => id.length > 20) || possibleIds[0];
 
-      await api.post("/attendance", {
-        employee_id: employee_id,
+      const payload = {
+        employee_id,
         date: form.date,
         check_in_time: form.check_in_time,
         check_out_time: form.check_out_time,
@@ -419,7 +439,15 @@ const EmployeeAttendanceSummary = () => {
         overtime: metrics.overtime,
         attendance_status: form.attendance_status,
         location: form.location,
-      });
+      };
+
+      const endpoint = !todayRecord || !todayRecord.check_in_time ? '/attendance/checkin' : '/attendance';
+      if (endpoint === '/attendance/checkin') {
+        await api.post('/attendance/checkin', payload);
+      } else {
+        await api.post('/attendance', payload);
+      }
+
       setIsModalOpen(false);
       setSuccessMsg("Attendance marked successfully for today!");
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -446,6 +474,15 @@ const EmployeeAttendanceSummary = () => {
 
   const presentDays = history.filter(h => h.attendance_status === 'Present').length;
   const absentDays = history.filter(h => h.attendance_status === 'Absent').length;
+  const attendanceAction = !todayRecord || !todayRecord.check_in_time
+    ? { label: 'Checkin', action: 'checkin' }
+    : !todayRecord.check_out_time && !todayRecord.break_start_time
+      ? { label: 'Start Break', action: 'break-start' }
+      : !todayRecord.check_out_time && todayRecord.break_start_time && !todayRecord.break_end_time
+        ? { label: 'End Break', action: 'break-end' }
+        : !todayRecord.check_out_time
+          ? { label: 'Checkout', action: 'checkout' }
+          : { label: 'Completed', action: 'completed' };
 
   // Real-time update for live duration
   const [, setTick] = useState(0);

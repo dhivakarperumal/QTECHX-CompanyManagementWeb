@@ -357,12 +357,20 @@ const EmployeeHeader = ({ onMenuClick }) => {
               <div className="absolute right-20 top-full mt-3 w-48 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 space-y-0.5">
                 {[
                   { label: "Apply Leave",   path: "/employee/leaves/apply",    icon: CalendarOff  },
-                 
+                  { label: "Checkin",       action: "checkin",                 icon: Timer        },
                   { label: "My Tasks",      path: "/employee/tasks",            icon: CheckSquare  },
                   { label: "Meetings",      path: "/employee/meetings",         icon: Video        },
                   { label: "My Pay Slips",  path: "/employee/payroll/slips",    icon: DollarSign   },
                 ].map(l => {
                   const LIcon = l.icon;
+                  if (l.action === 'checkin') {
+                    return (
+                      <button key={l.label} type="button" onClick={() => { handleCheckin(); setActiveDropdown(null); }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/8 text-sm text-white/70 hover:text-white transition text-left">
+                        <LIcon size={14} className="text-primary" /> {l.label}
+                      </button>
+                    );
+                  }
                   return (
                     <Link key={l.path} to={l.path} onClick={() => setActiveDropdown(null)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/8 text-sm text-white/70 hover:text-white transition">
