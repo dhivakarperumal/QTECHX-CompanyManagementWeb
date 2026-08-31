@@ -60,8 +60,8 @@ const FloatingSupport = () => {
     return null;
   }
 
-  const whatsappNumber = "919597293504"; // Company WhatsApp number (+91 95972 93504)
-  const phoneNumber = "+919597293504";   // Company Call line (+91 95972 93504)
+  const whatsappNumber = "919659133504"; // Company WhatsApp number (+91 96591 33504)
+  const phoneNumber = "+919659133504";   // Company Call line (+91 96591 33504)
 
   const handleWhatsApp = () => {
     window.open(
@@ -86,10 +86,10 @@ const FloatingSupport = () => {
           <div
             className="support-item whatsapp"
             onClick={handleWhatsApp}
-            title="WhatsApp (+91 95972 93504)"
+            title="WhatsApp (+91 96591 33504)"
           >
             <FaWhatsapp size={26} />
-            <span className="tooltip">🟢 WhatsApp (+91 95972 93504)</span>
+            <span className="tooltip">🟢 WhatsApp (+91 96591 33504)</span>
           </div>
         )}
 
@@ -98,15 +98,15 @@ const FloatingSupport = () => {
           <div
             className="support-item call"
             onClick={handleCall}
-            title="Call Us (+91 95972 93504)"
+            title="Call Us (+91 96591 33504)"
           >
             <Phone size={22} />
-            <span className="tooltip">📞 Call (+91 95972 93504)</span>
+            <span className="tooltip">📞 Call (+91 96591 33504)</span>
           </div>
         )}
 
-        {/* ScrollNavigator (Scroll-To-Top) button - placed below the Call button */}
-        {showUserUIWidgets && showScrollTop && (
+        {/* ScrollNavigator (Scroll-To-Top) button - DISABLED */}
+        {/* {showUserUIWidgets && showScrollTop && (
           <div
             className="support-item scroll-top"
             onClick={scrollToTop}
@@ -116,7 +116,7 @@ const FloatingSupport = () => {
             <FiArrowUp size={24} strokeWidth={3} />
             <span className="tooltip">⬆ Scroll to Top</span>
           </div>
-        )}
+        )} */}
 
         {/* Chat toggle button - ONLY visible in /admin panels */}
         {showChatBot && (

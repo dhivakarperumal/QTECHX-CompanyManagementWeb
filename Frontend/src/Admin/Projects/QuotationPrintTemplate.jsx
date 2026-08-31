@@ -109,7 +109,7 @@ export default function QuotationPrintTemplate({ quotation }) {
                 </span>
                 <span className="flex items-center gap-1">
                   <Phone size={12} className="text-orange-500 shrink-0" />
-                  +91 95972 93504
+                  +91 96591 33504
                 </span>
                 <span className="flex items-center gap-1">
                   <Globe size={12} className="text-orange-500 shrink-0" />
