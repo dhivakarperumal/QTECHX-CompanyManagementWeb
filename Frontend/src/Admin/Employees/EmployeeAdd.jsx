@@ -801,7 +801,15 @@ const EmployeeAdd = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className={labelClass}>Profile Photo <span className="text-red-500">*</span></label>
-              <input type="file" name="profile_photo" required={!isEditMode || !existingFiles.profile_photo} onChange={handleChange} className={inputClass} accept="image/*" />
+              <input
+                type="file"
+                name="profile_photo"
+                required={!isEditMode || !existingFiles.profile_photo}
+                onChange={handleChange}
+                className={`${inputClass} ${fieldErrors.profile_photo ? 'border-red-500/60' : ''}`}
+                accept="image/*"
+              />
+              {fieldErrors.profile_photo && <p className="mt-1 text-xs text-red-400">{fieldErrors.profile_photo}</p>}
               {existingFiles.profile_photo && (
                 <a href={getFileUrl(existingFiles.profile_photo)} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-blue-600 hover:underline">
                   View Current Photo
