@@ -2,6 +2,19 @@ const { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAtt
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
 
+function getLocalDateString(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getLocalTimeString(d = new Date()) {
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 async function checkin(req, res) {
   return clockIn(req, res);
 }
@@ -12,7 +25,13 @@ async function checkout(req, res) {
 
 async function clockIn(req, res) {
   try {
-    const payload = req.body;
+    const payload = req.body || {};
+    const employee_id = payload.employee_id || req.user?.employee_id || req.user?.user_id;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "employee_id is required" });
+    }
+
     const date = new Date();
     
     if (date.getDay() === 0) {
@@ -21,8 +40,8 @@ async function clockIn(req, res) {
 
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    const attendanceDate = date.toISOString().slice(0, 10);
-    const timeStr = date.toTimeString().slice(0, 5); // HH:MM
+    const attendanceDate = payload.date || getLocalDateString(date);
+    const timeStr = payload.check_in_time || getLocalTimeString(date);
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
@@ -35,15 +54,15 @@ async function clockIn(req, res) {
 
     const [leaveRows] = await db.execute(
       `SELECT id FROM employee_leaves WHERE employee_id = ? AND status = 'Approved' AND from_date <= ? AND to_date >= ? LIMIT 1`,
-      [payload.employee_id, attendanceDate, attendanceDate]
+      [employee_id, attendanceDate, attendanceDate]
     );
     if (leaveRows.length > 0) {
       return res.status(403).json({ message: "Attendance cannot be marked while approved leave exists for this date." });
     }
 
-    const existing = await getEmployeeAttendanceToday(payload.employee_id, attendanceDate);
-    if (existing) {
-      return res.status(409).json({ message: "Already clocked in today" });
+    const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
+    if (existing && existing.check_in_time) {
+      return res.status(409).json({ message: "Already clocked in today", attendance: existing });
     }
 
     const computed = calculateAttendanceMetrics({
@@ -52,7 +71,7 @@ async function clockIn(req, res) {
     });
 
     const record = {
-      employee_id: payload.employee_id,
+      employee_id,
       attendance_date: attendanceDate,
       month,
       year,
@@ -67,6 +86,12 @@ async function clockIn(req, res) {
       updated_by: req.user?.user_id || "SYSTEM",
     };
 
+    if (existing) {
+      delete record.created_by;
+      const updated = await updateAttendance(existing.id, record);
+      return res.status(200).json({ message: "Clocked in successfully", attendance: updated });
+    }
+
     const result = await createAttendance(record);
     return res.status(201).json({ message: "Clocked in successfully", attendance: result });
   } catch (error) {
@@ -77,10 +102,16 @@ async function clockIn(req, res) {
 
 async function breakStart(req, res) {
   try {
-    const { employee_id } = req.body;
+    const payload = req.body || {};
+    const employee_id = payload.employee_id || req.user?.employee_id || req.user?.user_id;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "employee_id is required" });
+    }
+
     const date = new Date();
-    const attendanceDate = date.toISOString().slice(0, 10);
-    const timeStr = date.toTimeString().slice(0, 5);
+    const attendanceDate = payload.date || getLocalDateString(date);
+    const timeStr = payload.break_start_time || getLocalTimeString(date);
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) {
@@ -91,7 +122,7 @@ async function breakStart(req, res) {
     }
 
     const updated = await updateAttendance(existing.id, { break_start_time: timeStr });
-    return res.status(200).json({ message: "Break started", attendance: updated });
+    return res.status(200).json({ message: "Break started successfully", attendance: updated });
   } catch (error) {
     console.error("Break Start error:", error);
     return res.status(500).json({ message: "Failed to start break" });
@@ -100,10 +131,16 @@ async function breakStart(req, res) {
 
 async function breakEnd(req, res) {
   try {
-    const { employee_id } = req.body;
+    const payload = req.body || {};
+    const employee_id = payload.employee_id || req.user?.employee_id || req.user?.user_id;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "employee_id is required" });
+    }
+
     const date = new Date();
-    const attendanceDate = date.toISOString().slice(0, 10);
-    const timeStr = date.toTimeString().slice(0, 5);
+    const attendanceDate = payload.date || getLocalDateString(date);
+    const timeStr = payload.break_end_time || getLocalTimeString(date);
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) return res.status(404).json({ message: "No attendance record found" });
@@ -111,7 +148,7 @@ async function breakEnd(req, res) {
     if (existing.break_end_time) return res.status(400).json({ message: "Break already ended" });
 
     const updated = await updateAttendance(existing.id, { break_end_time: timeStr });
-    return res.status(200).json({ message: "Break ended", attendance: updated });
+    return res.status(200).json({ message: "Break ended successfully", attendance: updated });
   } catch (error) {
     console.error("Break End error:", error);
     return res.status(500).json({ message: "Failed to end break" });
@@ -120,10 +157,16 @@ async function breakEnd(req, res) {
 
 async function clockOut(req, res) {
   try {
-    const { employee_id } = req.body;
+    const payload = req.body || {};
+    const employee_id = payload.employee_id || req.user?.employee_id || req.user?.user_id;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "employee_id is required" });
+    }
+
     const date = new Date();
-    const attendanceDate = date.toISOString().slice(0, 10);
-    const timeStr = date.toTimeString().slice(0, 5);
+    const attendanceDate = payload.date || getLocalDateString(date);
+    const timeStr = payload.check_out_time || getLocalTimeString(date);
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) return res.status(404).json({ message: "No attendance record found" });
@@ -142,7 +185,7 @@ async function clockOut(req, res) {
       late_entry: computed.late_entry,
       early_exit: computed.early_exit,
       overtime: computed.overtime,
-      attendance_status: computed.attendance_status,
+      attendance_status: computed.attendance_status || "Present",
       updated_by: req.user?.user_id || "SYSTEM",
     };
 
@@ -157,27 +200,26 @@ async function clockOut(req, res) {
 async function create(req, res) {
   try {
     const payload = req.body;
-    
-    // Parse the date properly to avoid UTC shift issues
-    let date;
-    if (payload.date) {
-      const [y, m, d] = payload.date.split('-');
-      date = new Date(y, m - 1, d);
-    } else {
-      date = new Date();
+    const employee_id = payload.employee_id || req.user?.employee_id || req.user?.user_id;
+
+    if (!employee_id) {
+      return res.status(400).json({ message: "Employee ID is required" });
     }
+    
+    let attendanceDate = payload.date;
+    if (!attendanceDate) {
+      attendanceDate = getLocalDateString();
+    }
+
+    const [yStr, mStr, dStr] = attendanceDate.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
+    const day = parseInt(dStr, 10);
+    const date = new Date(year, month - 1, day);
     
     if (date.getDay() === 0) {
       return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
     }
-
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    const attendanceDate = payload.date || [
-      year,
-      String(month).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0')
-    ].join('-');
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
@@ -190,7 +232,7 @@ async function create(req, res) {
 
     const [leaveRows] = await db.execute(
       `SELECT id FROM employee_leaves WHERE employee_id = ? AND status = 'Approved' AND from_date <= ? AND to_date >= ? LIMIT 1`,
-      [payload.employee_id, attendanceDate, attendanceDate]
+      [employee_id, attendanceDate, attendanceDate]
     );
     if (leaveRows.length > 0) {
       return res.status(403).json({ message: "Attendance cannot be marked while approved leave exists for this date." });
@@ -204,14 +246,14 @@ async function create(req, res) {
     });
 
     const record = {
-      employee_id: payload.employee_id,
+      employee_id,
       attendance_date: attendanceDate,
       month,
       year,
-      check_in_time: payload.check_in_time,
-      check_out_time: payload.check_out_time,
-      break_start_time: payload.break_start_time,
-      break_end_time: payload.break_end_time,
+      check_in_time: payload.check_in_time || null,
+      check_out_time: payload.check_out_time || null,
+      break_start_time: payload.break_start_time || null,
+      break_end_time: payload.break_end_time || null,
       working_hours: computed.working_hours,
       late_entry: computed.late_entry,
       early_exit: computed.early_exit,
@@ -223,7 +265,7 @@ async function create(req, res) {
       updated_by: req.user?.user_id || "SYSTEM",
     };
 
-    const existing = await getEmployeeAttendanceToday(payload.employee_id, attendanceDate);
+    const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (existing) {
       delete record.created_by;
       const updated = await updateAttendance(existing.id, record);
@@ -241,12 +283,12 @@ async function create(req, res) {
 async function summary(req, res) {
   try {
     const now = new Date();
-    
-    // YYYY-MM-DD formatting for first and last day of current month
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const firstDay = `${year}-${month}-01`;
-    const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+    const month = now.getMonth() + 1;
+    const monthStr = String(month).padStart(2, '0');
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const firstDay = `${year}-${monthStr}-01`;
+    const lastDay = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
     
     const startDate = req.query.startDate || firstDay;
     const endDate = req.query.endDate || lastDay;
@@ -257,11 +299,7 @@ async function summary(req, res) {
     // If viewing a single day, inject that specific date's records and dynamically calculate missing statuses
     if (startDate === endDate) {
       const todayDate = startDate;
-      const currentDateStr = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0')
-      ].join('-');
+      const currentDateStr = getLocalDateString(now);
       
       const currentHours = now.getHours();
       const currentMinutes = now.getMinutes();
@@ -426,16 +464,25 @@ async function summary(req, res) {
 
 async function employeeAttendance(req, res) {
   try {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const firstDay = `${year}-${month}-01`;
-    const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+    let { employeeId } = req.params;
+    if (!employeeId || employeeId === 'undefined' || employeeId === 'null') {
+      employeeId = req.user?.employee_id || req.user?.user_id;
+    }
 
-    const startDate = req.query.startDate || firstDay;
-    const endDate = req.query.endDate || lastDay;
+    const now = new Date();
+    let startDate = req.query.startDate;
+    let endDate = req.query.endDate;
     
-    const rows = await getEmployeeAttendance({ employeeId: req.params.employeeId, startDate, endDate });
+    if (!startDate || !endDate) {
+      const year = req.query.year ? parseInt(req.query.year, 10) : now.getFullYear();
+      const month = req.query.month ? parseInt(req.query.month, 10) : (now.getMonth() + 1);
+      const monthStr = String(month).padStart(2, '0');
+      const daysInMonth = new Date(year, month, 0).getDate();
+      startDate = `${year}-${monthStr}-01`;
+      endDate = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+    }
+
+    const rows = await getEmployeeAttendance({ employeeId, startDate, endDate });
     return res.json({ data: rows, startDate, endDate });
   } catch (error) {
     console.error("Employee attendance error:", error);
@@ -445,17 +492,15 @@ async function employeeAttendance(req, res) {
 
 async function getByEmployeeDate(req, res) {
   try {
-    const employee_id = req.query.employee_id || req.body.employee_id;
-    let attendanceDate = req.query.date || req.body.date;
+    const employee_id = req.query.employee_id || req.body?.employee_id || req.user?.employee_id || req.user?.user_id;
+    let attendanceDate = req.query.date || req.body?.date;
 
     if (!employee_id) {
       return res.status(400).json({ message: "employee_id is required" });
     }
 
-    // Normalize date to YYYY-MM-DD; default to today if not provided
     if (!attendanceDate) {
-      const d = new Date();
-      attendanceDate = d.toISOString().slice(0, 10);
+      attendanceDate = getLocalDateString();
     }
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
