@@ -105,8 +105,8 @@ const FloatingSupport = () => {
           </div>
         )}
 
-        {/* ScrollNavigator (Scroll-To-Top) button - placed below the Call button */}
-        {showUserUIWidgets && showScrollTop && (
+        {/* ScrollNavigator (Scroll-To-Top) button - DISABLED */}
+        {/* {showUserUIWidgets && showScrollTop && (
           <div
             className="support-item scroll-top"
             onClick={scrollToTop}
@@ -116,7 +116,7 @@ const FloatingSupport = () => {
             <FiArrowUp size={24} strokeWidth={3} />
             <span className="tooltip">⬆ Scroll to Top</span>
           </div>
-        )}
+        )} */}
 
         {/* Chat toggle button - ONLY visible in /admin panels */}
         {showChatBot && (
