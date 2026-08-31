@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapPin, PlusCircle, AlertCircle, CalendarDays, Loader2 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
@@ -6,6 +6,13 @@ import { useAuth } from '../PrivateRouter/AuthContext';
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
 const ALLOWED_RADIUS_METERS = 500;
+
+const getLocalDateStr = (d = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const getEmployeeReference = (user) => {
   if (!user) return null;
@@ -38,7 +45,7 @@ const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
 
 const EmployeeAttendance = () => {
   const { user } = useAuth();
-  const todayDate = new Date().toISOString().slice(0, 10);
+  const todayDate = getLocalDateStr();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -67,15 +74,19 @@ const EmployeeAttendance = () => {
       const d = new Date();
       const month = d.getMonth() + 1;
       const year = d.getFullYear();
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = getLocalDateStr();
 
-      const [attendanceRes, leaveRes, eventsRes] = await Promise.all([
+      const [attendanceRes, leaveRes, eventsRes, todayRes] = await Promise.all([
         api.get(`/attendance/${targetId}?month=${month}&year=${year}`),
-        api.get('/employee-leaves/my-leaves'),
-        api.get('/events')
+        api.get('/employee-leaves/my-leaves').catch(() => ({ data: { data: [] } })),
+        api.get('/events').catch(() => ({ data: [] })),
+        api.get(`/attendance/by-employee?employee_id=${targetId}&date=${dateStr}`).catch(() => ({ data: { attendance: null } }))
       ]);
 
-      if (attendanceRes.data && attendanceRes.data.data) {
+      const fetchedToday = todayRes?.data?.attendance;
+      if (fetchedToday) {
+        setAttendanceRecord(fetchedToday);
+      } else if (attendanceRes.data && attendanceRes.data.data) {
         const todayRecord = attendanceRes.data.data.find(r => (r.date === dateStr) || (r.attendance_date && String(r.attendance_date).startsWith(dateStr)));
         setAttendanceRecord(todayRecord || null);
       } else {
