@@ -308,7 +308,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
   const handleCheckin = () => {
     if (attendanceBtn.disabled) return;
-    navigate('/employee/attendance/summary?checkin=true');
+    navigate(`/employee/attendance/summary?action=attendance&t=${Date.now()}`);
     setActiveDropdown(null);
   };
 

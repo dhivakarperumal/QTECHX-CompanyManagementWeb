@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
 import Select from 'react-select';
@@ -80,7 +80,6 @@ const customSelectStyles = {
   }),
 };
 
-
 const OFFICE_LAT = 12.479818640954804;
 const OFFICE_LNG = 78.57369573005468;
 const ALLOWED_RADIUS_METERS = 500;
@@ -101,6 +100,31 @@ const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
+const normalizeTimeTo24h = (val) => {
+  if (!val) return '';
+  const trimmed = String(val).trim();
+  if (!trimmed || trimmed === '--') return '';
+  
+  if (trimmed.includes(' ')) {
+    const [time, modifier] = trimmed.split(' ');
+    const parts = time.split(':');
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1] || '00';
+    if (modifier.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+    if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, '0')}:${minutes.slice(0, 2)}`;
+  }
+
+  const parts = trimmed.split(':');
+  if (parts.length >= 2) {
+    const hours = String(parts[0]).padStart(2, '0');
+    const minutes = String(parts[1]).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  return trimmed;
+};
+
 const getLocalDateStr = (d = new Date()) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -117,6 +141,7 @@ const getLocalTimeStr = (d = new Date()) => {
 const EmployeeAttendanceSummary = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -417,17 +442,23 @@ const EmployeeAttendanceSummary = () => {
     );
   };
 
-  const openAttendanceModal = useCallback((customForm = {}) => {
+  const openAttendanceModal = useCallback((customForm = {}, baseRecord = null) => {
+    const recordToUse = baseRecord !== null ? baseRecord : todayRecord;
     const nextForm = {
       date: getLocalDateStr(),
-      check_in_time: todayRecord?.check_in_time || '',
-      check_out_time: todayRecord?.check_out_time || '',
-      break_start_time: todayRecord?.break_start_time || '',
-      break_end_time: todayRecord?.break_end_time || '',
-      attendance_status: todayRecord?.attendance_status || 'Present',
-      location: todayRecord?.location || '',
+      check_in_time: normalizeTimeTo24h(recordToUse?.check_in_time) || '',
+      check_out_time: normalizeTimeTo24h(recordToUse?.check_out_time) || '',
+      break_start_time: normalizeTimeTo24h(recordToUse?.break_start_time) || '',
+      break_end_time: normalizeTimeTo24h(recordToUse?.break_end_time) || '',
+      attendance_status: recordToUse?.attendance_status || 'Present',
+      location: recordToUse?.location || '',
       ...customForm,
     };
+
+    if (customForm.check_in_time !== undefined) nextForm.check_in_time = normalizeTimeTo24h(customForm.check_in_time);
+    if (customForm.check_out_time !== undefined) nextForm.check_out_time = normalizeTimeTo24h(customForm.check_out_time);
+    if (customForm.break_start_time !== undefined) nextForm.break_start_time = normalizeTimeTo24h(customForm.break_start_time);
+    if (customForm.break_end_time !== undefined) nextForm.break_end_time = normalizeTimeTo24h(customForm.break_end_time);
 
     setForm(nextForm);
     setMetrics(calculateMetrics(
@@ -443,16 +474,100 @@ const EmployeeAttendanceSummary = () => {
     setIsModalOpen(true);
   }, [todayRecord]);
 
-  useEffect(() => {
-    const shouldOpenQuickCheckin = new URLSearchParams(location.search).get('checkin') === 'true';
-    if (!shouldOpenQuickCheckin) return;
-    if (hasMarkedToday || todayHoliday || approvedLeaveToday) {
+  const triggerActionWithRecord = useCallback((record) => {
+    if (todayHoliday || approvedLeaveToday) {
+      alert('Attendance is blocked for today.');
       return;
     }
 
-    openAttendanceModal({ check_in_time: getLocalTimeStr(), attendance_status: 'Present' });
-    handleLocation();
-  }, [location.search, hasMarkedToday, todayHoliday, approvedLeaveToday, openAttendanceModal]);
+    const currentCheckIn = normalizeTimeTo24h(record?.check_in_time);
+    const currentBreakStart = normalizeTimeTo24h(record?.break_start_time);
+    const currentBreakEnd = normalizeTimeTo24h(record?.break_end_time);
+    const currentCheckOut = normalizeTimeTo24h(record?.check_out_time);
+    const currentLocation = record?.location || '';
+    const currentStatus = record?.attendance_status || 'Present';
+
+    // 1. Initial checkin
+    if (!currentCheckIn) {
+      openAttendanceModal({
+        check_in_time: getLocalTimeStr(),
+        check_out_time: '',
+        break_start_time: '',
+        break_end_time: '',
+        attendance_status: 'Present',
+        location: currentLocation,
+      }, record);
+      handleLocation();
+      return;
+    }
+
+    // 2. Start Break
+    if (!currentBreakStart && !currentCheckOut) {
+      openAttendanceModal({
+        check_in_time: currentCheckIn,
+        break_start_time: getLocalTimeStr(),
+        break_end_time: '',
+        check_out_time: '',
+        attendance_status: currentStatus,
+        location: currentLocation,
+      }, record);
+      if (currentLocation) {
+        setIsWithinRadius(true);
+      } else {
+        handleLocation();
+      }
+      return;
+    }
+
+    // 3. End Break
+    if (currentBreakStart && !currentBreakEnd && !currentCheckOut) {
+      openAttendanceModal({
+        check_in_time: currentCheckIn,
+        break_start_time: currentBreakStart,
+        break_end_time: getLocalTimeStr(),
+        check_out_time: '',
+        attendance_status: currentStatus,
+        location: currentLocation,
+      }, record);
+      if (currentLocation) {
+        setIsWithinRadius(true);
+      } else {
+        handleLocation();
+      }
+      return;
+    }
+
+    // 4. Checkout
+    if (!currentCheckOut) {
+      openAttendanceModal({
+        check_in_time: currentCheckIn,
+        break_start_time: currentBreakStart,
+        break_end_time: currentBreakEnd,
+        check_out_time: getLocalTimeStr(),
+        attendance_status: currentStatus,
+        location: currentLocation,
+      }, record);
+      if (currentLocation) {
+        setIsWithinRadius(true);
+      } else {
+        handleLocation();
+      }
+      return;
+    }
+
+    alert('Attendance for today is already completed.');
+  }, [todayHoliday, approvedLeaveToday, openAttendanceModal]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpen = params.get('action') === 'attendance' || params.get('checkin') === 'true';
+    if (!shouldOpen) return;
+    if (loading) return; // Wait until record finishes loading from DB!
+
+    // Clear search param so it doesn't loop or re-trigger on close
+    navigate(location.pathname, { replace: true });
+    triggerActionWithRecord(todayRecord);
+  }, [location.search, loading, todayRecord, triggerActionWithRecord, navigate, location.pathname]);
 
   const handleSubmit = async (event) => {
     if (event) event.preventDefault();
@@ -528,74 +643,7 @@ const EmployeeAttendanceSummary = () => {
   const attendanceAction = getAttendanceAction();
 
   const handleAttendanceAction = () => {
-    if (attendanceAction.action === 'completed') return;
-
-    if (attendanceAction.action === 'checkin') {
-      if (hasMarkedToday || todayHoliday || approvedLeaveToday) {
-        alert('Attendance cannot be marked for today.');
-        return;
-      }
-      openAttendanceModal({
-        check_in_time: getLocalTimeStr(),
-        check_out_time: '',
-        break_start_time: '',
-        break_end_time: '',
-        attendance_status: 'Present',
-      });
-      handleLocation();
-      return;
-    }
-
-    if (attendanceAction.action === 'break-start') {
-      openAttendanceModal({
-        check_in_time: todayRecord?.check_in_time || '',
-        break_start_time: getLocalTimeStr(),
-        break_end_time: '',
-        check_out_time: '',
-        attendance_status: todayRecord?.attendance_status || 'Present',
-        location: todayRecord?.location || '',
-      });
-      if (todayRecord?.location) {
-        setIsWithinRadius(true);
-      } else {
-        handleLocation();
-      }
-      return;
-    }
-
-    if (attendanceAction.action === 'break-end') {
-      openAttendanceModal({
-        check_in_time: todayRecord?.check_in_time || '',
-        break_start_time: todayRecord?.break_start_time || '',
-        break_end_time: getLocalTimeStr(),
-        check_out_time: '',
-        attendance_status: todayRecord?.attendance_status || 'Present',
-        location: todayRecord?.location || '',
-      });
-      if (todayRecord?.location) {
-        setIsWithinRadius(true);
-      } else {
-        handleLocation();
-      }
-      return;
-    }
-
-    if (attendanceAction.action === 'checkout') {
-      openAttendanceModal({
-        check_in_time: todayRecord?.check_in_time || '',
-        break_start_time: todayRecord?.break_start_time || '',
-        break_end_time: todayRecord?.break_end_time || '',
-        check_out_time: getLocalTimeStr(),
-        attendance_status: todayRecord?.attendance_status || 'Present',
-        location: todayRecord?.location || '',
-      });
-      if (todayRecord?.location) {
-        setIsWithinRadius(true);
-      } else {
-        handleLocation();
-      }
-      return;
-    }
+    triggerActionWithRecord(todayRecord);
   };
 
   // Real-time update for live duration
