@@ -484,6 +484,52 @@ const EmployeeAttendanceSummary = () => {
           ? { label: 'Checkout', action: 'checkout' }
           : { label: 'Completed', action: 'completed' };
 
+  const handleAttendanceAction = async () => {
+    const possibleIds = [user?.employee_id, user?.uuid, user?.id, user?._id, user?.userId, user?.user_id].filter(Boolean).map(String);
+    const employee_id = possibleIds.find((id) => id.length > 20) || possibleIds[0];
+
+    if (!employee_id) {
+      alert('Employee profile not found. Please login again.');
+      return;
+    }
+
+    try {
+      if (attendanceAction.action === 'checkin') {
+        if (hasMarkedToday || todayHoliday || approvedLeaveToday) {
+          alert('Attendance is blocked for today.');
+          return;
+        }
+        setMetrics(calculateMetrics(form.check_in_time, form.check_out_time, form.break_start_time, form.break_end_time));
+        openAttendanceModal({
+          check_in_time: new Date().toTimeString().slice(0, 5),
+          check_out_time: '',
+          break_start_time: '',
+          break_end_time: '',
+          attendance_status: 'Present',
+        });
+        handleLocation();
+        return;
+      }
+
+      if (attendanceAction.action === 'break-start') {
+        await api.put('/attendance/break-start', { employee_id });
+      } else if (attendanceAction.action === 'break-end') {
+        await api.put('/attendance/break-end', { employee_id });
+      } else if (attendanceAction.action === 'checkout') {
+        await api.put('/attendance/clock-out', { employee_id });
+      } else {
+        return;
+      }
+
+      setSuccessMsg(`Attendance ${attendanceAction.label} updated successfully.`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+      fetchMyAttendance();
+    } catch (err) {
+      console.error('Attendance action error:', err);
+      alert(err?.response?.data?.message || 'Could not update attendance status.');
+    }
+  };
+
   // Real-time update for live duration
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -512,32 +558,11 @@ const EmployeeAttendanceSummary = () => {
         </div>
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={() => {
-              if (hasMarkedToday) {
-                alert("You have already marked your attendance for today.");
-                return;
-              }
-              if (todayHoliday) {
-                alert("Attendance cannot be marked today because today is a holiday.");
-                return;
-              }
-              if (approvedLeaveToday) {
-                alert("Attendance cannot be marked today because approved leave exists for this date.");
-                return;
-              }
-              openAttendanceModal({
-                check_in_time: new Date().toTimeString().slice(0, 5),
-                check_out_time: '',
-                break_start_time: '',
-                break_end_time: '',
-                attendance_status: 'Present',
-              });
-              handleLocation();
-            }}
-            disabled={hasMarkedToday || todayHoliday || approvedLeaveToday}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition ${hasMarkedToday || todayHoliday || approvedLeaveToday ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
+            onClick={handleAttendanceAction}
+            disabled={attendanceAction.action === 'completed' || todayHoliday || approvedLeaveToday || (attendanceAction.action === 'checkin' && hasMarkedToday)}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition ${attendanceAction.action === 'completed' || todayHoliday || approvedLeaveToday || (attendanceAction.action === 'checkin' && hasMarkedToday) ? 'bg-orange-500/50 cursor-not-allowed opacity-70' : 'bg-orange-500 hover:bg-orange-600'}`}
           >
-            <PlusCircle size={16} /> Mark Attendance Today
+            <PlusCircle size={16} /> {attendanceAction.label}
           </button>
           
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

@@ -70,7 +70,10 @@ async function findForLogin(identifier) {
     );
 
     if (empRows.length) {
-      user.emp_code = empRows[0].employee_id;
+      const employeeId = empRows[0].employee_id || empRows[0].employeeId || user.user_id;
+      user.emp_code = employeeId;
+      user.employee_id = employeeId;
+      user.employeeId = employeeId;
       user.emp_code2 = empRows[0].employee_code;
       user.emp_status = empRows[0].status;
       user.emp_employment_status = empRows[0].employment_status;

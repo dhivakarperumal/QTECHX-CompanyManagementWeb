@@ -29,7 +29,7 @@ const normalizeUserProfile = (userData) => {
   if (!userData) return null;
 
   const userId = userData.user_id || userData.id || userData.uuid || userData.employee_id || userData.employeeId || null;
-  const employeeId = userData.employee_id || userData.employeeId || userData.user_id || userData.id || userData.uuid || userId || null;
+  const employeeId = userData.employee_id || userData.employeeId || userData.emp_code || userData.employee_code || userData.user_id || userData.id || userData.uuid || userId || null;
 
   return {
     ...userData,
