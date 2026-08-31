@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu, Search, Bell, Settings, User, LogOut, ChevronDown, X,
@@ -39,6 +39,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
   const [searchQuery, setSearchQuery]       = useState("");
   const [currentTime, setCurrentTime]       = useState(dayjs());
   const [alerts, setAlerts]                 = useState({ tasks: [], leaves: [], meetings: [] });
+  const [todayAttendance, setTodayAttendance] = useState(null);
 
   const dropdownRef = useRef(null);
   const searchRef   = useRef(null);
@@ -189,8 +190,84 @@ const EmployeeHeader = ({ onMenuClick }) => {
     return () => clearInterval(interval);
   }, [user]);
 
+  const fetchTodayAttendance = useCallback(async () => {
+    if (!user) return;
+    try {
+      const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?._id, user?.userId, user?.uuid, user?.emp_code].filter(Boolean).map(String);
+      const targetId = user?.employee_id || possibleIds.find(id => id.length > 20) || possibleIds[0];
+      if (!targetId) return;
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayDateStr = `${year}-${month}-${day}`;
+
+      const res = await api.get(`/attendance/by-employee?employee_id=${targetId}&date=${todayDateStr}`).catch(() => ({ data: { attendance: null } }));
+      if (res.data?.attendance) {
+        setTodayAttendance(res.data.attendance);
+      } else {
+        const monthRes = await api.get(`/attendance/${targetId}?month=${now.getMonth() + 1}&year=${year}`).catch(() => ({ data: { data: [] } }));
+        const list = Array.isArray(monthRes.data?.data) ? monthRes.data.data : [];
+        const record = list.find(r => (r.date === todayDateStr) || (r.attendance_date && String(r.attendance_date).startsWith(todayDateStr)));
+        setTodayAttendance(record || null);
+      }
+    } catch (e) {
+      console.warn('[Header] attendance fetch error:', e?.message);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchTodayAttendance();
+    const interval = setInterval(fetchTodayAttendance, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, [fetchTodayAttendance, location.pathname]);
+
   const allNotifications = [...alerts.tasks, ...alerts.leaves, ...alerts.meetings];
   const unreadCount = allNotifications.length;
+
+  const getAttendanceButtonInfo = () => {
+    if (!todayAttendance || !todayAttendance.check_in_time) {
+      return {
+        label: 'Checkin',
+        action: 'checkin',
+        classes: 'border-orange-500/40 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20',
+        disabled: false
+      };
+    }
+    if (!todayAttendance.break_start_time && !todayAttendance.check_out_time) {
+      return {
+        label: 'Start Break',
+        action: 'break-start',
+        classes: 'border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20',
+        disabled: false
+      };
+    }
+    if (todayAttendance.break_start_time && !todayAttendance.break_end_time && !todayAttendance.check_out_time) {
+      return {
+        label: 'End Break',
+        action: 'break-end',
+        classes: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20',
+        disabled: false
+      };
+    }
+    if (!todayAttendance.check_out_time) {
+      return {
+        label: 'Checkout',
+        action: 'checkout',
+        classes: 'border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
+        disabled: false
+      };
+    }
+    return {
+      label: 'Completed',
+      action: 'completed',
+      classes: 'border-white/10 bg-white/5 text-white/40 cursor-not-allowed opacity-60',
+      disabled: true
+    };
+  };
+
+  const attendanceBtn = getAttendanceButtonInfo();
 
   /* focus search input */
   useEffect(() => { if (showSearch) inputRef.current?.focus(); }, [showSearch]);
@@ -230,6 +307,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
   };
 
   const handleCheckin = () => {
+    if (attendanceBtn.disabled) return;
     navigate('/employee/attendance/summary?checkin=true');
     setActiveDropdown(null);
   };
@@ -357,7 +435,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
               <div className="absolute right-20 top-full mt-3 w-48 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 space-y-0.5">
                 {[
                   { label: "Apply Leave",   path: "/employee/leaves/apply",    icon: CalendarOff  },
-                  { label: "Checkin",       action: "checkin",                 icon: Timer        },
+                  { label: attendanceBtn.label, action: "checkin",             icon: Timer        },
                   { label: "My Tasks",      path: "/employee/tasks",            icon: CheckSquare  },
                   { label: "Meetings",      path: "/employee/meetings",         icon: Video        },
                   { label: "My Pay Slips",  path: "/employee/payroll/slips",    icon: DollarSign   },
@@ -366,8 +444,9 @@ const EmployeeHeader = ({ onMenuClick }) => {
                   if (l.action === 'checkin') {
                     return (
                       <button key={l.label} type="button" onClick={() => { handleCheckin(); setActiveDropdown(null); }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/8 text-sm text-white/70 hover:text-white transition text-left">
-                        <LIcon size={14} className="text-primary" /> {l.label}
+                        disabled={attendanceBtn.disabled}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition text-left ${attendanceBtn.disabled ? 'text-white/30 cursor-not-allowed' : 'hover:bg-white/8 text-white/70 hover:text-white'}`}>
+                        <LIcon size={14} className={attendanceBtn.disabled ? 'text-white/30' : 'text-primary'} /> {l.label}
                       </button>
                     );
                   }
@@ -385,10 +464,11 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
             <button
               onClick={handleCheckin}
-              className="inline-flex items-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/10 px-3 h-9 text-sm font-medium text-orange-200 transition hover:bg-orange-500/20"
+              disabled={attendanceBtn.disabled}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 h-9 text-sm font-medium transition ${attendanceBtn.classes}`}
             >
               <Timer size={14} />
-              <span className="hidden sm:inline">Checkin</span>
+              <span className="hidden sm:inline">{attendanceBtn.label}</span>
             </button>
 
             {/* Profile */}
