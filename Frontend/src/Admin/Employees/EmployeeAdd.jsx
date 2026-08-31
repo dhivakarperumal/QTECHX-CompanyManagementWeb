@@ -265,6 +265,18 @@ const EmployeeAdd = () => {
     return date.toISOString().split("T")[0];
   };
 
+  const parseEducationalDetails = (value) => {
+    const fallback = [{ course: "", institution: "", percentage: "", year_of_passing: "" }];
+    if (!value) return fallback;
+
+    try {
+      const parsed = typeof value === "string" ? JSON.parse(value) : value;
+      return Array.isArray(parsed) && parsed.length ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const addEducationRow = () => {
     setFormData((prev) => ({
       ...prev,
@@ -383,7 +395,7 @@ const EmployeeAdd = () => {
             username: "",
             official_email: "",
             password: "",
-            educational_details: emp.educational_details ? JSON.parse(emp.educational_details) : [{ course: "", institution: "", percentage: "", year_of_passing: "" }],
+            educational_details: parseEducationalDetails(emp.educational_details),
           });
           setExistingFiles({
             profile_photo: emp.profile_photo || null,
