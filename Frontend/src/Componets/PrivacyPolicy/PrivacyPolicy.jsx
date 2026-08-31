@@ -552,10 +552,10 @@ const PrivacyPolicy = () => {
                     <div>
                       <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Direct Line</h4>
                       <a
-                        href="tel:+919597293504"
+                        href="tel:+919659133504"
                         className="text-xs sm:text-sm text-white hover:text-[#FF6A00] transition mt-0.5 block"
                       >
-                        +91 95972 93504
+                        +91 96591 33504
                       </a>
                     </div>
                   </div>

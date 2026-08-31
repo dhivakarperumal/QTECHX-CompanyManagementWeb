@@ -35,7 +35,7 @@ function SocialMedia() {
     {
       icon: <FaWhatsapp />,
       name: "WhatsApp",
-      url: "https://wa.me/919597293504?text=Hello%20Q-Techx%20Solutions%2C%20I%20am%20interested%20in%20your%20services.%20Please%20share%20more%20details.",
+      url: "https://wa.me/919659133504?text=Hello%20Q-Techx%20Solutions%2C%20I%20am%20interested%20in%20your%20services.%20Please%20share%20more%20details.",
     },
     {
       icon: <FaInstagram />,
