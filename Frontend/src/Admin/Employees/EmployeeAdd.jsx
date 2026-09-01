@@ -673,7 +673,7 @@ const EmployeeAdd = () => {
         if (name === "first_name" || name === "last_name") {
           const first = name === "first_name" ? sanitizedValue : prev.first_name;
           const last = name === "last_name" ? sanitizedValue : prev.last_name;
-          newData.username = `${first.toLowerCase()}${last ? "." + last.toLowerCase() : ""}`.replace(/\s+/g, "");
+          newData.username = [first, last].filter(Boolean).join(" ");
         }
         if (name === "personal_email") {
           newData.official_email = sanitizedValue;
