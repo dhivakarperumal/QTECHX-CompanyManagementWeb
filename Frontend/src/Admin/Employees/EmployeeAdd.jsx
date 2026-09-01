@@ -587,12 +587,18 @@ const EmployeeAdd = () => {
     }
 
     if (!data.username?.trim()) {
-      errors.username = "Username is required.";
+      if (!isEditMode) {
+        errors.username = "Username is required.";
+      }
     }
     if (!data.official_email?.trim()) {
-      errors.official_email = "Official email is required.";
+      if (!isEditMode) {
+        errors.official_email = "Official email is required.";
+      }
     } else if (!emailPattern.test(data.official_email)) {
-      errors.official_email = "Official email must be a valid email address.";
+      if (!isEditMode) {
+        errors.official_email = "Official email must be a valid email address.";
+      }
     }
 
     if (!Array.isArray(data.educational_details) || data.educational_details.length === 0) {
@@ -1175,31 +1181,31 @@ const EmployeeAdd = () => {
           </div>
         </div>
 
-        <div className={sectionClass}>
-          <div className="mb-4 border-b border-white/10 pb-3">
-            <h2 className="text-lg font-semibold text-white">Login & Access</h2>
-            <p className="text-xs text-white/40">
-              {isEditMode ? "Account credentials and login identifiers" : "Credentials for the employee portal"}
-            </p>
+        {!isEditMode && (
+          <div className={sectionClass}>
+            <div className="mb-4 border-b border-white/10 pb-3">
+              <h2 className="text-lg font-semibold text-white">Login & Access</h2>
+              <p className="text-xs text-white/40">Credentials for the employee portal</p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div>
+                <label className={labelClass}>Username <span className="text-red-500">*</span></label>
+                <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+                {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
+              </div>
+              <div>
+                <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
+                <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+                {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
+              </div>
+              <div>
+                <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
+                <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
+                {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div>
-              <label className={labelClass}>Username <span className="text-red-500">*</span></label>
-              <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
-              {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
-              {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
-            </div>
-            <div>
-              <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
-              <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
-              {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="flex justify-end gap-3">
           <Link to="/admin/employees" className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white">Cancel</Link>
