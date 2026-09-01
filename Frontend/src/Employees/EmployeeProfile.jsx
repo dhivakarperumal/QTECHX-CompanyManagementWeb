@@ -62,6 +62,18 @@ const EmployeeProfile = () => {
     const fetchProfileDetails = async () => {
       try {
         setLoading(true);
+        // 1. Try /employees/me first
+        try {
+          const response = await api.get("/employees/me");
+          if (response.data?.employee) {
+            setProfileData(response.data.employee);
+            return;
+          }
+        } catch (e) {
+          // fallback to ID
+        }
+
+        // 2. Try by employee ID or user ID
         const empId = user?.employee_id || user?.employeeId || user?.user_id || user?.id;
         if (empId) {
           try {
@@ -71,7 +83,20 @@ const EmployeeProfile = () => {
               return;
             }
           } catch (err) {
-            // Logged in user might not have an employee table entry
+            // fallback to email
+          }
+        }
+
+        // 3. Try by email if available
+        if (user?.email) {
+          try {
+            const response = await api.get(`/employees/${encodeURIComponent(user.email)}`);
+            if (response.data?.employee) {
+              setProfileData(response.data.employee);
+              return;
+            }
+          } catch (err) {
+            // ignore
           }
         }
       } catch (err) {

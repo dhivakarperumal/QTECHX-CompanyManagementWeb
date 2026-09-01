@@ -253,10 +253,81 @@ async function getAll(req, res) {
   }
 }
 
+async function getMe(req, res) {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Authentication required" });
+
+    const identifiers = [
+      user.employee_id,
+      user.user_id,
+      user.id,
+      user.employee_code,
+      user.email,
+      user.username,
+    ].filter(Boolean);
+
+    let employee = null;
+    for (const id of identifiers) {
+      employee = await findByEmployeeId(id);
+      if (employee) break;
+    }
+
+    if (!employee) {
+      const { findByUserId } = require("../models/userModel");
+      const userRecord = await findByUserId(user.user_id || user.id);
+      if (userRecord) {
+        employee = {
+          first_name: userRecord.username || "User",
+          last_name: "",
+          personal_email: userRecord.email,
+          official_email: userRecord.email,
+          mobile_number: userRecord.mobile,
+          role: userRecord.role,
+          status: userRecord.status,
+          employment_status: userRecord.status,
+          username: userRecord.username,
+          employee_code: user.employee_code || (userRecord.user_id ? userRecord.user_id.substring(0, 8) : "ADMIN-01"),
+          created_at: userRecord.created_at,
+          joining_date: userRecord.created_at,
+        };
+      }
+    }
+
+    if (!employee) return res.status(404).json({ message: "Employee profile not found" });
+    return res.json({ employee });
+  } catch (error) {
+    console.error("Get Me Profile Error:", error);
+    return res.status(500).json({ message: "Failed to retrieve employee profile" });
+  }
+}
+
 async function getOne(req, res) {
   try {
-    const employee = await findByEmployeeId(req.params.employeeId);
+    const requestedId = req.params.employeeId;
+    if (requestedId === "me") {
+      return getMe(req, res);
+    }
+
+    const employee = await findByEmployeeId(requestedId);
     if (!employee) return res.status(404).json({ message: "Employee not found" });
+
+    // Authorization: Allow staff or self
+    const userRole = (req.user?.role || "").toLowerCase().trim();
+    const isStaff = ["super admin", "admin", "manager", "hr"].includes(userRole);
+    const isSelf =
+      req.user &&
+      (req.user.user_id === employee.employee_id ||
+       req.user.employee_id === employee.employee_id ||
+       req.user.email === employee.personal_email ||
+       req.user.email === employee.official_email ||
+       req.user.username === employee.username ||
+       req.user.employee_code === employee.employee_code);
+
+    if (!isStaff && !isSelf) {
+      return res.status(403).json({ message: "You do not have permission to view this employee" });
+    }
+
     return res.json({ employee });
   } catch (error) {
     console.error("Get Employee Error:", error);
@@ -430,5 +501,5 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove, generateEmployeeCodeHandler };
+module.exports = { create, getAll, getOne, getMe, update, remove, generateEmployeeCodeHandler };
 

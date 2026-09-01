@@ -62,6 +62,18 @@ const AdminProfile = () => {
     const fetchProfileDetails = async () => {
       try {
         setLoading(true);
+        // 1. Try /employees/me first
+        try {
+          const response = await api.get("/employees/me");
+          if (response.data?.employee) {
+            setProfileData(response.data.employee);
+            return;
+          }
+        } catch (e) {
+          // fallback to ID
+        }
+
+        // 2. Try by employee ID or user ID
         const empId = user?.employee_id || user?.employeeId || user?.user_id || user?.id;
         if (empId) {
           try {
@@ -71,7 +83,20 @@ const AdminProfile = () => {
               return;
             }
           } catch (err) {
-            // User might be a standalone admin not in the employees table
+            // fallback to email
+          }
+        }
+
+        // 3. Try by email if available
+        if (user?.email) {
+          try {
+            const response = await api.get(`/employees/${encodeURIComponent(user.email)}`);
+            if (response.data?.employee) {
+              setProfileData(response.data.employee);
+              return;
+            }
+          } catch (err) {
+            // ignore
           }
         }
       } catch (err) {
@@ -219,8 +244,7 @@ const AdminProfile = () => {
             </span>
           </div>
           <p className="text-white/40 text-xs mt-0.5">
-            Admin Profile • System Role: <span className="text-orange-400 font-semibold">{userRole}</span> • Code:{" "}
-            <span className="text-white/70 font-mono">{employeeCode}</span>
+            Admin Profile • System Role: <span className="text-orange-400 font-semibold">{userRole}</span>
           </p>
         </div>
 
@@ -259,9 +283,7 @@ const AdminProfile = () => {
             <p className="text-xs text-orange-400 font-medium mt-0.5 mb-3">{userDesignation}</p>
 
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-white/80">
-                {employeeCode}
-              </span>
+              
               <span className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-300">
                 {userRole}
               </span>
@@ -330,7 +352,7 @@ const AdminProfile = () => {
                 </div>
               )}
 
-              <div>
+              {/* <div>
                 <p className="text-white/40 mb-0.5">Primary Email</p>
                 {emp.personal_email || email || user?.email ? (
                   <a
@@ -343,7 +365,7 @@ const AdminProfile = () => {
                 ) : (
                   <span className="text-white/30 italic">Not Provided</span>
                 )}
-              </div>
+              </div> */}
 
               {emp.official_email && (
                 <div>
