@@ -81,8 +81,12 @@ async function listEmployees({ page, limit, search, status, role }) {
     values.push(term, term, term, term, term);
   }
   if (status) {
-    conditions.push("(status = ? OR employment_status = ?)");
-    values.push(status, status);
+    if (status.trim().toLowerCase() === "active") {
+      conditions.push("(LOWER(COALESCE(status, 'active')) NOT IN ('inactive', 'deactivated', 'terminated') AND LOWER(COALESCE(employment_status, 'active')) NOT IN ('inactive', 'deactivated', 'terminated'))");
+    } else {
+      conditions.push("(LOWER(status) = LOWER(?) OR LOWER(employment_status) = LOWER(?))");
+      values.push(status, status);
+    }
   }
   if (role) {
     conditions.push("role = ?");

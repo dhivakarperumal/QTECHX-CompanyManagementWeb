@@ -162,17 +162,40 @@ async function getDashboardMetrics(req, res) {
        ORDER BY startDate ASC, startTime ASC LIMIT 5`
     );
 
+    // Count total tasks (all statuses)
+    const [allTaskRows] = await db.execute(
+      "SELECT COUNT(*) AS total FROM tasks WHERE active = 1"
+    );
+    const totalTasks = allTaskRows[0]?.total || 0;
+
+    // Get total attendance for today
+    const [totalAttendanceRows] = await db.execute(
+      "SELECT COUNT(*) AS total FROM attendance WHERE attendance_date = CURDATE()"
+    );
+    const totalAttendanceToday = totalAttendanceRows[0]?.total || 0;
+
+    // Calculate pending follow-ups
+    const pendingFollowUps = clientRows.filter(r => r.client_status === 'Pending' || r.client_status === 'Follow Up').reduce((sum, r) => sum + r.count, 0);
+
     return res.json({
       success: true,
-      stats: {
-        totalEmployees,
-        activeProjects,
-        tasksInProgress,
-        presentToday,
-        activeTrainees,
-        internshipStudents,
-        totalMonthlyPayroll,
+      totalEmployees,
+      activeProjects,
+      totalTasks,
+      activeTrainees,
+      internshipStudents,
+      monthlyPayroll: totalMonthlyPayroll,
+      clientStats: {
+        total: totalClients,
+        pendingFollowUps: pendingFollowUps
       },
+      attendanceToday: {
+        present: presentToday,
+        total: totalAttendanceToday
+      },
+      currentMonthIncome,
+      currentMonthProjectPayments,
+      currentMonthIncomes,
       recentProjects: recentProjectRows,
       recentActivity: activityRows,
       projectStats: projectStatusRows,

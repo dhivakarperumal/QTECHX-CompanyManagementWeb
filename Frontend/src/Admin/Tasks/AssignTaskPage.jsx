@@ -114,17 +114,12 @@ export default function AssignTaskPage() {
           })
           .filter(Boolean);
 
-        const uniqueAssignedProjects = Array.from(
-          new Map(projectsFromAssignments.map((project) => [project.uuid, project])).values()
-        );
-
         const mergedProjects = Array.from(
           new Map([...projectsFromAssignments, ...projectsFromApi].map((project) => [project.uuid, project])).values()
         );
 
-        const finalList = uniqueAssignedProjects.length > 0 ? uniqueAssignedProjects : mergedProjects;
-        setProjects(finalList);
-        if (finalList.length > 0) setAssignForm((p) => ({ ...p, project_id: finalList[0].uuid }));
+        setProjects(mergedProjects);
+        if (mergedProjects.length > 0) setAssignForm((p) => ({ ...p, project_id: p.project_id || mergedProjects[0].uuid }));
       } catch (err) {
         setProjects([]);
       }
@@ -195,34 +190,68 @@ export default function AssignTaskPage() {
     if (!assignForm.project_id) return;
 
     setProjectEmployeesLoading(true);
-    Promise.all([
+    Promise.allSettled([
       api.get(`/projects/${assignForm.project_id}/assignments`),
-      api.get('/employees?limit=500&status=Active')
+      api.get('/employees?limit=500')
     ])
-      .then(([projRes, allEmpsRes]) => {
-        const projList =
-          projRes.data.assignedEmployees ||
-          projRes.data.project?.assignedEmployees ||
-          projRes.data.project?.employees ||
-          projRes.data.data ||
-          [];
-        
-        const activeProjEmps = projList.filter(e => {
-          const empStatus = (e.employee_status || e.employment_status || '').toLowerCase();
-          return empStatus !== 'inactive';
+      .then(([projResult, allEmpsResult]) => {
+        let projList = [];
+        if (projResult.status === 'fulfilled' && projResult.value?.data) {
+          const projData = projResult.value.data;
+          projList =
+            projData.assignedEmployees ||
+            projData.project?.assignedEmployees ||
+            projData.project?.employees ||
+            projData.data ||
+            [];
+        }
+
+        let allEmpsList = [];
+        if (allEmpsResult.status === 'fulfilled' && allEmpsResult.value?.data) {
+          const empData = allEmpsResult.value.data;
+          allEmpsList = empData.data || (Array.isArray(empData) ? empData : []);
+        }
+
+        const activeProjEmps = (Array.isArray(projList) ? projList : [])
+          .filter((e) => {
+            const empStatus = String(e.employee_status || e.employment_status || e.status || 'Active').trim().toLowerCase();
+            return empStatus !== 'inactive' && empStatus !== 'deactivated' && empStatus !== 'terminated';
+          })
+          .map((e) => ({ ...e, _isProjectMember: true }));
+
+        const allActiveEmps = (Array.isArray(allEmpsList) ? allEmpsList : [])
+          .filter((e) => {
+            const empStatus = String(e.status || e.employment_status || 'Active').trim().toLowerCase();
+            return empStatus !== 'inactive' && empStatus !== 'deactivated' && empStatus !== 'terminated';
+          });
+
+        const seenIds = new Set();
+        const combined = [];
+
+        // Project members first
+        activeProjEmps.forEach((emp) => {
+          const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
+          if (id && !seenIds.has(String(id))) {
+            seenIds.add(String(id));
+            combined.push(emp);
+          }
         });
 
-        const allActiveEmps = (allEmpsRes.data?.data || allEmpsRes.data || []).filter(
-          e => (e.status || e.employment_status) === 'Active'
-        );
+        // Other active employees
+        allActiveEmps.forEach((emp) => {
+          const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
+          if (id && !seenIds.has(String(id))) {
+            seenIds.add(String(id));
+            combined.push(emp);
+          }
+        });
 
-        if (activeProjEmps.length > 0) {
-          setAssignedEmployees(activeProjEmps);
-        } else {
-          setAssignedEmployees(allActiveEmps);
-        }
+        setAssignedEmployees(combined);
       })
-      .catch(() => setAssignedEmployees([]))
+      .catch((err) => {
+        console.error("Failed to load employees for project", err);
+        setAssignedEmployees([]);
+      })
       .finally(() => setProjectEmployeesLoading(false));
 
     setPlanLoading(true);
@@ -594,9 +623,9 @@ export default function AssignTaskPage() {
                 <Loader2 size={14} className="animate-spin" /> Loading employees...
               </div>
             ) : !assignForm.project_id ? (
-              <p className="text-sm text-white/30 py-2">Select a project to see assigned employees.</p>
+              <p className="text-sm text-white/30 py-2">Select a project to see employees.</p>
             ) : assignedEmployees.length === 0 ? (
-              <p className="text-sm text-white/30 py-2">No employees assigned to this project.</p>
+              <p className="text-sm text-white/30 py-2">No active employees found.</p>
             ) : (
               <select
                 value={assignForm.assigned_to}
@@ -618,9 +647,10 @@ export default function AssignTaskPage() {
                     `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || id;
                   const code = emp.employee_code || emp.employeeCode || "";
                   const role = emp.designation || emp.role || "";
+                  const isProjectMember = emp._isProjectMember;
                   return (
                     <option key={id} value={id}>
-                      {`${name}${code ? ` (${code})` : ""}${role ? ` • ${role}` : ""}`}
+                      {`${name}${code ? ` (${code})` : ""}${role ? ` • ${role}` : ""}${isProjectMember ? " [Project Member]" : ""}`}
                     </option>
                   );
                 })}

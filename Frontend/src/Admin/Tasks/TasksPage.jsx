@@ -575,29 +575,63 @@ export default function TasksPage({ initialPageKey = null }) {
     const loadEmployees = async () => {
       setProjectEmployeesLoading(true);
       try {
-        const [projRes, allEmpsRes] = await Promise.all([
+        const [projResult, allEmpsResult] = await Promise.allSettled([
           api.get(`/projects/${assignForm.project_id}/assignments`),
-          api.get('/employees?limit=500&status=Active')
+          api.get('/employees?limit=500')
         ]);
-        const projList =
-          projRes.data.assignedEmployees ||
-          projRes.data.project?.assignedEmployees ||
-          projRes.data.project?.employees ||
-          projRes.data.data ||
-          [];
-        const activeProjEmps = projList.filter(e => {
-          const empStatus = (e.employee_status || e.employment_status || '').toLowerCase();
-          return empStatus !== 'inactive';
-        });
-        const allActiveEmps = (allEmpsRes.data?.data || allEmpsRes.data || []).filter(
-          e => (e.status || e.employment_status) === 'Active'
-        );
 
-        if (activeProjEmps.length > 0) {
-          setAssignedEmployees(activeProjEmps);
-        } else {
-          setAssignedEmployees(allActiveEmps);
+        let projList = [];
+        if (projResult.status === 'fulfilled' && projResult.value?.data) {
+          const projData = projResult.value.data;
+          projList =
+            projData.assignedEmployees ||
+            projData.project?.assignedEmployees ||
+            projData.project?.employees ||
+            projData.data ||
+            [];
         }
+
+        let allEmpsList = [];
+        if (allEmpsResult.status === 'fulfilled' && allEmpsResult.value?.data) {
+          const empData = allEmpsResult.value.data;
+          allEmpsList = empData.data || (Array.isArray(empData) ? empData : []);
+        }
+
+        const activeProjEmps = (Array.isArray(projList) ? projList : [])
+          .filter((e) => {
+            const empStatus = String(e.employee_status || e.employment_status || e.status || 'Active').trim().toLowerCase();
+            return empStatus !== 'inactive' && empStatus !== 'deactivated' && empStatus !== 'terminated';
+          })
+          .map((e) => ({ ...e, _isProjectMember: true }));
+
+        const allActiveEmps = (Array.isArray(allEmpsList) ? allEmpsList : [])
+          .filter((e) => {
+            const empStatus = String(e.status || e.employment_status || 'Active').trim().toLowerCase();
+            return empStatus !== 'inactive' && empStatus !== 'deactivated' && empStatus !== 'terminated';
+          });
+
+        const seenIds = new Set();
+        const combined = [];
+
+        // Project members first
+        activeProjEmps.forEach((emp) => {
+          const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
+          if (id && !seenIds.has(String(id))) {
+            seenIds.add(String(id));
+            combined.push(emp);
+          }
+        });
+
+        // Other active employees
+        allActiveEmps.forEach((emp) => {
+          const id = emp.employee_id || emp.id || emp.employeeCode || emp.employee_code;
+          if (id && !seenIds.has(String(id))) {
+            seenIds.add(String(id));
+            combined.push(emp);
+          }
+        });
+
+        setAssignedEmployees(combined);
       } catch (err) {
         console.error('Failed to load employees for project', err);
         setAssignedEmployees([]);
@@ -1758,21 +1792,49 @@ export default function TasksPage({ initialPageKey = null }) {
 
           <FieldBox label="Assign To Employee *">
             <Select
-              value={assignForm.assigned_to ? {
-                value: assignForm.assigned_to,
-                label: assignedEmployees.find(e => e.employee_id === assignForm.assigned_to)
-                  ? `${assignedEmployees.find(e => e.employee_id === assignForm.assigned_to).first_name || ''} ${assignedEmployees.find(e => e.employee_id === assignForm.assigned_to).last_name || ''}`.trim() || assignForm.assigned_to
-                  : assignForm.assigned_to
-              } : null}
-              onChange={option => setAssignForm(p => ({ ...p, assigned_to: option ? option.value : '' }))}
-              options={assignedEmployees.map((employee) => ({
-                value: employee.employee_id,
-                label: `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || employee.employee_id
-              }))}
+              value={(() => {
+                if (!assignForm.assigned_to) return null;
+                const emp = assignedEmployees.find(e => {
+                  const id = e.employee_id || e.id || e.employeeCode || e.employee_code;
+                  return String(id) === String(assignForm.assigned_to);
+                });
+                if (!emp) return { value: assignForm.assigned_to, label: assignForm.assigned_to };
+                const name = emp.full_name || emp.employee_name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.employee_id;
+                const code = emp.employee_code || emp.employeeCode || '';
+                const role = emp.designation || emp.role || '';
+                const isProjectMember = emp._isProjectMember;
+                return {
+                  value: assignForm.assigned_to,
+                  label: `${name}${code ? ` (${code})` : ''}${role ? ` • ${role}` : ''}${isProjectMember ? ' [Project Member]' : ''}`
+                };
+              })()}
+              onChange={option => {
+                const selectedId = option ? option.value : '';
+                const emp = assignedEmployees.find(e => {
+                  const id = e.employee_id || e.id || e.employeeCode || e.employee_code;
+                  return String(id) === String(selectedId);
+                });
+                setAssignForm(p => ({
+                  ...p,
+                  assigned_to: selectedId,
+                  team: emp?.designation || emp?.role || p.team,
+                }));
+              }}
+              options={assignedEmployees.map((employee) => {
+                const id = employee.employee_id || employee.id || employee.employeeCode || employee.employee_code;
+                const name = employee.full_name || employee.employee_name || `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || id;
+                const code = employee.employee_code || employee.employeeCode || '';
+                const role = employee.designation || employee.role || '';
+                const isProjectMember = employee._isProjectMember;
+                return {
+                  value: id,
+                  label: `${name}${code ? ` (${code})` : ''}${role ? ` • ${role}` : ''}${isProjectMember ? ' [Project Member]' : ''}`
+                };
+              })}
               placeholder={projectEmployeesLoading ? 'Loading employees…' : assignForm.project_id ? 'Select employee' : 'Select a project first'}
               isDisabled={!assignForm.project_id || projectEmployeesLoading}
               styles={customSelectStyles}
-              isSearchable={false}
+              isSearchable={true}
             />
           </FieldBox>
 

@@ -131,15 +131,14 @@ async function resolveEmployeeAssignments(db, employeeAssignments = []) {
 }
 
 async function resolveProject(req) {
-  if (req.body?.project_id) {
-    const numericId = Number(req.body.project_id);
-    if (Number.isInteger(numericId) && numericId > 0) {
-      return findProjectById(numericId);
-    }
-    return findProjectByUUID(req.body.project_id);
+  const projectId = req.body?.project_id || req.params?.id || req.query?.project_id;
+  if (!projectId) return null;
+  const numericId = Number(projectId);
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const byId = await findProjectById(numericId);
+    if (byId) return byId;
   }
-
-  return findProjectByUUID(req.params.id);
+  return findProjectByUUID(projectId);
 }
 
 function buildAssignmentEnvelope(project, assignments = []) {

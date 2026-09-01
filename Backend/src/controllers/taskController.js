@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { createTask, findTaskByUUID, listTasks, updateTask, deleteTask } = require('../models/taskModel');
-const { findProjectByUUID } = require('../models/projectModel');
+const { findProjectById, findProjectByUUID } = require('../models/projectModel');
 const { getDB } = require('../config/db');
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
@@ -75,6 +75,18 @@ async function resolveEmployeeId(value) {
   return null;
 }
 
+async function resolveProjectId(projectId) {
+  if (!projectId) return null;
+  const numericId = Number(projectId);
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const project = await findProjectById(numericId);
+    if (project) return project.id;
+  }
+  const project = await findProjectByUUID(projectId);
+  if (project) return project.id;
+  return null;
+}
+
 /* ─── GET ALL ─── */
 async function getAllTasksHandler(req, res) {
   try {
@@ -89,10 +101,10 @@ async function getAllTasksHandler(req, res) {
       if (resolved) assigned_to = resolved;
     }
 
-    if (project_id && typeof project_id === 'string' && project_id.length === 36) {
-      const project = await findProjectByUUID(project_id);
-      if (!project) return fail(res, 'Project not found', 404);
-      project_id = project.id;
+    if (project_id) {
+      const resolvedProjId = await resolveProjectId(project_id);
+      if (!resolvedProjId) return fail(res, 'Project not found', 404);
+      project_id = resolvedProjId;
     }
 
     const result = await listTasks({ page, limit, search, status, project_id, assigned_to });
@@ -141,8 +153,8 @@ async function createTaskHandler(req, res) {
       return fail(res, `Invalid status. Allowed: ${STATUSES.join(', ')}`, 400);
     }
 
-    const project = await findProjectByUUID(project_id);
-    if (!project) return fail(res, 'Project not found', 404);
+    const resolvedProjectId = await resolveProjectId(project_id);
+    if (!resolvedProjectId) return fail(res, 'Project not found', 404);
 
     const fileEntry = saveBase64File(attachmentBase64, attachmentName, attachmentType);
     const resolvedAssignedTo = assigned_to ? await resolveEmployeeId(assigned_to) : null;
@@ -150,7 +162,7 @@ async function createTaskHandler(req, res) {
 
     const task = await createTask({
       uuid: uuidv4(),
-      project_id: project.id,
+      project_id: resolvedProjectId,
       module_name: module_name || null,
       task_name: trimmedName,
       description: description || null,
@@ -245,11 +257,11 @@ async function updateTaskHandler(req, res) {
       updates.attachments = JSON.stringify(baseList);
     }
 
-    // Resolve project UUID → numeric id
+    // Resolve project ID (UUID or numeric id) -> numeric id
     if (updates.project_id) {
-      const project = await findProjectByUUID(updates.project_id);
-      if (!project) return fail(res, 'Project not found', 404);
-      updates.project_id = project.id;
+      const resolvedProjId = await resolveProjectId(updates.project_id);
+      if (!resolvedProjId) return fail(res, 'Project not found', 404);
+      updates.project_id = resolvedProjId;
     }
 
     if (updates.task_name) updates.task_name = updates.task_name.toString().trim();
