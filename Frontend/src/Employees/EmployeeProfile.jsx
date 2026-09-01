@@ -105,10 +105,6 @@ const EmployeeProfile = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-1">Employee ID</p>
-                <p className="font-medium text-white/90">{employeeId}</p>
-              </div>
-              <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-1">Full Name</p>
                 <p className="font-medium text-white/90">{profileName || 'N/A'}</p>
               </div>
