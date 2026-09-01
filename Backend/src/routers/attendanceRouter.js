@@ -6,7 +6,9 @@ const router = express.Router();
 const commonAccess = authorize("Super Admin", "Admin", "Manager", "HR", "Employee");
 
 router.post("/", authenticate, commonAccess, controller.create);
+router.post("/checkin", authenticate, commonAccess, controller.checkin || controller.clockIn);
 router.post("/clock-in", authenticate, commonAccess, controller.clockIn);
+router.post("/checkout", authenticate, commonAccess, controller.checkout || controller.clockOut);
 router.put("/clock-out", authenticate, commonAccess, controller.clockOut);
 router.put("/break-start", authenticate, commonAccess, controller.breakStart);
 router.put("/break-end", authenticate, commonAccess, controller.breakEnd);

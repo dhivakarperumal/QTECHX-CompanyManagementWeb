@@ -264,15 +264,17 @@ const OfficeCalendar = () => {
   /* ── derived data ── */
   const birthdayEvents = useMemo(() => {
     const year = currentDate.year();
-    return allEmployees.filter(emp => emp.dob).map(emp => {
-      const dobDate = dayjs(emp.dob);
-      if (!dobDate.isValid()) return null;
-      const bdayThisYear = dobDate.year(year).format('YYYY-MM-DD');
-      return {
-        _id: `bday-${emp.employee_id || emp.id}`,
-        title: `${getEmployeeFullName(emp)}'s Birthday`,
-        eventType: 'Birthday',
-        startDate: bdayThisYear,
+    return allEmployees
+      .filter(emp => (emp.status || emp.employment_status) === 'Active' && emp.dob)
+      .map(emp => {
+        const dobDate = dayjs(emp.dob);
+        if (!dobDate.isValid()) return null;
+        const bdayThisYear = dobDate.year(year).format('YYYY-MM-DD');
+        return {
+          _id: `bday-${emp.employee_id || emp.id}`,
+          title: `${getEmployeeFullName(emp)}'s Birthday`,
+          eventType: 'Birthday',
+          startDate: bdayThisYear,
         endDate: bdayThisYear,
         allDay: true,
         priority: 'Low',
@@ -401,9 +403,11 @@ const OfficeCalendar = () => {
     setCurrentDate(c => c.add(dir, viewMode === 'month' ? 'month' : viewMode === 'week' ? 'week' : 'day'));
 
   const openCreateModal = (date = dayjs().format('YYYY-MM-DD')) => {
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    const validDate = date && !dayjs(date).isBefore(dayjs().startOf('day')) ? date : todayStr;
     setMode('create');
-    setSelectedDate(date);
-    setFormData({ ...defaultForm, startDate: date, endDate: date });
+    setSelectedDate(validDate);
+    setFormData({ ...defaultForm, startDate: validDate, endDate: validDate });
     setShowModal(true);
   };
 
@@ -427,6 +431,11 @@ const OfficeCalendar = () => {
     const { name, value, type, checked } = e.target;
     setFormData(c => {
       const updated = { ...c, [name]: type === 'checkbox' ? checked : value };
+      if (name === 'startDate') {
+        if (!updated.endDate || dayjs(updated.endDate).isBefore(dayjs(value))) {
+          updated.endDate = value;
+        }
+      }
       if (name === 'startTime' && updated.endTime && updated.endTime < value) {
         updated.endTime = value;
       }
@@ -474,6 +483,9 @@ const OfficeCalendar = () => {
     if ([formData.title, formData.eventType, formData.startDate, formData.endDate].some(v => !v)) {
       toast.error('Please complete required fields.'); return;
     }
+    if (mode === 'create' && formData.startDate && dayjs(formData.startDate).isBefore(dayjs().startOf('day'))) {
+      toast.error('Cannot create events on previous dates.'); return;
+    }
     if (dayjs(formData.endDate).isBefore(dayjs(formData.startDate))) {
       toast.error('End date before start date.'); return;
     }
@@ -504,7 +516,7 @@ const OfficeCalendar = () => {
       if (mode === 'edit' && selectedEvent) {
         const id = selectedEvent._id || selectedEvent.id;
         const res = await api.put(`/events/${id}`, payload);
-        setEvents(c => c.map(x => x._id === id ? res.data : x));
+        setEvents(c => c.map(x => (x._id || x.id) === id ? res.data : x));
         setSelectedEvent(res.data);
         toast.success('Event updated.');
       } else {
@@ -526,8 +538,9 @@ const OfficeCalendar = () => {
     if (!selectedEvent) return;
     if (!window.confirm('Delete this event permanently?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/events/${selectedEvent._id}`);
-      setEvents(c => c.filter(x => x._id !== selectedEvent._id));
+      const id = selectedEvent._id || selectedEvent.id;
+      await api.delete(`/events/${id}`);
+      setEvents(c => c.filter(x => (x._id || x.id) !== id));
       setShowDrawer(false); setSelectedEvent(null);
       toast.success('Event deleted.');
     } catch (err) {
@@ -537,10 +550,15 @@ const OfficeCalendar = () => {
 
   const handleDrop = async (date) => {
     if (!draggingEventId) return;
+    if (dayjs(date).isBefore(dayjs().startOf('day'))) {
+      toast.error('Cannot move events to previous dates.');
+      setDraggingEventId(null);
+      return;
+    }
     const targetDate = dayjs(date).format('YYYY-MM-DD');
     try {
-      const res = await axios.put(`http://localhost:5000/api/events/${draggingEventId}`, { startDate: targetDate, endDate: targetDate });
-      setEvents(c => c.map(x => x._id === draggingEventId ? res.data : x));
+      const res = await api.put(`/events/${draggingEventId}`, { startDate: targetDate, endDate: targetDate });
+      setEvents(c => c.map(x => (x._id || x.id) === draggingEventId ? res.data : x));
       toast.success('Event moved.');
     } catch { toast.error('Failed to move event.'); }
     finally { setDraggingEventId(null); }
@@ -681,6 +699,10 @@ const OfficeCalendar = () => {
         .oc-day-cell.today { border-color: #F8740E; background: rgba(248, 116, 14, 0.05); }
         .oc-day-cell.other-m { background: rgba(0, 0, 0, 0.2); }
         .oc-day-cell.other-m .oc-day-num { color: rgba(255, 255, 255, 0.2); }
+        .oc-day-cell.past-d { background: rgba(8, 9, 13, 0.6); opacity: 0.4; cursor: default; }
+        .oc-day-cell.past-d:hover { background: rgba(8, 9, 13, 0.6); border-color: rgba(255, 255, 255, 0.05); }
+        .oc-day-cell.past-d .oc-day-num { color: rgba(255, 255, 255, 0.3) !important; }
+        .oc-day-cell.past-d .oc-chip { cursor: pointer; }
         .oc-day-num {
           font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.8);
           display: inline-flex; align-items: center; justify-content: center;
@@ -688,6 +710,7 @@ const OfficeCalendar = () => {
         }
         .oc-day-num.t { background: #F8740E; color: #fff; box-shadow: 0 0 10px rgba(248,116,14,0.4); }
         .oc-day-num.rd { color: rgba(244, 63, 94, 0.8); }
+        .oc-day-num.past-num { color: rgba(255, 255, 255, 0.3); }
         .oc-day-count {
           position: absolute; top: 8px; right: 6px;
           background: rgba(248, 116, 14, 0.15); color: #F8740E; font-size: 10px; font-weight: 700;
@@ -791,6 +814,7 @@ const OfficeCalendar = () => {
         .oc-mini-d.other-m { color: rgba(255, 255, 255, 0.2); }
         .oc-mini-d.today-m { background: #F8740E; color: #fff; font-weight: 700; box-shadow: 0 0 10px rgba(248,116,14,0.4); }
         .oc-mini-d.rd-d:not(.today-m) { color: rgba(244, 63, 94, 0.8); }
+        .oc-mini-d.past-m { color: rgba(255, 255, 255, 0.25); opacity: 0.5; }
 
         /* Section titles */
         .oc-sec-title { font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 8px; }
@@ -996,7 +1020,12 @@ const OfficeCalendar = () => {
               >
                 <Filter size={13} /> Filters
               </button>
-              <button className="oc-add-btn" onClick={() => openCreateModal(selectedDate)}>
+              <button className="oc-add-btn" onClick={() => {
+                const targetDate = dayjs(selectedDate).isBefore(dayjs().startOf('day'))
+                  ? dayjs().format('YYYY-MM-DD')
+                  : selectedDate;
+                openCreateModal(targetDate);
+              }}>
                 <Plus size={14} /> Add Event
               </button>
             </div>
@@ -1052,16 +1081,23 @@ const OfficeCalendar = () => {
                     const isOther = date.month() !== currentDate.month() && viewMode === 'month';
                     const dOW = date.day();
                     const isWE = dOW === 0 || dOW === 6;
+                    const isPast = date.isBefore(dayjs().startOf('day'));
+                    const isTod = isToday(date);
                     return (
                       <div
                         key={dateStr}
                         data-day="true" data-date={dateStr}
-                        className={`oc-day-cell${isToday(date) ? ' today' : ''}${isOther ? ' other-m' : ''}`}
-                        onDragOver={e => e.preventDefault()}
-                        onDrop={() => handleDrop(dateStr)}
-                        onClick={() => { setSelectedDate(dateStr); openCreateModal(dateStr); }}
+                        className={`oc-day-cell${isTod ? ' today' : ''}${isOther ? ' other-m' : ''}${isPast ? ' past-d' : ''}`}
+                        onDragOver={e => { if (!isPast) e.preventDefault(); }}
+                        onDrop={() => { if (!isPast) handleDrop(dateStr); }}
+                        onClick={() => {
+                          setSelectedDate(dateStr);
+                          if (!isPast) {
+                            openCreateModal(dateStr);
+                          }
+                        }}
                       >
-                        <span className={`oc-day-num${isToday(date) ? ' t' : ''}${!isToday(date) && isWE && !isOther ? ' rd' : ''}`}>
+                        <span className={`oc-day-num${isTod ? ' t' : ''}${!isTod && isWE && !isOther && !isPast ? ' rd' : ''}${isPast ? ' past-num' : ''}`}>
                           {date.format('D')}
                         </span>
                         {dEvs.length > 0 && <span className="oc-day-count">{dEvs.length}</span>}
@@ -1196,6 +1232,7 @@ const OfficeCalendar = () => {
               {miniCalDays.map(date => {
                 const isOther = date.month() !== miniCalDate.month();
                 const todM = isToday(date);
+                const isPast = date.isBefore(dayjs().startOf('day'));
                 const dOW = date.day();
                 const isRD = dOW === 0 || dOW === 6;
                 const hasEv = events.some(e => {
@@ -1207,7 +1244,7 @@ const OfficeCalendar = () => {
                 return (
                   <button
                     key={date.format('YYYY-MM-DD')}
-                    className={`oc-mini-d${isOther ? ' other-m' : ''}${todM ? ' today-m' : ''}${!todM && isRD && !isOther ? ' rd-d' : ''}`}
+                    className={`oc-mini-d${isOther ? ' other-m' : ''}${todM ? ' today-m' : ''}${!todM && isRD && !isOther && !isPast ? ' rd-d' : ''}${isPast && !todM ? ' past-m' : ''}`}
                     onClick={() => { setCurrentDate(date); setSelectedDate(date.format('YYYY-MM-DD')); }}
                     title={date.format('MMM D, YYYY')}
                   >
@@ -1322,7 +1359,21 @@ const OfficeCalendar = () => {
             <div className="oc-sec-title">Quick Actions</div>
             <div className="oc-qa-grid">
               {QUICK_ACTIONS.map(({ label, icon: Icon, color }) => (
-                <button key={label} className="oc-qa-btn" onClick={() => openCreateModal(dayjs().format('YYYY-MM-DD'))}>
+                <button
+                  key={label}
+                  className="oc-qa-btn"
+                  onClick={() => {
+                    const todayStr = dayjs().format('YYYY-MM-DD');
+                    let type = 'Office Event';
+                    if (label === 'Add Meeting') type = 'Meeting';
+                    else if (label === 'Add Task') type = 'Project Deadline';
+                    else if (label === 'Add Reminder') type = 'Meeting';
+                    setMode('create');
+                    setSelectedDate(todayStr);
+                    setFormData({ ...defaultForm, eventType: type, startDate: todayStr, endDate: todayStr });
+                    setShowModal(true);
+                  }}
+                >
                   <div className={`oc-qa-icon ${color}`}><Icon size={16} /></div>
                   <span className="oc-qa-lbl">{label}</span>
                 </button>
@@ -1367,7 +1418,7 @@ const OfficeCalendar = () => {
                 <>
                   <div>
                     <label className="oc-flbl">Date *</label>
-                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="startDate" min={mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined} value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">Meeting Link</label>
@@ -1412,7 +1463,7 @@ const OfficeCalendar = () => {
                       <div style={{ position: 'absolute', zIndex: 999, top: '100%', left: 0, right: 0, background: '#1e1e24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 220, overflowY: 'auto' }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 10 }}>Select Employees</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-                          {Array.isArray(allEmployees) ? allEmployees.map((emp, i) => {
+                          {Array.isArray(allEmployees) ? allEmployees.filter(emp => (emp.status || emp.employment_status) === 'Active').map((emp, i) => {
                             const name = getEmployeeFullName(emp);
                             if (!name) return null;
                             const isSel = (formData.participants || []).some(p => typeof p === 'object' ? p.user_id === emp.employee_id : p === name);
@@ -1436,11 +1487,11 @@ const OfficeCalendar = () => {
                 <>
                   <div>
                     <label className="oc-flbl">Start Date *</label>
-                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="startDate" min={mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined} value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">End Date *</label>
-                    <input required type="date" name="endDate" value={formData.endDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="endDate" min={formData.startDate || (mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined)} value={formData.endDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div className="oc-full">
                     <label className="oc-flbl">Reason</label>
@@ -1457,7 +1508,7 @@ const OfficeCalendar = () => {
                 <>
                   <div className="oc-full">
                     <label className="oc-flbl">Date *</label>
-                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="startDate" min={mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined} value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">Start Time</label>
@@ -1482,7 +1533,7 @@ const OfficeCalendar = () => {
                   </div>
                   <div className="oc-full">
                     <label className="oc-flbl">Date *</label>
-                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="startDate" min={mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined} value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">Start Time</label>
@@ -1511,7 +1562,7 @@ const OfficeCalendar = () => {
                   </div>
                   <div>
                     <label className="oc-flbl">Date *</label>
-                    <input required type="date" name="startDate" value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
+                    <input required type="date" name="startDate" min={mode === 'create' ? dayjs().format('YYYY-MM-DD') : undefined} value={formData.startDate} onChange={handleFieldChange} className="oc-finput" />
                   </div>
                   <div>
                     <label className="oc-flbl">Deadline Time</label>

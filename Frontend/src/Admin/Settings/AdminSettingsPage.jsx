@@ -1,9 +1,17 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail, FolderKanban } from 'lucide-react';
+import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, Mail, FolderKanban, UserCog } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 
 const AdminSettingsPage = () => {
   const cards = [
+    {
+      title: 'User Management',
+      description: 'Manage user accounts, roles, access permissions, and active/inactive login status.',
+      icon: UserCog,
+      path: '/admin/settings/users',
+      accent: 'from-blue-500/20 to-indigo-600/10',
+    },
     {
       title: 'Leave Settings',
       description: 'Manage leave types and the maximum days employees can apply for.',

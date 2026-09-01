@@ -62,7 +62,22 @@ async function listProjectPlans() {
     `SELECT id, plan_id, plan_code, plan_name, project_id, project_code, project_type, category, status, taskmodule, plan_data, plan_document, created_at, updated_at FROM project_plan ORDER BY updated_at DESC`
   );
   return rows.map((row) => {
-    const parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
+    let parsedData = {};
+    try {
+      parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
+    } catch (e) {
+      console.error(`Failed to parse plan_data for plan id ${row.id}:`, e);
+      parsedData = {};
+    }
+
+    let taskmodule = [];
+    try {
+      taskmodule = row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [];
+    } catch (e) {
+      console.error(`Failed to parse taskmodule for plan id ${row.id}:`, e);
+      taskmodule = [];
+    }
+
     return {
       ...parsedData,
       id: row.id,
@@ -74,7 +89,7 @@ async function listProjectPlans() {
       projectType: row.project_type || parsedData.projectType,
       category: row.category || parsedData.category,
       status: row.status || parsedData.status,
-      taskmodule: row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [],
+      taskmodule: taskmodule,
       planDocument: row.plan_document || parsedData.planDocument || null,
       createdAt: row.created_at ? row.created_at.toISOString() : parsedData.createdAt,
       updatedAt: row.updated_at ? row.updated_at.toISOString() : parsedData.updatedAt,
@@ -90,7 +105,23 @@ async function findProjectPlanById(id) {
   );
   const row = rows[0];
   if (!row) return null;
-  const parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
+
+  let parsedData = {};
+  try {
+    parsedData = row.plan_data ? JSON.parse(row.plan_data) : {};
+  } catch (e) {
+    console.error(`Failed to parse plan_data for plan id ${id}:`, e);
+    parsedData = {};
+  }
+
+  let taskmodule = [];
+  try {
+    taskmodule = row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [];
+  } catch (e) {
+    console.error(`Failed to parse taskmodule for plan id ${id}:`, e);
+    taskmodule = [];
+  }
+
   return {
     ...parsedData,
     id: row.id,
@@ -102,7 +133,7 @@ async function findProjectPlanById(id) {
     projectType: row.project_type || parsedData.projectType,
     category: row.category || parsedData.category,
     status: row.status || parsedData.status,
-    taskmodule: row.taskmodule ? (typeof row.taskmodule === 'string' ? JSON.parse(row.taskmodule) : row.taskmodule) : parsedData.modules || [],
+    taskmodule: taskmodule,
     createdAt: row.created_at ? row.created_at.toISOString() : parsedData.createdAt,
     updatedAt: row.updated_at ? row.updated_at.toISOString() : parsedData.updatedAt,
   };

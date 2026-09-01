@@ -49,7 +49,7 @@ async function create(req, res) {
 async function getAll(req, res) {
   try {
     const page = Number(req.query.page || 1);
-    const limit = Number(req.query.limit || 20);
+    const limit = Math.min(Math.max(Number(req.query.limit || 100), 1), 500);
     const result = await listUsers({
       page,
       limit,
@@ -81,10 +81,20 @@ async function update(req, res) {
     const existing = await findByUserId(req.params.userId);
     if (!existing) return res.status(404).json({ message: "User not found" });
 
+    if (req.body.status !== undefined) {
+      const normalizedStatus = String(req.body.status).trim().toLowerCase() === "active" ? "Active" : "Inactive";
+      if (normalizedStatus === "Inactive" && existing.user_id === req.user.user_id) {
+        return res.status(400).json({ message: "You cannot deactivate your own account" });
+      }
+    }
+
     const updates = {};
-    ["username", "email", "mobile", "role", "status"].forEach((field) => {
+    ["username", "email", "mobile", "role"].forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
+    if (req.body.status !== undefined) {
+      updates.status = String(req.body.status).trim().toLowerCase() === "active" ? "Active" : "Inactive";
+    }
     if (req.body.password !== undefined) updates.password = await bcrypt.hash(req.body.password, 12);
     updates.updated_by = req.user.user_id;
 
@@ -123,10 +133,28 @@ async function login(req, res) {
       return res.status(401).json({ message: "Invalid credentials. Please check your username, email, or mobile and password." });
     }
 
+    const userStatus = String(user.status || "").trim().toLowerCase();
+    if (userStatus !== "active") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
+    if (user.emp_status && String(user.emp_status).trim().toLowerCase() === "inactive") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
+    if (user.emp_employment_status && String(user.emp_employment_status).trim().toLowerCase() === "inactive") {
+      return res.status(403).json({ message: "Your account is inactive. Please contact the administrator." });
+    }
+
+    const safeUser = publicUser(user);
+    const employeeId = user.emp_code || user.employee_id || user.user_id;
+    safeUser.employee_id = employeeId;
+    safeUser.employeeId = employeeId;
+
     const token = jwt.sign(
       {
         user_id: user.user_id,
-        employee_id: user.emp_code || user.user_id,
+        employee_id: employeeId,
         employee_code: user.emp_code2 || user.emp_code || null,
         id: user.user_id,
         username: user.username,
@@ -136,7 +164,7 @@ async function login(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
-    return res.json({ message: "Login successful", token, user: publicUser(user) });
+    return res.json({ message: "Login successful", token, user: safeUser });
   } catch (error) {
     console.error('[UsersController] login error:', error);
     return res.status(500).json({ message: "Login failed", error: error.message });
@@ -188,4 +216,24 @@ async function changePassword(req, res) {
   }
 }
 
-module.exports = { create, getAll, getOne, update, remove, login, addTrainee, changePassword };
+async function deleteOwnAccount(req, res) {
+  try {
+    const userId = req.user?.user_id || req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const existing = await findByUserId(userId);
+    if (!existing) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = await softDeleteUser(userId, userId);
+    return res.json({ message: "Account deleted successfully", user: publicUser(user) });
+  } catch (error) {
+    console.error("Delete own account error:", error);
+    return res.status(500).json({ message: "Failed to delete account" });
+  }
+}
+
+module.exports = { create, getAll, getOne, update, remove, login, addTrainee, changePassword, deleteOwnAccount };

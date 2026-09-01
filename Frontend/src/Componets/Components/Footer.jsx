@@ -29,6 +29,9 @@ const Footer = () => {
     { name: "Who We Work", path: "/whoweworkwith" },
     { name: "What We Do", path: "/whatwedo" },
     { name: "Pricing", path: "/prices" },
+
+    { name: "Privacy Policy", path: "/privacy-policy" },
+
   ];
 
   const socialLinks = [
@@ -36,7 +39,7 @@ const Footer = () => {
     { name: "Twitter", icon: FaTwitter, url: "https://x.com/QTechxTpt?t=fmfCt7ZX-5RoQIbHJ-4s_A&s=09" },
     { name: "Email", icon: FaGoogle, url: "mailto:info@qtechx.com" },
     { name: "LinkedIn", icon: FaLinkedinIn, url: "https://www.linkedin.com/in/q-techx-solutions-724346366/" },
-    { name: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/919597293504?text=Hello%20Q-Techx%20Solutions" },
+    { name: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/919659133504?text=Hello%20Q-Techx%20Solutions" },
     { name: "Instagram", icon: FaInstagram, url: "https://www.instagram.com/qtech.x?igsh=MXNsODg2YjA5N21wbA==" },
   ];
 
@@ -259,7 +262,7 @@ const Footer = () => {
                 />
 
                 <span>
-                  +91 95972 93504
+                  +91 96591 33504
                 </span>
 
               </p>

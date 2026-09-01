@@ -405,8 +405,8 @@ const MessageBubble = ({ msg, navigate, onClose }) => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               {[
                 { label: "Email Admin", href: "mailto:admin@qtechx.com", color: "#f97316", icon: "📧" },
-                { label: "Call Support", href: "tel:+919597293504", color: "#10b981", icon: "📞" },
-                { label: "WhatsApp", href: "https://wa.me/919597293504", color: "#25d366", icon: "💬" },
+                { label: "Call Support", href: "tel:+919659133504", color: "#10b981", icon: "📞" },
+                { label: "WhatsApp", href: "https://wa.me/919659133504", color: "#25d366", icon: "💬" },
                 { label: "Raise Ticket", href: "/admin", color: "#8b5cf6", icon: "🎫" },
               ].map((opt) => (
                 <a

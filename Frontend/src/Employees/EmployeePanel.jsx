@@ -48,7 +48,11 @@ const EmployeeLayout = () => {
         `}
       >
         {/* Header */}
-        {!isPrintPage && <Header onMenuClick={() => setSidebarOpen(true)} />}
+        {!isPrintPage && (
+          <div className="sticky top-0 z-40 print:hidden">
+            <Header onMenuClick={() => setSidebarOpen(true)} />
+          </div>
+        )}
 
         {/* Page Content */}
         <main className={`flex-1 ${isPrintPage ? 'p-0' : 'p-4 sm:p-5 lg:p-6'} overflow-y-auto`}>

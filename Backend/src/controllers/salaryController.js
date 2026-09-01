@@ -100,16 +100,9 @@ exports.paySalary = async (req, res) => {
 
     const tSalary = parseFloat(total_salary);
 
-    // Check available funds
+    // Deduct from available fund; salaries may make the balance negative.
     const [fundRows] = await connection.query("SELECT available_fund FROM company_funds ORDER BY id DESC LIMIT 1");
     let current_fund = fundRows.length > 0 ? parseFloat(fundRows[0].available_fund) : 0.00;
-
-    if (current_fund < tSalary) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: "Insufficient funds to pay salary" });
-    }
-
-    // Deduct fund
     const new_fund = current_fund - tSalary;
     await connection.query(
       "INSERT INTO company_funds (available_fund, created_by) VALUES (?, ?)",

@@ -5,12 +5,11 @@ const path = require("path");
 const { AsyncLocalStorage } = require("async_hooks");
 const jwt = require("jsonwebtoken");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
-console.table({
-  DB_HOST: process.env.DB_HOST,
-  DB_PORT: process.env.DB_PORT,
-  DB_NAME: process.env.DB_NAME,
-  DB_USER: process.env.DB_USER,
-  DB_PASSWORD: process.env.DB_PASSWORD,
+console.log("Database configuration loaded:", {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
 });
 
 const { initDB } = require("./src/config/db");
@@ -69,7 +68,11 @@ app.use(
         const isLocalhost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
         if (isLocalhost) return callback(null, origin);
       } catch (err) { }
-      const allowed = ["https://qt1.qtechx.com"];
+      const allowed = [
+        "https://qtechx.com",
+        "https://www.qtechx.com",
+        "https://qt1.qtechx.com",
+      ];
       if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
     },

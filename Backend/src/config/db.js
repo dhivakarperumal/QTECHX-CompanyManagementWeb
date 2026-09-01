@@ -1342,6 +1342,10 @@ async function ensureEmployeesSchema(pool) {
   if (!empColumnNames.has('educational_details')) {
     await pool.execute('ALTER TABLE employees ADD COLUMN educational_details JSON NULL');
   }
+  if (!empColumnNames.has('status')) {
+    await pool.execute("ALTER TABLE employees ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER confirmation_date");
+    await pool.execute("UPDATE employees SET status = IF(employment_status = 'Inactive', 'Inactive', 'Active')");
+  }
 }
 
 async function ensureAttendanceSchema(pool) {

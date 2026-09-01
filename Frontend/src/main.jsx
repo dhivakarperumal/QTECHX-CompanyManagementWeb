@@ -37,6 +37,7 @@ import CareerDetail from "./Componets/Careers/CareerDetail.jsx";
 import JobApply from "./Admin/JobApply/JobApply.jsx";
 import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import Booknow from "./Componets/BookingForm/Booknow.jsx";
+import PrivacyPolicy from "./Componets/PrivacyPolicy/PrivacyPolicy.jsx";
 
 import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
 import EmployeeLayout from './Employees/EmployeePanel.jsx'
@@ -111,6 +112,7 @@ import AdminJobApplicationsPage from './Admin/Settings/AdminJobApplicationsPage.
 import AdminServiceRequestsPage from './Admin/Settings/AdminServiceRequestsPage.jsx';
 import AdminContactRequestsPage from './Admin/Settings/AdminContactRequestsPage.jsx';
 import AdminCompletedProjectsSettingsPage from './Admin/Settings/AdminCompletedProjectsSettingsPage.jsx';
+import AdminUsersSettingsPage from './Admin/Settings/AdminUsersSettingsPage.jsx';
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -142,6 +144,8 @@ const router = createHashRouter([
       { path: "/apply/:jobId", element: <JobApply /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/booknow", element: <Booknow /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
+      { path: "/privacy", element: <PrivacyPolicy /> },
       {
         path: 'login',
         element: <Login />,
@@ -366,6 +370,10 @@ const router = createHashRouter([
           {
             path: 'settings',
             element: <AdminSettingsPage />,
+          },
+          {
+            path: 'settings/users',
+            element: <AdminUsersSettingsPage />,
           },
           {
             path: 'settings/leave',

@@ -46,15 +46,43 @@ async function findForLogin(identifier) {
   const db = getDB();
   const fields = publicFields.split(', ').map((field) => `u.${field}`).join(', ');
   const [rows] = await db.execute(
-    `SELECT ${fields}, u.password,
-            e.employee_id AS emp_code, e.employee_code AS emp_code2
+    `SELECT ${fields}, u.password
      FROM users u
-     LEFT JOIN employees e ON e.official_email COLLATE utf8mb4_unicode_ci = u.email COLLATE utf8mb4_unicode_ci
-     WHERE (u.username COLLATE utf8mb4_unicode_ci = ? OR u.email COLLATE utf8mb4_unicode_ci = ? OR u.mobile COLLATE utf8mb4_unicode_ci = ?) AND u.status = 'Active'
+     WHERE u.username = ? OR u.email = ? OR u.mobile = ?
      LIMIT 1`,
     [identifier, identifier, identifier]
   );
-  return rows[0] || null;
+  if (!rows.length) return null;
+
+  const user = rows[0];
+  user.emp_code = null;
+  user.emp_code2 = null;
+  user.emp_status = null;
+  user.emp_employment_status = null;
+
+  try {
+    const [empRows] = await db.execute(
+      `SELECT employee_id, employee_code, status, employment_status
+       FROM employees
+       WHERE employee_id = ? OR official_email = ? OR personal_email = ?
+       LIMIT 1`,
+      [user.user_id, user.email || '', user.email || '']
+    );
+
+    if (empRows.length) {
+      const employeeId = empRows[0].employee_id || empRows[0].employeeId || user.user_id;
+      user.emp_code = employeeId;
+      user.employee_id = employeeId;
+      user.employeeId = employeeId;
+      user.emp_code2 = empRows[0].employee_code;
+      user.emp_status = empRows[0].status;
+      user.emp_employment_status = empRows[0].employment_status;
+    }
+  } catch (err) {
+    console.error('[findForLogin] employee lookup error:', err);
+  }
+
+  return user;
 }
 
 async function listUsers({ page, limit, search, status, role }) {
@@ -131,6 +159,70 @@ async function existsByEmailOrMobile(email, mobile) {
   return rows[0] || null;
 }
 
+async function findConflictUser({ emails = [], mobile, username, excludeUserId = null }) {
+  const db = getDB();
+  const emailList = (Array.isArray(emails) ? emails : [emails])
+    .map((e) => String(e || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  const cleanMobile = mobile ? String(mobile).replace(/[\s\-\+]/g, "").slice(-10) : "";
+  const cleanUsername = username ? String(username).trim().toLowerCase() : "";
+
+  // Check emails
+  if (emailList.length > 0) {
+    const placeholders = emailList.map(() => "?").join(", ");
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE LOWER(TRIM(email)) IN (${placeholders})`;
+    const params = [...emailList];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "email", value: rows[0].email, user: rows[0] };
+    }
+  }
+
+  // Check mobile
+  if (cleanMobile) {
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE RIGHT(REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '-', ''), '+', ''), 10) = ?`;
+    const params = [cleanMobile];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "mobile", value: rows[0].mobile, user: rows[0] };
+    }
+  }
+
+  // Check username
+  if (cleanUsername) {
+    let query = `SELECT id, user_id, username, email, mobile FROM users WHERE LOWER(TRIM(username)) = ?`;
+    const params = [cleanUsername];
+    if (excludeUserId) {
+      query += " AND user_id != ?";
+      params.push(excludeUserId);
+    }
+    query += " LIMIT 1";
+    const [rows] = await db.execute(query, params);
+    if (rows.length > 0) {
+      return { field: "username", value: rows[0].username, user: rows[0] };
+    }
+  }
+
+  return null;
+}
+
+async function hardDeleteUser(userId) {
+  const db = getDB();
+  await db.execute("DELETE FROM users WHERE user_id = ?", [userId]);
+  return true;
+}
+
 module.exports = {
   createUser,
   findByUserId,
@@ -140,4 +232,7 @@ module.exports = {
   updateUser,
   softDeleteUser,
   existsByEmailOrMobile,
+  findConflictUser,
+  hardDeleteUser,
 };
+
