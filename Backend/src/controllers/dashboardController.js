@@ -1,7 +1,8 @@
 const { getDB } = require('../config/db');
+const { resolveAllPossibleEmployeeIds } = require('../models/attendanceModel');
 
 function getAuthenticatedEmployeeId(req) {
-  return req.user?.employee_id || req.user?.employeeId || req.user?.user_id || req.user?.id || req.user?.uuid || null;
+  return req.user?.employee_id || req.user?.employeeId || req.user?.user_id || req.user?.id || req.user?.uuid || req.user?.email || null;
 }
 
 async function getDashboardMetrics(req, res) {
