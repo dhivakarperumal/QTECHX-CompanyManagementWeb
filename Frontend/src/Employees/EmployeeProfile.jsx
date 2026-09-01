@@ -244,8 +244,7 @@ const EmployeeProfile = () => {
             </span>
           </div>
           <p className="text-white/40 text-xs mt-0.5">
-            Employee Profile • Role: <span className="text-orange-400 font-semibold">{userRole}</span> • Code:{" "}
-            <span className="text-white/70 font-mono">{employeeCode}</span>
+            Employee Profile • Role: <span className="text-orange-400 font-semibold">{userRole}</span>
           </p>
         </div>
 
@@ -284,9 +283,7 @@ const EmployeeProfile = () => {
             <p className="text-xs text-orange-400 font-medium mt-0.5 mb-3">{userDesignation}</p>
 
             <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              <span className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-white/80">
-                {employeeCode}
-              </span>
+              
               <span className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-300">
                 {userRole}
               </span>
@@ -355,7 +352,7 @@ const EmployeeProfile = () => {
                 </div>
               )}
 
-              <div>
+              {/* <div>
                 <p className="text-white/40 mb-0.5">Primary Email</p>
                 {emp.personal_email || email || user?.email ? (
                   <a
@@ -368,7 +365,7 @@ const EmployeeProfile = () => {
                 ) : (
                   <span className="text-white/30 italic">Not Provided</span>
                 )}
-              </div>
+              </div> */}
 
               {emp.official_email && (
                 <div>
