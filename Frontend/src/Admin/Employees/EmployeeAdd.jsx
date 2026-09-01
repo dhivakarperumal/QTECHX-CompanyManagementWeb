@@ -392,8 +392,8 @@ const EmployeeAdd = () => {
             bank_passbook_url: emp.bank_passbook_url || emp.passport_url || "",
             appointment_letter_url: "",
             nda_url: "",
-            username: "",
-            official_email: "",
+            username: emp.username || [emp.first_name, emp.last_name].filter(Boolean).join(" ") || "",
+            official_email: emp.official_email || emp.personal_email || "",
             password: "",
             educational_details: parseEducationalDetails(emp.educational_details),
           });
@@ -586,13 +586,17 @@ const EmployeeAdd = () => {
       errors.upi_id = "UPI ID should look like name@bank.";
     }
 
-    if (!isEditMode) {
-      if (!data.username?.trim()) {
+    if (!data.username?.trim()) {
+      if (!isEditMode) {
         errors.username = "Username is required.";
       }
-      if (!data.official_email?.trim()) {
+    }
+    if (!data.official_email?.trim()) {
+      if (!isEditMode) {
         errors.official_email = "Official email is required.";
-      } else if (!emailPattern.test(data.official_email)) {
+      }
+    } else if (!emailPattern.test(data.official_email)) {
+      if (!isEditMode) {
         errors.official_email = "Official email must be a valid email address.";
       }
     }
@@ -669,19 +673,17 @@ const EmployeeAdd = () => {
 
     setFormData((prev) => {
       const newData = { ...prev, [name]: sanitizedValue };
-      if (!isEditMode) {
-        if (name === "first_name" || name === "last_name") {
-          const first = name === "first_name" ? sanitizedValue : prev.first_name;
-          const last = name === "last_name" ? sanitizedValue : prev.last_name;
-          newData.username = `${first.toLowerCase()}${last ? "." + last.toLowerCase() : ""}`.replace(/\s+/g, "");
-        }
-        if (name === "personal_email") {
-          newData.official_email = sanitizedValue;
-        }
-        if (name === "mobile_number") {
-          // autofill password with mobile for initial creation
-          newData.password = sanitizedValue;
-        }
+      if (name === "first_name" || name === "last_name") {
+        const first = name === "first_name" ? sanitizedValue : prev.first_name;
+        const last = name === "last_name" ? sanitizedValue : prev.last_name;
+        newData.username = [first, last].filter(Boolean).join(" ");
+      }
+      if (name === "personal_email") {
+        newData.official_email = sanitizedValue;
+      }
+      if (!isEditMode && name === "mobile_number") {
+        // autofill password with mobile for initial creation
+        newData.password = sanitizedValue;
       }
       return newData;
     });
@@ -1201,7 +1203,6 @@ const EmployeeAdd = () => {
                 <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
                 {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
               </div>
-              {/* Passwords are managed by employee portal; admin will not set password here. */}
             </div>
           </div>
         )}

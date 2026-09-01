@@ -1,6 +1,6 @@
 const { getDB } = require("../config/db");
 
-const publicFields = "id, employee_id, employee_code, first_name, last_name, profile_photo, gender, dob, blood_group, marital_status, nationality, aadhaar_number, pan_number, mobile_number, alternate_mobile, personal_email, permanent_address, emergency_contact_person, emergency_contact_number, emergency_relationship, designation, team_lead, joining_date, confirmation_date, status, employment_status, role, salary_type, basic_salary, bank_name, account_number, ifsc_code, upi_id, resume_url, aadhaar_url, pan_url, bank_passbook_url, appointment_letter_url, nda_url, educational_details, created_at, updated_at, created_by, updated_by";
+const publicFields = "id, employee_id, employee_code, first_name, last_name, profile_photo, gender, dob, blood_group, marital_status, nationality, aadhaar_number, pan_number, mobile_number, alternate_mobile, personal_email, official_email, username, permanent_address, emergency_contact_person, emergency_contact_number, emergency_relationship, designation, team_lead, joining_date, confirmation_date, status, employment_status, role, salary_type, basic_salary, bank_name, account_number, ifsc_code, upi_id, driving_licence_number, vehicle_registration_number, referral_code, resume_url, aadhaar_url, pan_url, bank_passbook_url, passport_url, offer_letter_url, appointment_letter_url, nda_url, educational_details, created_at, updated_at, created_by, updated_by";
 
 async function generateEmployeeCode() {
   const db = getDB();
@@ -48,11 +48,23 @@ async function createEmployee(employee) {
   return findByEmployeeId(employee.employee_id, result.insertId);
 }
 
-async function findByEmployeeId(employeeId, id = null) {
+async function findByEmployeeId(identifier, id = null) {
   const db = getDB();
+  if (id) {
+    const [rows] = await db.execute(
+      `SELECT ${publicFields} FROM employees WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  if (!identifier) return null;
+
   const [rows] = await db.execute(
-    `SELECT ${publicFields} FROM employees WHERE ${id ? "id = ?" : "employee_id = ?"} LIMIT 1`,
-    [id || employeeId]
+    `SELECT ${publicFields} FROM employees 
+     WHERE employee_id = ? OR id = ? OR employee_code = ? OR official_email = ? OR personal_email = ? OR username = ? 
+     LIMIT 1`,
+    [identifier, identifier, identifier, identifier, identifier, identifier]
   );
   return rows[0] || null;
 }

@@ -65,6 +65,24 @@ const LeaveRow = ({ type, dates, status }) => {
   );
 };
 
+const formatDisplayTime = (timeStr) => {
+  if (!timeStr) return null;
+  const str = String(timeStr).trim();
+  if (!str) return null;
+  if (/am|pm/i.test(str)) return str;
+
+  const parts = str.split(':');
+  if (parts.length >= 2) {
+    let h = parseInt(parts[0], 10);
+    const m = String(parts[1]).padStart(2, '0');
+    if (isNaN(h)) return str;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
+  return str;
+};
+
 const isSameDay = (val) => {
   if (!val) return false;
   return dayjs(val).isSame(dayjs(), 'day');
@@ -126,6 +144,8 @@ const EmployeeDashboard = () => {
     };
 
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 15000); // refresh every 15s
+    return () => clearInterval(interval);
   }, [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?.uuid, userProfile?.employee_id]);
 
   const greeting = () => {
@@ -153,7 +173,9 @@ const EmployeeDashboard = () => {
         <div className="flex flex-wrap gap-4 mt-5">
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CheckCircle2 size={16} className="text-green-400" />
-            <span className="text-white text-sm font-medium">Check-in: <span className="text-green-400">{data.attendance.checkIn || 'Not yet'}</span> · Check-out: <span className="text-amber-400">{data.attendance.checkOut || 'Not yet'}</span></span>
+            <span className="text-white text-sm font-medium">
+              Check-in: <span className="text-green-400">{formatDisplayTime(data.attendance.checkIn) || 'Not yet'}</span> · Check-out: <span className="text-amber-400">{formatDisplayTime(data.attendance.checkOut) || 'Not yet'}</span>
+            </span>
           </div>
           <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2 border border-white/10">
             <CalendarDays size={16} className="text-blue-400" />

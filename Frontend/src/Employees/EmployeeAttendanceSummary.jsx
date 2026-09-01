@@ -369,6 +369,13 @@ const EmployeeAttendanceSummary = () => {
   };
 
   const fillCurrentTime = (field) => {
+    if (field === 'check_out_time' && form.break_start_time && !form.break_end_time) {
+      const msg = "Before ending break you can't checkout. Please end your break first.";
+      setError(msg);
+      alert(msg);
+      return;
+    }
+    setError(null);
     const timeStr = getLocalTimeStr();
     const nextForm = { ...form, [field]: timeStr };
     setForm(nextForm);
@@ -501,49 +508,13 @@ const EmployeeAttendanceSummary = () => {
       return;
     }
 
-    // 2. Start Break
-    if (!currentBreakStart && !currentCheckOut) {
-      openAttendanceModal({
-        check_in_time: currentCheckIn,
-        break_start_time: getLocalTimeStr(),
-        break_end_time: '',
-        check_out_time: '',
-        attendance_status: currentStatus,
-        location: currentLocation,
-      }, record);
-      if (currentLocation) {
-        setIsWithinRadius(true);
-      } else {
-        handleLocation();
-      }
-      return;
-    }
-
-    // 3. End Break
-    if (currentBreakStart && !currentBreakEnd && !currentCheckOut) {
-      openAttendanceModal({
-        check_in_time: currentCheckIn,
-        break_start_time: currentBreakStart,
-        break_end_time: getLocalTimeStr(),
-        check_out_time: '',
-        attendance_status: currentStatus,
-        location: currentLocation,
-      }, record);
-      if (currentLocation) {
-        setIsWithinRadius(true);
-      } else {
-        handleLocation();
-      }
-      return;
-    }
-
-    // 4. Checkout
+    // 2. Already checked in, updating attendance - open with existing recorded values without auto-filling break/checkout
     if (!currentCheckOut) {
       openAttendanceModal({
         check_in_time: currentCheckIn,
         break_start_time: currentBreakStart,
         break_end_time: currentBreakEnd,
-        check_out_time: getLocalTimeStr(),
+        check_out_time: '',
         attendance_status: currentStatus,
         location: currentLocation,
       }, record);
@@ -571,6 +542,12 @@ const EmployeeAttendanceSummary = () => {
 
   const handleSubmit = async (event) => {
     if (event) event.preventDefault();
+    if (form.check_out_time && form.break_start_time && !form.break_end_time) {
+      const msg = "Before ending break you can't checkout. Please end your break first.";
+      setError(msg);
+      alert(msg);
+      return;
+    }
     if (!isWithinRadius && !form.location) {
       alert(`You must be within ${ALLOWED_RADIUS_METERS} meters of the office to mark attendance. Please fetch your location.`);
       return;
@@ -628,14 +605,8 @@ const EmployeeAttendanceSummary = () => {
     if (!todayRecord || !todayRecord.check_in_time) {
       return { label: 'Checkin', action: 'checkin', modalTitle: 'Daily Check-in', submitLabel: 'Check In' };
     }
-    if (!todayRecord.break_start_time && !todayRecord.check_out_time) {
-      return { label: 'Start Break', action: 'break-start', modalTitle: 'Start Break', submitLabel: 'Start Break' };
-    }
-    if (todayRecord.break_start_time && !todayRecord.break_end_time && !todayRecord.check_out_time) {
-      return { label: 'End Break', action: 'break-end', modalTitle: 'End Break', submitLabel: 'End Break' };
-    }
     if (!todayRecord.check_out_time) {
-      return { label: 'Checkout', action: 'checkout', modalTitle: 'Daily Check-out', submitLabel: 'Check Out' };
+      return { label: 'Update Attendance', action: 'attendance', modalTitle: 'Update Attendance', submitLabel: 'Save Attendance' };
     }
     return { label: 'Completed', action: 'completed', modalTitle: 'Attendance Completed', submitLabel: 'Completed' };
   };
@@ -678,13 +649,9 @@ const EmployeeAttendanceSummary = () => {
             disabled={attendanceAction.action === 'completed' || todayHoliday || approvedLeaveToday || (attendanceAction.action === 'checkin' && hasMarkedToday)}
             className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition ${
               attendanceAction.action === 'completed' || todayHoliday || approvedLeaveToday || (attendanceAction.action === 'checkin' && hasMarkedToday)
-                ? 'bg-orange-500/40 cursor-not-allowed opacity-60'
-                : attendanceAction.action === 'break-start'
+                ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-60'
+                : attendanceAction.action === 'attendance'
                 ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
-                : attendanceAction.action === 'break-end'
-                ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
-                : attendanceAction.action === 'checkout'
-                ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'
                 : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20'
             }`}
           >
@@ -975,14 +942,28 @@ const EmployeeAttendanceSummary = () => {
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="check_in_time"
+                        value={form.check_in_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="check_out_time"
+                        value={form.check_out_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
@@ -990,14 +971,28 @@ const EmployeeAttendanceSummary = () => {
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="break_start_time"
+                        value={form.break_start_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break End Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="break_end_time"
+                        value={form.break_end_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
