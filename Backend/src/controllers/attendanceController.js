@@ -171,6 +171,9 @@ async function clockOut(req, res) {
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) return res.status(404).json({ message: "No attendance record found" });
     if (existing.check_out_time) return res.status(400).json({ message: "Already clocked out" });
+    if (existing.break_start_time && !existing.break_end_time) {
+      return res.status(400).json({ message: "Before ending break you can't checkout. Please end your break first." });
+    }
 
     const computed = calculateAttendanceMetrics({
       check_in_time: existing.check_in_time,
@@ -236,6 +239,10 @@ async function create(req, res) {
     );
     if (leaveRows.length > 0) {
       return res.status(403).json({ message: "Attendance cannot be marked while approved leave exists for this date." });
+    }
+
+    if (payload.check_out_time && payload.break_start_time && !payload.break_end_time) {
+      return res.status(400).json({ message: "Before ending break you can't checkout. Please end your break first." });
     }
 
     const computed = calculateAttendanceMetrics({

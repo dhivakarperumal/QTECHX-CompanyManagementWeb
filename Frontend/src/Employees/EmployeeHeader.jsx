@@ -235,27 +235,11 @@ const EmployeeHeader = ({ onMenuClick }) => {
         disabled: false
       };
     }
-    if (!todayAttendance.break_start_time && !todayAttendance.check_out_time) {
-      return {
-        label: 'Start Break',
-        action: 'break-start',
-        classes: 'border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20',
-        disabled: false
-      };
-    }
-    if (todayAttendance.break_start_time && !todayAttendance.break_end_time && !todayAttendance.check_out_time) {
-      return {
-        label: 'End Break',
-        action: 'break-end',
-        classes: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20',
-        disabled: false
-      };
-    }
     if (!todayAttendance.check_out_time) {
       return {
-        label: 'Checkout',
-        action: 'checkout',
-        classes: 'border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
+        label: 'Update Attendance',
+        action: 'attendance',
+        classes: 'border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20',
         disabled: false
       };
     }
