@@ -48,11 +48,23 @@ async function createEmployee(employee) {
   return findByEmployeeId(employee.employee_id, result.insertId);
 }
 
-async function findByEmployeeId(employeeId, id = null) {
+async function findByEmployeeId(identifier, id = null) {
   const db = getDB();
+  if (id) {
+    const [rows] = await db.execute(
+      `SELECT ${publicFields} FROM employees WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  if (!identifier) return null;
+
   const [rows] = await db.execute(
-    `SELECT ${publicFields} FROM employees WHERE ${id ? "id = ?" : "employee_id = ?"} LIMIT 1`,
-    [id || employeeId]
+    `SELECT ${publicFields} FROM employees 
+     WHERE employee_id = ? OR id = ? OR employee_code = ? OR official_email = ? OR personal_email = ? OR username = ? 
+     LIMIT 1`,
+    [identifier, identifier, identifier, identifier, identifier, identifier]
   );
   return rows[0] || null;
 }

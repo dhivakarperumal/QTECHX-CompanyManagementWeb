@@ -382,8 +382,8 @@ const EmployeeView = () => {
               {renderInfoItem("Date of Joining", formatDate(employee.joining_date), <Calendar size={14} />)}
               {renderInfoItem("Confirmation Date", formatDate(employee.confirmation_date), <Calendar size={14} />)}
               {renderInfoItem("Employment Status", employee.employment_status || employee.status, <Clock size={14} />)}
-              {/* {renderInfoItem("Official Email", employee.official_email, <Mail size={14} />)}
-              {renderInfoItem("Username", employee.username, <User size={14} />)} */}
+              {renderInfoItem("Official Email", employee.official_email, <Mail size={14} />)}
+              {renderInfoItem("Username", employee.username, <User size={14} />)}
               {employee.driving_licence_number &&
                 renderInfoItem("Driving Licence No", employee.driving_licence_number, <Car size={14} />)}
               {employee.vehicle_registration_number &&
