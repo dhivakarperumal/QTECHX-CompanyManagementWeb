@@ -6,21 +6,23 @@ async function resolveAllPossibleEmployeeIds(db, employeeId) {
 
   try {
     const [empRows] = await db.execute(
-      `SELECT employee_id, id, employee_code, official_email, personal_email 
+      `SELECT employee_id, id, employee_code, official_email, personal_email, first_name, last_name, username 
        FROM employees 
-       WHERE employee_id = ? OR CAST(id AS CHAR) = ? OR employee_code = ? OR official_email = ? OR personal_email = ?`,
-      [employeeId, employeeId, employeeId, employeeId, employeeId]
+       WHERE employee_id = ? OR CAST(id AS CHAR) = ? OR employee_code = ? OR official_email = ? OR personal_email = ? OR username = ?`,
+      [employeeId, employeeId, employeeId, employeeId, employeeId, employeeId]
     );
 
     for (const emp of empRows) {
       if (emp.employee_id) ids.add(String(emp.employee_id));
       if (emp.employee_code) ids.add(String(emp.employee_code));
       if (emp.id) ids.add(String(emp.id));
+      if (emp.official_email) ids.add(String(emp.official_email));
+      if (emp.personal_email) ids.add(String(emp.personal_email));
     }
 
     const [userRows] = await db.execute(
-      `SELECT user_id, email FROM users WHERE user_id = ? OR email = ?`,
-      [employeeId, employeeId]
+      `SELECT user_id, email, username FROM users WHERE user_id = ? OR email = ? OR username = ?`,
+      [employeeId, employeeId, employeeId]
     );
 
     for (const u of userRows) {
@@ -31,6 +33,17 @@ async function resolveAllPossibleEmployeeIds(db, employeeId) {
           [u.email, u.email]
         );
         for (const emp of empByEmail) {
+          if (emp.employee_id) ids.add(String(emp.employee_id));
+          if (emp.employee_code) ids.add(String(emp.employee_code));
+          if (emp.id) ids.add(String(emp.id));
+        }
+      }
+      if (u.username) {
+        const [empByName] = await db.execute(
+          `SELECT employee_id, id, employee_code FROM employees WHERE username = ? OR CONCAT(first_name, ' ', last_name) = ? OR first_name = ?`,
+          [u.username, u.username, u.username]
+        );
+        for (const emp of empByName) {
           if (emp.employee_id) ids.add(String(emp.employee_id));
           if (emp.employee_code) ids.add(String(emp.employee_code));
           if (emp.id) ids.add(String(emp.id));

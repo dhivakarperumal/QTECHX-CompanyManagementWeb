@@ -144,6 +144,8 @@ const EmployeeDashboard = () => {
     };
 
     fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 15000); // refresh every 15s
+    return () => clearInterval(interval);
   }, [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?.uuid, userProfile?.employee_id]);
 
   const greeting = () => {

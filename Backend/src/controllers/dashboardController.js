@@ -261,9 +261,23 @@ async function getEmployeeDashboardData(req, res) {
     const [attendanceRows] = await db.execute(
       `SELECT attendance_date, attendance_status, check_in_time, check_out_time, working_hours
        FROM attendance
-       WHERE employee_id IN (${idPlaceholders}) AND month = ? AND year = ?
+       WHERE employee_id IN (${idPlaceholders})
+         AND (
+           (month = ? AND year = ?)
+           OR (MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?)
+         )
        ORDER BY attendance_date DESC, id DESC`,
-      [...idParams, month, year]
+      [...idParams, month, year, month, year]
+    );
+
+    // Directly query today's attendance record so both admin-marked and employee-marked records show immediately
+    const [todayAttendanceRows] = await db.execute(
+      `SELECT attendance_date, attendance_status, check_in_time, check_out_time, break_start_time, break_end_time, working_hours
+       FROM attendance
+       WHERE employee_id IN (${idPlaceholders})
+         AND (attendance_date = CURDATE() OR attendance_date = ? OR DATE(attendance_date) = ?)
+       ORDER BY id DESC LIMIT 1`,
+      [...idParams, localTodayStr, localTodayStr]
     );
 
     const [salaryRows] = await db.execute(
@@ -316,8 +330,8 @@ async function getEmployeeDashboardData(req, res) {
     const workingDaysSoFar = Array.from({ length: now.getDate() }, (_, index) => new Date(year, month - 1, index + 1)).filter((date) => date.getDay() !== 0 && date.getDay() !== 6).length;
     const presentDays = attendanceRows.filter((record) => ['Present', 'Half Day', 'Late'].includes(record.attendance_status)).length;
 
-    // Strict today's attendance record only - never fallback to previous days!
-    const todayAttendanceRecord = attendanceRows.find((record) => {
+    // Strict today's attendance record only - from direct query or monthly match
+    const todayAttendanceRecord = todayAttendanceRows[0] || attendanceRows.find((record) => {
       const recDate = normalizeRecordDate(record);
       return recDate === localTodayStr;
     }) || null;
