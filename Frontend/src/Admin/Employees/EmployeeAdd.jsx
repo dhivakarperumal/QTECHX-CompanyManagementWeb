@@ -392,8 +392,8 @@ const EmployeeAdd = () => {
             bank_passbook_url: emp.bank_passbook_url || emp.passport_url || "",
             appointment_letter_url: "",
             nda_url: "",
-            username: "",
-            official_email: "",
+            username: emp.username || [emp.first_name, emp.last_name].filter(Boolean).join(" ") || "",
+            official_email: emp.official_email || emp.personal_email || "",
             password: "",
             educational_details: parseEducationalDetails(emp.educational_details),
           });
@@ -669,12 +669,12 @@ const EmployeeAdd = () => {
 
     setFormData((prev) => {
       const newData = { ...prev, [name]: sanitizedValue };
+      if (name === "first_name" || name === "last_name") {
+        const first = name === "first_name" ? sanitizedValue : prev.first_name;
+        const last = name === "last_name" ? sanitizedValue : prev.last_name;
+        newData.username = [first, last].filter(Boolean).join(" ");
+      }
       if (!isEditMode) {
-        if (name === "first_name" || name === "last_name") {
-          const first = name === "first_name" ? sanitizedValue : prev.first_name;
-          const last = name === "last_name" ? sanitizedValue : prev.last_name;
-          newData.username = [first, last].filter(Boolean).join(" ");
-        }
         if (name === "personal_email") {
           newData.official_email = sanitizedValue;
         }
@@ -1179,32 +1179,31 @@ const EmployeeAdd = () => {
           </div>
         </div>
 
-        {!isEditMode && (
-          <div className={sectionClass}>
-            <div className="mb-4 border-b border-white/10 pb-3">
-              <h2 className="text-lg font-semibold text-white">Login & Access</h2>
-              <p className="text-xs text-white/40">Credentials for the employee portal</p>
+        <div className={sectionClass}>
+          <div className="mb-4 border-b border-white/10 pb-3">
+            <h2 className="text-lg font-semibold text-white">Login & Access</h2>
+            <p className="text-xs text-white/40">
+              {isEditMode ? "Account credentials and login identifiers" : "Credentials for the employee portal"}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div>
+              <label className={labelClass}>Username <span className="text-red-500">*</span></label>
+              <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
+              {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
             </div>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div>
-                <label className={labelClass}>Username <span className="text-red-500">*</span></label>
-                <input type="text" name="username" required value={formData.username} onChange={handleChange} className={inputClass} placeholder="Enter username" />
-                {fieldErrors.username && <p className="mt-1 text-xs text-red-400">{fieldErrors.username}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
-                <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
-                {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
-                <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
-                {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
-              </div>
-              {/* Passwords are managed by employee portal; admin will not set password here. */}
+            <div>
+              <label className={labelClass}>Official Email Address <span className="text-red-500">*</span></label>
+              <input type="email" name="official_email" required value={formData.official_email} onChange={handleChange} className={inputClass} placeholder="Enter official email address" />
+              {fieldErrors.official_email && <p className="mt-1 text-xs text-red-400">{fieldErrors.official_email}</p>}
+            </div>
+            <div>
+              <label className={labelClass}>Mobile Number <span className="text-red-500">*</span></label>
+              <input type="text" name="mobile_number" value={formData.mobile_number} onChange={handleChange} className={inputClass} placeholder="Auto-filled from above" />
+              {fieldErrors.mobile_number && <p className="mt-1 text-xs text-red-400">{fieldErrors.mobile_number}</p>}
             </div>
           </div>
-        )}
+        </div>
 
         <div className="flex justify-end gap-3">
           <Link to="/admin/employees" className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white">Cancel</Link>

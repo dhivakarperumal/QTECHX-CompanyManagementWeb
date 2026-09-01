@@ -452,6 +452,13 @@ async function update(req, res) {
     delete updates.confirm_password;
     delete updates.created_at;
 
+    // Auto-sync username from first and last name if not explicitly set
+    if (!updates.username && (updates.first_name || updates.last_name)) {
+      const first = updates.first_name !== undefined ? updates.first_name : existing.first_name;
+      const last = updates.last_name !== undefined ? updates.last_name : existing.last_name;
+      updates.username = [first, last].filter(Boolean).join(" ");
+    }
+
     const employee = await updateEmployee(req.params.employeeId, updates);
 
     // Update User record
@@ -465,7 +472,8 @@ async function update(req, res) {
         if (updates.status || updates.employment_status) userUpdates.status = updates.status || updates.employment_status;
         userUpdates.updated_by = updates.updated_by;
         // Password changes must be done by the employee via their panel
-        await updateUser(req.params.employeeId, userUpdates);
+        const targetUserId = existing.employee_id || req.params.employeeId;
+        await updateUser(targetUserId, userUpdates);
       } catch (err) {
         console.error("Failed to update associated user account:", err);
         const dup = duplicateMessage(err);
