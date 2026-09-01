@@ -586,15 +586,13 @@ const EmployeeAdd = () => {
       errors.upi_id = "UPI ID should look like name@bank.";
     }
 
-    if (!isEditMode) {
-      if (!data.username?.trim()) {
-        errors.username = "Username is required.";
-      }
-      if (!data.official_email?.trim()) {
-        errors.official_email = "Official email is required.";
-      } else if (!emailPattern.test(data.official_email)) {
-        errors.official_email = "Official email must be a valid email address.";
-      }
+    if (!data.username?.trim()) {
+      errors.username = "Username is required.";
+    }
+    if (!data.official_email?.trim()) {
+      errors.official_email = "Official email is required.";
+    } else if (!emailPattern.test(data.official_email)) {
+      errors.official_email = "Official email must be a valid email address.";
     }
 
     if (!Array.isArray(data.educational_details) || data.educational_details.length === 0) {
@@ -674,14 +672,12 @@ const EmployeeAdd = () => {
         const last = name === "last_name" ? sanitizedValue : prev.last_name;
         newData.username = [first, last].filter(Boolean).join(" ");
       }
-      if (!isEditMode) {
-        if (name === "personal_email") {
-          newData.official_email = sanitizedValue;
-        }
-        if (name === "mobile_number") {
-          // autofill password with mobile for initial creation
-          newData.password = sanitizedValue;
-        }
+      if (name === "personal_email") {
+        newData.official_email = sanitizedValue;
+      }
+      if (!isEditMode && name === "mobile_number") {
+        // autofill password with mobile for initial creation
+        newData.password = sanitizedValue;
       }
       return newData;
     });

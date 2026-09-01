@@ -459,14 +459,19 @@ async function update(req, res) {
       updates.username = [first, last].filter(Boolean).join(" ");
     }
 
+    // Auto-sync official_email from personal_email if not explicitly set
+    if (!updates.official_email && updates.personal_email) {
+      updates.official_email = updates.personal_email;
+    }
+
     const employee = await updateEmployee(req.params.employeeId, updates);
 
     // Update User record
-    if (updates.username || updates.official_email || updates.role || updates.status || updates.employment_status || updates.mobile_number) {
+    if (updates.username || updates.official_email || updates.personal_email || updates.role || updates.status || updates.employment_status || updates.mobile_number) {
       try {
         const userUpdates = {};
         if (updates.username) userUpdates.username = updates.username;
-        if (updates.official_email) userUpdates.email = updates.official_email;
+        if (updates.official_email || updates.personal_email) userUpdates.email = updates.official_email || updates.personal_email;
         if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
         if (updates.role) userUpdates.role = updates.role;
         if (updates.status || updates.employment_status) userUpdates.status = updates.status || updates.employment_status;
