@@ -975,14 +975,28 @@ const EmployeeAttendanceSummary = () => {
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-in Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_in_time" value={form.check_in_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="check_in_time"
+                        value={form.check_in_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('check_in_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check In</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Check-out Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="check_out_time" value={form.check_out_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="check_out_time"
+                        value={form.check_out_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('check_out_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Check Out</button>
                     </div>
                   </div>
@@ -990,14 +1004,28 @@ const EmployeeAttendanceSummary = () => {
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break Start Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_start_time" value={form.break_start_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="break_start_time"
+                        value={form.break_start_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('break_start_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">Start Break</button>
                     </div>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm text-white/70">Break End Time</label>
                     <div className="flex gap-2">
-                      <input type="time" name="break_end_time" value={form.break_end_time} onChange={handleFormChange} className="flex-1 text-white rounded-2xl border border-white/10 bg-white/5 px-3 py-3 outline-none" />
+                      <input
+                        type="time"
+                        name="break_end_time"
+                        value={form.break_end_time}
+                        readOnly
+                        onKeyDown={(e) => e.preventDefault()}
+                        className="flex-1 text-white/80 rounded-2xl border border-white/5 bg-black/20 px-3 py-3 outline-none cursor-not-allowed select-none"
+                      />
                       <button type="button" onClick={() => fillCurrentTime('break_end_time')} className="rounded-2xl text-white bg-white/10 px-4 text-sm font-medium hover:bg-white/20 transition">End Break</button>
                     </div>
                   </div>
