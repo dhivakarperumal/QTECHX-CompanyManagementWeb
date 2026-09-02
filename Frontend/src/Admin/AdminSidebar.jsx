@@ -375,7 +375,11 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
                           // Trainee Tasks
                           (sub.path === "/admin/trainees/tasks/assign" &&
-                            location.pathname.startsWith("/admin/trainees/tasks/view/"));
+                            location.pathname.startsWith("/admin/trainees/tasks/view/")) ||
+
+                          // New Tasks
+                          (sub.path === "/admin/tasks/new" &&
+                            location.pathname === "/admin/tasks/assign");
 
 
                         return (
