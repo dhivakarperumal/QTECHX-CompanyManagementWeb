@@ -121,7 +121,7 @@ async function createAttendance(record) {
 async function findById(id) {
   const db = getDB();
   const [rows] = await db.execute(
-    `SELECT a.*, e.first_name, e.last_name, e.employee_code
+    `SELECT a.*, DATE_FORMAT(a.attendance_date, '%Y-%m-%d') AS attendance_date, e.first_name, e.last_name, e.employee_code
      FROM attendance a
      LEFT JOIN employees e ON e.employee_id = a.employee_id
      WHERE a.id = ? LIMIT 1`,
@@ -168,7 +168,7 @@ async function getEmployeeAttendance({ employeeId, startDate, endDate }) {
   }
 
   const [rows] = await db.execute(
-    `SELECT a.*, e.first_name, e.last_name, e.employee_code
+    `SELECT a.*, DATE_FORMAT(a.attendance_date, '%Y-%m-%d') AS attendance_date, e.first_name, e.last_name, e.employee_code
      FROM attendance a
      LEFT JOIN employees e ON (e.employee_id = a.employee_id OR e.employee_code = a.employee_id)
      WHERE a.employee_id IN (${placeholders}) AND a.attendance_date BETWEEN ? AND ?
@@ -204,7 +204,7 @@ async function getEmployeeAttendanceToday(employeeId, attendanceDate) {
   const placeholders = possibleIds.map(() => "?").join(", ");
 
   const [rows] = await db.execute(
-    `SELECT a.*, e.first_name, e.last_name, e.employee_code
+    `SELECT a.*, DATE_FORMAT(a.attendance_date, '%Y-%m-%d') AS attendance_date, e.first_name, e.last_name, e.employee_code
      FROM attendance a
      LEFT JOIN employees e ON (e.employee_id = a.employee_id OR e.employee_code = a.employee_id)
      WHERE a.employee_id IN (${placeholders}) AND a.attendance_date = ? LIMIT 1`,

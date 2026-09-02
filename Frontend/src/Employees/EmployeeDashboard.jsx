@@ -123,7 +123,15 @@ const EmployeeDashboard = () => {
       setLoading(true);
 
       try {
-        const res = await api.get('/dashboard/employee');
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const localTodayStr = `${year}-${month}-${day}`;
+
+        const res = await api.get('/dashboard/employee', {
+          params: { date: localTodayStr }
+        });
         const payload = res?.data || {};
         console.log('[EmployeeDashboard] dedicated payload:', payload);
 

@@ -222,12 +222,14 @@ async function getEmployeeDashboardData(req, res) {
     const idPlaceholders = possibleIds.length > 0 ? possibleIds.map(() => '?').join(', ') : '?';
     const idParams = possibleIds.length > 0 ? possibleIds : [employeeId];
 
-    // Local Date String (YYYY-MM-DD) for local timezone
+    // Determine target local date (YYYY-MM-DD)
+    const clientDateStr = req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : null;
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const day = String(now.getDate()).padStart(2, '0');
-    const localTodayStr = `${year}-${String(month).padStart(2, '0')}-${day}`;
+    const serverYear = now.getFullYear();
+    const serverMonth = now.getMonth() + 1;
+    const serverDay = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = clientDateStr || `${serverYear}-${String(serverMonth).padStart(2, '0')}-${serverDay}`;
+    const [targetYear, targetMonth, targetDay] = localTodayStr.split('-').map(Number);
 
     const [employeeRows] = await db.execute(
       `SELECT employee_id, employee_code, first_name, last_name, profile_photo 
@@ -283,7 +285,8 @@ async function getEmployeeDashboardData(req, res) {
     );
 
     const [attendanceRows] = await db.execute(
-      `SELECT attendance_date, attendance_status, check_in_time, check_out_time, working_hours
+      `SELECT DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              attendance_status, check_in_time, check_out_time, working_hours
        FROM attendance
        WHERE employee_id IN (${idPlaceholders})
          AND (
@@ -291,15 +294,16 @@ async function getEmployeeDashboardData(req, res) {
            OR (MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?)
          )
        ORDER BY attendance_date DESC, id DESC`,
-      [...idParams, month, year, month, year]
+      [...idParams, targetMonth, targetYear, targetMonth, targetYear]
     );
 
-    // Directly query today's attendance record so both admin-marked and employee-marked records show immediately
+    // Directly query today's attendance record strictly for localTodayStr
     const [todayAttendanceRows] = await db.execute(
-      `SELECT attendance_date, attendance_status, check_in_time, check_out_time, break_start_time, break_end_time, working_hours
+      `SELECT DATE_FORMAT(attendance_date, '%Y-%m-%d') AS attendance_date,
+              attendance_status, check_in_time, check_out_time, break_start_time, break_end_time, working_hours
        FROM attendance
        WHERE employee_id IN (${idPlaceholders})
-         AND (attendance_date = CURDATE() OR attendance_date = ? OR DATE(attendance_date) = ?)
+         AND (attendance_date = ? OR DATE(attendance_date) = ?)
        ORDER BY id DESC LIMIT 1`,
       [...idParams, localTodayStr, localTodayStr]
     );
@@ -314,8 +318,18 @@ async function getEmployeeDashboardData(req, res) {
 
     const formatLocalDate = (value) => {
       if (!value) return null;
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed.length >= 10 && trimmed[4] === '-' && trimmed[7] === '-') {
+          return trimmed.slice(0, 10);
+        }
+      }
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return typeof value === 'string' ? value.slice(0, 10) : null;
+      try {
+        const iso = date.toISOString().slice(0, 10);
+        if (iso === localTodayStr) return iso;
+      } catch {}
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, '0');
       const d = String(date.getDate()).padStart(2, '0');
@@ -323,15 +337,26 @@ async function getEmployeeDashboardData(req, res) {
     };
 
     const normalizeRecordDate = (record) => {
+      if (!record) return null;
       const value = record.attendance_date;
       if (!value) return null;
-      if (typeof value === 'string') return value.slice(0, 10);
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed.length >= 10 && trimmed[4] === '-' && trimmed[7] === '-') {
+          return trimmed.slice(0, 10);
+        }
+      }
       return formatLocalDate(value);
     };
 
     const normalizeDateValue = (value) => {
       if (!value) return null;
-      if (typeof value === 'string') return value.slice(0, 10);
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed.length >= 10 && trimmed[4] === '-' && trimmed[7] === '-') {
+          return trimmed.slice(0, 10);
+        }
+      }
       return formatLocalDate(value);
     };
 
@@ -351,14 +376,24 @@ async function getEmployeeDashboardData(req, res) {
       return total + Math.max(maxDays - taken, 0);
     }, 0);
 
-    const workingDaysSoFar = Array.from({ length: now.getDate() }, (_, index) => new Date(year, month - 1, index + 1)).filter((date) => date.getDay() !== 0 && date.getDay() !== 6).length;
+    const workingDaysSoFar = Array.from({ length: targetDay }, (_, index) => new Date(targetYear, targetMonth - 1, index + 1)).filter((date) => date.getDay() !== 0 && date.getDay() !== 6).length;
     const presentDays = attendanceRows.filter((record) => ['Present', 'Half Day', 'Late'].includes(record.attendance_status)).length;
 
-    // Strict today's attendance record only - from direct query or monthly match
-    const todayAttendanceRecord = todayAttendanceRows[0] || attendanceRows.find((record) => {
-      const recDate = normalizeRecordDate(record);
-      return recDate === localTodayStr;
-    }) || null;
+    // Strict today's attendance record only - strictly matching localTodayStr
+    let todayAttendanceRecord = null;
+    if (todayAttendanceRows && todayAttendanceRows.length > 0) {
+      const rec = todayAttendanceRows[0];
+      const recDate = normalizeRecordDate(rec);
+      if (recDate === localTodayStr) {
+        todayAttendanceRecord = rec;
+      }
+    }
+    if (!todayAttendanceRecord) {
+      todayAttendanceRecord = attendanceRows.find((record) => {
+        const recDate = normalizeRecordDate(record);
+        return recDate === localTodayStr;
+      }) || null;
+    }
 
     const hoursThisWeek = attendanceRows.reduce((sum, record) => {
       const parsedHours = String(record.working_hours || '').match(/(\d+)h/);
@@ -366,7 +401,7 @@ async function getEmployeeDashboardData(req, res) {
     }, 0);
 
     const latestSalary = salaryRows[0] || null;
-    const nextPayDate = new Date(year, month, 0).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    const nextPayDate = new Date(targetYear, targetMonth, 0).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
 
     return res.json({
       success: true,
