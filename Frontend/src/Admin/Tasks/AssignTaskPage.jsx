@@ -275,12 +275,13 @@ export default function AssignTaskPage() {
         if (matched) {
           setPlanInfo(matched);
           let modules = [];
-          if (typeof matched.taskmodule === "string") {
-            try { modules = JSON.parse(matched.taskmodule); } catch {}
-          } else if (Array.isArray(matched.taskmodule)) {
-            modules = matched.taskmodule;
+          const rawMod = matched.modules || matched.taskmodule || matched.task_module;
+          if (typeof rawMod === "string") {
+            try { modules = JSON.parse(rawMod); } catch {}
+          } else if (Array.isArray(rawMod)) {
+            modules = rawMod;
           }
-          setPlanModules(modules);
+          setPlanModules(Array.isArray(modules) ? modules : []);
         }
       })
       .catch(() => {})

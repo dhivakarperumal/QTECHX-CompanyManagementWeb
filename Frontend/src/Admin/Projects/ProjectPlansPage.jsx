@@ -189,11 +189,17 @@ const fieldClasses = 'w-full rounded-xl border border-white/10 bg-[#0f141d] px-3
 const parseJsonField = (val) => {
   if (!val) return [];
   if (Array.isArray(val)) return val;
+  if (typeof val === 'object') return [val];
   if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return [];
     try {
-      return JSON.parse(val);
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === 'object') return [parsed];
+      return [parsed].filter(Boolean);
     } catch {
-      return val.split(',').map((s) => s.trim()).filter(Boolean);
+      return trimmed.split(',').map((s) => s.trim()).filter(Boolean);
     }
   }
   return [];
@@ -201,20 +207,56 @@ const parseJsonField = (val) => {
 
 const parseModulesField = (val, includedModules = []) => {
   const parsed = parseJsonField(val);
-  if (Array.isArray(parsed) && parsed.every((item) => item && typeof item === 'object')) {
-    return parsed.map((item) => ({
-      title: item.title || '',
-      duration: item.duration || '',
-      description: item.description || '',
-      documentName: item.documentName || item.document || '',
-    }));
+  if (Array.isArray(parsed) && parsed.length > 0) {
+    if (parsed.some((item) => item && typeof item === 'object')) {
+      return parsed
+        .map((item) => {
+          if (item && typeof item === 'object') {
+            return {
+              title: item.title || item.module_name || item.moduleName || item.name || '',
+              duration: item.duration || '',
+              description: item.description || '',
+              documentName: item.documentName || item.document || item.document_name || '',
+            };
+          }
+          return {
+            title: String(item || '').trim(),
+            duration: '',
+            description: '',
+            documentName: '',
+          };
+        })
+        .filter((item) => item.title);
+    }
+    if (parsed.every((item) => typeof item === 'string' || typeof item === 'number')) {
+      return parsed
+        .map((title) => ({ title: String(title).trim(), duration: '', description: '', documentName: '' }))
+        .filter((item) => item.title);
+    }
   }
-  if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) {
-    return parsed.map((title) => ({ title, duration: '', description: '', documentName: '' }));
+
+  const parsedIncluded = parseJsonField(includedModules);
+  if (Array.isArray(parsedIncluded) && parsedIncluded.length > 0) {
+    return parsedIncluded
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          return {
+            title: item.title || item.module_name || item.moduleName || item.name || '',
+            duration: item.duration || '',
+            description: item.description || '',
+            documentName: item.documentName || item.document || item.document_name || '',
+          };
+        }
+        return {
+          title: String(item || '').trim(),
+          duration: '',
+          description: '',
+          documentName: '',
+        };
+      })
+      .filter((item) => item.title);
   }
-  if (Array.isArray(includedModules) && includedModules.length) {
-    return includedModules.map((title) => ({ title, duration: '', description: '', documentName: '' }));
-  }
+
   return [];
 };
 
@@ -276,29 +318,20 @@ function ProjectPlansPage() {
         const response = await api.get('/project-plans');
         const fetchedPlans = Array.isArray(response?.data?.data) ? response.data.data : [];
 
-        // Normalize fields that may be returned as JSON strings by the backend
-        const parseField = (val) => {
-          if (!val) return [];
-          if (Array.isArray(val)) return val;
-          if (typeof val === 'string') {
-            try {
-              const parsed = JSON.parse(val);
-              return Array.isArray(parsed) ? parsed : [parsed];
-            } catch {
-              // fallback: split comma-separated string
-              return val.split(',').map((s) => s.trim()).filter(Boolean);
-            }
-          }
-          return [];
-        };
-
         const normalized = fetchedPlans.map((plan) => {
-          const parsedIncludedModules = parseField(plan.includedModules);
+          const rawModules = plan.modules || plan.taskmodule || plan.task_module || plan.taskmodules;
+          const parsedIncludedModules = parseJsonField(plan.includedModules || plan.included_modules);
+          const parsedModules = parseModulesField(rawModules, parsedIncludedModules);
+          const finalIncludedModules = parsedIncludedModules.length
+            ? parsedIncludedModules.map((item) => (typeof item === 'object' ? item.title || item.name || '' : String(item))).filter(Boolean)
+            : parsedModules.map((m) => m.title).filter(Boolean);
+
           return {
             ...plan,
-            includedModules: parsedIncludedModules,
-            technologyStack: parseField(plan.technologyStack),
-            modules: parseModulesField(plan.modules, parsedIncludedModules),
+            includedModules: finalIncludedModules,
+            technologyStack: parseJsonField(plan.technologyStack || plan.technology_stack),
+            modules: parsedModules,
+            taskmodule: parsedModules,
           };
         });
 
@@ -428,19 +461,16 @@ function ProjectPlansPage() {
     setCurrentPlan(plan);
     setEditingModuleIndex(null);
     setShowAddModuleForm(false);
+    const rawModules = plan.modules || plan.taskmodule || plan.task_module || plan.taskmodules;
+    const resolvedModules = parseModulesField(rawModules, plan.includedModules || plan.included_modules);
+    const parsedTech = parseJsonField(plan.technologyStack || plan.technology_stack);
+
     setFormData({
       ...createEmptyForm(),
       ...plan,
-      includedModules: [...(plan.includedModules || [])],
-      technologyStack: [...(plan.technologyStack || [])],
-      modules: Array.isArray(plan.modules)
-        ? plan.modules.map((module) => ({
-            title: module.title || '',
-            duration: module.duration || '',
-            description: module.description || '',
-            documentName: module.documentName || module.document || '',
-          }))
-        : (plan.includedModules || []).map((title) => ({ title, duration: '', description: '', documentName: '' })),
+      includedModules: [...(plan.includedModules || resolvedModules.map((m) => m.title))],
+      technologyStack: parsedTech,
+      modules: resolvedModules,
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -450,19 +480,16 @@ function ProjectPlansPage() {
     setMode('view');
     setCurrentPlan(plan);
     setEditingModuleIndex(null);
+    const rawModules = plan.modules || plan.taskmodule || plan.task_module || plan.taskmodules;
+    const resolvedModules = parseModulesField(rawModules, plan.includedModules || plan.included_modules);
+    const parsedTech = parseJsonField(plan.technologyStack || plan.technology_stack);
+
     setFormData({
       ...createEmptyForm(),
       ...plan,
-      includedModules: [...(plan.includedModules || [])],
-      technologyStack: [...(plan.technologyStack || [])],
-      modules: Array.isArray(plan.modules)
-        ? plan.modules.map((module) => ({
-            title: module.title || '',
-            duration: module.duration || '',
-            description: module.description || '',
-            documentName: module.documentName || module.document || '',
-          }))
-        : (plan.includedModules || []).map((title) => ({ title, duration: '', description: '', documentName: '' })),
+      includedModules: [...(plan.includedModules || resolvedModules.map((m) => m.title))],
+      technologyStack: parsedTech,
+      modules: resolvedModules,
       coverImage: plan.coverImage || '',
     });
     setDrawerOpen(true);
@@ -667,6 +694,7 @@ function ProjectPlansPage() {
       planName: formData.planName.trim(),
       category: formData.category || 'Website',
       modules: moduleEntries,
+      taskmodule: moduleEntries,
       includedModules: moduleEntries.map((module) => module.title.trim()),
       technologyStack: formData.technologyStack.filter(Boolean),
       activeProjectsUsingPlan: currentPlan?.activeProjectsUsingPlan || 0,
@@ -711,7 +739,6 @@ function ProjectPlansPage() {
     if (isEditMode) {
       if (backendAvailable) {
         try {
-          // Debug: log payload being sent to API to diagnose update issues
           if (requestPayload instanceof FormData) {
             const entries = {};
             for (const pair of requestPayload.entries()) {
@@ -725,12 +752,20 @@ function ProjectPlansPage() {
 
           const response = await api.put(`/project-plans/${currentPlan.id}`, requestPayload);
           const updatedPlanRaw = responsePayload(response);
-          const normalizePlan = (plan) => ({
-            ...plan,
-            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules),
-            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : parseJsonField(plan.technologyStack),
-            modules: Array.isArray(plan.modules) ? plan.modules : parseModulesField(plan.modules, Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules)),
-          });
+          const normalizePlan = (plan) => {
+            const rawModules = plan.modules || plan.taskmodule || plan.task_module || plan.taskmodules;
+            const parsedIncludedModules = parseJsonField(plan.includedModules || plan.included_modules);
+            const parsedModules = parseModulesField(rawModules, parsedIncludedModules);
+            return {
+              ...plan,
+              includedModules: parsedIncludedModules.length
+                ? parsedIncludedModules.map((item) => (typeof item === 'object' ? item.title || item.name || '' : String(item))).filter(Boolean)
+                : parsedModules.map((m) => m.title).filter(Boolean),
+              technologyStack: parseJsonField(plan.technologyStack || plan.technology_stack),
+              modules: parsedModules,
+              taskmodule: parsedModules,
+            };
+          };
           const updatedPlan = normalizePlan(updatedPlanRaw);
           setPlans((prev) => prev.map((plan) => (plan.id === currentPlan.id ? updatedPlan : plan)));
           setToast('Plan updated successfully.');
@@ -749,12 +784,20 @@ function ProjectPlansPage() {
         try {
           const response = await api.post('/project-plans', requestPayload);
           const createdPlanRaw = response?.data?.data || planPayload;
-          const normalizePlanShort = (plan) => ({
-            ...plan,
-            includedModules: Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules),
-            technologyStack: Array.isArray(plan.technologyStack) ? plan.technologyStack : parseJsonField(plan.technologyStack),
-            modules: Array.isArray(plan.modules) ? plan.modules : parseModulesField(plan.modules, Array.isArray(plan.includedModules) ? plan.includedModules : parseJsonField(plan.includedModules)),
-          });
+          const normalizePlanShort = (plan) => {
+            const rawModules = plan.modules || plan.taskmodule || plan.task_module || plan.taskmodules;
+            const parsedIncludedModules = parseJsonField(plan.includedModules || plan.included_modules);
+            const parsedModules = parseModulesField(rawModules, parsedIncludedModules);
+            return {
+              ...plan,
+              includedModules: parsedIncludedModules.length
+                ? parsedIncludedModules.map((item) => (typeof item === 'object' ? item.title || item.name || '' : String(item))).filter(Boolean)
+                : parsedModules.map((m) => m.title).filter(Boolean),
+              technologyStack: parseJsonField(plan.technologyStack || plan.technology_stack),
+              modules: parsedModules,
+              taskmodule: parsedModules,
+            };
+          };
           const createdPlan = normalizePlanShort(createdPlanRaw);
           setPlans((prev) => [createdPlan, ...prev]);
           setToast('Plan created successfully.');
@@ -1075,6 +1118,71 @@ function ProjectPlansPage() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3 text-sm text-white/70">
+          <div>
+            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredPlans.length)} of {filteredPlans.length} plans
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPage((prev) => Math.max(1, prev - 1))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">Previous</button>
+            <span className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">{page}/{totalPages}</span>
+            <button onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">Next</button>
+          </div>
+        </div>
+        </>
+        )}
+
+        {viewMode === 'card' && (
+        <>
+        {filteredPlans.length ? (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {pagedPlans.map((plan) => {
+              const modulesCount = (plan.modules || plan.taskmodule || []).length;
+              return (
+                <div key={plan.id} className="rounded-2xl border border-white/5 bg-[#0f141d] p-5 flex flex-col justify-between gap-4 transition hover:border-white/10">
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#221c35] text-[#9373ee] font-bold flex items-center justify-center shrink-0">
+                          {plan.planName ? plan.planName.charAt(0).toUpperCase() : 'P'}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white leading-tight">{plan.planName}</h4>
+                          <span className="text-xs text-white/40">{plan.planCode}</span>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        plan.status === 'Active' ? 'bg-[#0a271d] text-[#1fd38a]' : 
+                        plan.status === 'Draft' ? 'bg-[#152336] text-[#3b82f6]' : 
+                        'bg-[#2d1b19] text-[#ef4444]'
+                      }`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
+                        {plan.status}
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-xs text-white/60">
+                      <p><span className="text-white/40">Category:</span> {plan.category || 'Website'}</p>
+                      <p><span className="text-white/40">Project:</span> {plan.projectName || projectsList.find(p => String(p.uuid) === String(plan.projectId))?.project_name || '—'}</p>
+                      <p><span className="text-white/40">Modules:</span> <span className="text-orange-400 font-medium">{modulesCount} Modules</span></p>
+                      <p><span className="text-white/40">Updated:</span> {formatDate(plan.updatedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-3">
+                    <button aria-label="View" onClick={() => openViewDrawer(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 transition"><Eye size={16} /></button>
+                    <button aria-label="Edit" onClick={() => openEditDrawer(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-orange-400 transition"><Edit3 size={16} /></button>
+                    <button aria-label="Delete" onClick={() => handleDelete(plan)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 transition"><Trash2 size={16} /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-12 text-center text-white/70">
+            <Box size={36} className="mb-3 text-white/20" />
+            <h3 className="text-lg font-semibold text-white">No plans found</h3>
+            <p className="mt-2 max-w-md text-sm">Try adjusting the search or create your first plan.</p>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 p-4 text-sm text-white/70">
           <div>
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredPlans.length)} of {filteredPlans.length} plans
           </div>
