@@ -400,9 +400,27 @@ const AdminDashboard = () => {
     };
   });
 
-  const taskStatusData = dashboard?.taskStats || tasksStatusData;
-  const projectStatusData = dashboard?.projectStats || [];
-  const clientFollowupData = dashboard?.clientFollowUps || [];
+  const taskStatusData = (dashboard?.taskStats && dashboard.taskStats.length > 0)
+    ? dashboard.taskStats
+    : [
+        { status: 'Completed', count: 0 },
+        { status: 'In Progress', count: 0 },
+        { status: 'Pending', count: 0 }
+      ];
+  const projectStatusData = (dashboard?.projectStats && dashboard.projectStats.length > 0)
+    ? dashboard.projectStats
+    : [
+        { current_status: 'Planning', status: 'Planning', count: 0 },
+        { current_status: 'In Progress', status: 'In Progress', count: 0 },
+        { current_status: 'Testing', status: 'Testing', count: 0 },
+        { current_status: 'Completed', status: 'Completed', count: 0 }
+      ];
+  const clientFollowupData = (dashboard?.clientFollowUps && dashboard.clientFollowUps.length > 0)
+    ? dashboard.clientFollowUps
+    : [
+        { follow_up_status: 'Completed', count: 0 },
+        { follow_up_status: 'Pending', count: 0 }
+      ];
   const taskTrend = [58, 72, 81, 76, 90, 84, 96];
 
   return (
@@ -465,7 +483,6 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthProjectPayments).toLocaleString('en-IN') : 0}</p>
-                    {/* <p className="mt-3 text-[11px] text-white/40">From <button onClick={() => navigate('/admin/expenses/project-payment')} className="text-sky-300 hover:text-sky-200 underline">Project Payment</button> page</p> */}
                   </div>
                 </div>
                 <div className="rounded-[1.5rem] border border-emerald-500/15 bg-emerald-500/10 p-6 shadow-md shadow-black/20 flex flex-col justify-between overflow-hidden group hover:border-emerald-500/30 transition-colors">
@@ -480,7 +497,6 @@ const AdminDashboard = () => {
                   </div>
                   <div>
                     <p className="text-4xl font-bold text-white tracking-tight">₹{dashboard ? safeNumber(dashboard.currentMonthIncomes).toLocaleString('en-IN') : 0}</p>
-                    {/* <p className="mt-3 text-[11px] text-white/40">From <button onClick={() => navigate('/admin/expenses/incomes')} className="text-emerald-300 hover:text-emerald-200 underline">Income</button> page</p> */}
                   </div>
                 </div>
               </div>
@@ -522,8 +538,8 @@ const AdminDashboard = () => {
         <div className="lg:col-span-8 bg-white/4 border border-white/8 p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold text-white">Company Overview</h2>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70 cursor-pointer">
-              This Month <ChevronDown size={14} />
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded text-xs text-white/70">
+              Last 6 Months
             </div>
           </div>
           <div className="h-64 w-full">
@@ -561,53 +577,63 @@ const AdminDashboard = () => {
         {/* Trainee & Intern Details (Donut Chart) */}
         <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col">
           <h2 className="text-sm font-bold text-white mb-2">Trainee & Interns</h2>
-          <div className="flex-1 relative flex items-center justify-center h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={dashboard?.traineeStats || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="count"
-                  stroke="none"
-                >
-                  {(dashboard?.traineeStats || []).map((entry, index) => {
-                    const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
-                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                  })}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                  formatter={(value, name, props) => [value, props.payload.type]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-              <span className="text-2xl font-bold text-white">{(dashboard?.traineeStats || []).reduce((a, b) => a + b.count, 0)}</span>
-              <span className="text-[10px] text-white/50">Total</span>
-            </div>
-          </div>
-          <div className="space-y-3 mt-4">
-            {(dashboard?.traineeStats || []).map((t, i) => {
-              const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
-              const total = (dashboard?.traineeStats || []).reduce((a, b) => a + b.count, 0);
-              return (
-                <div key={i} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
-                    <span className="text-white/70">{t.type}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="font-semibold text-white">{t.count}</span>
-                    <span className="text-white/40">({total > 0 ? Math.round((t.count / total) * 100) : 0}%)</span>
-                  </div>
+          {dashboard?.traineeStats && dashboard.traineeStats.length > 0 ? (
+            <>
+              <div className="flex-1 relative flex items-center justify-center h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dashboard.traineeStats}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="count"
+                      stroke="none"
+                    >
+                      {dashboard.traineeStats.map((entry, index) => {
+                        const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
+                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                      })}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                      formatter={(value, name, props) => [value, props.payload.type]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                  <span className="text-2xl font-bold text-white">{dashboard.traineeStats.reduce((a, b) => a + Number(b.count || 0), 0)}</span>
+                  <span className="text-[10px] text-white/50">Total</span>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <div className="space-y-3 mt-4">
+                {dashboard.traineeStats.map((t, i) => {
+                  const colors = ['#f97316', '#3b82f6', '#10b981', '#f43f5e'];
+                  const total = dashboard.traineeStats.reduce((a, b) => a + Number(b.count || 0), 0);
+                  return (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                        <span className="text-white/70">{t.type}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="font-semibold text-white">{t.count}</span>
+                        <span className="text-white/40">({total > 0 ? Math.round((t.count / total) * 100) : 0}%)</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-white/40 text-xs py-8">
+              <GraduationCap size={36} className="mb-2 opacity-30 text-teal-400" />
+              <p className="font-medium text-white/60">No active trainees or interns</p>
+              <p className="text-[11px] text-white/40 mt-1">Data will appear when trainees/interns are added</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -627,7 +653,6 @@ const AdminDashboard = () => {
             <h2 className="text-white font-bold text-base flex items-center gap-2">
               <Activity size={17} className="text-primary" /> Recent Activity
             </h2>
-            {/* <button className="text-xs text-primary hover:underline">View All</button> */}
           </div>
           {(dashboard?.recentActivity || []).length > 0 ? (
             dashboard.recentActivity.slice(0,5).map((a, i) => {
@@ -644,51 +669,60 @@ const AdminDashboard = () => {
         <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col gap-4">
           <h2 className="text-sm font-bold text-white">Project Status Overview</h2>
 
-          <div className="relative flex items-center justify-center" style={{ height: 180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={dashboard?.projectStats || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={1}
-                  dataKey="count"
-                  stroke="none"
-                >
-                  {(dashboard?.projectStats || []).map((entry, index) => {
-                    const colors = ['#f97316', '#6b7280', '#4b5563', '#374151', '#1f2937', '#111827'];
-                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                  })}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                  formatter={(value, name, props) => [value, props.payload.current_status]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-bold text-white">{(dashboard?.projectStats || []).reduce((a, b) => a + b.count, 0)}</span>
-              <span className="text-[10px] text-white/50">Total Projects</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            {(dashboard?.projectStats || []).slice(0, 4).map((t, i) => {
-              const colors = ['bg-orange-500', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700', 'bg-gray-800'];
-              const textColors = ['text-orange-400', 'text-gray-400', 'text-gray-400', 'text-gray-400', 'text-gray-400'];
-              return (
-                <div key={i} className="rounded-2xl bg-[#0d1018]/80 border border-white/10 p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${colors[i % colors.length]}`} />
-                    <span className="text-white/60 text-[10px] truncate max-w-[60px]">{t.current_status}</span>
-                  </div>
-                  <span className={`text-sm font-bold ${textColors[i % textColors.length]}`}>{t.count}</span>
+          {(dashboard?.projectStats || []).length > 0 ? (
+            <>
+              <div className="relative flex items-center justify-center" style={{ height: 180 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dashboard.projectStats}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={1}
+                      dataKey="count"
+                      stroke="none"
+                    >
+                      {dashboard.projectStats.map((entry, index) => {
+                        const colors = ['#f97316', '#6b7280', '#4b5563', '#374151', '#1f2937', '#111827'];
+                        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                      })}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1a1b23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                      formatter={(value, name, props) => [value, props.payload.current_status || props.payload.status]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-bold text-white">{dashboard.projectStats.reduce((a, b) => a + Number(b.count || 0), 0)}</span>
+                  <span className="text-[10px] text-white/50">Total Projects</span>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                {dashboard.projectStats.slice(0, 4).map((t, i) => {
+                  const colors = ['bg-orange-500', 'bg-gray-500', 'bg-gray-600', 'bg-gray-700', 'bg-gray-800'];
+                  const textColors = ['text-orange-400', 'text-gray-400', 'text-gray-400', 'text-gray-400', 'text-gray-400'];
+                  return (
+                    <div key={i} className="rounded-2xl bg-[#0d1018]/80 border border-white/10 p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${colors[i % colors.length]}`} />
+                        <span className="text-white/60 text-[10px] truncate max-w-[60px]">{t.current_status || t.status}</span>
+                      </div>
+                      <span className={`text-sm font-bold ${textColors[i % textColors.length]}`}>{t.count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-white/40 text-xs py-8">
+              <FolderKanban size={36} className="mb-2 opacity-30 text-primary" />
+              <p className="font-medium text-white/60">No project data</p>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions — 3 cols */}

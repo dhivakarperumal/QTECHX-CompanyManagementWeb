@@ -9,173 +9,235 @@ async function getDashboardMetrics(req, res) {
   try {
     const db = getDB();
 
-    const [empRows] = await db.execute("SELECT COUNT(*) AS total FROM employees");
-    const totalEmployees = empRows[0]?.total || 0;
+    // 1. Employee Count
+    let totalEmployees = 0;
+    try {
+      const [empRows] = await db.execute("SELECT COUNT(*) AS total FROM employees");
+      totalEmployees = empRows[0]?.total || 0;
+    } catch (e) {
+      console.warn('Dashboard totalEmployees error:', e.message);
+    }
 
-    const [projRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM projects WHERE current_status IN ('In Progress','Planning','Testing','Live')"
-    );
-    const activeProjects = projRows[0]?.total || 0;
+    // 2. Active Projects
+    let activeProjects = 0;
+    try {
+      const [projRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM projects WHERE current_status IN ('In Progress','Planning','Testing','Live')"
+      );
+      activeProjects = projRows[0]?.total || 0;
+    } catch (e) {
+      console.warn('Dashboard activeProjects error:', e.message);
+    }
 
-    const [taskRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM tasks WHERE status = 'In Progress' AND active = 1"
-    );
-    const tasksInProgress = taskRows[0]?.total || 0;
+    // 3. Tasks in Progress & Total Tasks
+    let tasksInProgress = 0;
+    let totalTasks = 0;
+    try {
+      const [taskRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM tasks WHERE status = 'In Progress' AND (active = 1 OR deleted = 0)"
+      );
+      tasksInProgress = taskRows[0]?.total || 0;
 
-    // Attendance today
-    const [presentRows] = await db.execute(
-      "SELECT COUNT(*) AS present FROM attendance WHERE attendance_date = CURDATE() AND attendance_status = 'Present'"
-    );
-    const presentToday = presentRows[0]?.present || 0;
+      const [allTaskRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM tasks WHERE deleted = 0"
+      );
+      totalTasks = allTaskRows[0]?.total || 0;
+    } catch (e) {
+      console.warn('Dashboard tasks error:', e.message);
+    }
 
-    const [traineeRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM trainee_intern WHERE status = 'Active'"
-    );
-    const activeTrainees = traineeRows[0]?.total || 0;
+    // 4. Attendance today
+    let presentToday = 0;
+    let totalAttendanceToday = 0;
+    try {
+      const [presentRows] = await db.execute(
+        "SELECT COUNT(*) AS present FROM attendance WHERE (attendance_date = CURDATE() OR DATE(attendance_date) = CURDATE()) AND attendance_status = 'Present'"
+      );
+      presentToday = presentRows[0]?.present || 0;
 
-    const [internRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM trainee_intern WHERE type = 'Intern'"
-    );
-    const internshipStudents = internRows[0]?.total || 0;
+      const [totalAttendanceRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM attendance WHERE (attendance_date = CURDATE() OR DATE(attendance_date) = CURDATE())"
+      );
+      totalAttendanceToday = totalAttendanceRows[0]?.total || 0;
+    } catch (e) {
+      console.warn('Dashboard attendance error:', e.message);
+    }
 
-    // Monthly payroll (current month/year)
+    // 5. Trainees & Interns
+    let activeTrainees = 0;
+    let internshipStudents = 0;
+    let traineeTypeRows = [];
+    try {
+      const [traineeRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM trainee_intern WHERE status = 'Active'"
+      );
+      activeTrainees = traineeRows[0]?.total || 0;
+
+      const [internRows] = await db.execute(
+        "SELECT COUNT(*) AS total FROM trainee_intern WHERE type = 'Intern'"
+      );
+      internshipStudents = internRows[0]?.total || 0;
+
+      const [tRows] = await db.execute(
+        "SELECT type, COUNT(*) as count FROM trainee_intern GROUP BY type"
+      );
+      traineeTypeRows = tRows || [];
+    } catch (e) {
+      console.warn('Dashboard trainees error:', e.message);
+    }
+
+    // 6. Monthly payroll (current month/year)
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    const [payRows] = await db.execute(
-      "SELECT IFNULL(SUM(total_salary),0) AS total FROM employee_salaries WHERE salary_month = ? AND salary_year = ?",
-      [month, year]
-    );
-    const monthlyPayroll = payRows[0]?.total || 0;
+    let monthlyPayroll = 0;
+    try {
+      const [payRows] = await db.execute(
+        "SELECT IFNULL(SUM(total_salary),0) AS total FROM employee_salaries WHERE salary_month = ? AND salary_year = ?",
+        [month, year]
+      );
+      monthlyPayroll = payRows[0]?.total || 0;
+    } catch (e) {
+      console.warn('Dashboard payroll error:', e.message);
+    }
 
-    const pendingLeaveRequests = Math.max(0, totalEmployees - presentToday);
+    // 7. Recent Activity (Union of last 10 activities)
+    let recentRows = [];
+    try {
+      const [rRows] = await db.execute(`
+        (SELECT 'New employee onboarded' as title, 'HR' as meta, created_at as time, first_name as user, profile_photo as avatar FROM employees)
+        UNION ALL
+        (SELECT 'Project added' as title, 'Projects' as meta, created_at as time, project_name as user, '' as avatar FROM projects)
+        UNION ALL
+        (SELECT CONCAT('New ', type, ' onboarded') as title, 'HR' as meta, created_at as time, full_name as user, profile_photo as avatar FROM trainee_intern)
+        UNION ALL
+        (SELECT 'Payroll processed' as title, 'Finance' as meta, created_at as time, 'System' as user, '' as avatar FROM employee_salaries)
+        ORDER BY time DESC
+        LIMIT 10
+      `);
+      recentRows = rRows || [];
+    } catch (e) {
+      console.warn('Dashboard recent activity error:', e.message);
+    }
 
-    // Recent Activity (Union of last 5 activities)
-    const [recentRows] = await db.execute(`
-      (SELECT 'New employee onboarded' as title, 'HR' as meta, created_at as time, first_name as user, profile_photo as avatar FROM employees)
-      UNION ALL
-      (SELECT 'Project added' as title, 'Projects' as meta, created_at as time, project_name as user, '' as avatar FROM projects)
-      UNION ALL
-      (SELECT CONCAT('New ', type, ' onboarded') as title, 'HR' as meta, created_at as time, full_name as user, profile_photo as avatar FROM trainee_intern)
-      UNION ALL
-      (SELECT 'Payroll processed' as title, 'Finance' as meta, created_at as time, 'System' as user, '' as avatar FROM employee_salaries)
-      ORDER BY time DESC
-      LIMIT 10
-    `);
+    // 8. Graph Data (Last 6 Months)
+    let overviewRows = [];
+    try {
+      const [oRows] = await db.execute(`
+        SELECT 
+          DATE_FORMAT(m.m_date, '%b %Y') as name,
+          IFNULL(e.emp_count, 0) as employees,
+          IFNULL(p.proj_count, 0) as projects,
+          IFNULL(i.inc_amount, 0) as income
+        FROM (
+          SELECT DATE_FORMAT(DATE_SUB(CURRENT_DATE(), INTERVAL n MONTH), '%Y-%m-01') as m_date
+          FROM (SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5) n
+        ) m
+        LEFT JOIN (
+          SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as emp_count FROM employees GROUP BY dt
+        ) e ON e.dt = m.m_date
+        LEFT JOIN (
+          SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as proj_count FROM projects GROUP BY dt
+        ) p ON p.dt = m.m_date
+        LEFT JOIN (
+          SELECT dt, SUM(inc_amount) AS inc_amount FROM (
+            SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount) as inc_amount FROM incomes GROUP BY dt
+            UNION ALL
+            SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as inc_amount FROM project_payments GROUP BY dt
+          ) combined GROUP BY dt
+        ) i ON i.dt = m.m_date
+        ORDER BY m.m_date ASC
+      `);
+      overviewRows = oRows || [];
+    } catch (e) {
+      console.warn('Dashboard overview graph error:', e.message);
+    }
 
-    // Graph Data (Last 6 Months)
-    const [overviewRows] = await db.execute(`
-      SELECT 
-        DATE_FORMAT(m.m_date, '%b %Y') as name,
-        IFNULL(e.emp_count, 0) as employees,
-        IFNULL(p.proj_count, 0) as projects,
-        IFNULL(i.inc_amount, 0) + IFNULL(pp.payment_amount, 0) as income
-      FROM (
-        SELECT DATE_FORMAT(DATE_SUB(CURRENT_DATE(), INTERVAL n MONTH), '%Y-%m-01') as m_date
-        FROM (SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5) n
-      ) m
-      LEFT JOIN (
-        SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as emp_count FROM employees GROUP BY dt
-      ) e ON e.dt = m.m_date
-      LEFT JOIN (
-        SELECT DATE_FORMAT(created_at, '%Y-%m-01') as dt, COUNT(*) as proj_count FROM projects GROUP BY dt
-      ) p ON p.dt = m.m_date
-      LEFT JOIN (
-        SELECT dt, SUM(inc_amount) AS inc_amount FROM (
-          SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount) as inc_amount FROM incomes GROUP BY dt
-          UNION ALL
-          SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as inc_amount FROM project_payments GROUP BY dt
-        ) combined GROUP BY dt
-      ) i ON i.dt = m.m_date
-      LEFT JOIN (
-        SELECT DATE_FORMAT(date_of_payment, '%Y-%m-01') as dt, SUM(amount_paid) as payment_amount FROM project_payments GROUP BY dt
-      ) pp ON pp.dt = m.m_date
-      ORDER BY m.m_date ASC
-    `);
+    // 9. Current Month Income & Project Payments
+    let currentMonthIncomes = 0;
+    let currentMonthProjectPayments = 0;
+    try {
+      const [incomeRows] = await db.execute(
+        `SELECT IFNULL(SUM(amount), 0) AS total FROM incomes WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
+        [month, year]
+      );
+      currentMonthIncomes = parseFloat(incomeRows[0]?.total) || 0;
 
-    // Current Month Income (including project payments)
-    const [incomeRows] = await db.execute(
-      `SELECT IFNULL(SUM(amount), 0) AS total FROM incomes WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
-      [month, year]
-    );
-    const [projectPaymentRows] = await db.execute(
-      `SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?`,
-      [month, year]
-    );
-    const [currentProjectPaymentRows] = await db.execute(
-      "SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
-      [month, year]
-    );
-    const currentMonthIncomes = parseFloat(incomeRows[0]?.total) || 0;
-    const currentMonthProjectPayments = parseFloat(currentProjectPaymentRows[0]?.total) || 0;
+      const [currentProjectPaymentRows] = await db.execute(
+        "SELECT IFNULL(SUM(amount_paid), 0) AS total FROM project_payments WHERE MONTH(date_of_payment) = ? AND YEAR(date_of_payment) = ?",
+        [month, year]
+      );
+      currentMonthProjectPayments = parseFloat(currentProjectPaymentRows[0]?.total) || 0;
+    } catch (e) {
+      console.warn('Dashboard income error:', e.message);
+    }
     const currentMonthIncome = currentMonthIncomes + currentMonthProjectPayments;
 
-    // New Stats for UI update
-    const [clientRows] = await db.execute("SELECT client_status, COUNT(*) as count FROM clients GROUP BY client_status");
-    const [totalClientRows] = await db.execute("SELECT COUNT(*) as total FROM clients");
-    const totalClients = totalClientRows[0]?.total || 0;
-    
-    const totalMonthlyPayroll = payRows[0]?.total || 0;
+    // 10. Clients & Follow-ups
+    let totalClients = 0;
+    let pendingFollowUps = 0;
+    let clientFollowUpRows = [];
+    try {
+      const [totalClientRows] = await db.execute("SELECT COUNT(*) as total FROM clients");
+      totalClients = totalClientRows[0]?.total || 0;
 
-    // Recent activity log (latest 5 created employees/clients/projects)
-    const [activityRows] = await db.execute(
-      `SELECT 'New employee onboarded' as title, 'HR' as meta, created_at as time, first_name as user, profile_photo as avatar FROM employees
-       UNION ALL
-       SELECT 'Project added' as title, 'Operations' as meta, created_at as time, project_name as user, null as avatar FROM projects
-       ORDER BY time DESC LIMIT 5`
-    );
+      const [pendingFollowUpRows] = await db.execute(
+        "SELECT COUNT(*) as total FROM clients WHERE follow_up_status = 'Pending' OR client_status IN ('Pending', 'Follow Up', 'Lead', 'Prospect')"
+      );
+      pendingFollowUps = pendingFollowUpRows[0]?.total || 0;
 
-    // Recent 5 projects with assignments
-    const [recentProjectRows] = await db.execute(
-      `SELECT p.id, p.uuid, p.project_name, p.current_status, p.overall_progress, p.project_start_date, p.project_end_date,
-              c.client_name, pa.lead_name, pa.lead_avatar
-       FROM projects p
-       LEFT JOIN clients c ON p.client_id = c.id
-       LEFT JOIN project_assignments pa ON p.id = pa.project_id
-       ORDER BY p.created_at DESC LIMIT 5`
-    );
+      const [cFollowRows] = await db.execute(
+        "SELECT follow_up_status, COUNT(*) as count FROM clients GROUP BY follow_up_status"
+      );
+      clientFollowUpRows = cFollowRows || [];
+    } catch (e) {
+      console.warn('Dashboard client stats error:', e.message);
+    }
 
-    // Project status breakdown for doughnut chart
-    const [projectStatusRows] = await db.execute(
-      `SELECT current_status as status, COUNT(*) as count FROM projects GROUP BY current_status`
-    );
+    // 11. Recent 5 projects
+    let recentProjectRows = [];
+    let projectStatusRows = [];
+    try {
+      const [rProjects] = await db.execute(
+        `SELECT p.id, p.uuid, p.project_name, p.current_status, p.overall_progress, p.project_start_date, p.project_end_date,
+                p.client_name, p.project_manager
+         FROM projects p
+         ORDER BY p.created_at DESC LIMIT 5`
+      );
+      recentProjectRows = rProjects || [];
 
-    // Task status breakdown
-    const [taskStatusRows] = await db.execute(
-      `SELECT status, COUNT(*) as count FROM tasks WHERE active = 1 GROUP BY status`
-    );
+      const [pStatus] = await db.execute(
+        `SELECT current_status, current_status as status, COUNT(*) as count FROM projects GROUP BY current_status`
+      );
+      projectStatusRows = pStatus || [];
+    } catch (e) {
+      console.warn('Dashboard projects error:', e.message);
+    }
 
-    // Client followup data (latest 5 clients needing followup)
-    const [clientFollowUpRows] = await db.execute(
-      `SELECT c.id, c.client_name, c.company_name, c.email_address, c.mobile_number, c.client_status,
-              cr.review_type, cr.notes, cr.created_at
-       FROM clients c
-       LEFT JOIN client_reviews cr ON c.id = cr.client_id
-       ORDER BY c.created_at DESC LIMIT 5`
-    );
+    // 12. Task status breakdown
+    let taskStatusRows = [];
+    try {
+      const [tStatus] = await db.execute(
+        `SELECT status, COUNT(*) as count FROM tasks WHERE deleted = 0 GROUP BY status`
+      );
+      taskStatusRows = tStatus || [];
+    } catch (e) {
+      console.warn('Dashboard task stats error:', e.message);
+    }
 
-    // Upcoming events / meetings
-    const [upcomingEventRows] = await db.execute(
-      `SELECT id, title, startDate, startTime, eventType, location
-       FROM events
-       WHERE startDate >= CURDATE()
-       ORDER BY startDate ASC, startTime ASC LIMIT 5`
-    );
-
-    // Count total tasks (all statuses)
-    const [allTaskRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM tasks WHERE active = 1"
-    );
-    const totalTasks = allTaskRows[0]?.total || 0;
-
-    // Get total attendance for today
-    const [totalAttendanceRows] = await db.execute(
-      "SELECT COUNT(*) AS total FROM attendance WHERE attendance_date = CURDATE()"
-    );
-    const totalAttendanceToday = totalAttendanceRows[0]?.total || 0;
-
-    // Calculate pending follow-ups
-    const pendingFollowUps = clientRows.filter(r => r.client_status === 'Pending' || r.client_status === 'Follow Up').reduce((sum, r) => sum + r.count, 0);
+    // 13. Upcoming events / meetings
+    let upcomingEventRows = [];
+    try {
+      const [uEvents] = await db.execute(
+        `SELECT id, title, startDate, startTime, eventType, location
+         FROM events
+         WHERE (startDate >= CURDATE() OR DATE(startDate) >= CURDATE())
+         ORDER BY startDate ASC, startTime ASC LIMIT 5`
+      );
+      upcomingEventRows = uEvents || [];
+    } catch (e) {
+      console.warn('Dashboard events error:', e.message);
+    }
 
     return res.json({
       success: true,
@@ -184,7 +246,7 @@ async function getDashboardMetrics(req, res) {
       totalTasks,
       activeTrainees,
       internshipStudents,
-      monthlyPayroll: totalMonthlyPayroll,
+      monthlyPayroll,
       clientStats: {
         total: totalClients,
         pendingFollowUps: pendingFollowUps
@@ -197,10 +259,12 @@ async function getDashboardMetrics(req, res) {
       currentMonthProjectPayments,
       currentMonthIncomes,
       recentProjects: recentProjectRows,
-      recentActivity: activityRows,
+      recentActivity: recentRows,
       projectStats: projectStatusRows,
       taskStats: taskStatusRows,
       clientFollowUps: clientFollowUpRows,
+      traineeStats: traineeTypeRows,
+      overviewData: overviewRows,
       upcomingEvents: upcomingEventRows,
     });
   } catch (err) {
