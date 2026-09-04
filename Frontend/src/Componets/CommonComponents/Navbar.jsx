@@ -26,6 +26,8 @@ const Navbar = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [services, setServices] = useState([]);
   const dropdownRef = useRef(null);
+  const desktopProfileRef = useRef(null);
+  const mobileProfileRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, profileName, logout } = useAuth();
@@ -88,7 +90,11 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const clickedMainNavigation = dropdownRef.current?.contains(event.target);
+      const clickedDesktopProfile = desktopProfileRef.current?.contains(event.target);
+      const clickedMobileProfile = mobileProfileRef.current?.contains(event.target);
+
+      if (!clickedMainNavigation && !clickedDesktopProfile && !clickedMobileProfile) {
         setOpenMenu(null);
       }
     };
@@ -324,7 +330,7 @@ const Navbar = () => {
               </Link>
 
               {user ? (
-                <div className="relative">
+                <div ref={desktopProfileRef} className="relative">
                   <button
                     type="button"
                     aria-label="Open profile menu"
@@ -567,7 +573,7 @@ const Navbar = () => {
             </Link>
 
             {user ? (
-              <div className="relative">
+              <div ref={mobileProfileRef} className="relative">
                 <button
                   type="button"
                   aria-label="Open profile menu"
