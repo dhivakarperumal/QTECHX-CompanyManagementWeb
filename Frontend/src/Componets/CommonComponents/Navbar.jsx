@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import { FiChevronDown, FiMenu, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
+import { FiChevronDown, FiX, FiLogOut, FiArrowRight, FiUser } from "react-icons/fi";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import api from "../../api";
 import {
@@ -17,6 +17,7 @@ import {
   FaBullhorn,
 } from "react-icons/fa";
 import PageContainer from "./PageContainer";
+import { getRoleHome, isAdminRole, isEmployeeRole } from "../../PrivateRouter/roleUtils";
 
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState(null);
@@ -27,7 +28,13 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
+  const roleHome = getRoleHome(role);
+  const roleLabel = isAdminRole(role)
+    ? "Admin Panel"
+    : isEmployeeRole(role)
+      ? "Employee Panel"
+      : "My Profile";
 
   const handleConfirmLogout = () => {
     logout();
@@ -313,13 +320,41 @@ const Navbar = () => {
               </Link>
 
               {user ? (
-                <button
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="flex items-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition-all hover:bg-red-500/20"
-                >
-                  <FiLogOut />
-                  Logout
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="Open profile menu"
+                    aria-expanded={openMenu === "profile"}
+                    onClick={() => toggleMenu("profile")}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 text-xl text-[#FF6A00] transition-all hover:bg-[#FF6A00] hover:text-black"
+                  >
+                    <FiUser />
+                  </button>
+                  <div
+                    className={`absolute right-0 top-full mt-3 w-52 rounded-2xl border border-[#FF6A00]/20 bg-[#0d0d0d]/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-all duration-200 ${openMenu === "profile" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"}`}
+                  >
+                    {roleHome !== "/" && (
+                      <Link
+                        to={roleHome}
+                        onClick={() => setOpenMenu(null)}
+                        className="block rounded-xl px-3 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#FF6A00]/10 hover:text-[#FF6A00]"
+                      >
+                        {roleLabel}
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenMenu(null);
+                        setShowLogoutConfirm(true);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10"
+                    >
+                      <FiLogOut />
+                      Logout
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <Link
                   to="/login"
@@ -526,16 +561,41 @@ const Navbar = () => {
             </Link>
 
             {user ? (
-              <button
-                onClick={() => {
-                  setMobileMenu(false);
-                  setShowLogoutConfirm(true);
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 transition-all duration-300 hover:bg-red-500/20"
-              >
-                <FiLogOut />
-                Logout
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Open profile menu"
+                  aria-expanded={openMenu === "profile"}
+                  onClick={() => toggleMenu("profile")}
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 px-4 py-3 text-sm font-semibold text-[#FF6A00] transition-all duration-300 hover:bg-[#FF6A00] hover:text-black"
+                >
+                  <FiUser className="text-lg" />
+                  Profile
+                </button>
+                <div className={`mt-2 space-y-1 rounded-xl border border-white/10 bg-white/[0.04] p-2 ${openMenu === "profile" ? "block" : "hidden"}`}>
+                  {roleHome !== "/" && (
+                    <Link
+                      to={roleHome}
+                      onClick={() => setMobileMenu(false)}
+                      className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#FF6A00]/10 hover:text-[#FF6A00]"
+                    >
+                      {roleLabel}
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenu(false);
+                      setOpenMenu(null);
+                      setShowLogoutConfirm(true);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-300 hover:bg-red-500/10"
+                  >
+                    <FiLogOut />
+                    Logout
+                  </button>
+                </div>
+              </div>
             ) : (
               <Link
                 to="/login"
