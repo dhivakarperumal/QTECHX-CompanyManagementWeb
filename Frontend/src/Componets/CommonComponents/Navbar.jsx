@@ -129,20 +129,18 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("services")}
-                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${
-                    isServicesActive ? "text-primary" : "text-white hover:text-primary"
-                  }`}
+                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${isServicesActive ? "text-primary" : "text-white hover:text-primary"
+                    }`}
                 >
                   Services
 
                   <FiChevronDown
-                    className={`text-xs transition-all duration-300 ${
-                      openMenu === "services"
+                    className={`text-xs transition-all duration-300 ${openMenu === "services"
                         ? "rotate-180 text-primary"
                         : isServicesActive
-                        ? "text-primary"
-                        : "rotate-0 text-white/70 group-hover:text-primary"
-                    }`}
+                          ? "text-primary"
+                          : "rotate-0 text-white/70 group-hover:text-primary"
+                      }`}
                   />
                 </button>
 
@@ -226,20 +224,18 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => toggleMenu("whoWeAre")}
-                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${
-                    isWhoWeAreActive ? "text-primary" : "text-white hover:text-primary"
-                  }`}
+                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${isWhoWeAreActive ? "text-primary" : "text-white hover:text-primary"
+                    }`}
                 >
                   Who We Are?
 
                   <FiChevronDown
-                    className={`text-xs transition-all duration-300 ${
-                      openMenu === "whoWeAre"
+                    className={`text-xs transition-all duration-300 ${openMenu === "whoWeAre"
                         ? "rotate-180 text-primary"
                         : isWhoWeAreActive
-                        ? "text-primary"
-                        : "rotate-0 text-white/70 group-hover:text-primary"
-                    }`}
+                          ? "text-primary"
+                          : "rotate-0 text-white/70 group-hover:text-primary"
+                      }`}
                   />
                 </button>
 
@@ -433,17 +429,15 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileSubMenu((prev) => (prev === "services" ? null : "services"))}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${
-                isServicesActive
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${isServicesActive
                   ? "border-primary/40 bg-primary/10 text-primary font-semibold"
                   : "border-white/10 bg-white/3 text-white/80 hover:bg-white/5 hover:text-white"
-              }`}
+                }`}
             >
               <span>Services</span>
               <FiChevronDown
-                className={`text-sm transition ${mobileSubMenu === "services" ? "rotate-180" : ""} ${
-                  isServicesActive ? "text-primary" : ""
-                }`}
+                className={`text-sm transition ${mobileSubMenu === "services" ? "rotate-180" : ""} ${isServicesActive ? "text-primary" : ""
+                  }`}
               />
             </button>
 
@@ -483,17 +477,15 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileSubMenu((prev) => (prev === "whoWeAre" ? null : "whoWeAre"))}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${
-                isWhoWeAreActive
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${isWhoWeAreActive
                   ? "border-primary/40 bg-primary/10 text-primary font-semibold"
                   : "border-white/10 bg-white/3 text-white/80 hover:bg-white/5 hover:text-white"
-              }`}
+                }`}
             >
               <span>Who We Are?</span>
               <FiChevronDown
-                className={`text-sm transition ${mobileSubMenu === "whoWeAre" ? "rotate-180" : ""} ${
-                  isWhoWeAreActive ? "text-primary" : ""
-                }`}
+                className={`text-sm transition ${mobileSubMenu === "whoWeAre" ? "rotate-180" : ""} ${isWhoWeAreActive ? "text-primary" : ""
+                  }`}
               />
             </button>
 
@@ -533,16 +525,25 @@ const Navbar = () => {
               <FiArrowRight />
             </Link>
 
-            {user && (
+            {user ? (
               <button
                 onClick={() => {
                   setMobileMenu(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300"
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 transition-all duration-300 hover:bg-red-500/20"
               >
-                <FiLogOut /> Logout
+                <FiLogOut />
+                Logout
               </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileMenu(false)}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 px-4 py-3 text-sm font-semibold text-[#FF6A00] transition-all duration-300 hover:bg-[#FF6A00] hover:text-black"
+              >
+                Login
+              </Link>
             )}
           </div>
         </div>
