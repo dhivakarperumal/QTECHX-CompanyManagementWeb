@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import { FiChevronDown, FiX, FiLogOut, FiArrowRight, FiUser } from "react-icons/fi";
+import { FiChevronDown, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import api from "../../api";
 import {
@@ -28,8 +28,12 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role, logout } = useAuth();
+  const { user, role, profileName, logout } = useAuth();
   const roleHome = getRoleHome(role);
+  const profileInitial = (profileName || user?.name || user?.username || "U")
+    .trim()
+    .charAt(0)
+    .toUpperCase();
   const roleLabel = isAdminRole(role)
     ? "Admin Panel"
     : isEmployeeRole(role)
@@ -328,7 +332,9 @@ const Navbar = () => {
                     onClick={() => toggleMenu("profile")}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 text-xl text-[#FF6A00] transition-all hover:bg-[#FF6A00] hover:text-black"
                   >
-                    <FiUser />
+                    <span aria-hidden="true" className="text-base font-bold">
+                      {profileInitial}
+                    </span>
                   </button>
                   <div
                     className={`absolute right-0 top-full mt-3 w-52 rounded-2xl border border-[#FF6A00]/20 bg-[#0d0d0d]/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl transition-all duration-200 ${openMenu === "profile" ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"}`}
@@ -569,7 +575,9 @@ const Navbar = () => {
                   onClick={() => toggleMenu("profile")}
                   className="flex w-full items-center justify-center gap-2 rounded-full border border-[#FF6A00]/50 bg-[#FF6A00]/10 px-4 py-3 text-sm font-semibold text-[#FF6A00] transition-all duration-300 hover:bg-[#FF6A00] hover:text-black"
                 >
-                  <FiUser className="text-lg" />
+                  <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full border border-current text-sm font-bold">
+                    {profileInitial}
+                  </span>
                   Profile
                 </button>
                 <div className={`mt-2 space-y-1 rounded-xl border border-white/10 bg-white/[0.04] p-2 ${openMenu === "profile" ? "block" : "hidden"}`}>
