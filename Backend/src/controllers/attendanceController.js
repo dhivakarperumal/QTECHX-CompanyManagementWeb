@@ -3,16 +3,41 @@ const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
 
 function getLocalDateString(d = new Date()) {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+  } catch {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
 
 function getLocalTimeString(d = new Date()) {
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(d);
+  } catch {
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+}
+
+function isSundayDate(dateStr) {
+  if (!dateStr) return false;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (!y || !m || !d) return false;
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 0;
 }
 
 async function checkin(req, res) {
@@ -32,16 +57,16 @@ async function clockIn(req, res) {
       return res.status(400).json({ message: "employee_id is required" });
     }
 
-    const date = new Date();
-    
-    if (date.getDay() === 0) {
+    const attendanceDate = payload.date || getLocalDateString();
+    const timeStr = payload.check_in_time || getLocalTimeString();
+
+    if (isSundayDate(attendanceDate)) {
       return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
     }
 
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    const attendanceDate = payload.date || getLocalDateString(date);
-    const timeStr = payload.check_in_time || getLocalTimeString(date);
+    const [yStr, mStr] = attendanceDate.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
@@ -109,9 +134,8 @@ async function breakStart(req, res) {
       return res.status(400).json({ message: "employee_id is required" });
     }
 
-    const date = new Date();
-    const attendanceDate = payload.date || getLocalDateString(date);
-    const timeStr = payload.break_start_time || getLocalTimeString(date);
+    const attendanceDate = payload.date || getLocalDateString();
+    const timeStr = payload.break_start_time || getLocalTimeString();
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) {
@@ -138,9 +162,8 @@ async function breakEnd(req, res) {
       return res.status(400).json({ message: "employee_id is required" });
     }
 
-    const date = new Date();
-    const attendanceDate = payload.date || getLocalDateString(date);
-    const timeStr = payload.break_end_time || getLocalTimeString(date);
+    const attendanceDate = payload.date || getLocalDateString();
+    const timeStr = payload.break_end_time || getLocalTimeString();
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) return res.status(404).json({ message: "No attendance record found" });
@@ -164,9 +187,8 @@ async function clockOut(req, res) {
       return res.status(400).json({ message: "employee_id is required" });
     }
 
-    const date = new Date();
-    const attendanceDate = payload.date || getLocalDateString(date);
-    const timeStr = payload.check_out_time || getLocalTimeString(date);
+    const attendanceDate = payload.date || getLocalDateString();
+    const timeStr = payload.check_out_time || getLocalTimeString();
 
     const existing = await getEmployeeAttendanceToday(employee_id, attendanceDate);
     if (!existing) return res.status(404).json({ message: "No attendance record found" });
@@ -214,15 +236,13 @@ async function create(req, res) {
       attendanceDate = getLocalDateString();
     }
 
+    if (isSundayDate(attendanceDate)) {
+      return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
+    }
+
     const [yStr, mStr, dStr] = attendanceDate.split('-');
     const year = parseInt(yStr, 10);
     const month = parseInt(mStr, 10);
-    const day = parseInt(dStr, 10);
-    const date = new Date(year, month - 1, day);
-    
-    if (date.getDay() === 0) {
-      return res.status(403).json({ message: "Attendance cannot be marked on Sundays" });
-    }
 
     const db = getDB();
     const [holidayEvents] = await db.execute(
@@ -289,13 +309,13 @@ async function create(req, res) {
 
 async function summary(req, res) {
   try {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const monthStr = String(month).padStart(2, '0');
+    const todayIST = getLocalDateString();
+    const [yStr, mStr] = todayIST.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
     const daysInMonth = new Date(year, month, 0).getDate();
-    const firstDay = `${year}-${monthStr}-01`;
-    const lastDay = `${year}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+    const firstDay = `${year}-${mStr}-01`;
+    const lastDay = `${year}-${mStr}-${String(daysInMonth).padStart(2, '0')}`;
     
     const startDate = req.query.startDate || firstDay;
     const endDate = req.query.endDate || lastDay;
@@ -306,10 +326,9 @@ async function summary(req, res) {
     // If viewing a single day, inject that specific date's records and dynamically calculate missing statuses
     if (startDate === endDate) {
       const todayDate = startDate;
-      const currentDateStr = getLocalDateString(now);
-      
-      const currentHours = now.getHours();
-      const currentMinutes = now.getMinutes();
+      const currentDateStr = todayIST;
+      const currentTimeStr = getLocalTimeString();
+      const [currentHours, currentMinutes] = currentTimeStr.split(':').map(Number);
       const timeInMinutes = currentHours * 60 + currentMinutes;
 
       const [todayRecords] = await db.execute("SELECT * FROM attendance WHERE attendance_date = ?", [todayDate]);
@@ -476,13 +495,14 @@ async function employeeAttendance(req, res) {
       employeeId = req.user?.employee_id || req.user?.user_id;
     }
 
-    const now = new Date();
+    const todayIST = getLocalDateString();
+    const [yStr, mStr] = todayIST.split('-');
     let startDate = req.query.startDate;
     let endDate = req.query.endDate;
     
     if (!startDate || !endDate) {
-      const year = req.query.year ? parseInt(req.query.year, 10) : now.getFullYear();
-      const month = req.query.month ? parseInt(req.query.month, 10) : (now.getMonth() + 1);
+      const year = req.query.year ? parseInt(req.query.year, 10) : parseInt(yStr, 10);
+      const month = req.query.month ? parseInt(req.query.month, 10) : parseInt(mStr, 10);
       const monthStr = String(month).padStart(2, '0');
       const daysInMonth = new Date(year, month, 0).getDate();
       startDate = `${year}-${monthStr}-01`;
