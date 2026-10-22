@@ -1,7 +1,21 @@
 const { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday } = require("../models/attendanceModel");
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
-const { notifyAdminsSafely } = require("../utils/notificationService");
+const { notifyAdminsSafely, resolveEmployeeName } = require("../utils/notificationService");
+
+async function notifyAttendanceMarked(req, employeeId, attendanceDate, attendanceId) {
+  const employeeName = await resolveEmployeeName(
+    employeeId,
+    req.user?.username || req.user?.name || req.user?.email
+  );
+  await notifyAdminsSafely(req, {
+    type: "employee_attendance_marked",
+    title: "Employee marked attendance",
+    message: `${employeeName} marked attendance for ${attendanceDate}.`,
+    link: "/admin/attendance",
+    relatedId: attendanceId,
+  }, "employee attendance");
+}
 
 function getLocalDateString(d = new Date()) {
   try {
@@ -116,26 +130,14 @@ async function clockIn(req, res) {
       delete record.created_by;
       const updated = await updateAttendance(existing.id, record);
       if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
-        await notifyAdminsSafely(req, {
-          type: "employee_attendance_marked",
-          title: "Employee marked attendance",
-          message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
-          link: "/admin/attendance",
-          relatedId: updated?.id || existing.id,
-        }, "employee attendance");
+        await notifyAttendanceMarked(req, employee_id, attendanceDate, updated?.id || existing.id);
       }
       return res.status(200).json({ message: "Clocked in successfully", attendance: updated });
     }
 
     const result = await createAttendance(record);
     if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
-      await notifyAdminsSafely(req, {
-        type: "employee_attendance_marked",
-        title: "Employee marked attendance",
-        message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
-        link: "/admin/attendance",
-        relatedId: result?.id,
-      }, "employee attendance");
+      await notifyAttendanceMarked(req, employee_id, attendanceDate, result?.id);
     }
     return res.status(201).json({ message: "Clocked in successfully", attendance: result });
   } catch (error) {
@@ -316,26 +318,14 @@ async function create(req, res) {
       delete record.created_by;
       const updated = await updateAttendance(existing.id, record);
       if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
-        await notifyAdminsSafely(req, {
-          type: "employee_attendance_marked",
-          title: "Employee marked attendance",
-          message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
-          link: "/admin/attendance",
-          relatedId: updated?.id || existing.id,
-        }, "employee attendance");
+        await notifyAttendanceMarked(req, employee_id, attendanceDate, updated?.id || existing.id);
       }
       return res.status(200).json({ message: "Attendance updated successfully", attendance: updated });
     }
 
     const result = await createAttendance(record);
     if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
-      await notifyAdminsSafely(req, {
-        type: "employee_attendance_marked",
-        title: "Employee marked attendance",
-        message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
-        link: "/admin/attendance",
-        relatedId: result?.id,
-      }, "employee attendance");
+      await notifyAttendanceMarked(req, employee_id, attendanceDate, result?.id);
     }
     return res.status(201).json({ message: "Attendance recorded successfully", attendance: result });
   } catch (error) {

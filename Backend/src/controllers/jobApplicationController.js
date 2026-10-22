@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const JobApplicationModel = require("../models/jobApplicationModel");
 const JobModel = require("../models/jobModel");
+const { notifyAdminsSafely } = require("../utils/notificationService");
 
 const getUploadedFile = (req, filename) => {
   if (!filename) return null;
@@ -168,6 +169,14 @@ class JobApplicationController {
       };
 
       const application = await JobApplicationModel.createApplication(applicationData);
+
+      await notifyAdminsSafely(req, {
+        type: "job_application",
+        title: "New job application",
+        message: `${full_name} applied for ${job.job_title || "a job opening"}.`,
+        link: "/admin/settings/job-applications",
+        relatedId: application.id,
+      }, "job application submission");
 
       res.status(201).json({
         message: "Application submitted successfully",

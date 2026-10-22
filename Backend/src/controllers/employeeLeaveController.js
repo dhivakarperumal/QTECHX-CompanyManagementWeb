@@ -2,7 +2,7 @@ const LeaveModel = require("../models/employeeLeaveModel");
 const leaveSettingsModel = require("../models/leaveSettingsModel");
 const employeeModel = require("../models/employeeModel");
 const { getDB } = require("../config/db");
-const { notifySafely, notifyAdminsSafely } = require("../utils/notificationService");
+const { notifySafely, notifyAdminsSafely, resolveEmployeeName } = require("../utils/notificationService");
 
 function getAuthenticatedEmployeeId(req) {
   return req.user?.employee_id || req.user?.id || req.user?.user_id || null;
@@ -59,10 +59,14 @@ async function applyLeave(req, res) {
     };
 
     const newLeave = await LeaveModel.createLeave(leaveData);
+    const employeeName = await resolveEmployeeName(
+      employee_id,
+      req.user?.username || req.user?.name || req.user?.email
+    );
     await notifyAdminsSafely(req, {
       type: "leave_applied",
       title: "New leave request",
-      message: `An employee applied for ${leave_type} leave from ${from_date} to ${to_date}.`,
+      message: `${employeeName} applied for ${leave_type} leave from ${from_date} to ${to_date}.`,
       link: "/admin/employees/leave",
       relatedId: newLeave?.id,
     }, "employee leave application");

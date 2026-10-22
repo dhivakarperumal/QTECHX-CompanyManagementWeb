@@ -118,9 +118,115 @@ async function sendToAllActiveUsers(io, notification) {
   return persistAndEmit(io, rows.map((row) => row.user_id), notification);
 }
 
+async function resolveEmployeeName(employeeIdentifier, fallbackName = null) {
+  if (employeeIdentifier === undefined || employeeIdentifier === null || !String(employeeIdentifier).trim()) {
+    return fallbackName || 'An employee';
+  }
+
+  const identifier = String(employeeIdentifier).trim();
+  try {
+    const db = getDB();
+    const [userRows] = await db.execute(
+      'SELECT email, username FROM users WHERE user_id = ? LIMIT 1',
+      [identifier]
+    );
+    const identifiers = normalizeIds([
+      identifier,
+      userRows[0]?.email,
+      userRows[0]?.username,
+    ]);
+    const placeholders = identifiers.map(() => '?').join(', ');
+    const [rows] = await db.execute(
+      `SELECT first_name, last_name
+         FROM employees
+        WHERE employee_id IN (${placeholders})
+           OR CAST(id AS CHAR) IN (${placeholders})
+           OR employee_code IN (${placeholders})
+           OR username IN (${placeholders})
+           OR official_email IN (${placeholders})
+           OR personal_email IN (${placeholders})
+        LIMIT 1`,
+      [...identifiers, ...identifiers, ...identifiers, ...identifiers, ...identifiers, ...identifiers]
+    );
+    if (!rows.length) return fallbackName || 'An employee';
+    return [rows[0].first_name, rows[0].last_name].filter(Boolean).join(' ').trim() || fallbackName || 'An employee';
+  } catch (error) {
+    console.error('[Notifications] Employee name lookup failed:', error);
+    return fallbackName || 'An employee';
+  }
+}
+
+function parseAudienceValues(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => {
+      if (item && typeof item === 'object') {
+        return [item.name, item.label, item.department, item.team, item.value].filter(Boolean);
+      }
+      return [item];
+    });
+  }
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parseAudienceValues(parsed);
+    } catch (error) {
+      console.warn('[Notifications] Could not parse calendar audience list:', error.message);
+    }
+    return value.split(',').map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+async function resolveCalendarAudienceIds(event) {
+  const recipients = participantIds(event?.participants);
+  const departments = normalizeIds(parseAudienceValues(event?.departments));
+  const teams = normalizeIds(parseAudienceValues(event?.teams));
+  if (!departments.length && !teams.length) return recipients;
+
+  const db = getDB();
+  const audienceClauses = [];
+  const audienceValues = [];
+  if (departments.length) {
+    const placeholders = departments.map(() => '?').join(', ');
+    audienceClauses.push(`designation IN (${placeholders})`, `role IN (${placeholders})`);
+    audienceValues.push(...departments, ...departments);
+  }
+  if (teams.length) {
+    const placeholders = teams.map(() => '?').join(', ');
+    audienceClauses.push(`team_lead IN (${placeholders})`);
+    audienceValues.push(...teams);
+  }
+
+  const [rows] = await db.execute(
+    `SELECT employee_id FROM employees
+      WHERE (status = 'Active' OR employment_status = 'Active')
+        AND (${audienceClauses.join(' OR ')})`,
+    audienceValues
+  );
+  return normalizeIds([...recipients, ...rows.map((row) => row.employee_id)]);
+}
+
+async function resolveCalendarAudienceIdsSafely(event, context) {
+  try {
+    return await resolveCalendarAudienceIds(event);
+  } catch (error) {
+    console.error(`[Notifications] ${context} audience lookup failed:`, error);
+    return null;
+  }
+}
+
 async function notifySafely(req, recipientIds, notification, context) {
   try {
     return await sendNotification(req.app.get('io'), recipientIds, notification);
+  } catch (error) {
+    console.error(`[Notifications] ${context} delivery failed:`, error);
+    return [];
+  }
+}
+
+async function notifyRolesSafely(req, roles, notification, context) {
+  try {
+    return await sendToRoles(req.app.get('io'), roles, notification);
   } catch (error) {
     console.error(`[Notifications] ${context} delivery failed:`, error);
     return [];
@@ -189,7 +295,11 @@ module.exports = {
   sendNotification,
   sendToAdmins,
   sendToAllActiveUsers,
+  resolveEmployeeName,
+  resolveCalendarAudienceIds,
+  resolveCalendarAudienceIdsSafely,
   notifySafely,
+  notifyRolesSafely,
   notifyAdminsSafely,
   notifyAllUsersSafely,
   participantIds,
