@@ -16,28 +16,34 @@ async function resolveUserIds(recipientIds) {
   const [rows] = await db.execute(
     `SELECT DISTINCT u.user_id
        FROM users u
-       LEFT JOIN employees e
-         ON e.employee_id = u.user_id
-         OR e.official_email = u.email
-         OR e.personal_email = u.email
       WHERE u.status = 'Active'
         AND (
           u.user_id IN (${placeholders})
           OR u.email IN (${placeholders})
-          OR e.employee_id IN (${placeholders})
-          OR CAST(e.id AS CHAR) IN (${placeholders})
-          OR e.employee_code IN (${placeholders})
+          OR EXISTS (
+            SELECT 1
+              FROM employees e
+             WHERE (
+               BINARY e.employee_id = BINARY u.user_id
+               OR BINARY e.official_email = BINARY u.email
+               OR BINARY e.personal_email = BINARY u.email
+             )
+               AND (
+                 e.employee_id IN (${placeholders})
+                 OR CAST(e.id AS CHAR) IN (${placeholders})
+                 OR e.employee_code IN (${placeholders})
+               )
+          )
         )`,
     [...ids, ...ids, ...ids, ...ids, ...ids]
   );
   return rows.map((row) => row.user_id);
 }
 
-async function sendNotification(io, recipientIds, notification) {
-  const userIds = await resolveUserIds(recipientIds);
-  if (!userIds.length) return [];
-
+async function persistAndEmit(io, userIds, notification) {
   const uniqueUserIds = normalizeIds(userIds);
+  if (!uniqueUserIds.length) return [];
+
   const records = uniqueUserIds.map((recipientUserId) => ({
     id: uuidv4(),
     recipientUserId,
@@ -87,6 +93,11 @@ async function sendNotification(io, recipientIds, notification) {
   return records.map((record) => record.id);
 }
 
+async function sendNotification(io, recipientIds, notification) {
+  const userIds = await resolveUserIds(recipientIds);
+  return persistAndEmit(io, userIds, notification);
+}
+
 async function sendToRoles(io, roles, notification) {
   const db = getDB();
   const placeholders = roles.map(() => '?').join(', ');
@@ -94,7 +105,7 @@ async function sendToRoles(io, roles, notification) {
     `SELECT user_id FROM users WHERE status = 'Active' AND role IN (${placeholders})`,
     roles
   );
-  return sendNotification(io, rows.map((row) => row.user_id), notification);
+  return persistAndEmit(io, rows.map((row) => row.user_id), notification);
 }
 
 async function sendToAdmins(io, notification) {
@@ -104,7 +115,7 @@ async function sendToAdmins(io, notification) {
 async function sendToAllActiveUsers(io, notification) {
   const db = getDB();
   const [rows] = await db.execute("SELECT user_id FROM users WHERE status = 'Active'");
-  return sendNotification(io, rows.map((row) => row.user_id), notification);
+  return persistAndEmit(io, rows.map((row) => row.user_id), notification);
 }
 
 async function notifySafely(req, recipientIds, notification, context) {
