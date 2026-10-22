@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const { getDB } = require('../config/db');
 
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
 function normalizeIds(ids) {
   return [...new Set((Array.isArray(ids) ? ids : [ids])
     .filter((id) => id !== undefined && id !== null && String(id).trim())
@@ -90,7 +92,87 @@ async function persistAndEmit(io, userIds, notification) {
     io?.to(`user:${record.recipientUserId}`).emit('notification', payload);
   });
 
+  await sendPushNotifications(records);
   return records.map((record) => record.id);
+}
+
+async function sendPushNotifications(records) {
+  try {
+    const userIds = normalizeIds(records.map((record) => record.recipientUserId));
+    if (!userIds.length) return;
+
+    const placeholders = userIds.map(() => '?').join(', ');
+    const [tokenRows] = await getDB().execute(
+      `SELECT token, recipient_user_id
+         FROM notification_push_tokens
+        WHERE recipient_user_id IN (${placeholders})`,
+      userIds
+    );
+    if (!tokenRows.length) return;
+
+    const recordByUserId = new Map(records.map((record) => [String(record.recipientUserId), record]));
+    const messages = tokenRows.flatMap(({ token, recipient_user_id }) => {
+      const record = recordByUserId.get(String(recipient_user_id));
+      if (!record) return [];
+      return [{
+        to: token,
+        sound: 'default',
+        title: record.title,
+        body: record.message,
+        data: {
+          notificationId: record.id,
+          type: record.type,
+          link: record.link,
+        },
+        channelId: 'default',
+      }];
+    });
+
+    for (let index = 0; index < messages.length; index += 100) {
+      const batch = messages.slice(index, index + 100);
+      const response = await fetch(EXPO_PUSH_URL, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(batch),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('[Notifications] Expo push request failed:', response.status, result);
+        continue;
+      }
+
+      const tickets = Array.isArray(result?.data) ? result.data : [result?.data];
+      const invalidTokens = tickets.flatMap((ticket, ticketIndex) =>
+        ticket?.details?.error === 'DeviceNotRegistered' && batch[ticketIndex]
+          ? [batch[ticketIndex].to]
+          : []
+      );
+      if (invalidTokens.length) {
+        const invalidPlaceholders = invalidTokens.map(() => '?').join(', ');
+        await getDB().execute(
+          `DELETE FROM notification_push_tokens WHERE token IN (${invalidPlaceholders})`,
+          invalidTokens
+        );
+      }
+
+      tickets.forEach((ticket, ticketIndex) => {
+        if (ticket?.status === 'error' && ticket?.details?.error !== 'DeviceNotRegistered') {
+          console.error('[Notifications] Expo push delivery failed:', {
+            token: batch[ticketIndex]?.to,
+            message: ticket.message,
+            error: ticket.details?.error,
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error('[Notifications] Push delivery failed:', error);
+  }
 }
 
 async function sendNotification(io, recipientIds, notification) {

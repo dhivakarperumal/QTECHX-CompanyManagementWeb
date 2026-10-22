@@ -37,7 +37,7 @@ exports.assignTrainee = async (req, res) => {
     const insertId = await TraineeAssignmentModel.createAssignment(assignmentData);
 
     const traineeName = assignmentData.trainee_name || assignmentData.person_name || 'A trainee or intern';
-    await notifySafely(req, [assignmentData.trainee_id, assignmentData.employee_id], {
+    await notifySafely(req, [assignmentData.employee_id], {
       type: 'trainee_assignment',
       title: 'Trainee/intern assignment updated',
       message: `${traineeName} has been assigned${assignmentData.employee_name ? ` to ${assignmentData.employee_name}` : ''}.`,

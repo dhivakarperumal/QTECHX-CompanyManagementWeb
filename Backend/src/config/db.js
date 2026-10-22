@@ -2680,6 +2680,19 @@ async function ensureNotificationsSchema(pool) {
   );
 }
 
+async function ensureNotificationPushTokensSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS notification_push_tokens (
+      token VARCHAR(255) NOT NULL,
+      recipient_user_id VARCHAR(36) NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (token),
+      INDEX idx_notification_push_tokens_user (recipient_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2691,6 +2704,7 @@ async function initDB() {
     connection.release();
     await ensureSchema(pool);
     await ensureNotificationsSchema(pool);
+    await ensureNotificationPushTokensSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
     await ensureServiceRequestsSchema(pool);

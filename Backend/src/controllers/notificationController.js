@@ -54,4 +54,50 @@ async function markAllNotificationsRead(req, res) {
   }
 }
 
-module.exports = { listNotifications, markNotificationRead, markAllNotificationsRead };
+async function registerPushToken(req, res) {
+  const token = String(req.body?.token || '').trim();
+  if (!/^Expo(nent)?PushToken\[[^\]]+\]$/.test(token)) {
+    return res.status(400).json({ success: false, message: 'A valid Expo push token is required' });
+  }
+
+  try {
+    await getDB().execute(
+      `INSERT INTO notification_push_tokens (token, recipient_user_id)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE
+         recipient_user_id = VALUES(recipient_user_id),
+         updated_at = CURRENT_TIMESTAMP`,
+      [token, req.user.user_id]
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('registerPushToken error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to register push token' });
+  }
+}
+
+async function unregisterPushToken(req, res) {
+  const token = String(req.body?.token || '').trim();
+  if (!/^Expo(nent)?PushToken\[[^\]]+\]$/.test(token)) {
+    return res.status(400).json({ success: false, message: 'A valid Expo push token is required' });
+  }
+
+  try {
+    await getDB().execute(
+      'DELETE FROM notification_push_tokens WHERE token = ? AND recipient_user_id = ?',
+      [token, req.user.user_id]
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('unregisterPushToken error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to unregister push token' });
+  }
+}
+
+module.exports = {
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  registerPushToken,
+  unregisterPushToken,
+};
