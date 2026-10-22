@@ -156,6 +156,10 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       return true;
     }
 
+    if (path === "/employee/projects" && location.pathname.startsWith("/employee/projects/")) {
+      return true;
+    }
+
     return location.pathname === path;
   };
 
