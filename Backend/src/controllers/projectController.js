@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { getDB } = require('../config/db');
+const { notifyAdminsSafely } = require('../utils/notificationService');
 const {
   createProject, findProjectByUUID, listProjects, updateProject, deleteProject,
   generateProjectCode,
@@ -209,10 +210,121 @@ async function updateProjectHandler(req, res) {
       if (assets.length) await createProjectAssets(assets);
     }
 
+    const actorRole = String(req.user?.role || '').trim().toLowerCase();
+    const isAdminActor = ['admin', 'super admin', 'manager'].includes(actorRole);
+    if (
+      project &&
+      !isAdminActor &&
+      updates.current_status &&
+      updates.current_status !== existing.current_status
+    ) {
+      await notifyAdminsSafely(req, {
+        type: 'employee_project_updated',
+        title: 'Employee updated a project',
+        message: `${project.project_name || 'A project'} was marked ${updates.current_status} by an employee.`,
+        link: '/admin/projects',
+        relatedId: project.uuid || project.id,
+      }, 'employee project update');
+    }
+
     return ok(res, { message: 'Project updated successfully', data: project });
   } catch (err) {
     console.error('updateProjectHandler:', err);
     return fail(res, 'Failed to update project', 500, err.message);
+  }
+}
+
+async function updateProjectStatusByEmployeeHandler(req, res) {
+  try {
+    const status = String(req.body?.current_status || '').trim();
+    if (!PROJECT_STATUSES.includes(status)) {
+      return fail(res, `Invalid status. Allowed: ${PROJECT_STATUSES.join(', ')}`, 400);
+    }
+
+    const project = await findProjectByUUID(req.params.id);
+    if (!project) return fail(res, 'Project not found', 404);
+
+    const db = getDB();
+    const possibleIds = [...new Set([
+      req.user?.employee_id,
+      req.user?.user_id,
+    ].filter(Boolean).map(String))];
+    const identityClauses = possibleIds.flatMap(() => [
+      'employee_id = ?',
+      'employee_code = ?',
+      'CAST(id AS CHAR) = ?',
+    ]);
+    const identityValues = possibleIds.flatMap((id) => [id, id, id]);
+    if (req.user?.email) {
+      identityClauses.push('official_email = ?', 'personal_email = ?');
+      identityValues.push(req.user.email, req.user.email);
+    }
+    if (!identityClauses.length) return fail(res, 'Employee identity could not be resolved', 403);
+
+    const [employees] = await db.execute(
+      `SELECT employee_id, employee_code, CAST(id AS CHAR) AS id
+         FROM employees
+        WHERE ${identityClauses.join(' OR ')}
+        LIMIT 1`,
+      identityValues
+    );
+    if (!employees.length) return fail(res, 'Employee profile not found', 403);
+
+    const employee = employees[0];
+    const [assignmentRows] = await db.execute(
+      'SELECT employee_ids FROM project_assignments WHERE project_id = ? LIMIT 1',
+      [project.id]
+    );
+    let assignments = [];
+    try {
+      const parsed = assignmentRows[0]?.employee_ids;
+      if (Array.isArray(parsed)) {
+        assignments = parsed;
+      } else if (parsed && typeof parsed === 'object') {
+        assignments = Object.values(parsed);
+      } else {
+        const decoded = JSON.parse(parsed || '[]');
+        assignments = Array.isArray(decoded) ? decoded : [];
+      }
+    } catch (error) {
+      console.error('Could not parse project assignment recipients:', error);
+      return fail(res, 'Could not verify project assignment', 500);
+    }
+    const isAssigned = assignments.some((assignment) => {
+      const assignedIds = [
+        assignment?.employee_id,
+        assignment?.employeeId,
+        assignment?.employee_code,
+        assignment?.employeeCode,
+        assignment?.id,
+      ].filter(Boolean).map(String);
+      return [employee.employee_id, employee.employee_code, employee.id]
+        .filter(Boolean)
+        .some((id) => assignedIds.includes(String(id)));
+    });
+    if (!isAssigned) return fail(res, 'You are not assigned to this project', 403);
+
+    if (project.current_status !== status) {
+      await updateProject(req.params.id, {
+        current_status: status,
+        updated_by: req.user?.user_id || employee.employee_id,
+      });
+      await notifyAdminsSafely(req, {
+        type: 'employee_project_updated',
+        title: 'Employee updated a project',
+        message: `${req.user?.username || req.user?.email || 'An employee'} marked ${project.project_name || 'a project'} ${status}.`,
+        link: '/admin/projects',
+        relatedId: project.uuid || project.id,
+      }, 'employee project status update');
+    }
+
+    return ok(res, {
+      message: 'Project status updated successfully',
+      data: { ...project, current_status: status },
+    });
+  } catch (error) {
+    console.error('updateProjectStatusByEmployeeHandler:', error);
+    return fail(res, 'Failed to update project status', 500, error.message);
   }
 }
 
@@ -290,4 +402,5 @@ async function getProjectProgressHandler(req, res) {
 module.exports = {
   createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler,
   getProjectByIdHandler, updateProjectHandler, deleteProjectHandler, getProjectProgressHandler,
+  updateProjectStatusByEmployeeHandler,
 };

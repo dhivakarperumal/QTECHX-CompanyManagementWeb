@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const { createTask, findTaskByUUID, listTasks, updateTask, deleteTask } = require('../models/taskModel');
 const { findProjectById, findProjectByUUID } = require('../models/projectModel');
 const { getDB } = require('../config/db');
+const { notifySafely, notifyAdminsSafely } = require('../utils/notificationService');
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const STATUSES = ['Pending', 'Accepted', 'To Do', 'In Progress', 'Review', 'Testing', 'Completed', 'On Hold', 'Cancelled', 'Issue'];
@@ -285,6 +286,28 @@ async function updateTaskHandler(req, res) {
     console.log('updateTaskHandler - incoming status:', req.body.status);
     const updated = await updateTask(req.params.id, updates);
     console.log('updateTaskHandler - updated status in DB:', updated?.status);
+
+    const actorRole = String(req.user?.role || '').trim().toLowerCase();
+    const isAdminActor = ['admin', 'super admin', 'manager'].includes(actorRole);
+    if (updated && !isAdminActor && Object.keys(updates).some((field) => field !== 'updated_by')) {
+      await notifyAdminsSafely(req, {
+        type: 'employee_task_updated',
+        title: 'Employee updated a task',
+        message: `${req.user?.username || req.user?.email || 'An employee'} updated ${updated.task_name || updated.module_name || 'a task'}.`,
+        link: '/admin/tasks',
+        relatedId: updated.uuid || updated.id,
+      }, 'employee task update');
+    }
+
+    if (updated && updates.assigned_to && String(updates.assigned_to) !== String(task.assigned_to || '')) {
+      await notifySafely(req, [updates.assigned_to], {
+        type: 'task_assigned',
+        title: 'New task assigned',
+        message: `You have been assigned "${updated.task_name || updated.module_name || 'a task'}".`,
+        link: '/employee/tasks',
+        relatedId: updated.uuid || updated.id,
+      }, 'task reassignment');
+    }
 
     // Sync the status change into employee_task_assignments task_details JSON
     if (updates.status && updated) {

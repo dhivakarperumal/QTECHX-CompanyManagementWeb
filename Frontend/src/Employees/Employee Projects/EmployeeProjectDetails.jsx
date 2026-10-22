@@ -280,6 +280,9 @@
     const [tasks,       setTasks]       = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [error,    setError]    = useState('');
+    const [projectStatus, setProjectStatus] = useState('');
+    const [statusSaving, setStatusSaving] = useState(false);
+    const [statusError, setStatusError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [progressData, setProgressData] = useState(null);
 
@@ -304,6 +307,7 @@
           if (!projRes.data.success) throw new Error(projRes.data.message || 'Project not found');
           
           setProject(projRes.data.data);
+          setProjectStatus(projRes.data.data.current_status || 'Planning');
           await fetchProgress(id);
           
           const employees = assignRes.data?.assignedEmployees
@@ -360,6 +364,22 @@
     const progressColor = pct >= 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#3b82f6' : '#ef4444';
     const isFullyCompleted = pct >= 100 && (progressData?.total ?? 0) > 0;
 
+    const saveProjectStatus = async () => {
+      if (!projectStatus || projectStatus === project.current_status) return;
+      setStatusSaving(true);
+      setStatusError('');
+      try {
+        await api.patch(`/projects/${project.uuid || id}/status`, { current_status: projectStatus });
+        setProject(current => ({ ...current, current_status: projectStatus }));
+      } catch (saveError) {
+        console.error('Failed to update project status:', saveError);
+        setStatusError(saveError?.response?.data?.message || 'Failed to update project status.');
+        setProjectStatus(project.current_status || 'Planning');
+      } finally {
+        setStatusSaving(false);
+      }
+    };
+
     return (
       <div className="pb-12 text-white">
 
@@ -382,7 +402,28 @@
               </p>
             </div>
           </div>
-          <StatusBadge status={project.current_status} />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={project.current_status} />
+            <select
+              value={projectStatus}
+              onChange={event => setProjectStatus(event.target.value)}
+              aria-label="Project status"
+              className="rounded-xl border border-white/10 bg-[#111318] px-3 py-2 text-xs text-white"
+            >
+              {['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'].map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={saveProjectStatus}
+              disabled={statusSaving || projectStatus === project.current_status}
+              className="rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {statusSaving ? 'Saving…' : 'Update status'}
+            </button>
+            {statusError && <span role="alert" className="basis-full text-xs text-rose-300">{statusError}</span>}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -639,4 +680,3 @@
       </div>
     );
   }
-

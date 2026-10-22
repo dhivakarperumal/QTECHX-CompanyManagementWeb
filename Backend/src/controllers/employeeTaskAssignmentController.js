@@ -5,6 +5,7 @@ const {
   assignTaskToEmployee,
   listEmployeeTaskAssignments,
 } = require('../models/employeeTaskAssignmentModel');
+const { notifySafely } = require('../utils/notificationService');
 
 const taskUploadDir = path.join(__dirname, '../../uploads/tasks');
 if (!fs.existsSync(taskUploadDir)) fs.mkdirSync(taskUploadDir, { recursive: true });
@@ -100,6 +101,14 @@ async function assignTaskHandler(req, res) {
       status: status || null,
       attachments,
     });
+
+    await notifySafely(req, [employee_id], {
+      type: 'task_assigned',
+      title: 'New task assigned',
+      message: `You have been assigned a task for ${project.project_name || 'a project'}.`,
+      link: '/employee/tasks',
+      relatedId: task_id,
+    }, 'employee task assignment');
 
     return ok(res, {
       message: 'Task assigned successfully',

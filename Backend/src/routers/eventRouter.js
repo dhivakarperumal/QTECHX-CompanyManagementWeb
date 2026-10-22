@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate, authorize } = require('../security/authMiddleware');
 const {
   createEvent,
   getAllEvents,
@@ -8,10 +9,10 @@ const {
   deleteEvent
 } = require('../controllers/eventController');
 
-router.post('/', createEvent);
+router.post('/', authenticate, authorize('Admin', 'Super Admin'), createEvent);
 router.get('/', getAllEvents);
 router.get('/:id', getEventById);
-router.put('/:id', updateEvent);
-router.delete('/:id', deleteEvent);
+router.put('/:id', authenticate, authorize('Admin', 'Super Admin'), updateEvent);
+router.delete('/:id', authenticate, authorize('Admin', 'Super Admin'), deleteEvent);
 
 module.exports = router;

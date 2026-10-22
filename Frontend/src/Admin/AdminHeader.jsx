@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Menu, Search, Bell, Settings, User, LogOut, ChevronDown,
+  Menu, Search, Settings, User, LogOut, ChevronDown,
   ShoppingBag, Package, Clock, X, LayoutDashboard, MessageSquare,
   Users, CreditCard, UserCheck, ClipboardList, Activity, UserRound,
   CalendarCheck, Receipt, ShoppingCart, BarChart3, Dumbbell, Send,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
+import { NotificationBell } from "../PrivateRouter/NotificationsContext.jsx";
 import dayjs from "dayjs";
 
 /* ── page title map ── */
@@ -178,7 +179,6 @@ const Header = ({ onMenuClick }) => {
   }, [activeDropdown, showSearch]);
 
   const toggle = (name) => setActiveDropdown(p => p === name ? null : name);
-  const totalAlerts = alerts.leaves.length + alerts.tasks.length;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -281,12 +281,7 @@ const Header = ({ onMenuClick }) => {
               )}
             </div>
 
-            {/* Bell - total pending count */}
-            {/* <div className="relative">
-              <IconBtn name="bell" badge={totalAlerts} badgeColor="bg-primary" title="Notifications">
-                <Bell size={18} />
-              </IconBtn>
-            </div> */}
+            <NotificationBell />
 
             {/* Divider */}
             <div className="w-px h-6 bg-white/10 mx-1" />

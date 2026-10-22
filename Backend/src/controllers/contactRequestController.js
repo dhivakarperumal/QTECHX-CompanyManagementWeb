@@ -5,6 +5,7 @@ const {
   updateContactRequestStatus: updateStatusInDb,
   deleteContactRequest: deleteInDb,
 } = require('../models/contactRequestModel');
+const { notifyAdminsSafely } = require('../utils/notificationService');
 
 const VALID_STATUSES = ['New', 'Contacted', 'In Progress', 'Resolved', 'Closed'];
 
@@ -54,6 +55,14 @@ async function submitContactRequest(req, res) {
       message: String(message).trim(),
       status: 'New',
     });
+
+    await notifyAdminsSafely(req, {
+      type: 'contact_request',
+      title: 'New contact form submission',
+      message: `${request.name || name} sent a new contact request${request.subject || subject ? `: ${request.subject || subject}` : ''}.`,
+      link: '/admin/settings/contact-requests',
+      relatedId: request.uuid || request.id,
+    }, 'contact form submission');
 
     return res.status(201).json({
       success: true,

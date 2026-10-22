@@ -1,5 +1,6 @@
 const { getDB } = require("../config/db");
 const { v4: uuidv4 } = require("uuid");
+const { notifySafely } = require("../utils/notificationService");
 
 exports.getEmployeeSalaryDetails = async (req, res) => {
   const { employee_id, month, year } = req.query;
@@ -182,6 +183,13 @@ exports.paySalary = async (req, res) => {
     );
 
     await connection.commit();
+    await notifySafely(req, [employee_id], {
+      type: "salary_paid",
+      title: "Salary payment completed",
+      message: `Your salary payment of ${tSalary.toFixed(2)} for ${month}/${year} has been completed.`,
+      link: "/employee/payroll",
+      relatedId: expense_id,
+    }, "salary payment");
     res.status(201).json({ success: true, message: "Salary paid successfully" });
   } catch (error) {
     await connection.rollback();

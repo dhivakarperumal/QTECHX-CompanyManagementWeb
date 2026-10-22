@@ -22,6 +22,7 @@ import OfficeCalendar from './Admin/OfficeCalendar.jsx'
 import MyCalendar from './Admin/MyCalendar.jsx'
 
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
+import { NotificationsProvider } from './PrivateRouter/NotificationsContext.jsx'
 import { StoreProvider } from './PrivateRouter/StoreContext.jsx'
 import { AdminProvider } from './PrivateRouter/AdminContext';
 import RouteError from './Componets/Components/RouteError.jsx'
@@ -597,11 +598,13 @@ const router = createHashRouter([
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <StoreProvider>
-        <AdminProvider>
-          <RouterProvider router={router} />
-        </AdminProvider>
-      </StoreProvider>
+      <NotificationsProvider>
+        <StoreProvider>
+          <AdminProvider>
+            <RouterProvider router={router} />
+          </AdminProvider>
+        </StoreProvider>
+      </NotificationsProvider>
     </AuthProvider>
   </StrictMode>,
 )

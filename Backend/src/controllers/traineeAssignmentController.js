@@ -1,5 +1,6 @@
 const TraineeAssignmentModel = require('../models/traineeAssignmentModel');
 const { getDB } = require('../config/db');
+const { notifySafely } = require('../utils/notificationService');
 
 // Create or Reassign Trainee
 exports.assignTrainee = async (req, res) => {
@@ -34,6 +35,15 @@ exports.assignTrainee = async (req, res) => {
 
     // Create the new assignment
     const insertId = await TraineeAssignmentModel.createAssignment(assignmentData);
+
+    const traineeName = assignmentData.trainee_name || assignmentData.person_name || 'A trainee or intern';
+    await notifySafely(req, [assignmentData.trainee_id, assignmentData.employee_id], {
+      type: 'trainee_assignment',
+      title: 'Trainee/intern assignment updated',
+      message: `${traineeName} has been assigned${assignmentData.employee_name ? ` to ${assignmentData.employee_name}` : ''}.`,
+      link: '/employee/trainees',
+      relatedId: insertId,
+    }, 'trainee/intern assignment');
 
     res.status(201).json({
       success: true,

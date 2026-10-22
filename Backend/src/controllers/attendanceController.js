@@ -1,6 +1,7 @@
 const { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday } = require("../models/attendanceModel");
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
+const { notifyAdminsSafely } = require("../utils/notificationService");
 
 function getLocalDateString(d = new Date()) {
   try {
@@ -114,10 +115,28 @@ async function clockIn(req, res) {
     if (existing) {
       delete record.created_by;
       const updated = await updateAttendance(existing.id, record);
+      if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
+        await notifyAdminsSafely(req, {
+          type: "employee_attendance_marked",
+          title: "Employee marked attendance",
+          message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
+          link: "/admin/attendance",
+          relatedId: updated?.id || existing.id,
+        }, "employee attendance");
+      }
       return res.status(200).json({ message: "Clocked in successfully", attendance: updated });
     }
 
     const result = await createAttendance(record);
+    if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
+      await notifyAdminsSafely(req, {
+        type: "employee_attendance_marked",
+        title: "Employee marked attendance",
+        message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
+        link: "/admin/attendance",
+        relatedId: result?.id,
+      }, "employee attendance");
+    }
     return res.status(201).json({ message: "Clocked in successfully", attendance: result });
   } catch (error) {
     console.error("Clock In error:", error);
@@ -296,10 +315,28 @@ async function create(req, res) {
     if (existing) {
       delete record.created_by;
       const updated = await updateAttendance(existing.id, record);
+      if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
+        await notifyAdminsSafely(req, {
+          type: "employee_attendance_marked",
+          title: "Employee marked attendance",
+          message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
+          link: "/admin/attendance",
+          relatedId: updated?.id || existing.id,
+        }, "employee attendance");
+      }
       return res.status(200).json({ message: "Attendance updated successfully", attendance: updated });
     }
 
     const result = await createAttendance(record);
+    if (!["admin", "super admin", "manager", "hr"].includes(String(req.user?.role || '').toLowerCase())) {
+      await notifyAdminsSafely(req, {
+        type: "employee_attendance_marked",
+        title: "Employee marked attendance",
+        message: `Employee ${employee_id} marked attendance for ${attendanceDate}.`,
+        link: "/admin/attendance",
+        relatedId: result?.id,
+      }, "employee attendance");
+    }
     return res.status(201).json({ message: "Attendance recorded successfully", attendance: result });
   } catch (error) {
     console.error("Create attendance error:", error);
@@ -543,4 +580,3 @@ async function getByEmployeeDate(req, res) {
 }
 
 module.exports = { create, summary, employeeAttendance, checkin, checkout, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };
-

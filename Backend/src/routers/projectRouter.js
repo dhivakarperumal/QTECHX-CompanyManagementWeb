@@ -4,6 +4,7 @@ const { upload } = require('../config/multerConfig');
 const {
   createProjectHandler, getAllProjectsHandler, getNextProjectCodeHandler, getProjectByIdHandler,
   updateProjectHandler, deleteProjectHandler, getProjectProgressHandler,
+  updateProjectStatusByEmployeeHandler,
 } = require('../controllers/projectController');
 const {
   assignHandler,
@@ -49,6 +50,7 @@ router.put(   '/:id/assignments/:assignmentId', authenticate, managers, updateAs
 router.delete('/:id/assignments', authenticate, managers, unassignHandler);
 
 router.get(   '/:id/progress', authenticate, allStaff, getProjectProgressHandler);
+router.patch( '/:id/status', authenticate, authorize('Employee', 'Staff', 'Manager'), updateProjectStatusByEmployeeHandler);
 router.get(   '/:id', authenticate, allStaff, getProjectByIdHandler);
 router.put(   '/:id', authenticate, managers, uploadFields, updateProjectHandler);
 router.delete('/:id', authenticate, admins,   deleteProjectHandler);

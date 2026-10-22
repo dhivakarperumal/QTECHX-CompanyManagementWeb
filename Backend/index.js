@@ -1,5 +1,7 @@
 process.env.TZ = "Asia/Kolkata";
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
@@ -48,6 +50,7 @@ const jobRouter = require("./src/routers/jobRouter");
 const jobApplicationRouter = require("./src/routers/jobApplicationRouter");
 const contactRequestRouter = require("./src/routers/contactRequestRouter");
 const completedProjectRouter = require("./src/routers/completedProjectRouter");
+const notificationRouter = require("./src/routers/notificationRouter");
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -118,6 +121,7 @@ app.use("/api/contact-requests", contactRequestRouter);
 app.use("/api/trainee-assignments", traineeAssignmentRouter);
 app.use("/api/completedprojects", completedProjectRouter);
 app.use("/api/completed-projects", completedProjectRouter);
+app.use("/api/notifications", notificationRouter);
 
 app.post("/api/upload", upload.any(), (req, res) => {
   const files = Array.isArray(req.files) ? req.files : [];
@@ -340,7 +344,40 @@ async function startServer() {
     await initDB();
 
     const PORT = Number(process.env.PORT || 5000);
-    const server = app.listen(PORT, () => {
+    const server = http.createServer(app);
+    const io = new Server(server, {
+      cors: {
+        origin: [
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+          "https://qtechx.com",
+          "https://www.qtechx.com",
+          "https://qt1.qtechx.com",
+        ],
+        methods: ["GET", "POST"],
+        credentials: true,
+      },
+    });
+
+    io.use((socket, next) => {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error("Authentication required"));
+      try {
+        const user = jwt.verify(token, process.env.JWT_SECRET);
+        if (!user.user_id) return next(new Error("Invalid user session"));
+        socket.data.userId = String(user.user_id);
+        return next();
+      } catch (error) {
+        return next(new Error("Invalid or expired token"));
+      }
+    });
+
+    io.on("connection", (socket) => {
+      socket.join(`user:${socket.data.userId}`);
+    });
+    app.set("io", io);
+
+    server.listen(PORT, () => {
       console.log(`Backend running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
     });
 

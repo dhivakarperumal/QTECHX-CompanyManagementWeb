@@ -1,4 +1,23 @@
 const { createEvent: createEventModel, getAllEvents: getAllEventsModel, getEventById: getEventByIdModel, updateEvent: updateEventModel, deleteEvent: deleteEventModel } = require('../models/eventModel');
+const { notifySafely, participantIds } = require('../utils/notificationService');
+
+function notifyEventParticipants(req, event, context, previousEvent = null) {
+  const isMeeting = [event?.eventType, previousEvent?.eventType]
+    .some((eventType) => String(eventType || '').toLowerCase().includes('meeting'));
+  const recipients = [
+    ...participantIds(event?.participants),
+    ...participantIds(previousEvent?.participants),
+  ];
+  return notifySafely(req, recipients, {
+    type: isMeeting ? 'meeting_assigned' : 'calendar_updated',
+    title: isMeeting ? 'Meeting scheduled or updated' : 'Office calendar updated',
+    message: isMeeting
+      ? `${event.title || 'A meeting'} has been scheduled or updated${event.startDate ? ` for ${event.startDate}` : ''}.`
+      : `${event.title || 'An office calendar event'} has been added or updated${event.startDate ? ` for ${event.startDate}` : ''}.`,
+    link: '/employee/meetings',
+    relatedId: event.id,
+  }, context);
+}
 
 const validateEventPayload = (payload) => {
   const requiredFields = ['title', 'eventType', 'startDate', 'endDate'];
@@ -30,6 +49,7 @@ const createEvent = async (req, res) => {
 
   try {
     const savedEvent = await createEventModel(req.body);
+    await notifyEventParticipants(req, savedEvent, 'office calendar event');
     res.status(201).json(savedEvent);
   } catch (error) {
     console.error('Event creation failed:', error);
@@ -58,8 +78,11 @@ const getEventById = async (req, res) => {
 
 const updateEvent = async (req, res) => {
   try {
+    const previousEvent = await getEventByIdModel(req.params.id);
+    if (!previousEvent) return res.status(404).json({ message: 'Event not found' });
     const updatedEvent = await updateEventModel(req.params.id, req.body);
     if (!updatedEvent) return res.status(404).json({ message: 'Event not found' });
+    await notifyEventParticipants(req, updatedEvent, 'office calendar update', previousEvent);
     res.status(200).json(updatedEvent);
   } catch (error) {
     res.status(500).json({ message: 'Error updating event', error: error.message });
@@ -71,6 +94,14 @@ const deleteEvent = async (req, res) => {
     const existing = await getEventByIdModel(req.params.id);
     if (!existing) return res.status(404).json({ message: 'Event not found' });
     await deleteEventModel(req.params.id);
+    const isMeeting = String(existing.eventType || '').toLowerCase().includes('meeting');
+    await notifySafely(req, participantIds(existing.participants), {
+      type: isMeeting ? 'meeting_cancelled' : 'calendar_event_cancelled',
+      title: isMeeting ? 'Meeting cancelled' : 'Office calendar event cancelled',
+      message: `${existing.title || (isMeeting ? 'A meeting' : 'An office calendar event')} has been cancelled.`,
+      link: '/employee/meetings',
+      relatedId: existing.id,
+    }, 'office calendar cancellation');
     res.status(200).json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting event', error: error.message });

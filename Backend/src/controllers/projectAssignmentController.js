@@ -9,6 +9,7 @@ const {
   searchEmployeesForProject,
 } = require('../models/projectAssignmentModel');
 const { getDB } = require('../config/db');
+const { notifySafely } = require('../utils/notificationService');
 
 function ok(res, data, code = 200) { return res.status(code).json({ success: true, ...data }); }
 function fail(res, msg, code = 500) { return res.status(code).json({ success: false, message: msg }); }
@@ -196,6 +197,8 @@ async function assignHandler(req, res) {
     const { resolvedEmployeeAssignments, invalidIds } = await resolveEmployeeAssignments(db, employeeAssignments);
     if (invalidIds.length) return fail(res, 'One or more employees were not found', 404);
 
+    const previousAssignments = await listAssignmentsByProject(project.id);
+    const previousEmployeeIds = new Set(previousAssignments.map((assignment) => String(assignment.employee_id)));
     const result = await assignEmployeesToProject({
       project_id: project.id,
       employee_ids: resolvedEmployeeAssignments,
@@ -206,6 +209,18 @@ async function assignHandler(req, res) {
     });
 
     const assignments = await listAssignmentsByProject(project.id);
+    const newlyAssigned = resolvedEmployeeAssignments
+      .map((assignment) => assignment.employee_id)
+      .filter((employeeId) => !previousEmployeeIds.has(String(employeeId)));
+    if (newlyAssigned.length) {
+      await notifySafely(req, newlyAssigned, {
+        type: 'project_assigned',
+        title: 'New project assigned',
+        message: `You have been assigned to ${project.project_name || 'a project'}.`,
+        link: '/employee/projects',
+        relatedId: project.uuid || project.id,
+      }, 'project assignment');
+    }
     const payload = buildAssignmentEnvelope(project, assignments);
     return ok(res, {
       message: result.inserted ? 'Employees assigned successfully' : 'No new assignments were created',
@@ -254,6 +269,8 @@ async function updateAssignmentsHandler(req, res) {
     const { resolvedEmployeeAssignments, invalidIds } = await resolveEmployeeAssignments(db, employeeAssignments);
     if (employeeAssignments.length && invalidIds.length) return fail(res, 'One or more employees were not found', 404);
 
+    const previousAssignments = await listAssignmentsByProject(project.id);
+    const previousEmployeeIds = new Set(previousAssignments.map((assignment) => String(assignment.employee_id)));
     const result = await syncProjectAssignments({
       project_id: project.id,
       employee_ids: resolvedEmployeeAssignments,
@@ -263,6 +280,18 @@ async function updateAssignmentsHandler(req, res) {
     });
 
     const assignments = await listAssignmentsByProject(project.id);
+    const newlyAssigned = resolvedEmployeeAssignments
+      .map((assignment) => assignment.employee_id)
+      .filter((employeeId) => !previousEmployeeIds.has(String(employeeId)));
+    if (newlyAssigned.length) {
+      await notifySafely(req, newlyAssigned, {
+        type: 'project_assigned',
+        title: 'New project assigned',
+        message: `You have been assigned to ${project.project_name || 'a project'}.`,
+        link: '/employee/projects',
+        relatedId: project.uuid || project.id,
+      }, 'project assignment update');
+    }
     const payload = buildAssignmentEnvelope(project, assignments);
     return ok(res, {
       message: 'Project assignments updated successfully',

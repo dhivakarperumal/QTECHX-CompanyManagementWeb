@@ -2,6 +2,7 @@ const LeaveModel = require("../models/employeeLeaveModel");
 const leaveSettingsModel = require("../models/leaveSettingsModel");
 const employeeModel = require("../models/employeeModel");
 const { getDB } = require("../config/db");
+const { notifySafely, notifyAdminsSafely } = require("../utils/notificationService");
 
 function getAuthenticatedEmployeeId(req) {
   return req.user?.employee_id || req.user?.id || req.user?.user_id || null;
@@ -58,6 +59,13 @@ async function applyLeave(req, res) {
     };
 
     const newLeave = await LeaveModel.createLeave(leaveData);
+    await notifyAdminsSafely(req, {
+      type: "leave_applied",
+      title: "New leave request",
+      message: `An employee applied for ${leave_type} leave from ${from_date} to ${to_date}.`,
+      link: "/admin/employees/leave",
+      relatedId: newLeave?.id,
+    }, "employee leave application");
     res.status(201).json({ success: true, message: "Leave applied successfully", data: newLeave });
   } catch (error) {
     console.error("Error applying leave:", error);
@@ -135,6 +143,15 @@ async function updateLeaveStatus(req, res) {
     }
 
     const updatedLeave = await LeaveModel.updateLeaveStatus(id, status, admin_reason, admin_id);
+    if (["approved", "rejected"].includes(String(status).trim().toLowerCase())) {
+      await notifySafely(req, [updatedLeave?.employee_id], {
+        type: "leave_status",
+        title: `Leave ${String(status).toLowerCase()}`,
+        message: `Your ${updatedLeave?.leave_type || "leave"} request from ${updatedLeave?.from_date || ""} to ${updatedLeave?.to_date || ""} was ${String(status).toLowerCase()}.`,
+        link: "/employee/leaves",
+        relatedId: updatedLeave?.id || id,
+      }, "leave status update");
+    }
     res.status(200).json({ success: true, message: "Leave status updated successfully", data: updatedLeave });
   } catch (error) {
     console.error("Error updating leave status:", error);

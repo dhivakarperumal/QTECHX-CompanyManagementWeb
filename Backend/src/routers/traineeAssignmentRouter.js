@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const traineeAssignmentController = require('../controllers/traineeAssignmentController');
+const { authenticate, authorize } = require('../security/authMiddleware');
+
+router.use(authenticate, authorize('Admin', 'Super Admin', 'Manager', 'Employee'));
 // Assuming some auth middleware exists, we'll try to require it or just proceed
 // const authenticate = require('../middleware/authenticate'); // If it exists, add it
 

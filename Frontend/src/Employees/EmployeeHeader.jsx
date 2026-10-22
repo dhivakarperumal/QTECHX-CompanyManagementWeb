@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Menu, Search, Bell, Settings, User, LogOut, ChevronDown, X,
+  Menu, Search, Settings, User, LogOut, ChevronDown, X,
   LayoutDashboard, ClipboardCheck, CalendarOff, FolderKanban,
   CheckSquare, Clock, DollarSign, Video, CalendarDays, CalendarClock,
-  TrendingUp, FileText, AlertCircle, CheckCircle2, Timer,
+  TrendingUp, FileText, AlertCircle, Timer,
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import dayjs from "dayjs";
 import api from "../api";
+import { NotificationBell } from "../PrivateRouter/NotificationsContext.jsx";
 
 /* ── page title map ── */
 const pageInfo = {
@@ -38,7 +39,6 @@ const EmployeeHeader = ({ onMenuClick }) => {
   const [showSearch, setShowSearch]         = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
   const [currentTime, setCurrentTime]       = useState(dayjs());
-  const [alerts, setAlerts]                 = useState({ tasks: [], leaves: [], meetings: [] });
   const [todayAttendance, setTodayAttendance] = useState(null);
 
   const dropdownRef = useRef(null);
@@ -58,137 +58,6 @@ const EmployeeHeader = ({ onMenuClick }) => {
     const t = setInterval(() => setCurrentTime(dayjs()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  /* fetch notifications */
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      if (!user) return;
-      const employeeId = user?.employee_id || user?.employeeId || user?.user_id || user?.id;
-      if (!employeeId) return;
-
-      let taskAlerts = [];
-      let leaveAlerts = [];
-      let meetingAlerts = [];
-
-      try {
-        const { data } = await api.get('/tasks', {
-          params: { page: 1, limit: 100, assigned_to: employeeId },
-        });
-        const active = (data?.data || []).filter(t => {
-          return (t.assignment_date && dayjs(t.assignment_date).isSame(dayjs(), 'day')) ||
-                 (t.created_at && dayjs(t.created_at).isSame(dayjs(), 'day'));
-        });
-        taskAlerts = active.map(t => ({
-          id: t.uuid || t.id,
-          type: "task",
-          icon: CheckSquare,
-          color: "text-blue-400",
-          bg: "bg-blue-500/15",
-          title: "Today Assigned Task",
-          sub: t.task_name || t.module_name || 'Untitled Task',
-          time: dayjs(t.assignment_date || t.created_at).format('h:mm A'),
-          link: "/employee/tasks"
-        }));
-      } catch (e) {
-        console.error('[Header] Tasks fetch error:', e?.message);
-      }
-
-      try {
-        const { data } = await api.get('/employee-leaves/my-leaves');
-        const approved = (data?.data || []).filter(l => {
-          if (l.status !== 'Approved') return false;
-          return (l.updated_at && dayjs(l.updated_at).isSame(dayjs(), 'day')) ||
-                 (l.created_at && dayjs(l.created_at).isSame(dayjs(), 'day'));
-        });
-        leaveAlerts = approved.map(l => ({
-          id: l.id,
-          type: "leave",
-          icon: CheckCircle2,
-          color: "text-green-400",
-          bg: "bg-green-500/15",
-          title: "Leave approved",
-          sub: `${dayjs(l.from_date).format('MMM D')} - ${dayjs(l.to_date).format('MMM D')} ${l.leave_type || 'Leave'}`,
-          time: dayjs(l.updated_at || l.created_at).format('h:mm A'),
-          link: "/employee/leaves"
-        }));
-      } catch (e) {
-        console.error('[Header] Leave fetch error:', e?.message);
-      }
-
-      try {
-        const [eventsRes, myEventsRes] = await Promise.all([
-          api.get('/events').catch(() => ({ data: [] })),
-          api.get('/myevents').catch(() => ({ data: [] }))
-        ]);
-
-        const normalizeList = (payload) => {
-          if (!payload) return [];
-          if (Array.isArray(payload)) return payload;
-          if (Array.isArray(payload?.data)) return payload.data;
-          if (Array.isArray(payload?.rows)) return payload.rows;
-          return [];
-        };
-
-        const possibleIds = [user?.employee_id, user?.employeeId, user?.user_id, user?.id, user?._id, user?.userId, user?.uuid, user?.employee_code, user?.employeeCode].filter(Boolean).map(String);
-        const currentUserName = (profileName || user?.name || user?.full_name || user?.username || '').trim().toLowerCase();
-        let personalEvents = normalizeList(myEventsRes?.data);
-        let officeEvents = normalizeList(eventsRes?.data);
-
-        if (possibleIds.length > 0) {
-          personalEvents = personalEvents.filter(evt => possibleIds.includes(String(evt.user_id || evt.userId || evt.employeeId || evt.employee_id || '')));
-          officeEvents = officeEvents.filter(evt => {
-            const participants = evt.participants;
-            if (!participants) return false;
-            const normalizedParticipants = typeof participants === 'string' ? (() => { try { return JSON.parse(participants); } catch { return []; } })() : participants;
-            if (!Array.isArray(normalizedParticipants)) return false;
-            return normalizedParticipants.some(part => {
-              if (typeof part === 'object' && part !== null) {
-                const partId = String(part.user_id || part.userId || part.employee_id || part.employeeId || '');
-                const partName = String(part.name || part.full_name || part.username || '').trim().toLowerCase();
-                return possibleIds.includes(partId) || (currentUserName && partName && partName === currentUserName);
-              }
-              return typeof part === 'string' && currentUserName && String(part).trim().toLowerCase() === currentUserName;
-            });
-          });
-        }
-
-        const allEvents = [...personalEvents, ...officeEvents];
-        const uniqueEvents = Array.from(new Map(allEvents.map(evt => [evt.id || evt.uuid || `${evt.title || evt.event_name || 'event'}-${evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || ''}`, evt])).values());
-        const now = dayjs();
-        const meetingItems = uniqueEvents.filter(evt => {
-          const dateValue = evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || evt.start || evt.event_date;
-          if (!dateValue) return false;
-          const eventDate = dayjs(dateValue);
-          if (!eventDate.isValid()) return false;
-          return eventDate.isSame(now, 'day') || eventDate.isAfter(now, 'day');
-        });
-
-        meetingAlerts = meetingItems.slice(0, 5).map(evt => {
-          const dateValue = evt.planDate || evt.startDate || evt.plan_date || evt.start_time || evt.date || evt.start || evt.event_date;
-          const meetingTime = dateValue ? dayjs(dateValue).format('h:mm A') : 'Time TBD';
-          return {
-            id: evt.id || evt.uuid || `${evt.title || evt.event_name || evt.planTitle || 'meeting'}-${dateValue || ''}`,
-            type: 'meeting',
-            icon: Video,
-            color: 'text-pink-400',
-            bg: 'bg-pink-500/15',
-            title: 'Meeting allotted',
-            sub: `${evt.title || evt.event_name || evt.planTitle || 'Meeting'} · ${dateValue ? dayjs(dateValue).format('MMM D, h:mm A') : 'Upcoming'}`,
-            time: meetingTime,
-            link: '/employee/meetings'
-          };
-        });
-      } catch (e) {
-        console.error('[Header] Meetings fetch error:', e?.message);
-      }
-
-      setAlerts({ tasks: taskAlerts, leaves: leaveAlerts, meetings: meetingAlerts });
-    };
-
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000); // refresh every minute
-    return () => clearInterval(interval);
-  }, [user]);
 
   const fetchTodayAttendance = useCallback(async () => {
     if (!user) return;
@@ -222,9 +91,6 @@ const EmployeeHeader = ({ onMenuClick }) => {
     const interval = setInterval(fetchTodayAttendance, 30000); // refresh every 30s
     return () => clearInterval(interval);
   }, [fetchTodayAttendance, location.pathname]);
-
-  const allNotifications = [...alerts.tasks, ...alerts.leaves, ...alerts.meetings];
-  const unreadCount = allNotifications.length;
 
   const getAttendanceButtonInfo = () => {
     if (!todayAttendance || !todayAttendance.check_in_time) {
@@ -357,59 +223,7 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
             <div className="w-px h-6 bg-white/10 mx-1" />
 
-            {/* Notifications Bell */}
-            <div className="relative">
-              <IconBtn name="notifications" badge={unreadCount} title="Notifications">
-                <Bell size={18} />
-              </IconBtn>
-
-              {activeDropdown === "notifications" && (
-                <div className="absolute right-0 top-full mt-3 w-80 bg-[#13141a] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                  {/* header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
-                    <span className="text-sm font-bold text-white flex items-center gap-2">
-                      <Bell size={14} className="text-primary" /> Notifications
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-primary/20 text-primary">
-                      {unreadCount} New
-                    </span>
-                  </div>
-                  {/* list */}
-                  <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
-                    {allNotifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-white/40 text-xs">
-                        No new notifications
-                      </div>
-                    ) : (
-                      allNotifications.map(n => {
-                        const NIcon = n.icon;
-                        return (
-                          <div 
-                            key={`${n.type}-${n.id}`} 
-                            onClick={() => {
-                              if (n.link) navigate(n.link);
-                              setActiveDropdown(null);
-                            }}
-                            className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition cursor-pointer group"
-                          >
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${n.bg}`}>
-                            <NIcon size={14} className={n.color} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-white group-hover:text-primary transition">{n.title}</p>
-                            <p className="text-[10px] text-white/40 mt-0.5 truncate">{n.sub}</p>
-                          </div>
-                          <span className="text-[9px] text-white/25 shrink-0 mt-0.5">{n.time}</span>
-                        </div>
-                      );
-                    }))}
-                  </div>
-                  <button className="w-full block text-center py-2.5 border-t border-white/10 text-[11px] font-bold text-primary hover:bg-primary/10 transition uppercase tracking-widest">
-                    View All Notifications
-                  </button>
-                </div>
-              )}
-            </div>
+            <NotificationBell />
 
             {/* Quick links */}
             <IconBtn name="quick" title="Quick Actions">

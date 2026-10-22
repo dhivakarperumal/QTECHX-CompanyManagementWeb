@@ -2661,6 +2661,25 @@ async function ensureCompletedProjectsSchema(pool) {
   `);
 }
 
+async function ensureNotificationsSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS notifications (
+      id VARCHAR(36) NOT NULL,
+      recipient_user_id VARCHAR(36) NOT NULL,
+      type VARCHAR(80) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      link VARCHAR(500) NULL,
+      related_id VARCHAR(100) NULL,
+      is_read TINYINT(1) NOT NULL DEFAULT 0,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      INDEX idx_notifications_recipient_created (recipient_user_id, created_at),
+      INDEX idx_notifications_recipient_unread (recipient_user_id, is_read)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2671,6 +2690,7 @@ async function initDB() {
     await connection.ping();
     connection.release();
     await ensureSchema(pool);
+    await ensureNotificationsSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
     await ensureServiceRequestsSchema(pool);

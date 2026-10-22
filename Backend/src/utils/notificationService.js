@@ -1,0 +1,185 @@
+const { v4: uuidv4 } = require('uuid');
+const { getDB } = require('../config/db');
+
+function normalizeIds(ids) {
+  return [...new Set((Array.isArray(ids) ? ids : [ids])
+    .filter((id) => id !== undefined && id !== null && String(id).trim())
+    .map((id) => String(id).trim()))];
+}
+
+async function resolveUserIds(recipientIds) {
+  const ids = normalizeIds(recipientIds);
+  if (!ids.length) return [];
+
+  const db = getDB();
+  const placeholders = ids.map(() => '?').join(', ');
+  const [rows] = await db.execute(
+    `SELECT DISTINCT u.user_id
+       FROM users u
+       LEFT JOIN employees e
+         ON e.employee_id = u.user_id
+         OR e.official_email = u.email
+         OR e.personal_email = u.email
+      WHERE u.status = 'Active'
+        AND (
+          u.user_id IN (${placeholders})
+          OR u.email IN (${placeholders})
+          OR e.employee_id IN (${placeholders})
+          OR CAST(e.id AS CHAR) IN (${placeholders})
+          OR e.employee_code IN (${placeholders})
+        )`,
+    [...ids, ...ids, ...ids, ...ids, ...ids]
+  );
+  return rows.map((row) => row.user_id);
+}
+
+async function sendNotification(io, recipientIds, notification) {
+  const userIds = await resolveUserIds(recipientIds);
+  if (!userIds.length) return [];
+
+  const uniqueUserIds = normalizeIds(userIds);
+  const records = uniqueUserIds.map((recipientUserId) => ({
+    id: uuidv4(),
+    recipientUserId,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    link: notification.link || null,
+    relatedId: notification.relatedId ? String(notification.relatedId) : null,
+  }));
+
+  const db = getDB();
+  for (let index = 0; index < records.length; index += 250) {
+    const batch = records.slice(index, index + 250);
+    const values = batch.flatMap((record) => [
+      record.id,
+      record.recipientUserId,
+      record.type,
+      record.title,
+      record.message,
+      record.link,
+      record.relatedId,
+    ]);
+    const rowsSql = batch.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+    await db.execute(
+      `INSERT INTO notifications
+        (id, recipient_user_id, type, title, message, link, related_id)
+       VALUES ${rowsSql}`,
+      values
+    );
+  }
+
+  const createdAt = new Date().toISOString();
+  records.forEach((record) => {
+    const payload = {
+      id: record.id,
+      type: record.type,
+      title: record.title,
+      message: record.message,
+      link: record.link,
+      related_id: record.relatedId,
+      is_read: 0,
+      created_at: createdAt,
+    };
+    io?.to(`user:${record.recipientUserId}`).emit('notification', payload);
+  });
+
+  return records.map((record) => record.id);
+}
+
+async function sendToRoles(io, roles, notification) {
+  const db = getDB();
+  const placeholders = roles.map(() => '?').join(', ');
+  const [rows] = await db.execute(
+    `SELECT user_id FROM users WHERE status = 'Active' AND role IN (${placeholders})`,
+    roles
+  );
+  return sendNotification(io, rows.map((row) => row.user_id), notification);
+}
+
+async function sendToAdmins(io, notification) {
+  return sendToRoles(io, ['Admin', 'Super Admin'], notification);
+}
+
+async function sendToAllActiveUsers(io, notification) {
+  const db = getDB();
+  const [rows] = await db.execute("SELECT user_id FROM users WHERE status = 'Active'");
+  return sendNotification(io, rows.map((row) => row.user_id), notification);
+}
+
+async function notifySafely(req, recipientIds, notification, context) {
+  try {
+    return await sendNotification(req.app.get('io'), recipientIds, notification);
+  } catch (error) {
+    console.error(`[Notifications] ${context} delivery failed:`, error);
+    return [];
+  }
+}
+
+async function notifyAdminsSafely(req, notification, context) {
+  try {
+    return await sendToAdmins(req.app.get('io'), notification);
+  } catch (error) {
+    console.error(`[Notifications] ${context} delivery failed:`, error);
+    return [];
+  }
+}
+
+async function notifyAllUsersSafely(req, notification, context) {
+  try {
+    return await sendToAllActiveUsers(req.app.get('io'), notification);
+  } catch (error) {
+    console.error(`[Notifications] ${context} delivery failed:`, error);
+    return [];
+  }
+}
+
+function parseJsonArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    const isParticipant = [
+      'user_id', 'userId', 'employee_id', 'employeeId',
+      'trainee_id', 'traineeId', 'intern_id', 'internId',
+    ].some((field) => value[field] !== undefined && value[field] !== null);
+    return isParticipant ? [value] : Object.values(value);
+  }
+  if (typeof value !== 'string' || !value.trim()) return [];
+  const trimmed = value.trim();
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object') return Object.values(parsed);
+  } catch (error) {
+    if (!trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+      return trimmed.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+    console.warn('[Notifications] Could not parse participant list:', error.message);
+  }
+  return [];
+}
+
+function participantIds(participants) {
+  return parseJsonArray(participants)
+    .map((participant) => {
+      if (typeof participant === 'string' || typeof participant === 'number') return participant;
+      if (!participant || typeof participant !== 'object') return null;
+      return participant.user_id || participant.userId ||
+        participant.employee_id || participant.employeeId ||
+        participant.trainee_id || participant.traineeId ||
+        participant.intern_id || participant.internId ||
+        participant.id || participant.value || null;
+    })
+    .filter(Boolean);
+}
+
+module.exports = {
+  normalizeIds,
+  resolveUserIds,
+  sendNotification,
+  sendToAdmins,
+  sendToAllActiveUsers,
+  notifySafely,
+  notifyAdminsSafely,
+  notifyAllUsersSafely,
+  participantIds,
+};

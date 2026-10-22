@@ -1,5 +1,6 @@
 const path = require('path');
 const jobModel = require('../models/jobModel');
+const { notifyAllUsersSafely } = require('../utils/notificationService');
 
 function getUploadedCompanyLogo(req) {
   const file = req.file;
@@ -52,6 +53,18 @@ async function createJob(req, res) {
       created_by: actor,
       updated_by: actor,
     });
+    if (
+      String(job.visibility || 'Public').trim().toLowerCase() === 'public' &&
+      String(job.job_status || '').trim().toLowerCase() === 'active'
+    ) {
+      await notifyAllUsersSafely(req, {
+        type: 'career_added',
+        title: 'New career opportunity',
+        message: `${job.job_title || 'A new job'} has been added to the careers page.`,
+        link: '/career',
+        relatedId: job.id,
+      }, 'career posting');
+    }
     return res.status(201).json({ success: true, message: 'Job created successfully', data: job });
   } catch (error) {
     console.error('Error creating job:', error);
@@ -62,12 +75,26 @@ async function createJob(req, res) {
 async function updateJob(req, res) {
   try {
     const { id } = req.params;
+    const previousJob = await jobModel.getJobById(id);
     const actor = req.user?.employee_id || req.user?.id || req.user?.user_id || null;
     const job = await jobModel.updateJob(id, {
       ...req.body,
       company_logo: getUploadedCompanyLogo(req),
       updated_by: actor,
     });
+    const wasPublished = String(previousJob?.visibility || '').trim().toLowerCase() === 'public' &&
+      String(previousJob?.job_status || '').trim().toLowerCase() === 'active';
+    const isPublished = String(job.visibility || 'Public').trim().toLowerCase() === 'public' &&
+      String(job.job_status || '').trim().toLowerCase() === 'active';
+    if (previousJob && !wasPublished && isPublished) {
+      await notifyAllUsersSafely(req, {
+        type: 'career_added',
+        title: 'New career opportunity',
+        message: `${job.job_title || 'A new job'} is now available on the careers page.`,
+        link: '/career',
+        relatedId: job.id,
+      }, 'career publication');
+    }
     return res.status(200).json({ success: true, message: 'Job updated successfully', data: job });
   } catch (error) {
     console.error('Error updating job:', error);
