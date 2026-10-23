@@ -1,16 +1,48 @@
 const { getDB } = require("../config/db");
 
-async function createLeave(leaveData) {
+async function createLeaveIfNoPending(leaveData) {
   const db = getDB();
-  const fields = Object.keys(leaveData).filter(key => leaveData[key] !== undefined);
-  const values = fields.map(key => leaveData[key]);
-  const placeholders = fields.map(() => "?").join(", ");
-  
-  const [result] = await db.execute(
-    `INSERT INTO employee_leaves (${fields.join(", ")}) VALUES (${placeholders})`,
-    values
-  );
-  return getLeaveById(result.insertId);
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    await connection.execute(
+      `SELECT employee_id FROM employees WHERE employee_id = ? FOR UPDATE`,
+      [leaveData.employee_id]
+    );
+
+    const [pendingRows] = await connection.execute(
+      `SELECT id FROM employee_leaves
+       WHERE employee_id = ? AND LOWER(TRIM(status)) = 'pending'
+       LIMIT 1`,
+      [leaveData.employee_id]
+    );
+
+    if (pendingRows.length > 0) {
+      await connection.rollback();
+      return null;
+    }
+
+    const fields = Object.keys(leaveData).filter(key => leaveData[key] !== undefined);
+    const values = fields.map(key => leaveData[key]);
+    const placeholders = fields.map(() => "?").join(", ");
+    const [result] = await connection.execute(
+      `INSERT INTO employee_leaves (${fields.join(", ")}) VALUES (${placeholders})`,
+      values
+    );
+    const [rows] = await connection.execute(
+      `SELECT * FROM employee_leaves WHERE id = ?`,
+      [result.insertId]
+    );
+
+    await connection.commit();
+    return rows[0] || null;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function getLeaveById(id) {
@@ -55,7 +87,7 @@ async function updateLeaveStatus(id, status, adminReason, updatedBy) {
 }
 
 module.exports = {
-  createLeave,
+  createLeaveIfNoPending,
   getLeaveById,
   getLeavesByEmployeeId,
   getAllLeaves,

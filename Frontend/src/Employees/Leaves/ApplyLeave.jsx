@@ -128,6 +128,9 @@ const ApplyLeave = () => {
     };
   });
   const selectedLeaveSetting = enrichedLeaveSettings.find((item) => item.leave_type === formData.leave_type) || null;
+  const hasPendingLeave = employeeLeaves.some(
+    (leave) => String(leave.status || '').trim().toLowerCase() === 'pending'
+  );
 
   useEffect(() => {
     const fetchLeaveSettings = async () => {
@@ -250,6 +253,11 @@ const ApplyLeave = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (hasPendingLeave) {
+      toast.error('You already have a pending leave request. Please wait for it to be reviewed before applying again.');
+      return;
+    }
+
     if (formData.no_of_days <= 0) {
       toast.error('Invalid date range');
       return;
@@ -283,6 +291,14 @@ const ApplyLeave = () => {
       toast.success('Leave applied successfully');
       navigate('/employee/leaves/history');
     } catch (error) {
+      if (error.response?.status === 409) {
+        try {
+          const leavesRes = await api.get('/employee-leaves/my-leaves');
+          setEmployeeLeaves(leavesRes.data?.data || []);
+        } catch (refreshError) {
+          console.error('Failed to refresh leave requests', refreshError);
+        }
+      }
       toast.error(error.response?.data?.message || 'Failed to apply leave');
     } finally {
       setLoading(false);
@@ -334,6 +350,11 @@ const ApplyLeave = () => {
           <div className="max-h-[calc(90vh-92px)] overflow-y-auto p-6">
             <div className="rounded-2xl border border-white/10 bg-[#111318] p-6">
               <form onSubmit={handleSubmit} className="space-y-6">
+                {hasPendingLeave && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200" role="alert">
+                    You already have a pending leave request. Please wait for it to be reviewed before applying again.
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Read-only Employee Info */}
                   <div className="space-y-2">
@@ -514,7 +535,7 @@ const ApplyLeave = () => {
                 <div className="pt-4 flex justify-end">
                   <button 
                     type="submit" 
-                    disabled={loading}
+                    disabled={loading || settingsLoading || hasPendingLeave}
                     className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition hover:opacity-90 disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}
                   >

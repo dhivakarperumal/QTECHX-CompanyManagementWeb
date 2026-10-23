@@ -58,7 +58,14 @@ async function applyLeave(req, res) {
       created_by: employee_id
     };
 
-    const newLeave = await LeaveModel.createLeave(leaveData);
+    const newLeave = await LeaveModel.createLeaveIfNoPending(leaveData);
+    if (!newLeave) {
+      return res.status(409).json({
+        success: false,
+        message: "You already have a pending leave request. Please wait for it to be reviewed before applying again."
+      });
+    }
+
     const employeeName = await resolveEmployeeName(
       employee_id,
       req.user?.username || req.user?.name || req.user?.email
