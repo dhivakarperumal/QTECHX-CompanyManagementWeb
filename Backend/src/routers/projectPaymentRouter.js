@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const projectPaymentController = require('../controllers/projectPaymentController');
+const { authenticate, authorize } = require('../security/authMiddleware');
+const financeAdmins = [authenticate, authorize('Super Admin', 'Admin')];
 
-router.post('/', projectPaymentController.createProjectPayment);
-router.get('/', projectPaymentController.getProjectPayments);
-router.get('/:projectId/summary', projectPaymentController.getProjectPaymentSummary);
-router.put('/:id', projectPaymentController.updateProjectPayment);
-router.delete('/:id', projectPaymentController.deleteProjectPayment);
+router.post('/', ...financeAdmins, projectPaymentController.createProjectPayment);
+router.get('/', ...financeAdmins, projectPaymentController.getProjectPayments);
+router.get('/:projectId/summary', ...financeAdmins, projectPaymentController.getProjectPaymentSummary);
+router.put('/:id', ...financeAdmins, projectPaymentController.updateProjectPayment);
+router.delete('/:id', ...financeAdmins, projectPaymentController.deleteProjectPayment);
 
 module.exports = router;

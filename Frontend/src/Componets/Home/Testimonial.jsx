@@ -6,7 +6,7 @@ import SliderLib from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-import api from "../../api";
+import { getPublicResponse } from "../../utils/publicDataCache";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 
@@ -24,7 +24,7 @@ const Testimonial = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const { data } = await api.get(
+        const { data } = await getPublicResponse(
           "/reviews/public/approved"
         );
 
@@ -41,9 +41,6 @@ const Testimonial = () => {
               role:
                 review.product_name ||
                 "Client",
-
-              image:
-                "https://randomuser.me/api/portraits/men/1.jpg",
 
               quote:
                 review.review || "",
@@ -574,19 +571,26 @@ const Testimonial = () => {
                             "
                           >
 
-                            <img
-                              src={review.image}
-                              alt={review.name}
+                            <div
+                              aria-hidden="true"
                               className="
+                                flex
                                 h-8
                                 w-8
                                 shrink-0
+                                items-center
+                                justify-center
                                 rounded-full
                                 border-2
                                 border-[#FF6A00]/50
-                                object-cover
+                                bg-[#0b1014]
+                                text-xs
+                                font-bold
+                                text-[#FF6A00]
                               "
-                            />
+                            >
+                              {review.name.charAt(0).toUpperCase()}
+                            </div>
 
                             <div className="min-w-0">
 

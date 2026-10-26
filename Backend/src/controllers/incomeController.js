@@ -7,7 +7,7 @@ exports.createIncome = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const actor = req.user?.user_id || req.body.created_by || null;
+    const actor = req.user?.user_id || null;
     const {
       income_type,
       intern_id,
@@ -178,7 +178,7 @@ exports.updateIncome = async (req, res) => {
     await connection.beginTransaction();
 
     const { id } = req.params;
-    const actor = req.user?.user_id || req.body.updated_by || null;
+    const actor = req.user?.user_id || null;
     const {
       income_type,
       intern_id,

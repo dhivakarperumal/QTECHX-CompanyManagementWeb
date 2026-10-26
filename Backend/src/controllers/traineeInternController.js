@@ -55,7 +55,8 @@ const { createUser, updateUser, findByEmail } = require('../models/userModel');
 
 async function createTraineeInternHandler(req, res) {
   try {
-    const actor = req.user?.user_id || 'SYSTEM';
+    const isAuthenticated = Boolean(req.user);
+    const actor = req.user?.user_id || 'PUBLIC_APPLICATION';
     const uploadedFiles = getUploadedFiles(req);
     
     // Extract user credentials
@@ -66,6 +67,8 @@ async function createTraineeInternHandler(req, res) {
     const traineeData = { ...req.body };
     delete traineeData.password;
     delete traineeData.confirm_password;
+    delete traineeData.role;
+    if (!isAuthenticated) traineeData.status = 'Pending';
 
     normalizeTraineeData(traineeData);
 
@@ -95,8 +98,8 @@ async function createTraineeInternHandler(req, res) {
               email: userEmail,
               mobile: traineeData.mobile_number,
               password: hashedPassword,
-              role: traineeData.role || 'Trainee',
-              status: traineeData.status || 'Active',
+              role: 'Trainee',
+              status: isAuthenticated ? 'Active' : 'Inactive',
               created_by: actor,
               updated_by: actor,
             });
@@ -107,7 +110,15 @@ async function createTraineeInternHandler(req, res) {
       }
     }
 
-    return ok(res, { message: 'Trainee/Intern created successfully', trainee }, 201);
+    const responseTrainee = isAuthenticated
+      ? trainee
+      : {
+          uuid: trainee.uuid,
+          person_id: trainee.person_id,
+          full_name: trainee.full_name,
+          status: trainee.status,
+        };
+    return ok(res, { message: 'Trainee/Intern created successfully', trainee: responseTrainee }, 201);
   } catch (error) {
     console.error('Create Trainee/Intern Error:', error);
     const msg = duplicateMessage(error);
@@ -189,7 +200,6 @@ async function updateTraineeInternHandler(req, res) {
         if (officialEmail) userUpdates.email = officialEmail;
         else if (updates.email_address && !officialEmail) userUpdates.email = updates.email_address;
         if (updates.mobile_number) userUpdates.mobile = updates.mobile_number;
-        if (updates.type) userUpdates.role = updates.type;
         if (updates.status) userUpdates.status = updates.status;
         if (userPassword) {
           userUpdates.password = await bcrypt.hash(userPassword, 12);

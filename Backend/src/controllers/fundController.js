@@ -16,9 +16,7 @@ exports.updateFund = async (req, res) => {
   try {
     const pool = getDB();
     const { available_fund } = req.body;
-    // The global JWT middleware might set AsyncLocalStorage or just req.user if we add middleware in route.
-    // I will try to get it from headers just in case.
-    const created_by = req.body.created_by || null;
+    const created_by = req.user?.user_id || null;
 
     if (available_fund === undefined || isNaN(available_fund)) {
       return res.status(400).json({ success: false, message: "Valid amount is required" });

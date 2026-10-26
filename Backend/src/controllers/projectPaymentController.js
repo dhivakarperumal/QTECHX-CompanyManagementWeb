@@ -1,4 +1,3 @@
-const { AsyncLocalStorage } = require('async_hooks');
 const projectPaymentModel = require('../models/projectPaymentModel');
 const projectModel = require('../models/projectModel');
 
@@ -16,8 +15,8 @@ async function createProjectPayment(req, res) {
   try {
     await connection.beginTransaction();
 
-    const { project_id, payment_mode, created_by, client_name, paid_to, amount_paid, reason_for_payment, date_of_payment, time_of_payment } = req.body;
-    const actor = req.user?.user_id || created_by || null;
+    const { project_id, payment_mode, client_name, paid_to, amount_paid, reason_for_payment, date_of_payment, time_of_payment } = req.body;
+    const actor = req.user?.user_id || null;
 
     if (!project_id || !amount_paid || !date_of_payment || !time_of_payment) {
       await connection.rollback();
@@ -176,7 +175,7 @@ module.exports = {
 async function updateProjectPayment(req, res) {
   try {
     const { id } = req.params;
-    const actor = req.user?.user_id || req.body.updated_by || null;
+    const actor = req.user?.user_id || null;
     const { amount_paid } = req.body;
 
     if (!amount_paid || isNaN(amount_paid)) {
@@ -224,7 +223,7 @@ async function updateProjectPayment(req, res) {
 async function deleteProjectPayment(req, res) {
   try {
     const { id } = req.params;
-    const actor = req.user?.user_id || req.body.updated_by || null;
+    const actor = req.user?.user_id || null;
 
     const db = require('../config/db').getDB();
     const [rows] = await db.query('SELECT amount_paid FROM project_payments WHERE uuid = ?', [id]);

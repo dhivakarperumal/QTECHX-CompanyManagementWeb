@@ -12,7 +12,7 @@ import {
   FaBullhorn,
 } from "react-icons/fa";
 
-import api from "../../api";
+import { getPublicResponse } from "../../utils/publicDataCache";
 import { Link } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -50,7 +50,7 @@ function Services() {
       setError(null);
 
       try {
-        const { data } = await api.get("/services/public/all");
+        const { data } = await getPublicResponse("/services/public/all");
 
         if (!data.success) {
           throw new Error(
@@ -256,6 +256,8 @@ function Services() {
                                   : service.singlepageimage
                               }
                               alt={service.title}
+                              loading="lazy"
+                              decoding="async"
                               className="
     h-24
     w-24

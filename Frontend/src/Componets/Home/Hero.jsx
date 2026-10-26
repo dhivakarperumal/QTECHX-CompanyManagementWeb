@@ -251,6 +251,9 @@ const Hero = () => {
                 <img
                   src={activeSlide.image}
                   alt={activeSlide.alt}
+                  loading={currentSlide === 0 ? "eager" : "lazy"}
+                  fetchPriority={currentSlide === 0 ? "high" : "auto"}
+                  decoding="async"
                   className="relative z-10 w-full max-w-[380px] object-contain drop-shadow-[0_0_35px_rgba(255,106,0,0.18)] transition-transform duration-700 hover:scale-[1.02] sm:max-w-[480px] md:max-w-[540px] lg:max-w-[620px] xl:max-w-[690px]"
                 />
               </motion.div>

@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import { FiChevronDown, FiX, FiLogOut, FiArrowRight } from "react-icons/fi";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
-import api from "../../api";
+import { getPublicResponse } from "../../utils/publicDataCache";
 import {
   FaCode,
   FaLaptopCode,
@@ -51,7 +51,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const { data } = await api.get("/services/public/all");
+        const { data } = await getPublicResponse("/services/public/all");
         if (data.success && Array.isArray(data.data)) {
           setServices(data.data);
         }

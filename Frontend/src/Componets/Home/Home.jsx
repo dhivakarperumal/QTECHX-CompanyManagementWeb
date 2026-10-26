@@ -1,32 +1,33 @@
+import { lazy } from "react";
 import Hero from "./Hero";
-import FeaturedOpenings from "./FeaturedOpenings";
-import EventBanner from "./EventBanner";
-import Services from "./Services";
-import AboutUs from "./AboutUs";
-import Methodology from "./Methodology";
-import WhyChooseUs from "./WhyChooseUs";
-import Projects from "./Projects";
-import Careers from "./Careers";
-import Testimonial from "./Testimonial";
-import JobOpeningBanner from "./JobOpeningBanner";
-import InnovationHub from "./InnovationHub";
-import InternationalMarkets from "./InternationalMarkets";
+import DeferredHomeSection from "./DeferredHomeSection";
+
+const JobOpeningBanner = lazy(() => import("./JobOpeningBanner"));
+const Services = lazy(() => import("./Services"));
+const InternationalMarkets = lazy(() => import("./InternationalMarkets"));
+const EventBanner = lazy(() => import("./EventBanner"));
+const AboutUs = lazy(() => import("./AboutUs"));
+const Methodology = lazy(() => import("./Methodology"));
+const WhyChooseUs = lazy(() => import("./WhyChooseUs"));
+const Projects = lazy(() => import("./Projects"));
+const Careers = lazy(() => import("./Careers"));
+const Testimonial = lazy(() => import("./Testimonial"));
 
 const Home = () => {
 
   return (
     <>
       <Hero />
-      <JobOpeningBanner />
-      <Services/>
-      <InternationalMarkets />
-      <EventBanner/>
-      <AboutUs/>
-      <Methodology/>
-      <WhyChooseUs />
-      <Projects />
-      <Careers />
-      <Testimonial />
+      <DeferredHomeSection component={JobOpeningBanner} />
+      <DeferredHomeSection component={Services} />
+      <DeferredHomeSection component={InternationalMarkets} />
+      <DeferredHomeSection component={EventBanner} />
+      <DeferredHomeSection component={AboutUs} />
+      <DeferredHomeSection component={Methodology} />
+      <DeferredHomeSection component={WhyChooseUs} />
+      <DeferredHomeSection component={Projects} />
+      <DeferredHomeSection component={Careers} />
+      <DeferredHomeSection component={Testimonial} />
     </>
   );
 };

@@ -12,6 +12,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import api from "../../api";
+import { getPublicResponse } from "../../utils/publicDataCache";
 import PageContainer from "../CommonComponents/PageContainer";
 import SectionTitle from "../CommonComponents/SectionTitle";
 
@@ -112,8 +113,8 @@ const Projects = () => {
     const fetchProjects = async () => {
       try {
         const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
-          api.get("/projects/public/all?limit=500&current_status=Completed"),
-          api.get("/completed-projects/public/all?limit=500")
+          getPublicResponse("/projects/public/all?limit=8&current_status=Completed"),
+          getPublicResponse("/completed-projects/public/all?limit=8")
         ]);
 
         let adminList = [];
@@ -784,6 +785,8 @@ const Projects = () => {
                             <img
                               src={project.image}
                               alt={project.title}
+                              loading="lazy"
+                              decoding="async"
                               className="
                                 h-full
                                 w-full

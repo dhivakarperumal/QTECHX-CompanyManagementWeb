@@ -1,6 +1,26 @@
 const { getDB } = require("../config/db");
 const { v4: uuidv4 } = require("uuid");
 const { notifySafely } = require("../utils/notificationService");
+const { resolveAllPossibleEmployeeIds } = require("../models/attendanceModel");
+
+const adminRoles = new Set(["admin", "super admin"]);
+const employeeRoles = new Set(["employee", "staff"]);
+
+async function getSalaryEmployeeScope(req, pool) {
+  const role = String(req.user?.role || req.user?.user_role || req.user?.emp_role || "")
+    .trim()
+    .toLowerCase();
+  if (adminRoles.has(role)) return null;
+  if (!employeeRoles.has(role)) return [];
+
+  const identity =
+    req.user?.employee_id ||
+    req.user?.employeeId ||
+    req.user?.user_id ||
+    req.user?.id ||
+    req.user?.uuid;
+  return identity ? resolveAllPossibleEmployeeIds(pool, String(identity)) : [];
+}
 
 exports.getEmployeeSalaryDetails = async (req, res) => {
   const { employee_id, month, year } = req.query;
@@ -11,6 +31,10 @@ exports.getEmployeeSalaryDetails = async (req, res) => {
 
   try {
     const pool = getDB();
+    const employeeScope = await getSalaryEmployeeScope(req, pool);
+    if (employeeScope && !employeeScope.includes(String(employee_id))) {
+      return res.status(403).json({ success: false, message: "You can only view your own salary details" });
+    }
 
     // Fetch employee details
     const [empRows] = await pool.query(
@@ -92,7 +116,7 @@ exports.paySalary = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const actor = req.user?.user_id || req.body.created_by || null;
+    const actor = req.user?.user_id || null;
 
 
     if (!employee_id || !total_salary || isNaN(total_salary)) {
@@ -203,11 +227,21 @@ exports.paySalary = async (req, res) => {
 exports.getSalaryHistory = async (req, res) => {
   try {
     const pool = getDB();
+    const employeeScope = await getSalaryEmployeeScope(req, pool);
+    if (employeeScope && employeeScope.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const scopeFilter = employeeScope
+      ? `WHERE s.employee_id IN (${employeeScope.map(() => "?").join(", ")})`
+      : "";
     const [rows] = await pool.query(
       `SELECT s.*, e.first_name, e.last_name, e.employee_code
        FROM employee_salaries s
        JOIN employees e ON s.employee_id = e.employee_id
-       ORDER BY s.created_at DESC`
+       ${scopeFilter}
+       ORDER BY s.created_at DESC`,
+      employeeScope || []
     );
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
@@ -223,7 +257,7 @@ exports.updateSalary = async (req, res) => {
     await connection.beginTransaction();
 
     const { id } = req.params;
-    const actor = req.user?.user_id || req.body.updated_by || null;
+    const actor = req.user?.user_id || null;
     const { total_salary } = req.body;
 
     if (!total_salary || isNaN(total_salary)) {
@@ -297,7 +331,7 @@ exports.deleteSalary = async (req, res) => {
   try {
     await connection.beginTransaction();
     const { id } = req.params;
-    const actor = req.user?.user_id || req.body.updated_by || null;
+    const actor = req.user?.user_id || null;
 
     // Fetch existing salary
     const [existing] = await connection.query("SELECT total_salary, expense_id FROM employee_salaries WHERE id = ?", [id]);

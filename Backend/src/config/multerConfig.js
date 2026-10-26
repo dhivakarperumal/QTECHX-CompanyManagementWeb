@@ -3,6 +3,21 @@ const path = require("path");
 const fs = require("fs");
 
 const uploadDir = path.join(__dirname, "../../uploads");
+const allowedMimeTypesByExtension = {
+  ".jpg": ["image/jpeg"],
+  ".jpeg": ["image/jpeg"],
+  ".png": ["image/png"],
+  ".pdf": ["application/pdf"],
+  ".doc": ["application/msword"],
+  ".docx": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+  ".txt": ["text/plain"],
+  ".xls": ["application/vnd.ms-excel"],
+  ".xlsx": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  ".ppt": ["application/vnd.ms-powerpoint"],
+  ".pptx": ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+  ".zip": ["application/zip", "application/x-zip-compressed"],
+  ".rar": ["application/x-rar-compressed", "application/vnd.rar"],
+};
 const employeeUploadDir = path.join(uploadDir, "employees");
 const clientUploadDir = path.join(uploadDir, "clients");
 const projectUploadDir = path.join(uploadDir, "projects");
@@ -118,29 +133,12 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for ZIP and large assets
   fileFilter: (req, file, cb) => {
-    // allow images and documents
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "text/plain",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/zip",
-      "application/x-zip-compressed",
-      "application/x-rar-compressed",
-      "application/vnd.rar",
-    ];
-    const isAllowed = allowedTypes.includes(file.mimetype) || file.originalname.match(/\.(pdf|doc|docx|txt|xls|xlsx|ppt|pptx|zip|rar)$/i);
-    if (isAllowed) {
+    const extension = path.extname(file.originalname).toLowerCase();
+    const allowedMimeTypes = allowedMimeTypesByExtension[extension];
+    if (allowedMimeTypes?.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only PDF, DOC/DOCX, images, text, spreadsheets, presentations, and ZIP/RAR files are allowed."));
+      cb(new Error("Invalid file type. Upload a supported document or JPG/PNG image with a matching file type."));
     }
   },
 });
