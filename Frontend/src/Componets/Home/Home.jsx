@@ -10,6 +10,7 @@ import Careers from "./Careers";
 import Testimonial from "./Testimonial";
 import JobOpeningBanner from "./JobOpeningBanner";
 import InnovationHub from "./InnovationHub";
+import InternationalMarkets from "./InternationalMarkets";
 
 const Home = () => {
 
@@ -18,6 +19,7 @@ const Home = () => {
       <Hero />
       <JobOpeningBanner />
       <Services/>
+      <InternationalMarkets />
       <EventBanner/>
       <AboutUs/>
       <Methodology/>

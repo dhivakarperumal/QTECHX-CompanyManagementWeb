@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /trainee/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://qtechx.com/sitemap.xml
