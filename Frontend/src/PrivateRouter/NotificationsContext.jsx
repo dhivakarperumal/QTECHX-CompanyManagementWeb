@@ -8,7 +8,7 @@ import { NotificationsContext, useNotifications } from './NotificationsContext'
 const socketUrl = API_URL.replace(/\/api\/?$/, '') || window.location.origin
 
 export function NotificationsProvider({ children }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const userId = user?.user_id || user?.id
   const token = localStorage.getItem('token')
   const userRole = String(user?.role || '').toLowerCase()
@@ -19,21 +19,35 @@ export function NotificationsProvider({ children }) {
       userId={userId}
       token={token}
       userRole={userRole}
+      logout={logout}
     >
       {children}
     </NotificationsSession>
   )
 }
 
-function NotificationsSession({ children, userId, token, userRole }) {
+function NotificationsSession({ children, userId, token, userRole, logout }) {
   const [notifications, setNotifications] = useState([])
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState('')
+  const [connectionError, setConnectionError] = useState('')
 
   useEffect(() => {
     if (!userId || !token) return undefined
 
     let active = true
+    let sessionInvalid = false
+    const handleInvalidSession = error => {
+      const isExpiredToken =
+        error.response?.status === 403 &&
+        error.response?.data?.message === 'Invalid or expired token'
+
+      if (!isExpiredToken || sessionInvalid) return false
+      sessionInvalid = true
+      logout()
+      return true
+    }
+
     const refreshNotifications = () => api.get('/notifications', { params: { limit: 50 } })
       .then(({ data }) => {
         if (!active) return
@@ -48,6 +62,7 @@ function NotificationsSession({ children, userId, token, userRole }) {
       })
       .catch(error => {
         if (!active) return
+        if (handleInvalidSession(error)) return
         console.error('[Notifications] Failed to load saved notifications:', error)
         setLoadError('Notifications could not be loaded.')
       })
@@ -55,7 +70,8 @@ function NotificationsSession({ children, userId, token, userRole }) {
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling'],
+      reconnectionAttempts: 5,
     })
 
     socket.on('notification', notification => {
@@ -78,16 +94,27 @@ function NotificationsSession({ children, userId, token, userRole }) {
       }
     })
 
-    socket.on('connect', refreshNotifications)
+    socket.on('connect', () => {
+      setConnectionError('')
+      refreshNotifications()
+    })
     socket.on('connect_error', error => {
-      console.error('[Notifications] Real-time connection failed:', error.message)
+      if (error.message === 'Invalid or expired token') {
+        if (!sessionInvalid) {
+          sessionInvalid = true
+          logout()
+        }
+      }
+    })
+    socket.io.on('reconnect_failed', () => {
+      if (active) setConnectionError('Real-time notifications are temporarily unavailable.')
     })
 
     return () => {
       active = false
       socket.disconnect()
     }
-  }, [userId, token])
+  }, [userId, token, logout])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -109,9 +136,10 @@ function NotificationsSession({ children, userId, token, userRole }) {
     notifications,
     unreadCount: notifications.filter(item => !Number(item.is_read)).length,
     loadError,
+    connectionError,
     markRead,
     markAllRead,
-  }), [notifications, loadError, markRead, markAllRead])
+  }), [notifications, loadError, connectionError, markRead, markAllRead])
 
   const hasHeaderInbox = ['admin', 'super admin', 'manager', 'staff', 'employee', 'hr'].includes(userRole)
 
@@ -153,6 +181,7 @@ function NotificationBell({ floating = false }) {
     notifications,
     unreadCount,
     loadError,
+    connectionError,
     markRead,
     markAllRead,
   } = useNotifications()
@@ -209,6 +238,7 @@ function NotificationBell({ floating = false }) {
           )}
           <div className="max-h-80 divide-y divide-white/5 overflow-y-auto">
             {loadError && <p className="px-4 py-3 text-xs text-red-300">{loadError}</p>}
+            {connectionError && <p className="px-4 py-3 text-xs text-amber-300">{connectionError}</p>}
             {notifications.length === 0 && !loadError ? (
               <p className="px-4 py-8 text-center text-xs text-white/45">No notifications yet</p>
             ) : notifications.map(item => (

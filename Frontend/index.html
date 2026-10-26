@@ -96,6 +96,13 @@
   <body>
     <div id="root"></div>
     <div id="modal-root"></div>
+    <script>
+      if (!window.location.hash && window.location.pathname !== "/") {
+        window.location.replace(
+          `${window.location.origin}/#${window.location.pathname}${window.location.search}`
+        );
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

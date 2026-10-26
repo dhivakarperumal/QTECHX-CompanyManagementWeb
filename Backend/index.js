@@ -301,7 +301,11 @@ app.use(["/uploads", "/api/uploads"], (req, res, next) => {
 }));
 
 // Serve frontend production build if available
+const configuredFrontendBuildPath = process.env.FRONTEND_BUILD_PATH
+  ? path.resolve(__dirname, process.env.FRONTEND_BUILD_PATH)
+  : null;
 const potentialFrontendBuildPaths = [
+  configuredFrontendBuildPath,
   path.join(__dirname, "Frontend", "dist"),
   path.join(__dirname, "..", "Frontend", "dist"),
   path.join(__dirname, "..", "..", "Frontend", "dist"),
@@ -310,7 +314,7 @@ const potentialFrontendBuildPaths = [
   path.join(__dirname, "..", "dist"),
   path.join(__dirname, "build"),
   path.join(__dirname, "..", "build"),
-];
+].filter(Boolean);
 
 const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => {
   return fs.existsSync(buildPath) && fs.existsSync(path.join(buildPath, "index.html"));
@@ -361,7 +365,10 @@ if (frontendBuildPath) {
     return res.sendFile(path.join(frontendBuildPath, "index.html"));
   });
 } else {
-  console.warn("Frontend build directory not found. Backend will run in API-only mode.");
+  console.warn(
+    "Frontend build directory not found. Backend will run in API-only mode; " +
+    "build Frontend/dist or set FRONTEND_BUILD_PATH to the deployed frontend build."
+  );
 }
 
 if (fs.existsSync(frontendPublicPath)) {

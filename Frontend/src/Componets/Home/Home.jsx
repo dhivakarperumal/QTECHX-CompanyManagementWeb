@@ -4,7 +4,6 @@ import DeferredHomeSection from "./DeferredHomeSection";
 
 const JobOpeningBanner = lazy(() => import("./JobOpeningBanner"));
 const Services = lazy(() => import("./Services"));
-const InternationalMarkets = lazy(() => import("./InternationalMarkets"));
 const EventBanner = lazy(() => import("./EventBanner"));
 const AboutUs = lazy(() => import("./AboutUs"));
 const Methodology = lazy(() => import("./Methodology"));
@@ -20,7 +19,6 @@ const Home = () => {
       <Hero />
       <DeferredHomeSection component={JobOpeningBanner} />
       <DeferredHomeSection component={Services} />
-      <DeferredHomeSection component={InternationalMarkets} />
       <DeferredHomeSection component={EventBanner} />
       <DeferredHomeSection component={AboutUs} />
       <DeferredHomeSection component={Methodology} />
