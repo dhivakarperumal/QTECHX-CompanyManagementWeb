@@ -4,7 +4,6 @@ import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useCallback } from "react";
 import Select from 'react-select';
-import { Link } from 'react-router-dom';
 import ModalPortal from '../Componets/CommonComponents/ModalPortal';
 
 const customSelectStyles = {
@@ -84,12 +83,13 @@ const AttendancePage = () => {
   const [trendData, setTrendData] = useState([]);
   const [departmentData, setDepartmentData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [historyData, setHistoryData] = useState([]);
-  const [historyTotal, setHistoryTotal] = useState(0);
-  const [historyPage, setHistoryPage] = useState(1);
-  const [historySearch, setHistorySearch] = useState("");
-  const [historyStartDate, setHistoryStartDate] = useState("");
-  const [historyEndDate, setHistoryEndDate] = useState("");
+  const [historyEmployee, setHistoryEmployee] = useState(null);
+  const [historyFilter, setHistoryFilter] = useState("This Month");
+  const [historyCustomDate, setHistoryCustomDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  });
+  const [employeeHistory, setEmployeeHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState(null);
   const [historyRefresh, setHistoryRefresh] = useState(0);
@@ -158,39 +158,6 @@ const AttendancePage = () => {
     }
   }, [startDate, endDate]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadHistory = async () => {
-      setHistoryLoading(true);
-      setHistoryError(null);
-      const params = new URLSearchParams({
-        page: String(historyPage),
-        limit: "25",
-      });
-      if (historySearch.trim()) params.set("search", historySearch.trim());
-      if (historyStartDate) params.set("startDate", historyStartDate);
-      if (historyEndDate) params.set("endDate", historyEndDate);
-
-      try {
-        const response = await api.get(`/attendance/history?${params.toString()}`);
-        if (cancelled) return;
-        setHistoryData(response?.data?.data || []);
-        setHistoryTotal(Number(response?.data?.total || 0));
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Failed to load attendance history", err);
-        setHistoryError(err?.response?.data?.message || "Could not load attendance history.");
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
-      }
-    };
-
-    loadHistory();
-    return () => {
-      cancelled = true;
-    };
-  }, [historyPage, historySearch, historyStartDate, historyEndDate, historyRefresh]);
-
   const loadData = useCallback(async () => {
     if (!startDate || !endDate) return;
     setLoading(true);
@@ -211,6 +178,67 @@ const AttendancePage = () => {
       setLoading(false);
     }
   }, [startDate, endDate]);
+
+  const historyDateRange = (() => {
+    const now = new Date();
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+    let from;
+    let to;
+
+    if (historyFilter === "Today") {
+      from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      to = new Date(from);
+    } else if (historyFilter === "This Week" || historyFilter === "Last Week") {
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (historyFilter === "Last Week" ? -7 : 0));
+      from = weekStart;
+      to = new Date(weekStart);
+      to.setDate(to.getDate() + 6);
+    } else if (historyFilter === "This Month") {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (historyFilter === "Last Month") {
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else {
+      from = new Date(`${historyCustomDate || formatDate(now)}T00:00:00`);
+      to = new Date(from);
+    }
+
+    return { startDate: formatDate(from), endDate: formatDate(to) };
+  })();
+
+  useEffect(() => {
+    if (!historyEmployee) return undefined;
+    let cancelled = false;
+    const loadEmployeeHistory = async () => {
+      setHistoryLoading(true);
+      setHistoryError(null);
+      try {
+        const response = await api.get(
+          `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
+        );
+        if (!cancelled) setEmployeeHistory(response?.data?.data || []);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Failed to load employee attendance history", err);
+        setHistoryError(err?.response?.data?.message || "Could not load attendance history.");
+        setEmployeeHistory([]);
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
+      }
+    };
+
+    loadEmployeeHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [historyEmployee, historyDateRange.startDate, historyDateRange.endDate, historyRefresh]);
 
   const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -414,157 +442,12 @@ const AttendancePage = () => {
         <StatCard icon={<UserCog className="text-indigo-400" />} title="Working Now" value={workingNow} subtext="Live Tracking" bgColor="bg-indigo-500/10" />
       </div>
 
-      <section className="rounded-2xl border border-white/10 bg-[#111318] p-4 md:p-5">
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-white">Employee Attendance History</h3>
-            <p className="mt-1 text-sm text-white/50">
-              All recorded attendance, newest first. {historyTotal} record{historyTotal === 1 ? "" : "s"} found.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <input
-              type="search"
-              value={historySearch}
-              onChange={(event) => {
-                setHistorySearch(event.target.value);
-                setHistoryPage(1);
-              }}
-              placeholder="Search employee or status"
-              aria-label="Search attendance history"
-              className="min-w-[220px] rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-orange-500/50"
-            />
-            <label className="flex items-center gap-2 text-xs text-white/50">
-              From
-              <input
-                type="date"
-                value={historyStartDate}
-                onChange={(event) => {
-                  setHistoryStartDate(event.target.value);
-                  setHistoryPage(1);
-                }}
-                aria-label="Attendance history start date"
-                className="min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none scheme-dark focus:border-orange-500/50"
-              />
-            </label>
-            <label className="flex items-center gap-2 text-xs text-white/50">
-              To
-              <input
-                type="date"
-                value={historyEndDate}
-                onChange={(event) => {
-                  setHistoryEndDate(event.target.value);
-                  setHistoryPage(1);
-                }}
-                aria-label="Attendance history end date"
-                className="min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none scheme-dark focus:border-orange-500/50"
-              />
-            </label>
-          </div>
-        </div>
-
-        {historyError && (
-          <div role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-900/20 p-3 text-sm text-rose-200">
-            {historyError}
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1250px] text-left text-sm">
-            <thead className="border-b border-white/10 bg-white/5 text-xs font-medium uppercase tracking-wide text-white/50">
-              <tr>
-                <th className="px-3 py-3">Date</th>
-                <th className="px-3 py-3">Employee</th>
-                <th className="px-3 py-3">Check In</th>
-                <th className="px-3 py-3">Check Out</th>
-                <th className="px-3 py-3">Break</th>
-                <th className="px-3 py-3">Working Hours</th>
-                <th className="px-3 py-3">Late Entry</th>
-                <th className="px-3 py-3">Early Exit</th>
-                <th className="px-3 py-3">Overtime</th>
-                <th className="px-3 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {historyLoading ? (
-                <tr>
-                  <td colSpan="10" className="px-3 py-10 text-center text-white/50">Loading attendance history…</td>
-                </tr>
-              ) : historyData.length === 0 ? (
-                <tr>
-                  <td colSpan="10" className="px-3 py-10 text-center text-white/50">
-                    {historyError ? "Attendance history is unavailable." : "No attendance records match these filters."}
-                  </td>
-                </tr>
-              ) : historyData.map((record) => {
-                const status = record.attendance_status || "Unknown";
-                const statusColor = status.toLowerCase().includes("present")
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : status.toLowerCase().includes("absent")
-                    ? "bg-rose-500/10 text-rose-400"
-                    : "bg-slate-500/10 text-slate-300";
-                return (
-                  <tr key={record.id} className="transition-colors hover:bg-white/5">
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{String(record.attendance_date || "").slice(0, 10) || "—"}</td>
-                    <td className="px-3 py-3">
-                      <Link to={`/admin/attendance/view/${record.employee_id}`} className="font-medium text-white hover:text-orange-400">
-                        {record.employee_name || "Unknown Employee"}
-                      </Link>
-                      <span className="ml-2 text-xs text-white/40">{record.employee_code || record.employee_id || "—"}</span>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_in_time || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_out_time || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">
-                      {record.break_start_time || "—"} – {record.break_end_time || "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.working_hours || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.late_entry || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.early_exit || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.overtime || "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3">
-                      <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
-                        {status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-white/50">
-            Showing {historyTotal === 0 ? 0 : (historyPage - 1) * 25 + 1}–{Math.min(historyPage * 25, historyTotal)} of {historyTotal}
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setHistoryPage((page) => Math.max(1, page - 1))}
-              disabled={historyPage === 1 || historyLoading}
-              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <span className="text-xs text-white/50">
-              Page {historyPage} of {Math.max(1, Math.ceil(historyTotal / 25))}
-            </span>
-            <button
-              type="button"
-              onClick={() => setHistoryPage((page) => page + 1)}
-              disabled={historyPage >= Math.ceil(historyTotal / 25) || historyLoading}
-              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </section>
-
       <div className="rounded-2xl border border-white/10 bg-[#111318] p-4">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
-
+          <div>
+            <h3 className="text-lg font-bold text-white">{dateFilter === 'Today' ? "Today's" : dateFilter} Timesheet {dateFilter === 'Today' && '(Live)'}</h3>
+            <p className="mt-1 text-xs text-white/45">Select an employee to view their full attendance history.</p>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px] text-sm text-left table-auto">
@@ -598,9 +481,17 @@ const AttendancePage = () => {
                 <tr key={i} className="hover:bg-white/5 transition-colors">
                   <td className="py-3 px-4 text-white/60 whitespace-nowrap">{i + 1}</td>
                   <td className="py-3 px-4 font-medium text-white whitespace-nowrap">
-                    <Link to={`/admin/attendance/view/${row.employee_id}`} className="hover:text-orange-400 transition-colors">
-                      {row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span>
-                    </Link>
+                    <div>{row.employee_name} <span className="text-white/40 ml-1 text-xs">({row.employee_code || '—'})</span></div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHistoryFilter("This Month");
+                        setHistoryEmployee(row);
+                      }}
+                      className="mt-1 text-xs font-medium text-orange-400 transition hover:text-orange-300"
+                    >
+                      View full history
+                    </button>
                   </td>
                   {isSingleDay ? (
                     <>
@@ -758,6 +649,130 @@ const AttendancePage = () => {
         </div>
 
       </div>
+
+      {historyEmployee && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/75 p-4">
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="employee-attendance-history-title"
+              className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/50"
+            >
+              <div className="flex flex-col gap-4 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-orange-400">Full attendance history</p>
+                  <h3 id="employee-attendance-history-title" className="mt-1 text-xl font-semibold text-white">
+                    {historyEmployee.employee_name || "Employee"}
+                  </h3>
+                  <p className="mt-1 text-sm text-white/50">
+                    {historyEmployee.employee_code || historyEmployee.employee_id}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="min-w-[150px]">
+                    <Select
+                      value={{ value: historyFilter, label: historyFilter }}
+                      onChange={(option) => setHistoryFilter(option?.value || "This Month")}
+                      options={[
+                        { value: "Today", label: "Today" },
+                        { value: "This Week", label: "This Week" },
+                        { value: "Last Week", label: "Last Week" },
+                        { value: "This Month", label: "This Month" },
+                        { value: "Last Month", label: "Last Month" },
+                        { value: "Custom Date", label: "Custom Date" },
+                      ]}
+                      styles={customSelectStyles}
+                      isSearchable={false}
+                      aria-label="Attendance history date filter"
+                    />
+                  </div>
+                  {historyFilter === "Custom Date" && (
+                    <input
+                      type="date"
+                      value={historyCustomDate}
+                      onChange={(event) => setHistoryCustomDate(event.target.value)}
+                      aria-label="Select attendance history date"
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none scheme-dark focus:border-orange-500/50"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setHistoryEmployee(null)}
+                    aria-label="Close attendance history"
+                    className="rounded-full border border-white/10 p-2 text-white/70 transition hover:bg-white/10"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-auto p-4">
+                <div className="mb-3 text-xs text-white/45">
+                  {historyDateRange.startDate === historyDateRange.endDate
+                    ? historyDateRange.startDate
+                    : `${historyDateRange.startDate} to ${historyDateRange.endDate}`}
+                </div>
+                {historyError && (
+                  <div role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-900/20 p-3 text-sm text-rose-200">
+                    {historyError}
+                  </div>
+                )}
+                <table className="w-full min-w-[1050px] text-left text-sm">
+                  <thead className="border-b border-white/10 bg-white/5 text-xs font-medium uppercase tracking-wide text-white/50">
+                    <tr>
+                      <th className="px-3 py-3">Date</th>
+                      <th className="px-3 py-3">Check In</th>
+                      <th className="px-3 py-3">Check Out</th>
+                      <th className="px-3 py-3">Break</th>
+                      <th className="px-3 py-3">Working Hours</th>
+                      <th className="px-3 py-3">Late Entry</th>
+                      <th className="px-3 py-3">Early Exit</th>
+                      <th className="px-3 py-3">Overtime</th>
+                      <th className="px-3 py-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {historyLoading ? (
+                      <tr><td colSpan="9" className="px-3 py-10 text-center text-white/50">Loading attendance history…</td></tr>
+                    ) : employeeHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="px-3 py-10 text-center text-white/50">
+                          {historyError ? "Attendance history is unavailable." : "No attendance records for this period."}
+                        </td>
+                      </tr>
+                    ) : employeeHistory.map((record) => {
+                      const status = record.attendance_status || "Unknown";
+                      const statusColor = status.toLowerCase().includes("present")
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : status.toLowerCase().includes("absent")
+                          ? "bg-rose-500/10 text-rose-400"
+                          : "bg-slate-500/10 text-slate-300";
+                      return (
+                        <tr key={record.id} className="transition-colors hover:bg-white/5">
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{String(record.attendance_date || "").slice(0, 10) || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_in_time || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_out_time || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.break_start_time || "—"} – {record.break_end_time || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.working_hours || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.late_entry || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.early_exit || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.overtime || "—"}</td>
+                          <td className="whitespace-nowrap px-3 py-3">
+                            <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
+                              {status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Mark Attendance Modal */}
       {isModalOpen && (
