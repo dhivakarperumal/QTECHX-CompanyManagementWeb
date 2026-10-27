@@ -652,14 +652,14 @@ const AttendancePage = () => {
 
       {historyEmployee && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/75 p-4">
+          <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/75 p-2 sm:p-4">
             <section
               role="dialog"
               aria-modal="true"
               aria-labelledby="employee-attendance-history-title"
-              className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/50"
+              className="flex h-[calc(100dvh-1rem)] max-h-[720px] min-h-0 w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-black/50 sm:h-[min(85dvh,720px)] sm:rounded-3xl"
             >
-              <div className="flex flex-col gap-4 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex shrink-0 flex-col gap-4 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-orange-400">Full attendance history</p>
                   <h3 id="employee-attendance-history-title" className="mt-1 text-xl font-semibold text-white">
@@ -707,7 +707,7 @@ const AttendancePage = () => {
                 </div>
               </div>
 
-              <div className="overflow-auto p-4">
+              <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
                 <div className="mb-3 text-xs text-white/45">
                   {historyDateRange.startDate === historyDateRange.endDate
                     ? historyDateRange.startDate
