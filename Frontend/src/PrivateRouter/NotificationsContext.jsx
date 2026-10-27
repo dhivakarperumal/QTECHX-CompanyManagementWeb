@@ -14,6 +14,36 @@ function getDesktopPermission() {
   return window.Notification.permission
 }
 
+async function showDesktopNotification(notification) {
+  if (getDesktopPermission() !== 'granted') return false
+
+  const options = {
+    body: notification.message,
+    icon: '/favicon.ico',
+    tag: notification.id,
+    data: { link: notification.link || '' },
+  }
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js')
+      await navigator.serviceWorker.ready
+      await registration.showNotification(notification.title, options)
+      return true
+    } catch (error) {
+      console.error('[Notifications] Service worker notification failed:', error)
+    }
+  }
+
+  const desktopNotification = new window.Notification(notification.title, options)
+  desktopNotification.onclick = () => {
+    window.focus()
+    if (notification.link) window.location.hash = `#${notification.link}`
+    desktopNotification.close()
+  }
+  return true
+}
+
 export function NotificationsProvider({ children }) {
   const { user, logout } = useAuth()
   const userId = user?.user_id || user?.id
@@ -87,22 +117,8 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
         ...current.filter(item => item.id !== notification.id),
       ].slice(0, 100))
       setToast(notification)
-      if (getDesktopPermission() === 'granted') {
-        try {
-          const desktopNotification = new window.Notification(notification.title, {
-            body: notification.message,
-            icon: '/favicon.ico',
-            tag: notification.id,
-          })
-          desktopNotification.onclick = () => {
-            window.focus()
-            if (notification.link) window.location.hash = `#${notification.link}`
-            desktopNotification.close()
-          }
-        } catch (error) {
-          console.error('[Notifications] Could not show desktop notification:', error)
-        }
-      }
+      showDesktopNotification(notification)
+        .catch(error => console.error('[Notifications] Could not show desktop notification:', error))
     })
 
     socket.on('connect', () => {
@@ -198,6 +214,7 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
 function DesktopNotificationPrompt({ userId }) {
   const [desktopPermission, setDesktopPermission] = useState(getDesktopPermission)
   const [dismissed, setDismissed] = useState(false)
+  const [testError, setTestError] = useState('')
 
   const enableDesktopNotifications = async () => {
     try {
@@ -205,6 +222,21 @@ function DesktopNotificationPrompt({ userId }) {
     } catch (error) {
       console.error('[Notifications] Desktop permission request failed:', error)
       setDesktopPermission(getDesktopPermission())
+    }
+  }
+
+  const sendTestNotification = async () => {
+    setTestError('')
+    try {
+      const shown = await showDesktopNotification({
+        id: `notification-test-${Date.now()}`,
+        title: 'Desktop notifications are working',
+        message: 'You will see updates here when new notifications arrive.',
+      })
+      if (!shown) throw new Error('Allow notifications for this site before testing.')
+    } catch (error) {
+      console.error('[Notifications] Test notification failed:', error)
+      setTestError(error.message || 'Could not show a desktop notification.')
     }
   }
 
@@ -219,8 +251,7 @@ function DesktopNotificationPrompt({ userId }) {
   if (
     dismissed ||
     !userId ||
-    desktopPermission === 'unsupported' ||
-    desktopPermission === 'granted'
+    desktopPermission === 'unsupported'
   ) {
     return null
   }
@@ -234,11 +265,16 @@ function DesktopNotificationPrompt({ userId }) {
             <p className="mt-1 text-xs text-white/65">
               Allow desktop notifications to see updates while using another tab or app.
             </p>
-          ) : (
+          ) : desktopPermission === 'denied' ? (
             <p className="mt-1 text-xs text-amber-200">
               Notifications are blocked for this site. Change the site permission in your browser settings.
             </p>
+          ) : (
+            <p className="mt-1 text-xs text-white/65">
+              Desktop notifications are enabled for this site.
+            </p>
           )}
+          {testError && <p className="mt-2 text-xs text-amber-200">{testError}</p>}
         </div>
         <button
           type="button"
@@ -249,7 +285,7 @@ function DesktopNotificationPrompt({ userId }) {
           <X size={16} />
         </button>
       </div>
-      {desktopPermission === 'default' && (
+      {desktopPermission === 'default' ? (
         <button
           type="button"
           onClick={enableDesktopNotifications}
@@ -257,7 +293,15 @@ function DesktopNotificationPrompt({ userId }) {
         >
           Allow notifications
         </button>
-      )}
+      ) : desktopPermission === 'granted' ? (
+        <button
+          type="button"
+          onClick={sendTestNotification}
+          className="mt-3 rounded-lg bg-blue-500/20 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-500/30"
+        >
+          Test notification
+        </button>
+      ) : null}
     </aside>
   )
 }
