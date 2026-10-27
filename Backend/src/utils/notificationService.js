@@ -1,7 +1,20 @@
 const { v4: uuidv4 } = require('uuid');
 const { getDB } = require('../config/db');
+const webpush = require('web-push');
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+let missingWebPushConfigLogged = false;
+
+function configureWebPush() {
+  const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env;
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) return null;
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  return VAPID_PUBLIC_KEY;
+}
+
+function getWebPushPublicKey() {
+  return configureWebPush();
+}
 
 function normalizeIds(ids) {
   return [...new Set((Array.isArray(ids) ? ids : [ids])
@@ -92,8 +105,84 @@ async function persistAndEmit(io, userIds, notification) {
     io?.to(`user:${record.recipientUserId}`).emit('notification', payload);
   });
 
+  await sendWebPushNotifications(records);
   await sendPushNotifications(records);
   return records.map((record) => record.id);
+}
+
+async function sendWebPushNotifications(records) {
+  let publicKey;
+  try {
+    publicKey = configureWebPush();
+  } catch (error) {
+    console.error('[Notifications] Web Push configuration is invalid:', error);
+    return;
+  }
+  if (!publicKey) {
+    if (!missingWebPushConfigLogged) {
+      console.warn('[Notifications] Web Push is disabled; configure VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT.');
+      missingWebPushConfigLogged = true;
+    }
+    return;
+  }
+
+  try {
+    const userIds = normalizeIds(records.map((record) => record.recipientUserId));
+    if (!userIds.length) return;
+
+    const placeholders = userIds.map(() => '?').join(', ');
+    const [subscriptions] = await getDB().execute(
+      `SELECT endpoint_hash, endpoint, p256dh_key, auth_key, recipient_user_id
+         FROM notification_web_push_subscriptions
+        WHERE recipient_user_id IN (${placeholders})`,
+      userIds
+    );
+    const recordByUserId = new Map(records.map((record) => [String(record.recipientUserId), record]));
+
+    for (let index = 0; index < subscriptions.length; index += 25) {
+      const batch = subscriptions.slice(index, index + 25);
+      await Promise.all(batch.map(async (subscription) => {
+        const record = recordByUserId.get(String(subscription.recipient_user_id));
+        if (!record) return;
+
+        const pushSubscription = {
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: subscription.p256dh_key,
+            auth: subscription.auth_key,
+          },
+        };
+        const payload = JSON.stringify({
+          title: record.title,
+          body: record.message,
+          data: {
+            notificationId: record.id,
+            type: record.type,
+            link: record.link,
+          },
+        });
+
+        try {
+          await webpush.sendNotification(pushSubscription, payload);
+        } catch (error) {
+          if (error.statusCode === 404 || error.statusCode === 410) {
+            await getDB().execute(
+              'DELETE FROM notification_web_push_subscriptions WHERE endpoint_hash = ?',
+              [subscription.endpoint_hash]
+            );
+            return;
+          }
+          console.error('[Notifications] Web Push delivery failed:', {
+            endpoint: subscription.endpoint,
+            statusCode: error.statusCode,
+            message: error.message,
+          });
+        }
+      }));
+    }
+  } catch (error) {
+    console.error('[Notifications] Web Push delivery failed:', error);
+  }
 }
 
 async function sendPushNotifications(records) {
@@ -380,6 +469,7 @@ module.exports = {
   resolveEmployeeName,
   resolveCalendarAudienceIds,
   resolveCalendarAudienceIdsSafely,
+  getWebPushPublicKey,
   notifySafely,
   notifyRolesSafely,
   notifyAdminsSafely,

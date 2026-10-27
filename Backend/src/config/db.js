@@ -2693,6 +2693,22 @@ async function ensureNotificationPushTokensSchema(pool) {
   );
 }
 
+async function ensureWebPushSubscriptionsSchema(pool) {
+  await pool.execute(
+    `CREATE TABLE IF NOT EXISTS notification_web_push_subscriptions (
+      endpoint_hash CHAR(64) NOT NULL,
+      endpoint TEXT NOT NULL,
+      p256dh_key VARCHAR(255) NOT NULL,
+      auth_key VARCHAR(255) NOT NULL,
+      recipient_user_id VARCHAR(36) NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (endpoint_hash),
+      INDEX idx_notification_web_push_user (recipient_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+  );
+}
+
 async function initDB() {
   if (pool) return pool;
 
@@ -2705,6 +2721,7 @@ async function initDB() {
     await ensureSchema(pool);
     await ensureNotificationsSchema(pool);
     await ensureNotificationPushTokensSchema(pool);
+    await ensureWebPushSubscriptionsSchema(pool);
     await ensureEmployeesSchema(pool);
     await ensureServicesSchema(pool);
     await ensureServiceRequestsSchema(pool);

@@ -1,4 +1,6 @@
+const crypto = require('crypto');
 const { getDB } = require('../config/db');
+const { getWebPushPublicKey } = require('../utils/notificationService');
 
 async function listNotifications(req, res) {
   try {
@@ -94,10 +96,103 @@ async function unregisterPushToken(req, res) {
   }
 }
 
+function getWebPushKey(req, res) {
+  try {
+    const publicKey = getWebPushPublicKey();
+    if (!publicKey) {
+      return res.status(503).json({
+        success: false,
+        message: 'Web Push is not configured on the server',
+      });
+    }
+    return res.json({ success: true, publicKey });
+  } catch (error) {
+    console.error('getWebPushKey error:', error);
+    return res.status(500).json({ success: false, message: 'Web Push configuration is invalid' });
+  }
+}
+
+async function registerWebPushSubscription(req, res) {
+  const subscription = req.body?.subscription;
+  const endpoint = typeof subscription?.endpoint === 'string' ? subscription.endpoint.trim() : '';
+  const p256dhKey = subscription?.keys?.p256dh;
+  const authKey = subscription?.keys?.auth;
+
+  let endpointUrl;
+  try {
+    endpointUrl = new URL(endpoint);
+  } catch (error) {
+    return res.status(400).json({ success: false, message: 'A valid push subscription is required' });
+  }
+
+  if (
+    endpoint.length > 2048 ||
+    endpointUrl.protocol !== 'https:' ||
+    endpointUrl.username ||
+    endpointUrl.password ||
+    endpointUrl.port ||
+    !['fcm.googleapis.com', 'push.services.mozilla.com', 'push.apple.com'].some(
+      host => endpointUrl.hostname === host || endpointUrl.hostname.endsWith(`.${host}`)
+    ) ||
+    typeof p256dhKey !== 'string' ||
+    !p256dhKey.trim() ||
+    p256dhKey.length > 255 ||
+    !/^[A-Za-z0-9_-]+$/.test(p256dhKey) ||
+    typeof authKey !== 'string' ||
+    !authKey.trim() ||
+    authKey.length > 255 ||
+    !/^[A-Za-z0-9_-]+$/.test(authKey)
+  ) {
+    return res.status(400).json({ success: false, message: 'A valid push subscription is required' });
+  }
+
+  const endpointHash = crypto.createHash('sha256').update(endpoint).digest('hex');
+  try {
+    await getDB().execute(
+      `INSERT INTO notification_web_push_subscriptions
+        (endpoint_hash, endpoint, p256dh_key, auth_key, recipient_user_id)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         endpoint = VALUES(endpoint),
+         p256dh_key = VALUES(p256dh_key),
+         auth_key = VALUES(auth_key),
+         recipient_user_id = VALUES(recipient_user_id),
+         updated_at = CURRENT_TIMESTAMP`,
+      [endpointHash, endpoint, p256dhKey, authKey, req.user.user_id]
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('registerWebPushSubscription error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to register web push subscription' });
+  }
+}
+
+async function unregisterWebPushSubscription(req, res) {
+  const endpoint = typeof req.body?.endpoint === 'string' ? req.body.endpoint.trim() : '';
+  if (!endpoint || endpoint.length > 2048) {
+    return res.status(400).json({ success: false, message: 'A valid push endpoint is required' });
+  }
+
+  const endpointHash = crypto.createHash('sha256').update(endpoint).digest('hex');
+  try {
+    await getDB().execute(
+      'DELETE FROM notification_web_push_subscriptions WHERE endpoint_hash = ? AND recipient_user_id = ?',
+      [endpointHash, req.user.user_id]
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('unregisterWebPushSubscription error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to unregister web push subscription' });
+  }
+}
+
 module.exports = {
   listNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   registerPushToken,
   unregisterPushToken,
+  getWebPushKey,
+  registerWebPushSubscription,
+  unregisterWebPushSubscription,
 };
