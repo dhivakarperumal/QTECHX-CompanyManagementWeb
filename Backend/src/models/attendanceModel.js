@@ -158,6 +158,66 @@ async function getAttendanceSummary({ startDate, endDate }) {
   }));
 }
 
+async function getAttendanceHistory({ startDate, endDate, search, page, limit }) {
+  const db = getDB();
+  const conditions = [];
+  const params = [];
+
+  if (startDate) {
+    conditions.push("a.attendance_date >= ?");
+    params.push(startDate);
+  }
+
+  if (endDate) {
+    conditions.push("a.attendance_date <= ?");
+    params.push(endDate);
+  }
+
+  if (search) {
+    conditions.push(`(
+      a.employee_id LIKE ?
+      OR a.attendance_status LIKE ?
+      OR e.employee_code LIKE ?
+      OR CONCAT_WS(' ', e.first_name, e.last_name) LIKE ?
+      OR a.employee_name LIKE ?
+    )`);
+    const searchTerm = `%${search}%`;
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const [countRows] = await db.execute(
+    `SELECT COUNT(DISTINCT a.id) AS total
+     FROM attendance a
+     LEFT JOIN employees e ON e.employee_id = a.employee_id OR e.employee_code = a.employee_id
+     ${whereClause}`,
+    params
+  );
+  const total = Number(countRows[0]?.total || 0);
+  const offset = (page - 1) * limit;
+  const [rows] = await db.execute(
+    `SELECT a.id, a.employee_id, a.attendance_date,
+            COALESCE(
+              NULLIF(a.employee_name, ''),
+              NULLIF(CONCAT_WS(' ', NULLIF(e.first_name, ''), NULLIF(e.last_name, '')), ''),
+              e.employee_code,
+              a.employee_id
+            ) AS employee_name,
+            e.employee_code, a.check_in_time, a.check_out_time,
+            a.break_start_time, a.break_end_time, a.working_hours,
+            a.late_entry, a.early_exit, a.overtime, a.attendance_status,
+            a.location, a.notes
+     FROM attendance a
+     LEFT JOIN employees e ON e.employee_id = a.employee_id OR e.employee_code = a.employee_id
+     ${whereClause}
+     ORDER BY a.attendance_date DESC, a.id DESC
+     LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+
+  return { data: rows, total };
+}
+
 async function getEmployeeAttendance({ employeeId, startDate, endDate }) {
   const db = getDB();
   const possibleIds = await resolveAllPossibleEmployeeIds(db, employeeId);
@@ -213,4 +273,4 @@ async function getEmployeeAttendanceToday(employeeId, attendanceDate) {
   return rows[0] || null;
 }
 
-module.exports = { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday, resolveAllPossibleEmployeeIds, resolveEmployeeName };
+module.exports = { createAttendance, getAttendanceSummary, getAttendanceHistory, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday, resolveAllPossibleEmployeeIds, resolveEmployeeName };

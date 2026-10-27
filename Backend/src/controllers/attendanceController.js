@@ -1,4 +1,4 @@
-const { createAttendance, getAttendanceSummary, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday } = require("../models/attendanceModel");
+const { createAttendance, getAttendanceSummary, getAttendanceHistory, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday } = require("../models/attendanceModel");
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
 const { notifyAdminsSafely, resolveEmployeeName } = require("../utils/notificationService");
@@ -515,6 +515,47 @@ async function summary(req, res) {
   }
 }
 
+async function history(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+    const search = String(req.query.search || "").trim();
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
+
+    const isValidDate = (value) => {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const date = new Date(`${value}T00:00:00Z`);
+      return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+    };
+
+    if ((startDate && !isValidDate(startDate)) || (endDate && !isValidDate(endDate))) {
+      return res.status(400).json({ message: "Dates must use YYYY-MM-DD format" });
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      return res.status(400).json({ message: "Start date must be on or before end date" });
+    }
+
+    const result = await getAttendanceHistory({
+      startDate,
+      endDate,
+      search,
+      page,
+      limit,
+    });
+
+    return res.json({
+      ...result,
+      page,
+      limit,
+      totalPages: Math.ceil(result.total / limit),
+    });
+  } catch (error) {
+    console.error("Attendance history error:", error);
+    return res.status(500).json({ message: "Failed to retrieve attendance history" });
+  }
+}
+
 async function employeeAttendance(req, res) {
   try {
     let { employeeId } = req.params;
@@ -569,4 +610,4 @@ async function getByEmployeeDate(req, res) {
   }
 }
 
-module.exports = { create, summary, employeeAttendance, checkin, checkout, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };
+module.exports = { create, summary, history, employeeAttendance, checkin, checkout, clockIn, clockOut, breakStart, breakEnd, getByEmployeeDate };

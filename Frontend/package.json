@@ -17,6 +17,7 @@
     "dayjs": "^1.11.21",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.26.0",
+    "q-techx-web": "file:..",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.82.0",
