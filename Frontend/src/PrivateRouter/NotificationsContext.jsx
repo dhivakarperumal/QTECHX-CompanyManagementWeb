@@ -14,7 +14,7 @@ function getDesktopPermission() {
   return window.Notification.permission
 }
 
-async function showDesktopNotification(notification) {
+function showDesktopNotification(notification, { onShow, onError } = {}) {
   const permission = getDesktopPermission()
   if (permission !== 'granted') {
     if (permission === 'denied') {
@@ -23,31 +23,22 @@ async function showDesktopNotification(notification) {
     return false
   }
 
-  const options = {
+  const desktopNotification = new window.Notification(notification.title, {
     body: notification.message,
     icon: '/favicon.ico',
     tag: notification.id,
-    data: { link: notification.link || '' },
+  })
+  desktopNotification.onerror = error => {
+    console.error('[Notifications] Browser could not display desktop notification:', error)
+    onError?.(error)
   }
-
-  if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js')
-      await navigator.serviceWorker.ready
-      await registration.showNotification(notification.title, options)
-      return true
-    } catch (error) {
-      console.error('[Notifications] Service worker notification failed:', error)
-    }
-  }
-
-  const desktopNotification = new window.Notification(notification.title, options)
+  desktopNotification.onshow = () => onShow?.()
   desktopNotification.onclick = () => {
     window.focus()
     if (notification.link) window.location.hash = `#${notification.link}`
     desktopNotification.close()
   }
-  return true
+  return desktopNotification
 }
 
 export function NotificationsProvider({ children }) {
@@ -123,8 +114,11 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
         ...current.filter(item => item.id !== notification.id),
       ].slice(0, 100))
       setToast(notification)
-      showDesktopNotification(notification)
-        .catch(error => console.error('[Notifications] Could not show desktop notification:', error))
+      try {
+        showDesktopNotification(notification)
+      } catch (error) {
+        console.error('[Notifications] Could not show desktop notification:', error)
+      }
     })
 
     socket.on('connect', () => {
@@ -246,12 +240,27 @@ function DesktopNotificationPrompt({ userId }) {
   const sendTestNotification = async () => {
     setTestError('')
     try {
-      const shown = await showDesktopNotification({
+      const notification = showDesktopNotification({
         id: `notification-test-${Date.now()}`,
         title: 'Desktop notifications are working',
         message: 'You will see updates here when new notifications arrive.',
+      }, {
+        onShow: () => setTestError(
+          'The browser displayed the test notification. If no banner appeared, check Windows notification settings and Do Not Disturb.'
+        ),
+        onError: () => setTestError(
+          'The browser could not display the test notification. Check site permission and browser notification settings.'
+        ),
       })
-      if (!shown) throw new Error('Allow notifications for this site before testing.')
+      if (!notification) throw new Error('Allow notifications for this site before testing.')
+      setTestError('Waiting for the browser to display the test notification...')
+      window.setTimeout(() => {
+        if (notification.onshow) {
+          setTestError(current => current.startsWith('Waiting for the browser')
+            ? 'The browser accepted the notification but did not confirm it was displayed. Check browser and Windows notification settings.'
+            : current)
+        }
+      }, 5000)
     } catch (error) {
       console.error('[Notifications] Test notification failed:', error)
       setTestError(error.message || 'Could not show a desktop notification.')
