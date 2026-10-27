@@ -37,6 +37,7 @@ import {
   Layers,
   AlertCircle,
   XCircle,
+  Mail,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -63,6 +64,11 @@ const navItems = [
     ],
   },
 
+  {
+    path: "/admin/settings/contact-requests",
+    label: "Contact Requests",
+    icon: Mail,
+  },
 
   /* ---- WORK ---- */
   {

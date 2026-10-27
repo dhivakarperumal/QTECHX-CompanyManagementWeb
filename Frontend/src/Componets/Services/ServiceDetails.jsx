@@ -865,7 +865,7 @@ const ServiceDetails = () => {
                 <div className="mb-6">
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#FF6A00]/30 bg-[#FF6A00]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FF6A00]">
                     <FiZap size={12} />
-                    <span>Instant Project Inquiry</span>
+                    <span>Instant Project Enquiry</span>
                   </div>
                   <h3 className="hero-font text-xl font-bold uppercase text-white sm:text-2xl">
                     SEND US A <span className="text-[#FF6A00]">REQUEST</span>

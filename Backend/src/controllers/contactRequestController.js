@@ -51,7 +51,7 @@ async function submitContactRequest(req, res) {
       name: String(name).trim(),
       email: String(email).trim(),
       mobile: mobile || phone || null,
-      subject: String(subject || 'General Inquiry').trim(),
+      subject: String(subject || 'General Enquiry').trim(),
       message: String(message).trim(),
       status: 'New',
     });

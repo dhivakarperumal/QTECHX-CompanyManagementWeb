@@ -108,7 +108,7 @@ function DeleteModal({ request, onConfirm, onCancel, loading }) {
           </div>
         </div>
         <p className="text-white/60 text-sm mb-6 leading-relaxed">
-          Are you sure you want to delete the inquiry from{' '}
+          Are you sure you want to delete the Enquiry from{' '}
           <span className="text-white font-semibold">"{request?.name}"</span>?
         </p>
         <div className="flex gap-3">
@@ -151,7 +151,7 @@ function ViewDrawer({ request, index, onClose, onEdit }) {
             <Avatar name={request.name} index={index} size="lg" />
             <div>
               <h2 className="text-white font-bold text-base leading-tight">{request.name}</h2>
-              <p className="text-white/40 text-xs mt-0.5 truncate max-w-[200px]">{request.subject || 'General Inquiry'}</p>
+              <p className="text-white/40 text-xs mt-0.5 truncate max-w-[200px]">{request.subject || 'General Enquiry'}</p>
               <div className="mt-1.5">
                 <StatusPill status={request.status} />
               </div>
@@ -171,7 +171,7 @@ function ViewDrawer({ request, index, onClose, onEdit }) {
           <div className="grid grid-cols-2 gap-2.5">
             {/* {request.email && (
               <a
-                href={`mailto:${request.email}?subject=Re: ${encodeURIComponent(request.subject || 'Inquiry')}`}
+                href={`mailto:${request.email}?subject=Re: ${encodeURIComponent(request.subject || 'Enquiry')}`}
                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold hover:bg-blue-500/20 transition"
               >
                 <Mail size={13} /> Send Email
@@ -212,7 +212,7 @@ function ViewDrawer({ request, index, onClose, onEdit }) {
           <div>
             <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Subject / Topic</p>
             <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4">
-              <p className="text-white font-semibold text-sm leading-snug">{request.subject || 'General Inquiry'}</p>
+              <p className="text-white font-semibold text-sm leading-snug">{request.subject || 'General Enquiry'}</p>
             </div>
           </div>
 
@@ -322,7 +322,7 @@ function StatusEditModal({ request, onClose, onSuccess }) {
         </div>
 
         <p className="text-white/40 text-xs mb-4">
-          Updating status for inquiry by <span className="text-white font-semibold">"{request?.name}"</span>
+          Updating status for Enquiry by <span className="text-white font-semibold">"{request?.name}"</span>
         </p>
 
         {/* Status choices */}
@@ -471,7 +471,7 @@ export default function AdminContactRequestsPage() {
     setDeleting(true);
     try {
       await api.delete(`/contacts/${deleteTarget.uuid}`);
-      setDeleteMsg(`Inquiry from "${deleteTarget.name}" deleted successfully.`);
+      setDeleteMsg(`Enquiry from "${deleteTarget.name}" deleted successfully.`);
       setDeleteTarget(null);
       if (viewRequest?.uuid === deleteTarget.uuid) setViewRequest(null);
       await fetchRequests();
@@ -558,9 +558,9 @@ export default function AdminContactRequestsPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/admin/settings')}
+            onClick={() => navigate('/admin')}
             className="w-11 h-11 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition"
-            title="Back to settings"
+            title="Back to dashboard"
           >
             <ArrowLeft size={18} />
           </button>
@@ -835,7 +835,7 @@ export default function AdminContactRequestsPage() {
                     {/* Subject */}
                     <td className="px-4 py-3.5">
                       <span className="inline-flex text-xs font-semibold text-white/80 max-w-[160px] truncate">
-                        {r.subject || 'General Inquiry'}
+                        {r.subject || 'General Enquiry'}
                       </span>
                     </td>
 
@@ -911,7 +911,7 @@ export default function AdminContactRequestsPage() {
                   <Avatar name={r.name} index={i} />
                   <div className="min-w-0">
                     <p className="text-white font-semibold text-sm leading-tight truncate">{r.name}</p>
-                    <p className="text-white/40 text-xs mt-0.5 truncate">{r.subject || 'General Inquiry'}</p>
+                    <p className="text-white/40 text-xs mt-0.5 truncate">{r.subject || 'General Enquiry'}</p>
                   </div>
                 </div>
                 <StatusPill status={r.status || 'New'} />
