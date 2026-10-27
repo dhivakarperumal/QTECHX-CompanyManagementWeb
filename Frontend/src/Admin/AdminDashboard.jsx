@@ -274,18 +274,6 @@ const leaveRequestsData = [
   { employee: 'Dwight Schrute', avatar: 'https://i.pravatar.cc/150?u=11', type: 'Emergency', duration: 'Oct 13 (Half day)' },
 ];
 
-// Recent activity mock and ActivityRow component (used in Recent Activity section)
-
-const ActivityRow = ({ title, meta, time, user, avatar }) => (
-  <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
-    <img src={avatar} alt={user} className="w-10 h-10 rounded-full" />
-    <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-white truncate">{title}</p>
-      <p className="text-[11px] text-white/40 truncate">{meta} · {time}</p>
-    </div>
-  </div>
-);
-
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════ */
@@ -645,28 +633,10 @@ const AdminDashboard = () => {
       </div>
 
       {/* ── BOTTOM ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-        {/* Recent Activity — 5 cols */}
-        <div className="lg:col-span-5 rounded-2xl bg-white/4 border border-white/8 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-bold text-base flex items-center gap-2">
-              <Activity size={17} className="text-primary" /> Recent Activity
-            </h2>
-          </div>
-          {(dashboard?.recentActivity || []).length > 0 ? (
-            dashboard.recentActivity.slice(0,5).map((a, i) => {
-              const date = new Date(a.time);
-              const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              return <ActivityRow key={i} title={a.title} meta={a.meta} time={timeStr} user={a.user} avatar={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user)}&background=random`} />
-            })
-          ) : (
-            <p className="text-sm text-white/50">No recent activity found.</p>
-          )}
-        </div>
-
-        {/* Project Status Overview — 4 cols */}
-        <div className="lg:col-span-4 bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col gap-4">
+        {/* Project Status Overview */}
+        <div className="bg-white/4 border border-white/8 p-6 rounded-2xl flex flex-col gap-4">
           <h2 className="text-sm font-bold text-white">Project Status Overview</h2>
 
           {(dashboard?.projectStats || []).length > 0 ? (
@@ -725,8 +695,8 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Quick Actions — 3 cols */}
-        <div className="lg:col-span-3 bg-white/4 border border-white/8 p-5 rounded-2xl flex flex-col">
+        {/* Quick Actions */}
+        <div className="bg-white/4 border border-white/8 p-5 rounded-2xl flex flex-col">
           <h2 className="text-sm font-bold text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3 flex-1">
             {[
