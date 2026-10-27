@@ -39,8 +39,8 @@ const ContactPage = () => {
       requestSaved = true;
 
       await emailjs.send(
-        "service_bs2ofiq",
-        "template_2watukw",
+        "service_chra7y6",
+        "template_9fsjv1t",
         {
           name: data.name,
           email: data.email,
@@ -48,7 +48,7 @@ const ContactPage = () => {
           subject: data.subject,
           message: data.message,
         },
-        "PGkFp8TEtPWxWmOMo"
+        "Y-6IkRSIRXcMIzPSG"
       );
 
       setPopup(true);
