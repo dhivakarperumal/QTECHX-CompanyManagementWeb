@@ -7,6 +7,13 @@ import { NotificationsContext, useNotifications } from './NotificationsContext'
 
 const socketUrl = API_URL.replace(/\/api\/?$/, '') || window.location.origin
 
+function getDesktopPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window) || !window.isSecureContext) {
+    return 'unsupported'
+  }
+  return window.Notification.permission
+}
+
 export function NotificationsProvider({ children }) {
   const { user } = useAuth()
   const userId = user?.user_id || user?.id
@@ -65,15 +72,19 @@ function NotificationsSession({ children, userId, token, userRole }) {
       ].slice(0, 100))
       setToast(notification)
 
-      if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
-        const desktopNotification = new window.Notification(notification.title, {
-          body: notification.message,
-          tag: notification.id,
-        })
-        desktopNotification.onclick = () => {
-          window.focus()
-          if (notification.link) window.location.hash = `#${notification.link}`
-          desktopNotification.close()
+      if (getDesktopPermission() === 'granted') {
+        try {
+          const desktopNotification = new window.Notification(notification.title, {
+            body: notification.message,
+            tag: notification.id,
+          })
+          desktopNotification.onclick = () => {
+            window.focus()
+            if (notification.link) window.location.hash = `#${notification.link}`
+            desktopNotification.close()
+          }
+        } catch (error) {
+          console.error('[Notifications] Could not show desktop notification:', error)
         }
       }
     })
@@ -156,18 +167,26 @@ function NotificationBell({ floating = false }) {
     markRead,
     markAllRead,
   } = useNotifications()
-  const [desktopPermission, setDesktopPermission] = useState(
-    typeof window !== 'undefined' && 'Notification' in window ? window.Notification.permission : 'unsupported'
-  )
+  const [desktopPermission, setDesktopPermission] = useState(getDesktopPermission)
 
   const enableDesktopNotifications = async () => {
-    if (!('Notification' in window)) return
+    if (getDesktopPermission() === 'unsupported') {
+      setDesktopPermission('unsupported')
+      return
+    }
     try {
       setDesktopPermission(await window.Notification.requestPermission())
     } catch (error) {
       console.error('[Notifications] Desktop permission request failed:', error)
+      setDesktopPermission(window.Notification.permission)
     }
   }
+
+  useEffect(() => {
+    const refreshDesktopPermission = () => setDesktopPermission(getDesktopPermission())
+    window.addEventListener('focus', refreshDesktopPermission)
+    return () => window.removeEventListener('focus', refreshDesktopPermission)
+  }, [])
 
   return (
     <div className={floating ? 'fixed bottom-5 left-5 z-[9998]' : 'relative'}>
@@ -198,15 +217,32 @@ function NotificationBell({ floating = false }) {
               Mark all read
             </button>
           </header>
-          {desktopPermission === 'default' && (
-            <button
-              type="button"
-              onClick={enableDesktopNotifications}
-              className="w-full border-b border-white/10 px-4 py-2 text-left text-xs text-blue-200 hover:bg-white/5"
-            >
-              Enable desktop notifications
-            </button>
-          )}
+          <div className="border-b border-white/10 px-4 py-3" aria-live="polite">
+            {desktopPermission === 'default' ? (
+              <>
+                <p className="mb-2 text-xs text-white/60">
+                  Get notified when new updates arrive, even when this tab is in the background.
+                </p>
+                <button
+                  type="button"
+                  onClick={enableDesktopNotifications}
+                  className="rounded-lg bg-blue-500/15 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-500/25"
+                >
+                  Enable desktop notifications
+                </button>
+              </>
+            ) : desktopPermission === 'denied' ? (
+              <p className="text-xs text-amber-200">
+                Desktop notifications are blocked. Allow them for this site in your browser settings.
+              </p>
+            ) : desktopPermission === 'unsupported' ? (
+              <p className="text-xs text-white/55">
+                Desktop notifications require a supported browser and a secure HTTPS connection.
+              </p>
+            ) : (
+              <p className="text-xs text-emerald-200">Desktop notifications are enabled.</p>
+            )}
+          </div>
           <div className="max-h-80 divide-y divide-white/5 overflow-y-auto">
             {loadError && <p className="px-4 py-3 text-xs text-red-300">{loadError}</p>}
             {notifications.length === 0 && !loadError ? (
