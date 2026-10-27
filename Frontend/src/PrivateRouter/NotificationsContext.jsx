@@ -14,37 +14,6 @@ function getDesktopPermission() {
   return window.Notification.permission
 }
 
-function canUseWebPush() {
-  return getDesktopPermission() !== 'unsupported' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window
-}
-
-function decodeApplicationServerKey(encodedKey) {
-  const paddedKey = encodedKey.replace(/-/g, '+').replace(/_/g, '/')
-  const binaryKey = window.atob(paddedKey)
-  return Uint8Array.from(binaryKey, character => character.charCodeAt(0))
-}
-
-async function registerWebPushSubscription() {
-  const { data } = await api.get('/notifications/web-push-public-key')
-  if (!data?.publicKey) throw new Error('The Web Push public key is missing.')
-
-  const registration = await navigator.serviceWorker.register('/service-worker.js')
-  await navigator.serviceWorker.ready
-  let subscription = await registration.pushManager.getSubscription()
-  if (!subscription) {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: decodeApplicationServerKey(data.publicKey),
-    })
-  }
-
-  await api.post('/notifications/web-push-subscription', {
-    subscription: subscription.toJSON(),
-  })
-}
-
 export function NotificationsProvider({ children }) {
   const { user, logout } = useAuth()
   const userId = user?.user_id || user?.id
@@ -108,8 +77,8 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['polling'],
-      reconnectionAttempts: 5,
+      transports: ['websocket', 'polling'],
+      tryAllTransports: true,
     })
 
     socket.on('notification', notification => {
@@ -118,7 +87,22 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
         ...current.filter(item => item.id !== notification.id),
       ].slice(0, 100))
       setToast(notification)
-
+      if (getDesktopPermission() === 'granted') {
+        try {
+          const desktopNotification = new window.Notification(notification.title, {
+            body: notification.message,
+            icon: '/favicon.ico',
+            tag: notification.id,
+          })
+          desktopNotification.onclick = () => {
+            window.focus()
+            if (notification.link) window.location.hash = `#${notification.link}`
+            desktopNotification.close()
+          }
+        } catch (error) {
+          console.error('[Notifications] Could not show desktop notification:', error)
+        }
+      }
     })
 
     socket.on('connect', () => {
@@ -137,8 +121,16 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
       if (active) setConnectionError('Real-time notifications are temporarily unavailable.')
     })
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return
+      if (socket.disconnected) socket.connect()
+      refreshNotifications()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       active = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       socket.disconnect()
     }
   }, [userId, token, logout])
@@ -205,56 +197,11 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
 
 function DesktopNotificationPrompt({ userId }) {
   const [desktopPermission, setDesktopPermission] = useState(getDesktopPermission)
-  const [pushState, setPushState] = useState(() =>
-    getDesktopPermission() === 'granted' ? 'checking' : 'idle'
-  )
-  const [pushError, setPushError] = useState('')
   const [dismissed, setDismissed] = useState(false)
-
-  useEffect(() => {
-    if (!userId || desktopPermission !== 'granted' || !canUseWebPush()) return undefined
-
-    let active = true
-    registerWebPushSubscription()
-      .then(() => {
-        if (active) {
-          setPushState('enabled')
-          setPushError('')
-        }
-      })
-      .catch(error => {
-        if (!active) return
-        console.error('[Notifications] Web Push registration failed:', error)
-        setPushError(error.response?.data?.message || error.message || 'Could not enable push notifications.')
-        setPushState('error')
-      })
-
-    return () => {
-      active = false
-    }
-  }, [desktopPermission, userId])
 
   const enableDesktopNotifications = async () => {
     try {
-      const wasGranted = desktopPermission === 'granted'
-      const permission = wasGranted
-        ? desktopPermission
-        : await window.Notification.requestPermission()
-      setDesktopPermission(permission)
-      if (permission === 'granted' && !wasGranted) setPushState('checking')
-
-      if (permission === 'granted' && wasGranted) {
-        setPushState('checking')
-        setPushError('')
-        try {
-          await registerWebPushSubscription()
-          setPushState('enabled')
-        } catch (error) {
-          console.error('[Notifications] Web Push registration failed:', error)
-          setPushError(error.response?.data?.message || error.message || 'Could not enable push notifications.')
-          setPushState('error')
-        }
-      }
+      setDesktopPermission(await window.Notification.requestPermission())
     } catch (error) {
       console.error('[Notifications] Desktop permission request failed:', error)
       setDesktopPermission(getDesktopPermission())
@@ -263,21 +210,17 @@ function DesktopNotificationPrompt({ userId }) {
 
   useEffect(() => {
     const refreshDesktopPermission = () => {
-      const permission = getDesktopPermission()
-      setDesktopPermission(permission)
-      if (permission === 'granted' && desktopPermission !== 'granted') {
-        setPushState('checking')
-      }
+      setDesktopPermission(getDesktopPermission())
     }
     window.addEventListener('focus', refreshDesktopPermission)
     return () => window.removeEventListener('focus', refreshDesktopPermission)
-  }, [desktopPermission])
+  }, [])
 
   if (
     dismissed ||
     !userId ||
-    !canUseWebPush() ||
-    (desktopPermission === 'granted' && pushState === 'enabled')
+    desktopPermission === 'unsupported' ||
+    desktopPermission === 'granted'
   ) {
     return null
   }
@@ -289,17 +232,11 @@ function DesktopNotificationPrompt({ userId }) {
           <h2 className="text-sm font-bold">Stay up to date</h2>
           {desktopPermission === 'default' ? (
             <p className="mt-1 text-xs text-white/65">
-              Allow push notifications to receive updates even when this site is closed.
+              Allow desktop notifications to see updates while using another tab or app.
             </p>
-          ) : desktopPermission === 'denied' ? (
-            <p className="mt-1 text-xs text-amber-200">
-              Notifications are blocked for this site. Change the site permission in your browser settings.
-            </p>
-          ) : pushState === 'checking' ? (
-            <p className="mt-1 text-xs text-white/65">Setting up background notifications...</p>
           ) : (
             <p className="mt-1 text-xs text-amber-200">
-              {pushError || 'Background notifications are not enabled for this device.'}
+              Notifications are blocked for this site. Change the site permission in your browser settings.
             </p>
           )}
         </div>
@@ -312,13 +249,13 @@ function DesktopNotificationPrompt({ userId }) {
           <X size={16} />
         </button>
       </div>
-      {(desktopPermission === 'default' || (desktopPermission === 'granted' && pushState === 'error')) && (
+      {desktopPermission === 'default' && (
         <button
           type="button"
           onClick={enableDesktopNotifications}
           className="mt-3 rounded-lg bg-blue-500/20 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-500/30"
         >
-          {desktopPermission === 'default' ? 'Allow notifications' : 'Retry notifications'}
+          Allow notifications
         </button>
       )}
     </aside>

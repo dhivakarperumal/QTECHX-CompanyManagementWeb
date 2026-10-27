@@ -348,8 +348,6 @@ if (frontendBuildPath) {
     setHeaders: (res, filePath) => {
       if (path.basename(filePath) === "index.html") {
         res.setHeader("Cache-Control", "no-cache");
-      } else if (path.basename(filePath) === "service-worker.js") {
-        res.setHeader("Cache-Control", "no-cache");
       } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       } else {
@@ -379,8 +377,6 @@ if (fs.existsSync(frontendPublicPath)) {
     lastModified: true,
     setHeaders: (res, filePath) => {
       if (path.basename(filePath) === "index.html") {
-        res.setHeader("Cache-Control", "no-cache");
-      } else if (path.basename(filePath) === "service-worker.js") {
         res.setHeader("Cache-Control", "no-cache");
       } else {
         res.setHeader("Cache-Control", "public, max-age=86400");
