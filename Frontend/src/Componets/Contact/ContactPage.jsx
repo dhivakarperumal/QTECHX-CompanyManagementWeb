@@ -271,7 +271,7 @@ const ContactPage = () => {
 
               <div className="mx-auto mb-8 max-w-xl text-center">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF6A00] sm:text-xs">
-                  DIRECT INQUIRY
+                  DIRECT ENQUIRY
                 </p>
                 <h3 className="hero-font text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
                   SEND US A <span className="text-[#FF6A00]">MESSAGE</span>
@@ -433,7 +433,7 @@ const ContactPage = () => {
                   <textarea
                     rows={4}
                     {...register("message", { required: "Message is required" })}
-                    placeholder="Tell us more about your project or inquiry..."
+                    placeholder="Tell us more about your project or Enquiry..."
                     className={`
                       w-full
                       rounded-xl
@@ -512,7 +512,7 @@ const ContactPage = () => {
                   REQUEST SENT SUCCESSFULLY
                 </h3>
                 <p className="mb-6 text-xs leading-relaxed text-white/70 sm:text-sm">
-                  We have received your message. Our team will review your inquiry and get in touch with you shortly.
+                  We have received your message. Our team will review your Enquiry and get in touch with you shortly.
                 </p>
 
                 <button
