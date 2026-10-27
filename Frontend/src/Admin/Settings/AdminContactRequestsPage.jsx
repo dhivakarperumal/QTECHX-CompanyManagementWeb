@@ -558,9 +558,9 @@ export default function AdminContactRequestsPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/admin/settings')}
+            onClick={() => navigate('/admin')}
             className="w-11 h-11 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition"
-            title="Back to settings"
+            title="Back to dashboard"
           >
             <ArrowLeft size={18} />
           </button>
