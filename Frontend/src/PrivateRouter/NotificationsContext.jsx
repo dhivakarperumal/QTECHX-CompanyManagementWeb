@@ -77,8 +77,8 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
 
     const socket = io(socketUrl, {
       auth: { token },
-      transports: ['polling'],
-      reconnectionAttempts: 5,
+      transports: ['websocket', 'polling'],
+      tryAllTransports: true,
     })
 
     socket.on('notification', notification => {
@@ -87,11 +87,11 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
         ...current.filter(item => item.id !== notification.id),
       ].slice(0, 100))
       setToast(notification)
-
       if (getDesktopPermission() === 'granted') {
         try {
           const desktopNotification = new window.Notification(notification.title, {
             body: notification.message,
+            icon: '/favicon.ico',
             tag: notification.id,
           })
           desktopNotification.onclick = () => {
@@ -121,8 +121,16 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
       if (active) setConnectionError('Real-time notifications are temporarily unavailable.')
     })
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return
+      if (socket.disconnected) socket.connect()
+      refreshNotifications()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       active = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       socket.disconnect()
     }
   }, [userId, token, logout])
@@ -157,7 +165,7 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
   return (
     <NotificationsContext.Provider value={value}>
       {children}
-      <DesktopNotificationPrompt />
+      {userId && <DesktopNotificationPrompt userId={userId} />}
       {!hasHeaderInbox && userId && <NotificationBell floating />}
       {toast && (
         <div className="fixed bottom-5 right-5 z-[10000] w-[min(24rem,calc(100vw-2.5rem))]">
@@ -187,7 +195,7 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
   )
 }
 
-function DesktopNotificationPrompt() {
+function DesktopNotificationPrompt({ userId }) {
   const [desktopPermission, setDesktopPermission] = useState(getDesktopPermission)
   const [dismissed, setDismissed] = useState(false)
 
@@ -201,12 +209,19 @@ function DesktopNotificationPrompt() {
   }
 
   useEffect(() => {
-    const refreshDesktopPermission = () => setDesktopPermission(getDesktopPermission())
+    const refreshDesktopPermission = () => {
+      setDesktopPermission(getDesktopPermission())
+    }
     window.addEventListener('focus', refreshDesktopPermission)
     return () => window.removeEventListener('focus', refreshDesktopPermission)
   }, [])
 
-  if (dismissed || desktopPermission === 'granted' || desktopPermission === 'unsupported') {
+  if (
+    dismissed ||
+    !userId ||
+    desktopPermission === 'unsupported' ||
+    desktopPermission === 'granted'
+  ) {
     return null
   }
 
@@ -217,7 +232,7 @@ function DesktopNotificationPrompt() {
           <h2 className="text-sm font-bold">Stay up to date</h2>
           {desktopPermission === 'default' ? (
             <p className="mt-1 text-xs text-white/65">
-              Allow desktop notifications to hear about new updates as they arrive.
+              Allow desktop notifications to see updates while using another tab or app.
             </p>
           ) : (
             <p className="mt-1 text-xs text-amber-200">

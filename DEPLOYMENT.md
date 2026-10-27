@@ -17,3 +17,15 @@ refreshes and direct links to work.
 If the frontend build is deployed outside the repository's normal `Frontend/dist`
 location, set `FRONTEND_BUILD_PATH` on the backend service to its path, relative
 to the `Backend` directory or as an absolute path.
+
+## Desktop notifications
+
+The site uses the browser's native Notification API alongside its existing
+real-time connection. Sign in, select **Allow notifications**, and allow
+notifications for the site in the browser. Desktop notifications can arrive
+while the app is open in a background tab or the browser is minimized; the
+browser must remain running and connected. This does not require server keys.
+
+Notifications cannot be delivered after the browser is fully closed using only
+the browser Notification API. Delivery while closed requires a separate Web
+Push service and server-side push credentials.
