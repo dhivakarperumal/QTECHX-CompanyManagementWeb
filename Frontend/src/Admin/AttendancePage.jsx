@@ -488,7 +488,7 @@ const AttendancePage = () => {
                         setHistoryFilter("This Month");
                         setHistoryEmployee(row);
                       }}
-                      className="mt-1 text-xs font-medium text-orange-400 transition hover:text-orange-300"
+                      className="mt-1 cursor-pointer text-xs font-medium text-orange-400 transition hover:text-orange-300"
                     >
                       View full history
                     </button>
@@ -700,7 +700,7 @@ const AttendancePage = () => {
                     type="button"
                     onClick={() => setHistoryEmployee(null)}
                     aria-label="Close attendance history"
-                    className="rounded-full border border-white/10 p-2 text-white/70 transition hover:bg-white/10"
+                    className="cursor-pointer rounded-full border border-white/10 p-2 text-white/70 transition hover:bg-white/10"
                   >
                     <X size={18} />
                   </button>
@@ -784,7 +784,7 @@ const AttendancePage = () => {
                   <p className="text-xs uppercase tracking-[0.24em] text-orange-400">Admin Action</p>
                   <h3 className="text-xl font-semibold text-white">Mark Attendance</h3>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
+                <button onClick={() => setIsModalOpen(false)} className="cursor-pointer rounded-full border border-white/10 p-2 text-white/70 hover:bg-white/10">
                   <X size={16} />
                 </button>
               </div>
