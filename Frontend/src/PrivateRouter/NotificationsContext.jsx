@@ -15,7 +15,13 @@ function getDesktopPermission() {
 }
 
 async function showDesktopNotification(notification) {
-  if (getDesktopPermission() !== 'granted') return false
+  const permission = getDesktopPermission()
+  if (permission !== 'granted') {
+    if (permission === 'denied') {
+      throw new Error('Notifications are blocked for this site. Allow them in browser site settings.')
+    }
+    return false
+  }
 
   const options = {
     body: notification.message,
@@ -218,9 +224,21 @@ function DesktopNotificationPrompt({ userId }) {
 
   const enableDesktopNotifications = async () => {
     try {
-      setDesktopPermission(await window.Notification.requestPermission())
+      const permission = await window.Notification.requestPermission()
+      setDesktopPermission(permission)
+      setTestError('')
+      if (permission === 'granted') {
+        await showDesktopNotification({
+          id: `notification-enabled-${Date.now()}`,
+          title: 'Desktop notifications are enabled',
+          message: 'New updates will appear here while the browser is running.',
+        })
+      } else if (permission === 'denied') {
+        setTestError('Permission was blocked. Change this site’s notification setting in your browser, then reload.')
+      }
     } catch (error) {
       console.error('[Notifications] Desktop permission request failed:', error)
+      setTestError(error.message || 'Could not request desktop notification permission.')
       setDesktopPermission(getDesktopPermission())
     }
   }
@@ -267,7 +285,7 @@ function DesktopNotificationPrompt({ userId }) {
             </p>
           ) : desktopPermission === 'denied' ? (
             <p className="mt-1 text-xs text-amber-200">
-              Notifications are blocked for this site. Change the site permission in your browser settings.
+              Notifications are blocked. Open the site controls beside the address bar, set Notifications to Allow, then reload.
             </p>
           ) : (
             <p className="mt-1 text-xs text-white/65">
