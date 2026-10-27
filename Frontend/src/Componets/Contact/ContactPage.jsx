@@ -26,9 +26,9 @@ const ContactPage = () => {
 
   const onSubmit = async (data) => {
     setLoading(true);
+    let requestSaved = false;
 
     try {
-      // 1. Save contact request to backend database
       await api.post("/contacts", {
         name: data.name,
         email: data.email,
@@ -36,26 +36,32 @@ const ContactPage = () => {
         subject: data.subject,
         message: data.message,
       });
+      requestSaved = true;
 
-      // 2. Also send EmailJS if configured
-      try {
-        await emailjs.send(
-          "service_bs2ofiq", // 👉 EmailJS service ID
-          "template_2watukw", // 👉 EmailJS template ID
-          data,
-          "PGkFp8TEtPWxWmOMo" // 👉 EmailJS public key
-        );
-      } catch (emailErr) {
-        console.warn("EmailJS delivery note:", emailErr);
-      }
+      await emailjs.send(
+        "service_chra7y6",
+        "template_9fsjv1t",
+        {
+          name: data.name,
+          email: data.email,
+          mobile: data.mobile,
+          subject: data.subject,
+          message: data.message,
+        },
+        "Y-6IkRSIRXcMIzPSG"
+      );
 
-      setLoading(false);
       setPopup(true);
       reset();
     } catch (error) {
-      setLoading(false);
       console.error("Submission error:", error);
-      alert(error?.response?.data?.message || "Something went wrong. Please try again later.");
+      if (requestSaved) {
+        alert("Your request was saved, but the email could not be sent. Please contact us directly or try again later.");
+      } else {
+        alert(error?.response?.data?.message || "Something went wrong. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
