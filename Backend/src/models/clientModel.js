@@ -3,6 +3,7 @@ const { getDB } = require("../config/db");
 // ─── Public field projection ───────────────────────────────────────────────────
 const clientFields = [
   "id", "uuid", "company_name", "client_name", "email", "phone_number",
+  "customer_id", "gst_number", "business_registration_number", "referral_code",
   "contact_person", "client_status", "service_type", "business_name",
   "business_type", "requirement", "notes_summary", "follow_up_date",
   "follow_up_time", "next_follow_up_date", "next_follow_up_time",
@@ -26,8 +27,9 @@ async function createClient(data) {
        client_status, service_type, business_name, business_type, requirement,
        notes_summary, follow_up_date, follow_up_time, next_follow_up_date,
        next_follow_up_time, discussion_summary, follow_up_status, reminder,
+       customer_id, gst_number, business_registration_number, referral_code,
        created_by, updated_by)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       data.uuid,
       data.company_name || null,
@@ -48,6 +50,10 @@ async function createClient(data) {
       data.discussion_summary || null,
       data.follow_up_status || "Pending",
       data.reminder ? 1 : 0,
+      data.customer_id || null,
+      data.gst_number || null,
+      data.business_registration_number || null,
+      data.referral_code || null,
       data.created_by || null,
       data.updated_by || null,
     ]

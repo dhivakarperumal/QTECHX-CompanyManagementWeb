@@ -145,10 +145,13 @@ async function createClientHandler(req, res) {
 
     const {
       company_name, client_name, email, phone_number, contact_person,
+      client_status, service_type, business_name, business_type, requirement,
+      notes_summary, follow_up_date, follow_up_time, next_follow_up_date,
       next_follow_up_time, discussion_summary, follow_up_status, reminder,
+      customer_id, gst_number, business_registration_number, referral_code,
     } = req.body;
 
-    if (!client_name || !client_name.trim()) {
+    if (typeof client_name !== "string" || !client_name.trim()) {
       return fail(res, "Client name is required", 400);
     }
     if (client_status && !CLIENT_STATUSES.includes(client_status)) {
@@ -167,6 +170,7 @@ async function createClientHandler(req, res) {
       client_status, service_type, business_name, business_type, requirement,
       notes_summary, follow_up_date, follow_up_time, next_follow_up_date,
       next_follow_up_time, discussion_summary, follow_up_status,
+      customer_id, gst_number, business_registration_number, referral_code,
       reminder: reminder === true || reminder === "true" || reminder === 1,
       created_by: actor,
       updated_by: actor,
@@ -183,7 +187,8 @@ async function createClientHandler(req, res) {
     return ok(res, { message: "Client created successfully", data: client }, 201);
   } catch (err) {
     console.error("createClientHandler:", err);
-    return fail(res, "Client creation failed", 500, err.message);
+    const msg = duplicateMessage(err);
+    return fail(res, msg || "Client creation failed", msg ? 409 : 500, err.message);
   }
 }
 

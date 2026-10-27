@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
+import api from "../api";
 import Logo from "/images/logo.png";
 
 /* ================= NAV ITEMS ================= */
@@ -190,8 +191,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   useEffect(() => {
     const fetchPendingCount = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/trainee-intern?limit=1&status=Pending`);
-        const data = await response.json();
+        const { data } = await api.get("/trainee-intern", {
+          params: { limit: 1, status: "Pending" },
+        });
         if (data.success && data.pagination) {
           setPendingCount(data.pagination.total || 0);
         }

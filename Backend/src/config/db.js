@@ -851,22 +851,35 @@ async function ensureProjectExpirySchema(pool) {
 }
 
 async function ensureClientsSchema(pool) {
-  try {
-    const [existingTables] = await pool.execute("SHOW TABLES LIKE 'clients'");
-    if (!existingTables.length) return;
+  const [existingTables] = await pool.execute("SHOW TABLES LIKE 'clients'");
+  if (!existingTables.length) return;
 
-    const [columns] = await pool.execute("SHOW COLUMNS FROM clients");
-    const serviceTypeCol = columns.find((c) => c.Field === "service_type");
-    if (serviceTypeCol && serviceTypeCol.Type.toLowerCase().startsWith("enum")) {
-      await pool.execute("ALTER TABLE clients MODIFY COLUMN service_type VARCHAR(100) NULL");
+  const [columns] = await pool.execute("SHOW COLUMNS FROM clients");
+  const columnNames = new Set(columns.map((column) => column.Field));
+  const addColumnStatements = [];
+  const addColumn = (name, definition) => {
+    if (!columnNames.has(name)) {
+      addColumnStatements.push(`ADD COLUMN ${name} ${definition}`);
     }
+  };
 
-    const followUpCol = columns.find((c) => c.Field === "follow_up_status");
-    if (followUpCol && followUpCol.Type.toLowerCase().startsWith("enum")) {
-      await pool.execute("ALTER TABLE clients MODIFY COLUMN follow_up_status VARCHAR(50) NOT NULL DEFAULT 'Pending'");
-    }
-  } catch (err) {
-    console.error("ensureClientsSchema error:", err.message);
+  addColumn("customer_id", "VARCHAR(100) NULL");
+  addColumn("gst_number", "VARCHAR(50) NULL");
+  addColumn("business_registration_number", "VARCHAR(100) NULL");
+  addColumn("referral_code", "VARCHAR(100) NULL");
+
+  if (addColumnStatements.length) {
+    await pool.execute(`ALTER TABLE clients ${addColumnStatements.join(", ")}`);
+  }
+
+  const serviceTypeCol = columns.find((column) => column.Field === "service_type");
+  if (serviceTypeCol && serviceTypeCol.Type.toLowerCase().startsWith("enum")) {
+    await pool.execute("ALTER TABLE clients MODIFY COLUMN service_type VARCHAR(100) NULL");
+  }
+
+  const followUpCol = columns.find((column) => column.Field === "follow_up_status");
+  if (followUpCol && followUpCol.Type.toLowerCase().startsWith("enum")) {
+    await pool.execute("ALTER TABLE clients MODIFY COLUMN follow_up_status VARCHAR(50) NOT NULL DEFAULT 'Pending'");
   }
 }
 
@@ -902,6 +915,10 @@ async function ensureSchema(pool) {
       client_name          VARCHAR(255) NOT NULL,
       email                VARCHAR(255) NULL,
       phone_number         VARCHAR(20)  NULL,
+      customer_id          VARCHAR(100) NULL,
+      gst_number           VARCHAR(50) NULL,
+      business_registration_number VARCHAR(100) NULL,
+      referral_code        VARCHAR(100) NULL,
       contact_person       VARCHAR(255) NULL,
       client_status        ENUM('Active','Inactive','Lead','Prospect','Converted','Closed') NOT NULL DEFAULT 'Lead',
       service_type         VARCHAR(100) NULL,
