@@ -53,6 +53,23 @@ async function getService(req, res) {
   }
 }
 
+function uploadServiceImages(req, res) {
+  const uploadedFiles = getUploadedFiles(req);
+  const urls = uploadedFiles.singlepageimage || [];
+
+  if (!urls.length) {
+    return res.status(400).json({ success: false, message: 'No service images were uploaded' });
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: 'Service images uploaded successfully',
+    url: urls[0],
+    urls,
+    data: urls,
+  });
+}
+
 async function createService(req, res) {
   try {
     const uploadedFiles = getUploadedFiles(req);
@@ -101,6 +118,7 @@ async function deleteService(req, res) {
 module.exports = {
   listServices,
   getService,
+  uploadServiceImages,
   createService,
   updateService,
   deleteService,

@@ -8,6 +8,7 @@ import ScrollToTop from "./Componets/CommonComponents/ScrollToTop";
 import FloatingSupport from "./Componets/CommonComponents/FloatingSupport";
 import Loader from "./Componets/CommonComponents/Loader";
 import { useAuth } from "./PrivateRouter/AuthContext";
+import Seo from "./Componets/CommonComponents/Seo";
 
 function App() {
   const [loading] = useState(false);
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <section>
+      {showPublicChrome && <Seo />}
       {/* {showPublicChrome && <Header />} */}
       {showPublicChrome && (
         <div className="print:hidden">

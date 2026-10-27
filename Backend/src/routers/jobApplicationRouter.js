@@ -29,23 +29,23 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10 MB
   },
   fileFilter: (req, file, cb) => {
-    // Allow common document types
-    const allowedMimes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "image/jpeg",
-      "image/png",
-      "text/plain",
-    ];
-
-    if (allowedMimes.includes(file.mimetype)) {
+    const allowedMimeTypesByExtension = {
+      ".pdf": ["application/pdf"],
+      ".doc": ["application/msword"],
+      ".docx": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+      ".pptx": ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+      ".xls": ["application/vnd.ms-excel"],
+      ".xlsx": ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+      ".jpg": ["image/jpeg"],
+      ".jpeg": ["image/jpeg"],
+      ".png": ["image/png"],
+      ".txt": ["text/plain"],
+    };
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (allowedMimeTypesByExtension[extension]?.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`File type ${file.mimetype} not allowed`), false);
+      cb(new Error("Unsupported file type. Upload a PDF, office document, JPG, or PNG file."), false);
     }
   },
 });
@@ -104,14 +104,24 @@ router.post(
 // Protected routes - Get my applications (logged-in user)
 router.get("/my-applications/list", authenticate, authorize(), JobApplicationController.getMyApplications);
 
-// Protected routes - Get application by ID
-router.get("/:id/view", authenticate, JobApplicationController.getApplication);
+// Applicant records contain personal information and are restricted to recruiting staff.
+router.get(
+  "/:id/view",
+  authenticate,
+  authorize("admin", "recruiter", "hr"),
+  JobApplicationController.getApplication
+);
 
 // Protected routes - Update application (applicant only)
 router.put("/:id/update", authenticate, authorize(), JobApplicationController.updateApplication);
 
 // Protected routes - Download file from application
-router.get("/:id/download/:fileType", JobApplicationController.downloadFile);
+router.get(
+  "/:id/download/:fileType",
+  authenticate,
+  authorize("admin", "recruiter", "hr"),
+  JobApplicationController.downloadFile
+);
 
 // Admin/Recruiter routes - Update application status
 router.put(

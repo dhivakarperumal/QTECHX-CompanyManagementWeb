@@ -26,6 +26,15 @@ const duplicateMessage = (error) => {
 
 async function create(req, res) {
   try {
+    const actorRole = String(req.user?.role || "").trim().toLowerCase();
+    const requestedRole = String(req.body.role || "User").trim();
+    if (requestedRole.toLowerCase() === "super admin" && actorRole !== "super admin") {
+      return res.status(403).json({ message: "Only a Super Admin can assign the Super Admin role" });
+    }
+    if (actorRole === "manager" && ["admin", "super admin"].includes(requestedRole.toLowerCase())) {
+      return res.status(403).json({ message: "Managers cannot create administrator accounts" });
+    }
+
     const password = await bcrypt.hash(req.body.password, 12);
     const actor = req.user?.user_id || "SYSTEM";
     const user = await createUser({
@@ -34,8 +43,8 @@ async function create(req, res) {
       email: req.body.email,
       mobile: req.body.mobile,
       password,
-      role: req.body.role,
-      status: req.body.status,
+      role: requestedRole,
+      status: req.body.status || "Active",
       created_by: actor,
       updated_by: actor,
     });
@@ -70,7 +79,7 @@ async function getOne(req, res) {
   try {
     const user = await findByUserId(req.params.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-    return res.json({ user });
+    return res.json({ user: publicUser(user) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to retrieve user" });
   }
@@ -80,6 +89,23 @@ async function update(req, res) {
   try {
     const existing = await findByUserId(req.params.userId);
     if (!existing) return res.status(404).json({ message: "User not found" });
+
+    const actorRole = String(req.user?.role || "").trim().toLowerCase();
+    const targetRole = String(existing.role || "").trim().toLowerCase();
+    const requestedRole = String(req.body.role || "").trim().toLowerCase();
+    if (
+      (targetRole === "super admin" || requestedRole === "super admin") &&
+      actorRole !== "super admin"
+    ) {
+      return res.status(403).json({ message: "Only a Super Admin can manage the Super Admin role" });
+    }
+    if (
+      actorRole === "manager" &&
+      (["admin", "super admin"].includes(targetRole) ||
+        ["admin", "super admin"].includes(requestedRole))
+    ) {
+      return res.status(403).json({ message: "Managers cannot manage administrator accounts" });
+    }
 
     if (req.body.status !== undefined) {
       const normalizedStatus = String(req.body.status).trim().toLowerCase() === "active" ? "Active" : "Inactive";

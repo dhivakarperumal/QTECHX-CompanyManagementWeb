@@ -17,6 +17,7 @@ console.log("Database configuration loaded:", {
 
 const { initDB } = require("./src/config/db");
 const { upload } = require("./src/config/multerConfig");
+const { authenticate, authorize } = require("./src/security/authMiddleware");
 const cartStore = new Map();
 const wishlistStore = new Map();
 const usersRouter = require("./src/routers/usersRouter");
@@ -75,7 +76,6 @@ app.use(
       const allowed = [
         "https://qtechx.com",
         "https://www.qtechx.com",
-        "https://qt1.qtechx.com",
       ];
       if (allowed.includes(origin)) return callback(null, origin);
       callback(new Error("Not allowed by CORS"));
@@ -123,29 +123,35 @@ app.use("/api/completedprojects", completedProjectRouter);
 app.use("/api/completed-projects", completedProjectRouter);
 app.use("/api/notifications", notificationRouter);
 
-app.post("/api/upload", upload.any(), (req, res) => {
-  const files = Array.isArray(req.files) ? req.files : [];
+app.post(
+  "/api/upload",
+  authenticate,
+  authorize("Super Admin", "Admin", "Manager"),
+  upload.any(),
+  (req, res) => {
+    const files = Array.isArray(req.files) ? req.files : [];
 
-  if (!files.length) {
-    return res.status(400).json({
-      success: false,
-      message: "No file uploaded",
+    if (!files.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    const urls = files.map((file) => {
+      const relativePath = path.relative(__dirname, file.path).replace(/\\/g, "/");
+      return `/${relativePath}`;
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "File uploaded successfully",
+      url: urls[0],
+      urls,
+      data: urls,
     });
   }
-
-  const urls = files.map((file) => {
-    const relativePath = path.relative(__dirname, file.path).replace(/\\/g, "/");
-    return `/${relativePath}`;
-  });
-
-  res.status(200).json({
-    success: true,
-    message: "File uploaded successfully",
-    url: urls[0],
-    urls,
-    data: urls,
-  });
-});
+);
 
 app.get("/api/cart/:userId", (req, res) => {
   const cart = cartStore.get(req.params.userId) || [];
@@ -242,33 +248,64 @@ app.use("/api/*", (req, res) => {
 
 // Serve uploaded files from the backend uploads directory as inline browser content
 app.use(["/uploads", "/api/uploads"], (req, res, next) => {
-  res.setHeader("Content-Disposition", "inline");
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
-  const requestedPath = req.path.replace(/^\/+/, "");
-  const absoluteRequestedPath = path.join(__dirname, "uploads", requestedPath);
-
-  if (fs.existsSync(absoluteRequestedPath)) {
-    return next();
+  const relativePath = req.path.replace(/\\/g, "/").replace(/^\/+/, "").toLowerCase();
+  if (/\.(html?|xhtml|svg|js|mjs|cjs|wasm)$/i.test(relativePath)) {
+    return res.status(404).json({ success: false, message: "File not found" });
   }
 
-  const fileName = path.basename(requestedPath);
-  const fallbackCandidates = [
-    path.join(__dirname, "uploads", "projects", "source_code_backup", fileName),
-    path.join(__dirname, "uploads", "projects", "ProjectImageZip", fileName),
-    path.join(__dirname, "uploads", "projects", "images", fileName),
-    path.join(__dirname, "uploads", "projects", "project_plans", fileName),
-  ];
+  const segments = relativePath.split("/");
+  const privateRoots = new Set([
+    "trainees",
+    "employees",
+    "clients",
+    "expenses",
+    "tasks",
+    "myevents",
+    "jobs",
+  ]);
+  const privateProjectFiles =
+    segments[0] === "projects" &&
+    (segments.length === 2 ||
+      ["project_plans", "projectimagezip", "source_code_backup"].includes(segments[1]));
+  const requiresAuthorization = privateRoots.has(segments[0]) || privateProjectFiles;
 
-  const resolvedFile = fallbackCandidates.find((candidate) => fs.existsSync(candidate));
-  if (resolvedFile) {
-    return res.sendFile(resolvedFile);
-  }
+  if (!requiresAuthorization) return next();
 
+  return authenticate(req, res, () =>
+    authorize("Super Admin", "Admin", "Manager")(req, res, next)
+  );
+});
+
+app.use(["/uploads", "/api/uploads"], (req, res, next) => {
+  const isImage = /\.(?:avif|gif|jpe?g|png|webp)$/i.test(req.path);
+  res.setHeader("Content-Disposition", isImage ? "inline" : "attachment");
   next();
-}, express.static(path.join(__dirname, "uploads")));
+}, express.static(path.join(__dirname, "uploads"), {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    if (!/\.(?:avif|gif|jpe?g|png|webp)$/i.test(filePath)) {
+      res.setHeader("Content-Disposition", "attachment");
+    }
+    const relativePath = path.relative(path.join(__dirname, "uploads"), filePath);
+    const folder = relativePath.split(path.sep)[0]?.toLowerCase();
+    const isPublicImage = /\.(avif|gif|jpe?g|png|svg|webp)$/i.test(filePath);
+
+    if (isPublicImage && ["projects", "completedprojects", "services"].includes(folder)) {
+      res.setHeader("Cache-Control", "public, max-age=604800");
+    }
+  },
+}));
 
 // Serve frontend production build if available
+const configuredFrontendBuildPath = process.env.FRONTEND_BUILD_PATH
+  ? path.resolve(__dirname, process.env.FRONTEND_BUILD_PATH)
+  : null;
 const potentialFrontendBuildPaths = [
+  configuredFrontendBuildPath,
   path.join(__dirname, "Frontend", "dist"),
   path.join(__dirname, "..", "Frontend", "dist"),
   path.join(__dirname, "..", "..", "Frontend", "dist"),
@@ -277,7 +314,7 @@ const potentialFrontendBuildPaths = [
   path.join(__dirname, "..", "dist"),
   path.join(__dirname, "build"),
   path.join(__dirname, "..", "build"),
-];
+].filter(Boolean);
 
 const frontendBuildPath = potentialFrontendBuildPaths.find((buildPath) => {
   return fs.existsSync(buildPath) && fs.existsSync(path.join(buildPath, "index.html"));
@@ -305,7 +342,19 @@ app.get("/favicon.ico", (req, res) => {
 });
 
 if (frontendBuildPath) {
-  app.use(express.static(frontendBuildPath));
+  app.use(express.static(frontendBuildPath, {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (path.basename(filePath) === "index.html") {
+        res.setHeader("Cache-Control", "no-cache");
+      } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
+    },
+  }));
   app.get(["/", "/index.html"], (req, res) => {
     return res.sendFile(path.join(frontendBuildPath, "index.html"));
   });
@@ -316,11 +365,24 @@ if (frontendBuildPath) {
     return res.sendFile(path.join(frontendBuildPath, "index.html"));
   });
 } else {
-  console.warn("Frontend build directory not found. Backend will run in API-only mode.");
+  console.warn(
+    "Frontend build directory not found. Backend will run in API-only mode; " +
+    "build Frontend/dist or set FRONTEND_BUILD_PATH to the deployed frontend build."
+  );
 }
 
 if (fs.existsSync(frontendPublicPath)) {
-  app.use(express.static(frontendPublicPath));
+  app.use(express.static(frontendPublicPath, {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (path.basename(filePath) === "index.html") {
+        res.setHeader("Cache-Control", "no-cache");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
+    },
+  }));
 }
 
 // Global Context Middleware for tracking created_by / updated_by

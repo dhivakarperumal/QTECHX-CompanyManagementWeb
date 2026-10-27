@@ -1,4 +1,4 @@
-import { StrictMode, lazy } from 'react'
+import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 import './index.css'
@@ -9,17 +9,17 @@ import Login from './Componets/Auth/Login.jsx'
 import Register from './Componets/Components/Register.jsx'
 import PrivateRoute from './PrivateRouter/PrivateRouter.jsx'
 
-import AdminDashboard from './Admin/AdminDashboard.jsx'
-import AdminLayout from './Admin/Adminpanel.jsx'
-import EmployeeList from './Admin/Employees/EmployeeList.jsx'
-import EmployeeAdd from './Admin/Employees/EmployeeAdd.jsx'
+const AdminDashboard = lazy(() => import('./Admin/AdminDashboard.jsx'))
+const AdminLayout = lazy(() => import('./Admin/Adminpanel.jsx'))
+const EmployeeList = lazy(() => import('./Admin/Employees/EmployeeList.jsx'))
+const EmployeeAdd = lazy(() => import('./Admin/Employees/EmployeeAdd.jsx'))
 // import EmployeeEdit from './Admin/Employees/EmployeeEdit.jsx'
-import EmployeeView from './Admin/Employees/EmployeeView.jsx'
-import AdminLeaveManagement from './Admin/Employees/AdminLeaveManagement.jsx'
-import AttendancePage from './Admin/AttendancePage.jsx'
-import AttendanceView from './Admin/AttendanceView.jsx'
-import OfficeCalendar from './Admin/OfficeCalendar.jsx'
-import MyCalendar from './Admin/MyCalendar.jsx'
+const EmployeeView = lazy(() => import('./Admin/Employees/EmployeeView.jsx'))
+const AdminLeaveManagement = lazy(() => import('./Admin/Employees/AdminLeaveManagement.jsx'))
+const AttendancePage = lazy(() => import('./Admin/AttendancePage.jsx'))
+const AttendanceView = lazy(() => import('./Admin/AttendanceView.jsx'))
+const OfficeCalendar = lazy(() => import('./Admin/OfficeCalendar.jsx'))
+const MyCalendar = lazy(() => import('./Admin/MyCalendar.jsx'))
 
 import { AuthProvider } from './PrivateRouter/AuthContext.jsx'
 import { NotificationsProvider } from './PrivateRouter/NotificationsContext.jsx'
@@ -40,80 +40,77 @@ import ContactPage from "./Componets/Contact/ContactPage.jsx";
 import Booknow from "./Componets/BookingForm/Booknow.jsx";
 import PrivacyPolicy from "./Componets/PrivacyPolicy/PrivacyPolicy.jsx";
 
-import EmployeeDashboard from './Employees/EmployeeDashboard.jsx'
-import EmployeeLayout from './Employees/EmployeePanel.jsx'
-import EmployeeMeetings from './Employees/EmployeeMeetings.jsx'
-import EmployeeProjects from './Employees/Employee Projects/EmployeeProjects.jsx'
-import EmployeeProjectDetails from './Employees/Employee Projects/EmployeeProjectDetails.jsx'
-import EmployeeTasks from './Employees/EmployeeTasks.jsx'
-import EmployeeTaskDetails from './Employees/EmployeeTaskDetails.jsx'
-import EmployeeTimesheetPage from './Employees/EmployeeTimesheetPage.jsx'
-import TodayTasksPage from './Employees/TodayTasksPage.jsx'
-import CompletedTasksPage from './Employees/CompletedTasksPage.jsx'
-import PendingTasksPage from './Employees/PendingTasksPage.jsx'
-import CancelledTasksPage from './Employees/CancelledTasksPage.jsx'
-import EmployeePayroll from './Employees/EmployeePayroll.jsx'
-import EmployeePayrollSlips from './Employees/EmployeePayrollSlips.jsx'
-import ApplyLeave from './Employees/Leaves/ApplyLeave.jsx'
-import LeaveHistory from './Employees/Leaves/LeaveHistory.jsx'
-import EmployeeLeaveHistoryPage from './Employees/Leaves/EmployeeLeaveHistoryPage.jsx'
-import AllProjects from './Admin/Projects/AllProjects.jsx'
-import AddProject from './Admin/Projects/AddProject.jsx'
-import EditProject from './Admin/Projects/EditProject.jsx'
-import ProjectDetails from './Admin/Projects/ProjectDetails.jsx'
-import MyProjectDetails from './Admin/Projects/MyProjectDetails.jsx'
-import ProjectAssignments from './Admin/Projects/ProjectAssignments.jsx'
-import ProjectAssetsPage from './Admin/Projects/ProjectAssetsPage.jsx'
-import ProjectPlansPage from './Admin/Projects/ProjectPlansPage.jsx'
-import ProjectQuotationsPage from './Admin/Projects/ProjectQuotationsPage.jsx'
-import QuotationFormPage from './Admin/Projects/QuotationFormPage.jsx'
-import QuotationDetailsPage from './Admin/Projects/QuotationDetailsPage.jsx'
-import ProjectExpiryPage from './Admin/Projects/ProjectExpiryPage.jsx'
-import CompletedProjects from './Admin/Projects/CompletedProjects.jsx'
-import AssignmentView from './Admin/Projects/AssignmentView.jsx'
-import TasksPage from './Admin/Tasks/TasksPage.jsx'
-import AssignTaskPage from './Admin/Tasks/AssignTaskPage.jsx'
-import AdminTodayTasksPage from './Admin/Tasks/AdminTodayTasksPage.jsx'
-import AdminNewTasksPage from './Admin/Tasks/AdminNewTasksPage.jsx'
-import AdminPendingTasksPage from './Admin/Tasks/AdminPendingTasksPage.jsx'
-import AdminCompletedTasksPage from './Admin/Tasks/AdminCompletedTasksPage.jsx'
-import AdminCancelledTasksPage from './Admin/Tasks/AdminCancelledTasksPage.jsx'
-import AllTraineeInterns from './Admin/Trainees/AllTraineeInterns.jsx'
-import AddTraineeIntern from './Admin/Trainees/AddTraineeIntern.jsx'
-import TraineeInternDetails from './Admin/Trainees/TraineeInternDetails.jsx'
-import TraineeInternAttendancePage from './Admin/Trainees/TraineeInternAttendancePage.jsx'
-import TraineeInternAttendanceView from './Admin/Trainees/TraineeInternAttendanceView.jsx'
-import PendingTraineeInterns from './Admin/Trainees/PendingTraineeInterns.jsx'
-
-import EmployeeAttendance from './Employees/EmployeeAttendance.jsx'
-import EmployeeAttendanceSummary from './Employees/EmployeeAttendanceSummary.jsx'
-import EmployeeProfile from './Employees/EmployeeProfile.jsx'
-
-import EmployeeAllTraineeInterns from './Employees/Trainees/AllTraineeInterns.jsx'
-import EmployeeAddTraineeIntern from './Employees/Trainees/AddTraineeIntern.jsx'
-import EmployeeTraineeInternAttendancePage from './Employees/Trainees/TraineeInternAttendancePage.jsx'
-import EmployeeTraineeTaskMaster from './Employees/Trainees/TraineeTaskMaster.jsx'
-import EmployeeTraineeTaskAssign from './Employees/Trainees/TraineeTaskAssign.jsx'
-import EmployeeTraineeInternDetails from './Employees/Trainees/TraineeInternDetails.jsx'
-import EmployeeTraineeInternAttendanceView from './Employees/Trainees/TraineeInternAttendanceView.jsx'
-import EmployeeTraineeTaskDetails from './Employees/Trainees/TraineeTaskDetails.jsx'
-
-import TraineeTaskMaster from './Admin/Trainees/TraineeTaskMaster.jsx';
-import TraineeTaskAssign from './Admin/Trainees/TraineeTaskAssign.jsx';
-import TraineeTaskDetails from './Admin/Trainees/TraineeTaskDetails.jsx';
-import ReportsPage from './Admin/ReportsPage.jsx';
-import AdminProfile from './Admin/Settings/AdminProfile.jsx';
-import AdminSettingsPage from './Admin/Settings/AdminSettingsPage.jsx';
-import AdminLeaveSettingsPage from './Admin/Settings/AdminLeaveSettingsPage.jsx';
-import AdminServicesSettingsPage from './Admin/Settings/AdminServicesSettingsPage.jsx';
-import AdminPricingSettingsPage from './Admin/Settings/AdminPricingSettingsPage.jsx';
-import AdminReviewsSettingsPage from './Admin/Settings/AdminReviewsSettingsPage.jsx';
-import AdminJobsSettingsPage from './Admin/Settings/AdminJobsSettingsPage.jsx';
-import AdminJobApplicationsPage from './Admin/Settings/AdminJobApplicationsPage.jsx';
-import AdminServiceRequestsPage from './Admin/Settings/AdminServiceRequestsPage.jsx';
-import AdminContactRequestsPage from './Admin/Settings/AdminContactRequestsPage.jsx';
-import AdminCompletedProjectsSettingsPage from './Admin/Settings/AdminCompletedProjectsSettingsPage.jsx';
-import AdminUsersSettingsPage from './Admin/Settings/AdminUsersSettingsPage.jsx';
+const EmployeeDashboard = lazy(() => import('./Employees/EmployeeDashboard.jsx'))
+const EmployeeLayout = lazy(() => import('./Employees/EmployeePanel.jsx'))
+const EmployeeMeetings = lazy(() => import('./Employees/EmployeeMeetings.jsx'))
+const EmployeeProjects = lazy(() => import('./Employees/Employee Projects/EmployeeProjects.jsx'))
+const EmployeeProjectDetails = lazy(() => import('./Employees/Employee Projects/EmployeeProjectDetails.jsx'))
+const EmployeeTasks = lazy(() => import('./Employees/EmployeeTasks.jsx'))
+const EmployeeTaskDetails = lazy(() => import('./Employees/EmployeeTaskDetails.jsx'))
+const EmployeeTimesheetPage = lazy(() => import('./Employees/EmployeeTimesheetPage.jsx'))
+const TodayTasksPage = lazy(() => import('./Employees/TodayTasksPage.jsx'))
+const CompletedTasksPage = lazy(() => import('./Employees/CompletedTasksPage.jsx'))
+const PendingTasksPage = lazy(() => import('./Employees/PendingTasksPage.jsx'))
+const CancelledTasksPage = lazy(() => import('./Employees/CancelledTasksPage.jsx'))
+const EmployeePayroll = lazy(() => import('./Employees/EmployeePayroll.jsx'))
+const EmployeePayrollSlips = lazy(() => import('./Employees/EmployeePayrollSlips.jsx'))
+const ApplyLeave = lazy(() => import('./Employees/Leaves/ApplyLeave.jsx'))
+const LeaveHistory = lazy(() => import('./Employees/Leaves/LeaveHistory.jsx'))
+const EmployeeLeaveHistoryPage = lazy(() => import('./Employees/Leaves/EmployeeLeaveHistoryPage.jsx'))
+const AllProjects = lazy(() => import('./Admin/Projects/AllProjects.jsx'))
+const AddProject = lazy(() => import('./Admin/Projects/AddProject.jsx'))
+const EditProject = lazy(() => import('./Admin/Projects/EditProject.jsx'))
+const ProjectDetails = lazy(() => import('./Admin/Projects/ProjectDetails.jsx'))
+const MyProjectDetails = lazy(() => import('./Admin/Projects/MyProjectDetails.jsx'))
+const ProjectAssignments = lazy(() => import('./Admin/Projects/ProjectAssignments.jsx'))
+const ProjectAssetsPage = lazy(() => import('./Admin/Projects/ProjectAssetsPage.jsx'))
+const ProjectPlansPage = lazy(() => import('./Admin/Projects/ProjectPlansPage.jsx'))
+const ProjectQuotationsPage = lazy(() => import('./Admin/Projects/ProjectQuotationsPage.jsx'))
+const QuotationFormPage = lazy(() => import('./Admin/Projects/QuotationFormPage.jsx'))
+const QuotationDetailsPage = lazy(() => import('./Admin/Projects/QuotationDetailsPage.jsx'))
+const ProjectExpiryPage = lazy(() => import('./Admin/Projects/ProjectExpiryPage.jsx'))
+const CompletedProjects = lazy(() => import('./Admin/Projects/CompletedProjects.jsx'))
+const AssignmentView = lazy(() => import('./Admin/Projects/AssignmentView.jsx'))
+const TasksPage = lazy(() => import('./Admin/Tasks/TasksPage.jsx'))
+const AssignTaskPage = lazy(() => import('./Admin/Tasks/AssignTaskPage.jsx'))
+const AdminTodayTasksPage = lazy(() => import('./Admin/Tasks/AdminTodayTasksPage.jsx'))
+const AdminNewTasksPage = lazy(() => import('./Admin/Tasks/AdminNewTasksPage.jsx'))
+const AdminPendingTasksPage = lazy(() => import('./Admin/Tasks/AdminPendingTasksPage.jsx'))
+const AdminCompletedTasksPage = lazy(() => import('./Admin/Tasks/AdminCompletedTasksPage.jsx'))
+const AdminCancelledTasksPage = lazy(() => import('./Admin/Tasks/AdminCancelledTasksPage.jsx'))
+const AllTraineeInterns = lazy(() => import('./Admin/Trainees/AllTraineeInterns.jsx'))
+const AddTraineeIntern = lazy(() => import('./Admin/Trainees/AddTraineeIntern.jsx'))
+const TraineeInternDetails = lazy(() => import('./Admin/Trainees/TraineeInternDetails.jsx'))
+const TraineeInternAttendancePage = lazy(() => import('./Admin/Trainees/TraineeInternAttendancePage.jsx'))
+const TraineeInternAttendanceView = lazy(() => import('./Admin/Trainees/TraineeInternAttendanceView.jsx'))
+const PendingTraineeInterns = lazy(() => import('./Admin/Trainees/PendingTraineeInterns.jsx'))
+const EmployeeAttendance = lazy(() => import('./Employees/EmployeeAttendance.jsx'))
+const EmployeeAttendanceSummary = lazy(() => import('./Employees/EmployeeAttendanceSummary.jsx'))
+const EmployeeProfile = lazy(() => import('./Employees/EmployeeProfile.jsx'))
+const EmployeeAllTraineeInterns = lazy(() => import('./Employees/Trainees/AllTraineeInterns.jsx'))
+const EmployeeAddTraineeIntern = lazy(() => import('./Employees/Trainees/AddTraineeIntern.jsx'))
+const EmployeeTraineeInternAttendancePage = lazy(() => import('./Employees/Trainees/TraineeInternAttendancePage.jsx'))
+const EmployeeTraineeTaskMaster = lazy(() => import('./Employees/Trainees/TraineeTaskMaster.jsx'))
+const EmployeeTraineeTaskAssign = lazy(() => import('./Employees/Trainees/TraineeTaskAssign.jsx'))
+const EmployeeTraineeInternDetails = lazy(() => import('./Employees/Trainees/TraineeInternDetails.jsx'))
+const EmployeeTraineeInternAttendanceView = lazy(() => import('./Employees/Trainees/TraineeInternAttendanceView.jsx'))
+const EmployeeTraineeTaskDetails = lazy(() => import('./Employees/Trainees/TraineeTaskDetails.jsx'))
+const TraineeTaskMaster = lazy(() => import('./Admin/Trainees/TraineeTaskMaster.jsx'))
+const TraineeTaskAssign = lazy(() => import('./Admin/Trainees/TraineeTaskAssign.jsx'))
+const TraineeTaskDetails = lazy(() => import('./Admin/Trainees/TraineeTaskDetails.jsx'))
+const ReportsPage = lazy(() => import('./Admin/ReportsPage.jsx'))
+const AdminProfile = lazy(() => import('./Admin/Settings/AdminProfile.jsx'))
+const AdminSettingsPage = lazy(() => import('./Admin/Settings/AdminSettingsPage.jsx'))
+const AdminLeaveSettingsPage = lazy(() => import('./Admin/Settings/AdminLeaveSettingsPage.jsx'))
+const AdminServicesSettingsPage = lazy(() => import('./Admin/Settings/AdminServicesSettingsPage.jsx'))
+const AdminPricingSettingsPage = lazy(() => import('./Admin/Settings/AdminPricingSettingsPage.jsx'))
+const AdminReviewsSettingsPage = lazy(() => import('./Admin/Settings/AdminReviewsSettingsPage.jsx'))
+const AdminJobsSettingsPage = lazy(() => import('./Admin/Settings/AdminJobsSettingsPage.jsx'))
+const AdminJobApplicationsPage = lazy(() => import('./Admin/Settings/AdminJobApplicationsPage.jsx'))
+const AdminServiceRequestsPage = lazy(() => import('./Admin/Settings/AdminServiceRequestsPage.jsx'))
+const AdminContactRequestsPage = lazy(() => import('./Admin/Settings/AdminContactRequestsPage.jsx'))
+const AdminCompletedProjectsSettingsPage = lazy(() => import('./Admin/Settings/AdminCompletedProjectsSettingsPage.jsx'))
+const AdminUsersSettingsPage = lazy(() => import('./Admin/Settings/AdminUsersSettingsPage.jsx'))
 
 const AllClients = lazy(() => import('./Admin/Clients/AllClients.jsx'))
 const ExpensesPage = lazy(() => import('./Admin/Expenses/ExpensesPage.jsx'))
@@ -601,7 +598,9 @@ createRoot(document.getElementById('root')).render(
       <NotificationsProvider>
         <StoreProvider>
           <AdminProvider>
-            <RouterProvider router={router} />
+            <Suspense fallback={<div className="min-h-screen bg-slate-950" aria-label="Loading page" />}>
+              <RouterProvider router={router} />
+            </Suspense>
           </AdminProvider>
         </StoreProvider>
       </NotificationsProvider>

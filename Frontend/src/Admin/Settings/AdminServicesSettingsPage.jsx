@@ -437,6 +437,7 @@ const AdminServicesSettingsPage = () => {
 
     const currentUserId = user?.user_id || user?.id || user?.uuid || user?.employee_id || user?.employeeId || draft.updated_by || draft.created_by || 1;
 
+    let saveStage = 'service details';
     try {
       const payload = {
         ...draft,
@@ -453,16 +454,21 @@ const AdminServicesSettingsPage = () => {
       };
 
       if (draft.singlepageImageFiles?.length) {
-        payload.singlepageimage = [];
+        saveStage = 'service image upload';
+        const formData = new FormData();
         for (const file of draft.singlepageImageFiles) {
-          const formData = new FormData();
-          formData.append("file", file);
-          const uploadRes = await api.post("upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
-          payload.singlepageimage.push(uploadRes.data.url || uploadRes.data.urls?.[0]);
+          formData.append("singlepageimage", file);
         }
+        const uploadRes = await api.post("/services/upload", formData);
+        const uploadedUrls = uploadRes.data?.urls || uploadRes.data?.data;
+        if (!Array.isArray(uploadedUrls) || uploadedUrls.length !== draft.singlepageImageFiles.length) {
+          throw new Error("The server did not return a URL for every selected service image.");
+        }
+        payload.singlepageimage = uploadedUrls;
       }
       delete payload.singlepageImageFiles;
 
+      saveStage = 'service details';
       if (editingId) {
         await api.put(`/services/${editingId}`, payload);
         toast.success("Service updated successfully");
@@ -473,7 +479,13 @@ const AdminServicesSettingsPage = () => {
       setShowForm(false);
       fetchServices();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to save service");
+      const responseMessage = error.response?.data?.message;
+      const serverMessage = typeof responseMessage === "string"
+        ? responseMessage
+        : typeof error.response?.data === "string"
+          ? error.response.data
+          : "";
+      toast.error(serverMessage || `${saveStage} failed: ${error.message || "please try again"}`);
     }
   };
 
@@ -932,10 +944,10 @@ const AdminServicesSettingsPage = () => {
                   <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-white/40">Service Images</label>
                   <div className="space-y-4">
                     <div className="relative flex items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl bg-[#0a0b10] hover:bg-white/[0.02] hover:border-primary/50 transition-all cursor-pointer">
-                      <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files?.length) setDraft((prev) => ({ ...prev, singlepageImageFiles: Array.from(e.target.files) })); }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={(e) => { if (e.target.files?.length) setDraft((prev) => ({ ...prev, singlepageImageFiles: Array.from(e.target.files) })); }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                       <div className="text-center">
                         <Upload size={24} className="mx-auto text-white/30 mb-2" />
-                        <p className="text-sm text-white/50">Click or drag images to upload</p>
+                        <p className="text-sm text-white/50">Click or drag JPG, PNG, WebP, GIF, or AVIF images to upload</p>
                       </div>
                     </div>
                     {draft.singlepageImageFiles?.length > 0 && (
