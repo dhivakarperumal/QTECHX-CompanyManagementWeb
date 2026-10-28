@@ -367,11 +367,21 @@ const ContactPage = () => {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="tel"
                     {...register("mobile", {
                       required: "Mobile is required",
-                      pattern: { value: /^[0-9]{10}$/, message: "Enter 10 digit number" },
+                      validate: (value) => {
+                        const trimmedValue = value.trim();
+                        const digitCount = (trimmedValue.match(/\d/g) || []).length;
+                        return (
+                          (/^\+?[0-9\s().-]+$/.test(trimmedValue) &&
+                            digitCount >= 7 &&
+                            digitCount <= 15) ||
+                          "Enter a valid phone number with 7 to 15 digits"
+                        );
+                      },
                     })}
-                    placeholder="Enter 10-digit mobile number"
+                    placeholder="e.g. +1 555 123 4567"
                     className={`
                       w-full
                       rounded-xl
