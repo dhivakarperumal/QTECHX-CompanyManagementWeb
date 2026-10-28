@@ -192,6 +192,16 @@ async function createTaskHandler(req, res) {
       updated_by: req.user?.user_id || 'SYSTEM',
     });
 
+    if (resolvedAssignedTo) {
+      await notifySafely(req, [resolvedAssignedTo], {
+        type: 'task_assigned',
+        title: 'New task assigned',
+        message: `You have been assigned "${task.task_name || task.module_name || 'a task'}".`,
+        link: '/employee/tasks',
+        relatedId: task.uuid || task.id,
+      }, 'task creation assignment');
+    }
+
     return ok(res, { message: 'Task created successfully', data: task }, 201);
   } catch (err) {
     console.error('createTaskHandler:', err);

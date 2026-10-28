@@ -43,7 +43,17 @@ async function resolveUserIds(recipientIds) {
 }
 
 async function persistAndEmit(io, userIds, notification) {
-  const uniqueUserIds = normalizeIds(userIds);
+  const db = getDB();
+  const [adminRows] = await db.execute(
+    `SELECT user_id
+       FROM users
+      WHERE LOWER(TRIM(status)) = 'active'
+        AND LOWER(TRIM(role)) IN ('admin', 'super admin')`
+  );
+  const uniqueUserIds = normalizeIds([
+    ...(Array.isArray(userIds) ? userIds : [userIds]),
+    ...adminRows.map((row) => row.user_id),
+  ]);
   if (!uniqueUserIds.length) return [];
 
   const records = uniqueUserIds.map((recipientUserId) => ({
@@ -56,7 +66,6 @@ async function persistAndEmit(io, userIds, notification) {
     relatedId: notification.relatedId ? String(notification.relatedId) : null,
   }));
 
-  const db = getDB();
   for (let index = 0; index < records.length; index += 250) {
     const batch = records.slice(index, index + 250);
     const values = batch.flatMap((record) => [

@@ -20,11 +20,12 @@ to the `Backend` directory or as an absolute path.
 
 ## Desktop notifications
 
-The site uses the browser's native Notification API alongside its existing
-real-time connection. Sign in, select **Allow notifications**, and allow
-notifications for the site in the browser. Desktop notifications can arrive
-while the app is open in a background tab or the browser is minimized; the
-browser must remain running and connected. This does not require server keys.
+The site uses its authenticated real-time connection to deliver notifications
+for events such as task and project assignments and calendar updates. Sign in
+and select **Enable desktop alerts** to allow notifications for the site in the
+browser. New notifications appear in the app immediately over Socket.IO. If the
+real-time connection is unavailable, the app checks for saved notifications
+every 10 seconds while the browser is open.
 
 Notifications cannot be delivered after the browser is fully closed using only
 the browser Notification API. Delivery while closed requires a separate Web

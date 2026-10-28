@@ -65,12 +65,16 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
   const [toast, setToast] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [connectionError, setConnectionError] = useState('')
+  const [liveConnected, setLiveConnected] = useState(false)
 
   useEffect(() => {
     if (!userId || !token) return undefined
 
     let active = true
     let sessionInvalid = false
+    let initialLoadComplete = false
+    let refreshInProgress = false
+    const seenNotificationIds = new Set()
     const handleInvalidSession = error => {
       const isExpiredToken =
         error.response?.status === 403 &&
@@ -82,33 +86,9 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
       return true
     }
 
-    const refreshNotifications = () => api.get('/notifications', { params: { limit: 50 } })
-      .then(({ data }) => {
-        if (!active) return
-        setNotifications(current => {
-          const byId = new Map((data?.data || []).map(item => [item.id, item]))
-          current.forEach(item => {
-            if (!byId.has(item.id)) byId.set(item.id, item)
-          })
-          return [...byId.values()].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        })
-        setLoadError('')
-      })
-      .catch(error => {
-        if (!active) return
-        if (handleInvalidSession(error)) return
-        console.error('[Notifications] Failed to load saved notifications:', error)
-        setLoadError('Notifications could not be loaded.')
-      })
-    refreshNotifications()
-
-    const socket = io(socketUrl, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      tryAllTransports: true,
-    })
-
-    socket.on('notification', notification => {
+    const receiveNotification = notification => {
+      if (!active || !notification?.id || seenNotificationIds.has(String(notification.id))) return
+      seenNotificationIds.add(String(notification.id))
       setNotifications(current => [
         notification,
         ...current.filter(item => item.id !== notification.id),
@@ -119,33 +99,96 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
       } catch (error) {
         console.error('[Notifications] Could not show desktop notification:', error)
       }
+    }
+
+    const refreshNotifications = ({ notifyNew = false } = {}) => {
+      if (refreshInProgress) return Promise.resolve()
+      refreshInProgress = true
+      return api.get('/notifications', { params: { limit: 50 } })
+        .then(({ data }) => {
+          if (!active) return
+          const savedNotifications = data?.data || []
+          if (initialLoadComplete && notifyNew) {
+            savedNotifications
+              .filter(item => !seenNotificationIds.has(String(item.id)))
+              .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+              .forEach(receiveNotification)
+          } else {
+            savedNotifications.forEach(item => seenNotificationIds.add(String(item.id)))
+          }
+          initialLoadComplete = true
+          setNotifications(current => {
+            const byId = new Map(savedNotifications.map(item => [item.id, item]))
+            current.forEach(item => {
+              if (!byId.has(item.id)) byId.set(item.id, item)
+            })
+            return [...byId.values()]
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 100)
+          })
+          setLoadError('')
+        })
+        .catch(error => {
+          if (!active) return
+          if (handleInvalidSession(error)) return
+          console.error('[Notifications] Failed to load saved notifications:', error)
+          setLoadError('Notifications could not be loaded.')
+        })
+        .finally(() => {
+          refreshInProgress = false
+        })
+    }
+    refreshNotifications()
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      tryAllTransports: true,
+    })
+
+    socket.on('notification', notification => {
+      receiveNotification(notification)
     })
 
     socket.on('connect', () => {
+      setLiveConnected(true)
       setConnectionError('')
-      refreshNotifications()
+      refreshNotifications({ notifyNew: true })
+    })
+    socket.on('disconnect', () => {
+      if (!active) return
+      setLiveConnected(false)
+      setConnectionError('Live connection lost. Checking for new notifications periodically.')
     })
     socket.on('connect_error', error => {
+      if (!active) return
+      setLiveConnected(false)
+      setConnectionError('Live connection unavailable. Checking for new notifications periodically.')
       if (error.message === 'Invalid or expired token') {
         if (!sessionInvalid) {
           sessionInvalid = true
           logout()
         }
       }
+      console.error('[Notifications] Live connection failed:', error.message)
     })
     socket.io.on('reconnect_failed', () => {
-      if (active) setConnectionError('Real-time notifications are temporarily unavailable.')
+      if (active) setConnectionError('Live connection unavailable. Checking for new notifications periodically.')
     })
 
+    const pollTimer = window.setInterval(() => {
+      refreshNotifications({ notifyNew: true })
+    }, 10000)
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return
       if (socket.disconnected) socket.connect()
-      refreshNotifications()
+      refreshNotifications({ notifyNew: true })
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       active = false
+      window.clearInterval(pollTimer)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       socket.disconnect()
     }
@@ -181,7 +224,13 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
   return (
     <NotificationsContext.Provider value={value}>
       {children}
-      {userId && <DesktopNotificationPrompt userId={userId} />}
+      {userId && (
+        <DesktopNotificationPrompt
+          userId={userId}
+          liveConnected={liveConnected}
+          connectionError={connectionError}
+        />
+      )}
       {!hasHeaderInbox && userId && <NotificationBell floating />}
       {toast && (
         <div className="fixed bottom-5 right-5 z-[10000] w-[min(24rem,calc(100vw-2.5rem))]">
@@ -211,59 +260,17 @@ function NotificationsSession({ children, userId, token, userRole, logout }) {
   )
 }
 
-function DesktopNotificationPrompt({ userId }) {
+function DesktopNotificationPrompt({ userId, liveConnected, connectionError }) {
   const [desktopPermission, setDesktopPermission] = useState(getDesktopPermission)
   const [dismissed, setDismissed] = useState(false)
-  const [testError, setTestError] = useState('')
 
   const enableDesktopNotifications = async () => {
     try {
       const permission = await window.Notification.requestPermission()
       setDesktopPermission(permission)
-      setTestError('')
-      if (permission === 'granted') {
-        await showDesktopNotification({
-          id: `notification-enabled-${Date.now()}`,
-          title: 'Desktop notifications are enabled',
-          message: 'New updates will appear here while the browser is running.',
-        })
-      } else if (permission === 'denied') {
-        setTestError('Permission was blocked. Change this site’s notification setting in your browser, then reload.')
-      }
     } catch (error) {
       console.error('[Notifications] Desktop permission request failed:', error)
-      setTestError(error.message || 'Could not request desktop notification permission.')
       setDesktopPermission(getDesktopPermission())
-    }
-  }
-
-  const sendTestNotification = async () => {
-    setTestError('')
-    try {
-      const notification = showDesktopNotification({
-        id: `notification-test-${Date.now()}`,
-        title: 'Desktop notifications are working',
-        message: 'You will see updates here when new notifications arrive.',
-      }, {
-        onShow: () => setTestError(
-          'The browser displayed the test notification. If no banner appeared, check Windows notification settings and Do Not Disturb.'
-        ),
-        onError: () => setTestError(
-          'The browser could not display the test notification. Check site permission and browser notification settings.'
-        ),
-      })
-      if (!notification) throw new Error('Allow notifications for this site before testing.')
-      setTestError('Waiting for the browser to display the test notification...')
-      window.setTimeout(() => {
-        if (notification.onshow) {
-          setTestError(current => current.startsWith('Waiting for the browser')
-            ? 'The browser accepted the notification but did not confirm it was displayed. Check browser and Windows notification settings.'
-            : current)
-        }
-      }, 5000)
-    } catch (error) {
-      console.error('[Notifications] Test notification failed:', error)
-      setTestError(error.message || 'Could not show a desktop notification.')
     }
   }
 
@@ -298,10 +305,18 @@ function DesktopNotificationPrompt({ userId }) {
             </p>
           ) : (
             <p className="mt-1 text-xs text-white/65">
-              Desktop notifications are enabled for this site.
+              Live desktop alerts are enabled for new notifications.
             </p>
           )}
-          {testError && <p className="mt-2 text-xs text-amber-200">{testError}</p>}
+          {connectionError ? (
+            <p className="mt-2 text-xs text-amber-200">{connectionError}</p>
+          ) : (
+            <p className="mt-2 text-xs text-white/45">
+              {liveConnected
+                ? 'Live notifications are connected.'
+                : 'Connecting to live notifications...'}
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -318,15 +333,7 @@ function DesktopNotificationPrompt({ userId }) {
           onClick={enableDesktopNotifications}
           className="mt-3 rounded-lg bg-blue-500/20 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-500/30"
         >
-          Allow notifications
-        </button>
-      ) : desktopPermission === 'granted' ? (
-        <button
-          type="button"
-          onClick={sendTestNotification}
-          className="mt-3 rounded-lg bg-blue-500/20 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-500/30"
-        >
-          Test notification
+          Enable desktop alerts
         </button>
       ) : null}
     </aside>
