@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu, Search, Settings, User, LogOut, ChevronDown, X,
@@ -37,6 +38,7 @@ const getPageInfo = (pathname) => {
 const EmployeeHeader = ({ onMenuClick }) => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showSearch, setShowSearch]         = useState(false);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
   const [currentTime, setCurrentTime]       = useState(dayjs());
   const [todayAttendance, setTodayAttendance] = useState(null);
@@ -52,6 +54,17 @@ const EmployeeHeader = ({ onMenuClick }) => {
   const userName = profileName || "Employee";
   const userRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
   const { title: pageTitle, icon: PageIcon } = getPageInfo(location.pathname);
+
+  useEffect(() => {
+    if (!showLogoutConfirmation) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setShowLogoutConfirmation(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showLogoutConfirmation]);
 
   /* live clock */
   useEffect(() => {
@@ -143,8 +156,13 @@ const EmployeeHeader = ({ onMenuClick }) => {
 
   const toggle    = (name) => setActiveDropdown(p => p === name ? null : name);
   const handleLogout = () => {
-    logout();
+    setShowLogoutConfirmation(true);
     setActiveDropdown(null);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutConfirmation(false);
+    logout();
     window.location.hash = "#/";
   };
 
@@ -372,6 +390,54 @@ const EmployeeHeader = ({ onMenuClick }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {showLogoutConfirmation && createPortal(
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setShowLogoutConfirmation(false);
+          }}
+        >
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="employee-logout-confirmation-title"
+            className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#111318] p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/15">
+                <LogOut size={19} className="text-rose-400" />
+              </div>
+              <div>
+                <h2 id="employee-logout-confirmation-title" className="text-base font-bold text-white">Logout</h2>
+                <p className="mt-0.5 text-xs text-white/40">Confirm you want to end your employee session.</p>
+              </div>
+            </div>
+            <p className="mb-6 text-sm leading-relaxed text-white/60">
+              Are you sure you want to log out?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirmation(false)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600"
+              >
+                <LogOut size={15} />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
