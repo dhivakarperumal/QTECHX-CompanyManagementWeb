@@ -52,6 +52,8 @@ const jobApplicationRouter = require("./src/routers/jobApplicationRouter");
 const contactRequestRouter = require("./src/routers/contactRequestRouter");
 const completedProjectRouter = require("./src/routers/completedProjectRouter");
 const notificationRouter = require("./src/routers/notificationRouter");
+const demoProjectRouter = require("./src/routers/demoProjectRouter");
+const { createDemoProjectsTableIfNotExists } = require('./src/models/demoProjectModel');
 const app = express();
 const als = new AsyncLocalStorage();
 
@@ -122,6 +124,7 @@ app.use("/api/trainee-assignments", traineeAssignmentRouter);
 app.use("/api/completedprojects", completedProjectRouter);
 app.use("/api/completed-projects", completedProjectRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/demo-projects", demoProjectRouter);
 
 app.post(
   "/api/upload",
@@ -404,6 +407,7 @@ app.use((req, res, next) => {
 async function startServer() {
   try {
     await initDB();
+    await createDemoProjectsTableIfNotExists();
 
     const PORT = Number(process.env.PORT || 5000);
     const server = http.createServer(app);

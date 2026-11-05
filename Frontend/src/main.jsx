@@ -71,6 +71,8 @@ const QuotationDetailsPage = lazy(() => import('./Admin/Projects/QuotationDetail
 const ProjectExpiryPage = lazy(() => import('./Admin/Projects/ProjectExpiryPage.jsx'))
 const CompletedProjects = lazy(() => import('./Admin/Projects/CompletedProjects.jsx'))
 const AssignmentView = lazy(() => import('./Admin/Projects/AssignmentView.jsx'))
+const AllDemoProjects = lazy(() => import('./Admin/Projects/AllDemoProjects.jsx'))
+const AddDemoProject = lazy(() => import('./Admin/Projects/AddDemoProject.jsx'))
 const TasksPage = lazy(() => import('./Admin/Tasks/TasksPage.jsx'))
 const AssignTaskPage = lazy(() => import('./Admin/Tasks/AssignTaskPage.jsx'))
 const AdminTodayTasksPage = lazy(() => import('./Admin/Tasks/AdminTodayTasksPage.jsx'))
@@ -240,6 +242,18 @@ const router = createHashRouter([
           {
             path: 'projects/view/:id',
             element: <ProjectDetails />,
+          },
+          {
+            path: 'demo-projects',
+            element: <AllDemoProjects />,
+          },
+          {
+            path: 'demo-projects/add',
+            element: <AddDemoProject />,
+          },
+          {
+            path: 'demo-projects/edit/:id',
+            element: <AddDemoProject />,
           },
           {
             path: 'myprojects',
