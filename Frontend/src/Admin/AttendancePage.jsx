@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle, Loader2 } from "lucide-react";
 import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -90,6 +90,7 @@ const AttendancePage = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   });
   const [employeeHistory, setEmployeeHistory] = useState([]);
+  const [employeeLeaves, setEmployeeLeaves] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState(null);
   const [historyRefresh, setHistoryRefresh] = useState(0);
@@ -220,15 +221,22 @@ const AttendancePage = () => {
       setHistoryLoading(true);
       setHistoryError(null);
       try {
-        const response = await api.get(
-          `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
-        );
-        if (!cancelled) setEmployeeHistory(response?.data?.data || []);
+        const [attendanceRes, leaveRes] = await Promise.all([
+          api.get(
+            `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
+          ),
+          api.get(`/employee-leaves/employee/${historyEmployee.employee_id}`).catch(() => ({ data: { data: { leaves: [] } } }))
+        ]);
+        if (!cancelled) {
+          setEmployeeHistory(attendanceRes?.data?.data || []);
+          setEmployeeLeaves(leaveRes?.data?.data?.leaves || []);
+        }
       } catch (err) {
         if (cancelled) return;
         console.error("Failed to load employee attendance history", err);
         setHistoryError(err?.response?.data?.message || "Could not load attendance history.");
         setEmployeeHistory([]);
+        setEmployeeLeaves([]);
       } finally {
         if (!cancelled) setHistoryLoading(false);
       }
@@ -708,10 +716,19 @@ const AttendancePage = () => {
               </div>
 
               <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
-                <div className="mb-3 text-xs text-white/45">
-                  {historyDateRange.startDate === historyDateRange.endDate
-                    ? historyDateRange.startDate
-                    : `${historyDateRange.startDate} to ${historyDateRange.endDate}`}
+                <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                  <span className="text-xs text-white/45">
+                    {historyDateRange.startDate === historyDateRange.endDate
+                      ? historyDateRange.startDate
+                      : `${historyDateRange.startDate} → ${historyDateRange.endDate}`}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500/30"></span><span className="text-white/50">Present</span></span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500/30"></span><span className="text-white/50">Absent</span></span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-500/30"></span><span className="text-white/50">On Leave</span></span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500/20"></span><span className="text-white/50">Saturday</span></span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-slate-600/40"></span><span className="text-white/50">Sunday Off</span></span>
+                  </div>
                 </div>
                 {historyError && (
                   <div role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-900/20 p-3 text-sm text-rose-200">
@@ -735,37 +752,165 @@ const AttendancePage = () => {
                   <tbody className="divide-y divide-white/5">
                     {historyLoading ? (
                       <tr><td colSpan="9" className="px-3 py-10 text-center text-white/50">Loading attendance history…</td></tr>
-                    ) : employeeHistory.length === 0 ? (
-                      <tr>
-                        <td colSpan="9" className="px-3 py-10 text-center text-white/50">
-                          {historyError ? "Attendance history is unavailable." : "No attendance records for this period."}
-                        </td>
-                      </tr>
-                    ) : employeeHistory.map((record) => {
-                      const status = record.attendance_status || "Unknown";
-                      const statusColor = status.toLowerCase().includes("present")
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : status.toLowerCase().includes("absent")
-                          ? "bg-rose-500/10 text-rose-400"
-                          : "bg-slate-500/10 text-slate-300";
-                      return (
-                        <tr key={record.id} className="transition-colors hover:bg-white/5">
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{String(record.attendance_date || "").slice(0, 10) || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_in_time || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_out_time || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.break_start_time || "—"} – {record.break_end_time || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.working_hours || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.late_entry || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.early_exit || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.overtime || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-3">
-                            <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
-                              {status}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    ) : (() => {
+                      // Build a map of attendance records keyed by date string
+                      const attendanceMap = {};
+                      employeeHistory.forEach(r => {
+                        const dk = String(r.attendance_date || '').slice(0, 10);
+                        if (dk) attendanceMap[dk] = r;
+                      });
+
+                      // Helper: find an approved leave covering a given date
+                      const getLeaveForDate = (dateStr) =>
+                        employeeLeaves.find(l =>
+                          String(l.status || '').toLowerCase() === 'approved' &&
+                          String(l.from_date || '').slice(0, 10) <= dateStr &&
+                          String(l.to_date || '').slice(0, 10) >= dateStr
+                        );
+
+                      // Generate every calendar date in the selected range
+                      const allDates = [];
+                      const rangeStart = new Date(historyDateRange.startDate + 'T00:00:00');
+                      const rangeEnd   = new Date(historyDateRange.endDate   + 'T00:00:00');
+                      for (let d = new Date(rangeStart); d <= rangeEnd; d.setDate(d.getDate() + 1)) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        allDates.push(`${y}-${m}-${day}`);
+                      }
+
+                      if (allDates.length === 0) {
+                        return (
+                          <tr><td colSpan="9" className="px-3 py-10 text-center text-white/50">
+                            {historyError ? 'Attendance history is unavailable.' : 'No records for this period.'}
+                          </td></tr>
+                        );
+                      }
+
+                      return allDates.map(dateStr => {
+                        const dateObj  = new Date(dateStr + 'T00:00:00');
+                        const dow      = dateObj.getDay(); // 0=Sun, 6=Sat
+                        const isSunday = dow === 0;
+                        const isSat    = dow === 6;
+                        const dayLabel = dateObj.toLocaleDateString('en-GB', { weekday: 'short' });
+                        const displayDate = `${dateStr} (${dayLabel})`;
+                        const record = attendanceMap[dateStr];
+                        const leave  = !record ? getLeaveForDate(dateStr) : null;
+
+                        /* ── Sunday ── */
+                        if (isSunday) {
+                          return (
+                            <tr key={dateStr} className="bg-slate-800/40">
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/40 text-sm">{displayDate}</td>
+                              <td colSpan="7" className="px-3 py-2.5 text-white/25 text-xs italic">— Weekly holiday —</td>
+                              <td className="px-3 py-2.5">
+                                <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-600/30 text-slate-400">Sunday Off</span>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        /* ── Saturday ── */
+                        if (isSat) {
+                          if (record) {
+                            // Employee came in on Saturday
+                            const st = record.attendance_status || 'Present';
+                            const sc = st.toLowerCase().includes('present') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-300';
+                            return (
+                              <tr key={dateStr} className="transition-colors hover:bg-white/5 bg-blue-900/10">
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{displayDate}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.check_in_time || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.check_out_time || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.break_start_time || '—'} – {record.break_end_time || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.working_hours || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.late_entry || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.early_exit || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{record.overtime || '—'}</td>
+                                <td className="whitespace-nowrap px-3 py-2.5">
+                                  <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${sc}`}>{st}</span>
+                                </td>
+                              </tr>
+                            );
+                          }
+                          return (
+                            <tr key={dateStr} className="bg-slate-800/25">
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/40">{displayDate}</td>
+                              <td colSpan="7" className="px-3 py-2.5 text-white/25 text-xs italic">— Weekend —</td>
+                              <td className="px-3 py-2.5">
+                                <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400">Saturday</span>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        /* ── Approved Leave (no attendance record) ── */
+                        if (leave) {
+                          return (
+                            <tr key={dateStr} className="transition-colors hover:bg-white/5 bg-purple-900/10">
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{displayDate}</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-2.5">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300">{leave.leave_type || 'On Leave'}</span>
+                                  {leave.reason && (
+                                    <span className="text-[10px] text-white/40 pl-0.5 max-w-[130px] truncate" title={leave.reason}>{leave.reason}</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        /* ── Existing attendance record ── */
+                        if (record) {
+                          const status = record.attendance_status || 'Unknown';
+                          const statusColor =
+                            status.toLowerCase().includes('present') ? 'bg-emerald-500/10 text-emerald-400' :
+                            status.toLowerCase().includes('absent')  ? 'bg-rose-500/10 text-rose-400' :
+                            status.toLowerCase().includes('leave')   ? 'bg-purple-500/10 text-purple-400' :
+                            status.toLowerCase().includes('half')    ? 'bg-amber-500/10 text-amber-400' :
+                                                                       'bg-slate-500/10 text-slate-300';
+                          return (
+                            <tr key={dateStr} className="transition-colors hover:bg-white/5">
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{displayDate}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_in_time || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_out_time || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.break_start_time || '—'} – {record.break_end_time || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.working_hours || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.late_entry || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.early_exit || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.overtime || '—'}</td>
+                              <td className="whitespace-nowrap px-3 py-3">
+                                <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>{status}</span>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        /* ── Working day with no record → Absent ── */
+                        return (
+                          <tr key={dateStr} className="transition-colors hover:bg-white/5">
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{displayDate}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                            <td className="whitespace-nowrap px-3 py-3">
+                              <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400">Absent</span>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
