@@ -115,7 +115,7 @@
   }
 
   const STATUS_STYLES = {
-    'Planning':    { pill:'bg-blue-500/15 text-blue-400 border-blue-500/30',   dot:'bg-blue-400'    },
+    'Planning':    { pill:'bg-orange-500/15 text-orange-400 border-orange-500/30', dot:'bg-orange-400' },
     'In Progress': { pill:'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', dot:'bg-emerald-400' },
     'Testing':     { pill:'bg-violet-500/15 text-violet-400 border-violet-500/30',    dot:'bg-violet-400'  },
     'On Hold':     { pill:'bg-orange-500/15 text-orange-400 border-orange-500/30',    dot:'bg-orange-400'  },
@@ -164,7 +164,7 @@
     if (!assets || assets.length === 0) return null;
 
     return (
-      <Section title={`Project Assets & Documents (${assets.length})`} icon={FolderKanban} iconCls="text-blue-400">
+      <Section title={`Project Assets & Documents (${assets.length})`} icon={FolderKanban} iconCls="text-orange-400">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-white/50">All related files, images, and documents for this project.</p>
           <div className="flex bg-[#1a1d24] p-1 rounded-xl border border-white/5">
@@ -182,7 +182,7 @@
           : "space-y-3"}>
           {assets.map(asset => (
             <div key={asset.id} 
-              className={`group relative bg-[#15181e] border border-white/5 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all ${
+              className={`group relative bg-[#15181e] border border-white/5 rounded-2xl overflow-hidden hover:border-orange-500/30 transition-all ${
                 viewMode === 'list' ? 'flex items-center p-3 pr-4 gap-4' : 'flex flex-col'
               }`}>
               
@@ -195,14 +195,14 @@
                 ) : asset.kind === 'zip' ? (
                   <FileArchive size={viewMode==='list'?20:32} className="text-orange-400/80" />
                 ) : (
-                  <FileText size={viewMode==='list'?20:32} className="text-blue-400/80" />
+                  <FileText size={viewMode==='list'?20:32} className="text-orange-400/80" />
                 )}
                 
                 {/* Overlay Actions (Grid) */}
                 {viewMode === 'grid' && (
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
                     {asset.kind === 'image' && (
-                      <button onClick={() => setPreviewAsset(asset)} className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-blue-500 hover:text-white transition">
+                      <button onClick={() => setPreviewAsset(asset)} className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-orange-500 hover:text-white transition">
                         <Eye size={14} />
                       </button>
                     )}
@@ -215,7 +215,7 @@
 
               {/* Info */}
               <div className={`flex-1 min-w-0 ${viewMode === 'grid' ? 'p-3' : ''}`}>
-                <p className="text-xs font-medium text-blue-400 mb-1">{asset.label}</p>
+                <p className="text-xs font-medium text-orange-400 mb-1">{asset.label}</p>
                 <p className="text-sm font-semibold text-white truncate" title={asset.name}>{asset.name}</p>
               </div>
 
@@ -223,7 +223,7 @@
               {viewMode === 'list' && (
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {asset.kind === 'image' && (
-                    <button onClick={() => setPreviewAsset(asset)} className="w-8 h-8 rounded-full bg-white/5 text-white/70 hover:bg-blue-500 hover:text-white flex items-center justify-center transition">
+                    <button onClick={() => setPreviewAsset(asset)} className="w-8 h-8 rounded-full bg-white/5 text-white/70 hover:bg-orange-500 hover:text-white flex items-center justify-center transition">
                       <Eye size={14} />
                     </button>
                   )}
@@ -247,7 +247,7 @@
               <img src={previewAsset.url} alt={previewAsset.name} className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl" />
               <div className="flex items-center justify-between w-full max-w-2xl bg-[#111318] p-4 rounded-2xl border border-white/10">
                 <div>
-                  <p className="text-xs text-blue-400 font-medium mb-1">{previewAsset.label}</p>
+                  <p className="text-xs text-orange-400 font-medium mb-1">{previewAsset.label}</p>
                   <p className="text-sm text-white font-semibold truncate">{previewAsset.name}</p>
                 </div>
                 <a href={previewAsset.url} target="_blank" rel="noreferrer" download className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-400 transition">
@@ -346,7 +346,7 @@
     if (loading) return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={32} className="animate-spin text-primary/70" />
+          <Loader2 size={32} className="animate-spin text-orange-400" />
           <p className="text-sm text-white/40">Loading project details…</p>
         </div>
       </div>
@@ -366,7 +366,7 @@
     );
 
     const pct = progressData?.progress ?? 0;
-    const progressColor = pct >= 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#3b82f6' : '#ef4444';
+    const progressColor = pct >= 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#fb923c' : '#ef4444';
     const isFullyCompleted = pct >= 100 && (progressData?.total ?? 0) > 0;
 
     const saveProjectStatus = async () => {
@@ -418,7 +418,7 @@
               <ArrowLeft size={16} />
             </button>
             <div>
-              <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+              <div className="mb-1 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest text-orange-400">
                 <FolderKanban size={10} /> Project Details
               </div>
               <h1 className="text-2xl font-bold tracking-tight">{project.project_name}</h1>
@@ -443,7 +443,7 @@
               type="button"
               onClick={saveProjectStatus}
               disabled={statusSaving || projectStatus === project.current_status}
-              className="rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {statusSaving ? 'Saving…' : 'Update status'}
             </button>
@@ -465,7 +465,7 @@
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap outline-none ${
                       isActive 
-                      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' 
+                      ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
                       : 'bg-[#111318] text-white/50 border border-white/5 hover:bg-white/5 hover:text-white hover:border-white/10'
                     }`}
                   >
@@ -486,7 +486,7 @@
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
                     { label:'Progress',   value:`${pct}%`,                               icon:BarChart3,   cls:'text-emerald-400', bg:'bg-emerald-500/10' },
-                    { label:'Budget',     value:formatCurrency(project.total_project_cost), icon:DollarSign,  cls:'text-blue-400',    bg:'bg-blue-500/10'    },
+                    { label:'Budget',     value:formatCurrency(project.total_project_cost), icon:DollarSign,  cls:'text-orange-400',  bg:'bg-orange-500/10'  },
                     { label:'Deadline',   value:fmtDate(project.estimated_completion_date), icon:Clock,       cls:'text-rose-400',    bg:'bg-rose-500/10'    },
                   ].map(s => {
                     const Icon = s.icon;
@@ -544,7 +544,7 @@
                         { label: 'Total',       value: progressData?.total,      color: 'border-white/10 text-white/80' },
                         { label: 'Completed',   value: progressData?.completed,  color: 'border-emerald-500/30 text-emerald-400' },
                         { label: 'Remaining',   value: progressData?.remaining,  color: 'border-orange-500/30 text-orange-400' },
-                        { label: 'In Progress', value: progressData?.inProgress, color: 'border-blue-500/30 text-blue-400' },
+                        { label: 'In Progress', value: progressData?.inProgress, color: 'border-orange-500/30 text-orange-400' },
                         { label: 'Pending',     value: progressData?.pending,    color: 'border-yellow-500/30 text-yellow-400' },
                         { label: 'On Hold',     value: progressData?.onHold,     color: 'border-violet-500/30 text-violet-400' },
                         { label: 'Cancelled',   value: progressData?.cancelled,  color: 'border-rose-500/30 text-rose-400' },
@@ -574,7 +574,7 @@
                     </div>
                   </Section>
 
-                  <Section title="Client & Team" icon={User} iconCls="text-blue-400">
+                  <Section title="Client & Team" icon={User} iconCls="text-orange-400">
                     <div className="grid grid-cols-2 gap-3">
                       <InfoCard title="Contact Person"  value={project.contact_person}  icon={User}       />
                       <InfoCard title="Project Manager" value={project.project_manager}  icon={Briefcase}  />
@@ -632,7 +632,7 @@
             {/* TAB: TASKS */}
             {activeTab === 'tasks' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Section title={`Your Assigned Tasks (${tasks.length})`} icon={CheckSquare} iconCls="text-blue-400">
+                <Section title={`Your Assigned Tasks (${tasks.length})`} icon={CheckSquare} iconCls="text-orange-400">
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -640,7 +640,7 @@
                         setTaskError('');
                         setTaskFormOpen(open => !open);
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-500/15 border border-blue-500/25 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/25 transition"
+                      className="inline-flex items-center gap-2 rounded-xl bg-orange-500/15 border border-orange-500/25 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-500/25 transition"
                     >
                       <Plus size={14} /> Create task
                     </button>
@@ -655,7 +655,7 @@
                             maxLength={255}
                             value={taskForm.task_name}
                             onChange={event => setTaskForm(current => ({ ...current, task_name: event.target.value }))}
-                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-orange-400/50"
                             placeholder="Enter task name"
                           />
                         </label>
@@ -664,7 +664,7 @@
                           <select
                             value={taskForm.priority}
                             onChange={event => setTaskForm(current => ({ ...current, priority: event.target.value }))}
-                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-orange-400/50"
                           >
                             {['Low', 'Medium', 'High', 'Critical'].map(priority => (
                               <option key={priority} value={priority}>{priority}</option>
@@ -677,7 +677,7 @@
                             type="date"
                             value={taskForm.due_date}
                             onChange={event => setTaskForm(current => ({ ...current, due_date: event.target.value }))}
-                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-orange-400/50"
                           />
                         </label>
                         <label className="space-y-1.5 text-xs text-white/60 sm:col-span-2">
@@ -686,7 +686,7 @@
                             rows={3}
                             value={taskForm.description}
                             onChange={event => setTaskForm(current => ({ ...current, description: event.target.value }))}
-                            className="w-full resize-y rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            className="w-full resize-y rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-orange-400/50"
                             placeholder="Describe the work"
                           />
                         </label>
@@ -704,7 +704,7 @@
                         <button
                           type="submit"
                           disabled={taskSaving}
-                          className="rounded-lg bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
+                          className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
                         >
                           {taskSaving ? 'Creating…' : 'Create task'}
                         </button>
