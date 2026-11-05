@@ -4,6 +4,7 @@ const { upload } = require('../config/multerConfig');
 const {
   createDemoProjectHandler,
   getAllDemoProjectsHandler,
+  getDemoProjectsPublicHandler,
   getNextDemoProjectCodeHandler,
   getDemoProjectByIdHandler,
   updateDemoProjectHandler,
@@ -26,6 +27,9 @@ const uploadFields = upload.fields([
   { name: 'source_code_backup', maxCount: 1 },
   { name: 'project_images',     maxCount: 20 },
 ]);
+
+// ─── Public (no auth) ──────────────────────────────────────────────────────────
+router.get(   '/public/all', getDemoProjectsPublicHandler);
 
 // ─── Demo Project CRUD ─────────────────────────────────────────────────────────
 router.post(  '/',          authenticate, managers, uploadFields, createDemoProjectHandler);

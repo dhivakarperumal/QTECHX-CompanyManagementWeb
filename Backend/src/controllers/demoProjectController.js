@@ -86,6 +86,23 @@ async function createDemoProjectHandler(req, res) {
   }
 }
 
+/** GET /api/demo-projects/public/all  — no auth required */
+async function getDemoProjectsPublicHandler(req, res) {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit, 10) || 500));
+    const { search, current_status } = req.query;
+    const result = await listDemoProjects({ page, limit, search, current_status });
+    return ok(res, {
+      data: result.rows,
+      pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) },
+    });
+  } catch (err) {
+    console.error('getDemoProjectsPublicHandler:', err);
+    return fail(res, 'Failed to retrieve demo projects', 500, err.message);
+  }
+}
+
 /** GET /api/demo-projects */
 async function getAllDemoProjectsHandler(req, res) {
   try {
@@ -195,6 +212,7 @@ async function deleteDemoProjectHandler(req, res) {
 module.exports = {
   createDemoProjectHandler,
   getAllDemoProjectsHandler,
+  getDemoProjectsPublicHandler,
   getNextDemoProjectCodeHandler,
   getDemoProjectByIdHandler,
   updateDemoProjectHandler,

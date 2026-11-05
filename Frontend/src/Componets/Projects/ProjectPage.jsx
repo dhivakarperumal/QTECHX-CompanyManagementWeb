@@ -97,15 +97,15 @@ const ProjectPage = () => {
     setError(null);
     try {
       if (projectType === "demo") {
-        // ── Demo Projects ──
-        const res = await api.get("/demo-projects?limit=500");
+        // ── Demo Projects (public, no auth) ──
+        const res = await api.get("/demo-projects/public/all?limit=500");
         const raw = res.data?.data || [];
         setProjects(Array.isArray(raw) ? raw : []);
       } else if (projectType === "live") {
-        // ── Live Projects ──
+        // ── Live Projects (public route, filter by Live status) ──
         const res = await api.get("/projects/public/all?limit=500&current_status=Live");
         const raw = res.data?.data || [];
-        setProjects(Array.isArray(raw) ? raw.filter(p => (p.current_status || "").toLowerCase() === "live") : []);
+        setProjects(Array.isArray(raw) ? raw : []);
       } else {
         // ── Completed Projects (original logic preserved) ──
         const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
