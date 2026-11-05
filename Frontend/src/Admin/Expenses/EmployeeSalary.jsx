@@ -164,6 +164,11 @@ export default function EmployeeSalary() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedSalaryEmployee, setSelectedSalaryEmployee] = useState(null);
+  const [selectedAttendanceEmployee, setSelectedAttendanceEmployee] = useState(null);
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [attendanceLeaves, setAttendanceLeaves] = useState([]);
+  const [attendanceHistoryLoading, setAttendanceHistoryLoading] = useState(false);
+  const [attendanceHistoryError, setAttendanceHistoryError] = useState('');
 
   const [editId, setEditId] = useState(null);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
@@ -265,6 +270,39 @@ export default function EmployeeSalary() {
 
     fetchDetails();
   }, [formData.employee_id, formData.month, formData.year, editId]);
+
+  useEffect(() => {
+    if (!selectedAttendanceEmployee) return undefined;
+
+    let cancelled = false;
+    const fetchAttendanceHistory = async () => {
+      setAttendanceHistoryLoading(true);
+      setAttendanceHistoryError('');
+      try {
+        const { data } = await api.get(
+          `/attendance/${selectedAttendanceEmployee.employee_id}?month=${formData.month}&year=${formData.year}`
+        );
+        if (!cancelled) {
+          setAttendanceHistory(data?.data || []);
+          setAttendanceLeaves(data?.leaves || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Failed to fetch attendance history', err);
+          setAttendanceHistoryError(err?.response?.data?.message || 'Could not load attendance history.');
+          setAttendanceHistory([]);
+          setAttendanceLeaves([]);
+        }
+      } finally {
+        if (!cancelled) setAttendanceHistoryLoading(false);
+      }
+    };
+
+    fetchAttendanceHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAttendanceEmployee, formData.month, formData.year]);
 
   // Recalculate total salary whenever relevant fields change
   useEffect(() => {
@@ -448,6 +486,19 @@ export default function EmployeeSalary() {
   }, [history, selectedSalaryEmployee]);
 
   const selectedFormEmployee = employees.find((employee) => employee.employee_id === formData.employee_id);
+  const attendanceHistoryByDate = new Map(
+    attendanceHistory.map((record) => [String(record.attendance_date || '').slice(0, 10), record])
+  );
+  const daysInAttendanceMonth = new Date(Number(formData.year), Number(formData.month), 0).getDate();
+  const attendanceMonthDates = Array.from({ length: daysInAttendanceMonth }, (_, index) => {
+    const day = String(index + 1).padStart(2, '0');
+    return `${formData.year}-${String(formData.month).padStart(2, '0')}-${day}`;
+  });
+  const getAttendanceLeaveForDate = (date) => attendanceLeaves.find((leave) =>
+    String(leave.status || '').toLowerCase() === 'approved' &&
+    String(leave.from_date || '').slice(0, 10) <= date &&
+    String(leave.to_date || '').slice(0, 10) >= date
+  );
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -567,11 +618,11 @@ export default function EmployeeSalary() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setSelectedSalaryEmployee(selectedFormEmployee)}
+                  onClick={() => setSelectedAttendanceEmployee(selectedFormEmployee)}
                   className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:border-emerald-400/40 hover:bg-emerald-500/20"
                 >
                   <History size={14} />
-                  View History
+                  View Attendance History
                 </button>
               </div>
             )}
@@ -679,6 +730,90 @@ export default function EmployeeSalary() {
           </div>
         </form>
       </Modal>
+
+      {selectedAttendanceEmployee && (
+        <Modal
+          open={!!selectedAttendanceEmployee}
+          onClose={() => setSelectedAttendanceEmployee(null)}
+          title="Employee Attendance History"
+        >
+          <div className="space-y-4">
+            <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3">
+              <p className="font-semibold text-white">
+                {selectedAttendanceEmployee.first_name} {selectedAttendanceEmployee.last_name}
+              </p>
+              <p className="mt-1 text-xs text-white/50">
+                {new Date(Number(formData.year), Number(formData.month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+
+            {attendanceHistoryError && (
+              <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                {attendanceHistoryError}
+              </div>
+            )}
+
+            <div className="max-h-[55vh] overflow-auto rounded-xl border border-white/10">
+              <table className="w-full min-w-[620px] text-left text-sm">
+                <thead className="sticky top-0 bg-[#171a21] text-xs uppercase tracking-wide text-white/45">
+                  <tr>
+                    <th className="px-3 py-3">Date</th>
+                    <th className="px-3 py-3">Check In</th>
+                    <th className="px-3 py-3">Check Out</th>
+                    <th className="px-3 py-3">Working Hours</th>
+                    <th className="px-3 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {attendanceHistoryLoading ? (
+                    <tr><td colSpan={5} className="px-3 py-8 text-center text-white/45">Loading attendance history...</td></tr>
+                  ) : attendanceMonthDates.map((date) => {
+                    const dateObject = new Date(`${date}T00:00:00`);
+                    const record = attendanceHistoryByDate.get(date);
+                    const leave = !record ? getAttendanceLeaveForDate(date) : null;
+                    const isFuture = dateObject > new Date(new Date().setHours(0, 0, 0, 0));
+                    const status = dateObject.getDay() === 0
+                      ? 'Sunday Off'
+                      : dateObject.getDay() === 6 && !record
+                        ? 'Saturday'
+                        : leave
+                          ? (leave.leave_type || 'On Leave')
+                          : record
+                            ? (record.attendance_status || 'Present')
+                            : isFuture
+                              ? 'Upcoming'
+                              : 'Absent';
+                    const statusClass = status === 'Absent'
+                      ? 'bg-rose-500/10 text-rose-300'
+                      : status === 'Upcoming'
+                        ? 'bg-slate-500/10 text-slate-300'
+                        : status === 'Present'
+                          ? 'bg-emerald-500/10 text-emerald-300'
+                          : status === 'Saturday'
+                            ? 'bg-blue-500/10 text-blue-300'
+                            : status === 'Sunday Off'
+                              ? 'bg-slate-500/10 text-slate-300'
+                              : 'bg-purple-500/10 text-purple-300';
+                    return (
+                      <tr key={date} className="hover:bg-white/[0.03]">
+                        <td className="whitespace-nowrap px-3 py-2.5 text-white/70">
+                          {date} ({dateObject.toLocaleDateString('en-GB', { weekday: 'short' })})
+                        </td>
+                        <td className="px-3 py-2.5 text-white/60">{record?.check_in_time || '—'}</td>
+                        <td className="px-3 py-2.5 text-white/60">{record?.check_out_time || '—'}</td>
+                        <td className="px-3 py-2.5 text-white/60">{record?.working_hours || '—'}</td>
+                        <td className="px-3 py-2.5">
+                          <span className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${statusClass}`}>{status}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* <section className={sectionClass}>
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
