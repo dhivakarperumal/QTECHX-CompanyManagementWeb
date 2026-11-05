@@ -280,8 +280,8 @@ const Navbar = () => {
 
                     <div className="space-y-1">
                       {[
-                        { label: "Projects",      path: "/projects",            desc: "All completed work" },
-                        { label: "Demo Projects", path: "/projects?type=demo",  desc: "Live demo builds" },
+                        { label: "Projects",      path: "/projects?type=live", desc: "All completed work" },
+                        { label: "Demo Projects", path: "/projects?type=demo", desc: "Live demo builds" },
                       ].map((item, index) => (
                         <NavLink
                           key={item.label}
@@ -608,7 +608,7 @@ const Navbar = () => {
             {mobileSubMenu === "projects" && (
               <div className="space-y-1 rounded-xl border border-white/10 bg-white/3 p-2">
                 {[
-                  { label: "Projects",      path: "/projects" },
+                  { label: "Projects",      path: "/projects?type=live" },
                   { label: "Demo Projects", path: "/projects?type=demo" },
                 ].map((item) => (
                   <NavLink
