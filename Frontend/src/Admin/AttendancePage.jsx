@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Users, UserCheck, UserX, UserMinus, Clock, UserCog, CalendarDays, PlusCircle, X, AlertCircle, Loader2 } from "lucide-react";
+import dayjs from "dayjs";
 import api from "../api";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useCallback } from "react";
@@ -793,10 +794,13 @@ const AttendancePage = () => {
                         );
 
                       const getHolidayForDate = (dateStr) =>
-                        historyHolidays.find(event =>
-                          String(event.startDate || '').slice(0, 10) <= dateStr &&
-                          String(event.endDate || event.startDate || '').slice(0, 10) >= dateStr
-                        );
+                        historyHolidays.find(event => {
+                          const startDate = dayjs(event.startDate);
+                          const endDate = dayjs(event.endDate || event.startDate);
+                          return startDate.isValid() && endDate.isValid() &&
+                            startDate.format('YYYY-MM-DD') <= dateStr &&
+                            endDate.format('YYYY-MM-DD') >= dateStr;
+                        });
 
                       // Generate every calendar date in the selected range
                       const allDates = [];
