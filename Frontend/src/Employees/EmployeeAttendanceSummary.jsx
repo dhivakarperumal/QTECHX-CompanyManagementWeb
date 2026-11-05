@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, MapPin, Loader2, AlertCircle, Clock3, PlusCircle, X, LayoutGrid, List } from 'lucide-react';
+import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../PrivateRouter/AuthContext';
@@ -143,6 +144,8 @@ const EmployeeAttendanceSummary = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
+  const [employeeLeaves, setEmployeeLeaves] = useState([]);
+  const [calendarHolidays, setCalendarHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -288,6 +291,16 @@ const EmployeeAttendanceSummary = () => {
         api.get(`/attendance/by-employee?employee_id=${targetId}&date=${todayDateStr}`).catch(() => ({ data: { attendance: null } }))
       ]);
 
+      const leaveRows = Array.isArray(leaveRes.data?.data) ? leaveRes.data.data : [];
+      const holidayRows = Array.isArray(eventsRes.data)
+        ? eventsRes.data.filter((event) =>
+          String(event.eventType || '').trim().toLowerCase() === 'holiday' &&
+          String(event.status || '').trim().toLowerCase() !== 'cancelled'
+        )
+        : [];
+      setEmployeeLeaves(leaveRows);
+      setCalendarHolidays(holidayRows);
+
       const myData = Array.isArray(attendanceRes.data?.data) ? [...attendanceRes.data.data] : [];
       const fetchedToday = todayRes?.data?.attendance || null;
 
@@ -307,14 +320,20 @@ const EmployeeAttendanceSummary = () => {
       setTodayRecord(foundToday);
       setHasMarkedToday(Boolean(foundToday && foundToday.check_in_time));
 
-      const approved = Array.isArray(leaveRes.data?.data)
-        ? leaveRes.data.data.some((leave) => leave.status === 'Approved' && leave.from_date <= todayDateStr && leave.to_date >= todayDateStr)
-        : false;
+      const approved = leaveRows.some((leave) =>
+        String(leave.status || '').toLowerCase() === 'approved' &&
+        String(leave.from_date || '').slice(0, 10) <= todayDateStr &&
+        String(leave.to_date || '').slice(0, 10) >= todayDateStr
+      );
       setApprovedLeaveToday(approved);
 
-      const holiday = Array.isArray(eventsRes.data)
-        ? eventsRes.data.some((event) => String(event.eventType).toLowerCase() === 'holiday' && new Date(event.startDate) <= new Date(todayDateStr) && new Date(event.endDate || event.startDate) >= new Date(todayDateStr))
-        : false;
+      const holiday = holidayRows.some((event) => {
+        const startDate = dayjs(event.startDate);
+        const endDate = dayjs(event.endDate || event.startDate);
+        return startDate.isValid() && endDate.isValid() &&
+          startDate.format('YYYY-MM-DD') <= todayDateStr &&
+          endDate.format('YYYY-MM-DD') >= todayDateStr;
+      });
       setTodayHoliday(holiday);
     } catch (err) {
       console.error("Failed to load attendance", err);
@@ -624,16 +643,54 @@ const EmployeeAttendanceSummary = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const formatDateSafe = (val, opts = { weekday: 'short', month: 'short', day: 'numeric' }) => {
-    if (!val) return '—';
-    const d = new Date(val);
-    if (Number.isNaN(d.getTime())) return '—';
-    try {
-      return d.toLocaleDateString('en-US', opts);
-    } catch (e) {
-      return '—';
-    }
-  };
+  const attendanceByDate = new Map(
+    history.map((record) => [
+      String(record.attendance_date || record.date || '').slice(0, 10),
+      record,
+    ])
+  );
+  const attendanceMonthDates = Array.from(
+    { length: new Date(selectedYear, selectedMonth, 0).getDate() },
+    (_, index) => `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`
+  );
+  const attendanceMonthRows = attendanceMonthDates.map((date) => {
+    const dateObject = new Date(`${date}T00:00:00`);
+    const record = attendanceByDate.get(date) || null;
+    const leave = !record ? employeeLeaves.find((item) =>
+      String(item.status || '').toLowerCase() === 'approved' &&
+      String(item.from_date || '').slice(0, 10) <= date &&
+      String(item.to_date || '').slice(0, 10) >= date
+    ) : null;
+    const holiday = calendarHolidays.find((event) => {
+      const startDate = dayjs(event.startDate);
+      const endDate = dayjs(event.endDate || event.startDate);
+      return startDate.isValid() && endDate.isValid() &&
+        startDate.format('YYYY-MM-DD') <= date &&
+        endDate.format('YYYY-MM-DD') >= date;
+    });
+    const isSunday = dateObject.getDay() === 0;
+    const isSaturday = dateObject.getDay() === 6;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let type = 'absent';
+    if (holiday) type = 'holiday';
+    else if (isSunday) type = 'sunday';
+    else if (isSaturday && !record) type = 'saturday';
+    else if (leave) type = 'leave';
+    else if (record) type = 'record';
+    else if (dateObject > today) type = 'upcoming';
+
+    return {
+      date,
+      dateObject,
+      displayDate: `${date} (${dateObject.toLocaleDateString('en-GB', { weekday: 'short' })})`,
+      record,
+      leave,
+      holiday,
+      type,
+    };
+  });
 
   return (
     <div className="space-y-6 text-white pb-10">
@@ -787,105 +844,251 @@ const EmployeeAttendanceSummary = () => {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-[#0f172a]/70 shadow-lg shadow-black/20 overflow-hidden">
-            {history.length === 0 ? (
-              <div className="p-10 text-center text-white/50">
-                <CalendarDays size={48} className="mx-auto mb-3 opacity-20" />
-                <p>No attendance records found for this month.</p>
+            {viewMode === 'table' ? (
+              <>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/10 px-4 py-3 text-[11px]">
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/30"></span><span className="text-white/50">Present</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-500/30"></span><span className="text-white/50">Absent</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-purple-500/30"></span><span className="text-white/50">On Leave</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-400/50"></span><span className="text-white/50">Holiday</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-500/20"></span><span className="text-white/50">Saturday</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-600/40"></span><span className="text-white/50">Sunday Off</span></span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-500/20"></span><span className="text-white/50">Upcoming</span></span>
               </div>
-            ) : viewMode === 'table' ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-white/70">
-                  <thead className="bg-white/5 text-white/50">
+                <table className="w-full min-w-[1050px] text-left text-sm text-white/70">
+                  <thead className="border-b border-white/10 bg-white/5 text-xs font-medium uppercase tracking-wide text-white/50">
                     <tr>
-                      <th className="px-5 py-4 font-medium">S.No</th>
-                      <th className="px-5 py-4 font-medium">Date</th>
-                      <th className="px-5 py-4 font-medium">Status</th>
-                      <th className="px-5 py-4 font-medium">Check-In</th>
-                      <th className="px-5 py-4 font-medium">Break Start</th>
-                      <th className="px-5 py-4 font-medium">Break End</th>
-                      <th className="px-5 py-4 font-medium">Check-Out</th>
-                      <th className="px-5 py-4 font-medium">Working Hrs</th>
-                      <th className="px-5 py-4 font-medium">Location</th>
+                      <th className="px-3 py-3">Date</th>
+                      <th className="px-3 py-3">Check In</th>
+                      <th className="px-3 py-3">Check Out</th>
+                      <th className="px-3 py-3">Break</th>
+                      <th className="px-3 py-3">Working Hours</th>
+                      <th className="px-3 py-3">Late Entry</th>
+                      <th className="px-3 py-3">Early Exit</th>
+                      <th className="px-3 py-3">Overtime</th>
+                      <th className="px-3 py-3">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {history.map((record, i) => (
-                      <tr key={record.id || i} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-5 py-4 text-white/60">{i + 1}</td>
-                        <td className="px-5 py-4 font-medium text-white">
-                          {formatDateSafe(record.date || record.attendance_date)}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                            {record.attendance_status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">{record.check_in_time || '--'}</td>
-                        <td className="px-5 py-4">{record.break_start_time || '--'}</td>
-                        <td className="px-5 py-4">{record.break_end_time || '--'}</td>
-                        <td className="px-5 py-4">{record.check_out_time || '--'}</td>
-                        <td className="px-5 py-4">
-                          {record.check_out_time ? record.working_hours : (record.check_in_time && (record.date === todayDate || String(record.attendance_date).startsWith(todayDate))) ? getLiveDuration(record.check_in_time) : (record.working_hours || '--')}
-                        </td>
-                        <td className="px-5 py-4">
-                          {record.location ? (
-                            <div className="flex items-center gap-1 text-xs text-white/50 max-w-[150px] truncate" title={record.location}>
-                              <MapPin size={12} className="shrink-0" />
-                              <span className="truncate">{record.location.replace(/\n/g, ' ')}</span>
-                            </div>
-                          ) : (
-                            '--'
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {loading ? (
+                      <tr><td colSpan={9} className="px-3 py-10 text-center text-white/50">Loading attendance history...</td></tr>
+                    ) : attendanceMonthRows.map(({ date, dateObject, displayDate, record, leave, holiday, type }) => {
+                      const emptyCells = Array.from({ length: 7 }, (_, index) => (
+                        <td key={index} className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                      ));
+
+                      if (type === 'holiday') {
+                        const details = holiday.reason || holiday.description;
+                        return (
+                          <tr key={date}>
+                            <td colSpan={9} className="p-1.5">
+                              <div className="flex min-h-12 items-center gap-4 rounded-xl border border-emerald-400/20 bg-gradient-to-r from-emerald-500/15 via-emerald-900/10 to-transparent px-4 py-2.5">
+                                <span className="shrink-0 text-xs font-medium text-white/55">{displayDate}</span>
+                                <span className="h-6 w-px shrink-0 bg-emerald-200/15" />
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                  <CalendarDays size={15} className="shrink-0 text-emerald-300" />
+                                  <span className="text-sm font-semibold text-emerald-100">{holiday.title || 'Company holiday'}</span>
+                                  {details && <span className="hidden max-w-[240px] truncate text-xs text-white/45 md:inline" title={details}>{details}</span>}
+                                </div>
+                                <span className="ml-auto shrink-0 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-200">Holiday</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      if (type === 'sunday') {
+                        return (
+                          <tr key={date}>
+                            <td colSpan={9} className="p-1.5">
+                              <div className="flex min-h-12 items-center gap-4 rounded-xl border border-slate-500/20 bg-gradient-to-r from-slate-700/35 via-slate-800/25 to-transparent px-4 py-2.5">
+                                <span className="shrink-0 text-xs font-medium text-white/45">{displayDate}</span>
+                                <span className="h-6 w-px shrink-0 bg-white/10" />
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                  <CalendarDays size={15} className="shrink-0 text-slate-400" />
+                                  <span className="text-sm font-semibold text-slate-200">Weekly holiday</span>
+                                  <span className="hidden text-xs text-white/40 sm:inline">No attendance expected</span>
+                                </div>
+                                <span className="ml-auto shrink-0 rounded-full border border-slate-400/15 bg-slate-600/25 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">Sunday off</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      if (type === 'leave') {
+                        return (
+                          <tr key={date}>
+                            <td colSpan={9} className="p-1.5">
+                              <div className="flex min-h-12 items-center gap-4 rounded-xl border border-purple-400/20 bg-gradient-to-r from-purple-500/15 via-purple-900/10 to-transparent px-4 py-2.5">
+                                <span className="shrink-0 text-xs font-medium text-white/55">{displayDate}</span>
+                                <span className="h-6 w-px shrink-0 bg-purple-200/15" />
+                                <div className="flex min-w-0 items-center gap-2.5">
+                                  <CalendarDays size={15} className="shrink-0 text-purple-300" />
+                                  <span className="text-sm font-semibold text-purple-100">Approved leave</span>
+                                  <span className="rounded-full border border-purple-300/15 bg-purple-300/10 px-2.5 py-1 text-[10px] font-semibold text-purple-200">{leave.leave_type || 'On Leave'}</span>
+                                  {leave.reason && <span className="hidden max-w-[240px] truncate text-xs text-white/45 md:inline" title={leave.reason}>{leave.reason}</span>}
+                                </div>
+                                <span className="ml-auto shrink-0 rounded-full border border-purple-300/15 bg-purple-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-200">On leave</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      if (type === 'saturday') {
+                        return (
+                          <tr key={date} className="bg-slate-800/25">
+                            <td className="whitespace-nowrap px-3 py-2.5 text-white/40">{displayDate}</td>
+                            <td colSpan={7} className="px-3 py-2.5 text-xs italic text-white/25">— Weekend —</td>
+                            <td className="px-3 py-2.5">
+                              <span className="rounded-md bg-blue-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-400">Saturday</span>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      if (record) {
+                        const status = record.attendance_status || 'Unknown';
+                        const statusColor =
+                          status.toLowerCase().includes('present') ? 'bg-emerald-500/10 text-emerald-400' :
+                          status.toLowerCase().includes('absent') ? 'bg-rose-500/10 text-rose-400' :
+                          status.toLowerCase().includes('leave') ? 'bg-purple-500/10 text-purple-400' :
+                          status.toLowerCase().includes('half') ? 'bg-amber-500/10 text-amber-400' :
+                          'bg-slate-500/10 text-slate-300';
+                        return (
+                          <tr key={date} className={`transition-colors hover:bg-white/5 ${dateObject.getDay() === 6 ? 'bg-blue-900/10' : ''}`}>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{displayDate}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_in_time || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.check_out_time || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.break_start_time || '—'} – {record.break_end_time || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">
+                              {record.check_out_time ? record.working_hours : (record.check_in_time && date === todayDate) ? getLiveDuration(record.check_in_time) : (record.working_hours || '—')}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.late_entry || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.early_exit || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3 text-white/70">{record.overtime || '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-3">
+                              <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>{status}</span>
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return (
+                        <tr key={date} className="transition-colors hover:bg-white/5">
+                          <td className="whitespace-nowrap px-3 py-3 text-white/70">{displayDate}</td>
+                          {emptyCells}
+                          <td className="whitespace-nowrap px-3 py-3">
+                            <span className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${type === 'upcoming' ? 'bg-slate-500/10 text-slate-300' : 'bg-rose-500/10 text-rose-400'}`}>
+                              {type === 'upcoming' ? 'Upcoming' : 'Absent'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+              </>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
-                {history.map((record, i) => (
-                  <div key={record.id || i} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition">
+                {attendanceMonthRows.map(({ date, dateObject, displayDate, record, leave, holiday, type }) => {
+                  if (type === 'holiday' || type === 'leave' || type === 'sunday' || type === 'saturday') {
+                    const isHoliday = type === 'holiday';
+                    const isLeave = type === 'leave';
+                    const bannerClass = isHoliday
+                      ? 'border-emerald-400/20 bg-emerald-500/10'
+                      : isLeave
+                        ? 'border-purple-400/20 bg-purple-500/10'
+                        : 'border-slate-500/20 bg-slate-700/20';
+                    const title = isHoliday
+                      ? (holiday.title || 'Company holiday')
+                      : isLeave
+                        ? 'Approved leave'
+                        : type === 'sunday'
+                          ? 'Weekly holiday'
+                          : 'Weekend';
+                    const detail = isHoliday
+                      ? (holiday.reason || holiday.description)
+                      : isLeave
+                        ? `${leave.leave_type || 'On Leave'}${leave.reason ? ` · ${leave.reason}` : ''}`
+                        : type === 'sunday'
+                          ? 'No attendance expected'
+                          : 'Saturday';
+                    return (
+                      <div key={date} className={`rounded-2xl border p-4 ${bannerClass}`}>
+                        <p className="text-xs text-white/50">{displayDate}</p>
+                        <p className="mt-2 font-semibold text-white">{title}</p>
+                        <p className="mt-1 text-xs text-white/55">{detail}</p>
+                      </div>
+                    );
+                  }
+
+                  const status = record?.attendance_status || (type === 'upcoming' ? 'Upcoming' : 'Absent');
+                  const statusColor =
+                    status.toLowerCase().includes('present') ? 'bg-emerald-500/10 text-emerald-400' :
+                    status.toLowerCase().includes('absent') ? 'bg-rose-500/10 text-rose-400' :
+                    status.toLowerCase().includes('leave') ? 'bg-purple-500/10 text-purple-400' :
+                    status.toLowerCase().includes('half') ? 'bg-amber-500/10 text-amber-400' :
+                    'bg-slate-500/10 text-slate-300';
+                  const isTodayRecord = date === todayDate;
+                  const workingHours = record
+                    ? record.check_out_time
+                      ? record.working_hours
+                      : record.check_in_time && isTodayRecord
+                        ? getLiveDuration(record.check_in_time)
+                        : record.working_hours || '—'
+                    : '—';
+
+                  return (
+                  <div key={date} className={`rounded-2xl border border-white/10 p-4 transition hover:bg-white/10 ${dateObject.getDay() === 6 ? 'bg-blue-900/10' : 'bg-white/5'}`}>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-medium text-white">
-                        {formatDateSafe(record.date || record.attendance_date)}
-                      </span>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${record.attendance_status === 'Present' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                        {record.attendance_status}
+                      <span className="font-medium text-white">{displayDate}</span>
+                      <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
+                        {status}
                       </span>
                     </div>
                     <div className="space-y-2 text-sm text-white/70 mb-3 border-t border-white/5 pt-3">
                       <div className="flex justify-between">
                         <span>Check-In</span>
-                        <span className="text-white">{record.check_in_time || '--'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Break Start</span>
-                        <span className="text-white">{record.break_start_time || '--'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Break End</span>
-                        <span className="text-white">{record.break_end_time || '--'}</span>
+                        <span className="text-white">{record?.check_in_time || '—'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Check-Out</span>
-                        <span className="text-white">{record.check_out_time || '--'}</span>
+                        <span className="text-white">{record?.check_out_time || '—'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Working Hrs</span>
-                        <span className="text-white">
-                          {record.check_out_time ? record.working_hours : (record.check_in_time && (record.date === todayDate || String(record.attendance_date).startsWith(todayDate))) ? getLiveDuration(record.check_in_time) : (record.working_hours || '--')}
-                        </span>
+                        <span>Break</span>
+                        <span className="text-white">{record?.break_start_time || '—'} – {record?.break_end_time || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Working Hours</span>
+                        <span className="text-white">{workingHours}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Late Entry</span>
+                        <span className="text-white">{record?.late_entry || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Early Exit</span>
+                        <span className="text-white">{record?.early_exit || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Overtime</span>
+                        <span className="text-white">{record?.overtime || '—'}</span>
                       </div>
                     </div>
-                    {record.location && (
+                    {record?.location && (
                       <div className="flex items-start gap-1 text-xs text-white/50 mt-3 pt-3 border-t border-white/10">
                         <MapPin size={12} className="shrink-0 mt-0.5" />
                         <span className="line-clamp-2" title={record.location}>{record.location.replace(/\n/g, ' ')}</span>
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
