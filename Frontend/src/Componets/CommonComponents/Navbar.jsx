@@ -273,14 +273,9 @@ const Navbar = () => {
                     {/* Orange top line */}
                     <div className="absolute left-6 right-6 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6A00] to-transparent" />
 
-                    <div className="mb-2 px-2 py-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FF6A00]">Our Work</p>
-                      <h3 className="mt-1 text-sm font-bold text-white">Explore Projects</h3>
-                    </div>
-
                     <div className="space-y-1">
                       {[
-                        { label: "Projects",      path: "/projects?type=live", desc: "All completed work" },
+                        { label: "Live Projects", path: "/projects?type=live", desc: "All completed work" },
                         { label: "Demo Projects", path: "/projects?type=demo", desc: "Live demo builds" },
                       ].map((item, index) => (
                         <NavLink
@@ -609,7 +604,7 @@ const Navbar = () => {
             {mobileSubMenu === "projects" && (
               <div className="space-y-1 rounded-xl border border-white/10 bg-white/3 p-2">
                 {[
-                  { label: "Projects",      path: "/projects?type=live" },
+                  { label: "Live Projects", path: "/projects?type=live" },
                   { label: "Demo Projects", path: "/projects?type=demo" },
                 ].map((item) => (
                   <NavLink
