@@ -97,20 +97,23 @@ const ProjectPage = () => {
     setError(null);
     try {
       if (projectType === "demo") {
-        // ── Demo Projects (public, no auth) ──
+        // ── Demo Projects only (public, no auth) ──
         const res = await api.get("/demo-projects/public/all?limit=500");
         const raw = res.data?.data || [];
         setProjects(Array.isArray(raw) ? raw : []);
+
       } else if (projectType === "live") {
         // ── Live Projects (public route, filter by Live status) ──
         const res = await api.get("/projects/public/all?limit=500&current_status=Live");
         const raw = res.data?.data || [];
         setProjects(Array.isArray(raw) ? raw : []);
+
       } else {
-        // ── Completed Projects (original logic preserved) ──
-        const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
+        // ── All Projects: completed regular + completed-projects + ALL demo projects ──
+        const [adminProjectsRes, completedProjectsRes, demoProjectsRes] = await Promise.allSettled([
           api.get("/projects/public/all?limit=500&current_status=Completed"),
-          api.get("/completed-projects/public/all?limit=500")
+          api.get("/completed-projects/public/all?limit=500"),
+          api.get("/demo-projects/public/all?limit=500"),
         ]);
 
         let adminList = [];
@@ -129,9 +132,16 @@ const ProjectPage = () => {
           if (Array.isArray(raw)) completedList = raw;
         }
 
+        let demoList = [];
+        if (demoProjectsRes.status === "fulfilled" && demoProjectsRes.value?.data) {
+          const raw = demoProjectsRes.value.data.data;
+          if (Array.isArray(raw)) demoList = raw;
+        }
+
+        // Merge all three — deduplicate by uuid/id/project_name
         const seen = new Set();
         const combined = [];
-        [...completedList, ...adminList].forEach((p) => {
+        [...completedList, ...adminList, ...demoList].forEach((p) => {
           const key = p.uuid || p.id || p.project_name;
           if (key && !seen.has(key)) { seen.add(key); combined.push(p); }
         });
