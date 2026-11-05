@@ -799,11 +799,18 @@ const AttendancePage = () => {
                         /* ── Sunday ── */
                         if (isSunday) {
                           return (
-                            <tr key={dateStr} className="bg-slate-800/40">
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/40 text-sm">{displayDate}</td>
-                              <td colSpan="7" className="px-3 py-2.5 text-white/25 text-xs italic">— Weekly holiday —</td>
-                              <td className="px-3 py-2.5">
-                                <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-600/30 text-slate-400">Sunday Off</span>
+                            <tr key={dateStr}>
+                              <td colSpan={9} className="p-1.5">
+                                <div className="flex min-h-12 items-center gap-4 rounded-xl border border-slate-500/20 bg-gradient-to-r from-slate-700/35 via-slate-800/25 to-transparent px-4 py-2.5">
+                                  <span className="shrink-0 text-xs font-medium text-white/45">{displayDate}</span>
+                                  <span className="h-6 w-px shrink-0 bg-white/10" />
+                                  <div className="flex min-w-0 items-center gap-2.5">
+                                    <CalendarDays size={15} className="shrink-0 text-slate-400" />
+                                    <span className="text-sm font-semibold text-slate-200">Weekly holiday</span>
+                                    <span className="hidden text-xs text-white/40 sm:inline">No attendance expected</span>
+                                  </div>
+                                  <span className="ml-auto shrink-0 rounded-full border border-slate-400/15 bg-slate-600/25 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">Sunday off</span>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -845,21 +852,22 @@ const AttendancePage = () => {
                         /* ── Approved Leave (no attendance record) ── */
                         if (leave) {
                           return (
-                            <tr key={dateStr} className="transition-colors hover:bg-white/5 bg-purple-900/10">
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/70">{displayDate}</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5 text-white/35">—</td>
-                              <td className="whitespace-nowrap px-3 py-2.5">
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300">{leave.leave_type || 'On Leave'}</span>
-                                  {leave.reason && (
-                                    <span className="text-[10px] text-white/40 pl-0.5 max-w-[130px] truncate" title={leave.reason}>{leave.reason}</span>
-                                  )}
+                            <tr key={dateStr}>
+                              <td colSpan={9} className="p-1.5">
+                                <div className="flex min-h-12 items-center gap-4 rounded-xl border border-purple-400/20 bg-gradient-to-r from-purple-500/15 via-purple-900/10 to-transparent px-4 py-2.5">
+                                  <span className="shrink-0 text-xs font-medium text-white/55">{displayDate}</span>
+                                  <span className="h-6 w-px shrink-0 bg-purple-200/15" />
+                                  <div className="flex min-w-0 items-center gap-2.5">
+                                    <CalendarDays size={15} className="shrink-0 text-purple-300" />
+                                    <span className="text-sm font-semibold text-purple-100">Approved leave</span>
+                                    <span className="rounded-full border border-purple-300/15 bg-purple-300/10 px-2.5 py-1 text-[10px] font-semibold text-purple-200">
+                                      {leave.leave_type || 'On Leave'}
+                                    </span>
+                                    {leave.reason && (
+                                      <span className="hidden max-w-[240px] truncate text-xs text-white/45 md:inline" title={leave.reason}>{leave.reason}</span>
+                                    )}
+                                  </div>
+                                  <span className="ml-auto shrink-0 rounded-full border border-purple-300/15 bg-purple-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-200">On leave</span>
                                 </div>
                               </td>
                             </tr>
