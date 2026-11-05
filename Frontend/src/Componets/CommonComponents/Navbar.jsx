@@ -282,15 +282,7 @@ const Navbar = () => {
                           key={item.label}
                           to={item.path}
                           onClick={() => setOpenMenu(null)}
-                          className={({ isActive }) =>
-                            `group/proj flex items-center justify-between rounded-xl px-3 py-3 text-sm
-                            transition-all duration-300 hover:translate-x-1
-                            ${
-                              isActive
-                                ? "bg-[#FF6A00]/10 text-[#FF6A00]"
-                                : "text-white hover:bg-white/[0.04]"
-                            }`
-                          }
+                          className="group/proj flex items-center justify-between rounded-xl px-3 py-3 text-sm text-white transition-all duration-300 hover:translate-x-1 hover:bg-white/[0.04]"
                           style={{ transitionDelay: openMenu === "projects" ? `${index * 60}ms` : "0ms" }}
                         >
                           <div>
