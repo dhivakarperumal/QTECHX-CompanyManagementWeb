@@ -342,6 +342,7 @@ function Modal({ open, onClose, title, subtitle, icon: Icon, iconColor = "text-p
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
+        pointerEvents: 'auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -355,6 +356,8 @@ function Modal({ open, onClose, title, subtitle, icon: Icon, iconColor = "text-p
       <div
         style={{
           position: 'relative',
+          zIndex: 1,
+          pointerEvents: 'auto',
           width: '100%',
           maxWidth: '680px',
           maxHeight: '90vh',
@@ -405,7 +408,7 @@ function Modal({ open, onClose, title, subtitle, icon: Icon, iconColor = "text-p
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return createPortal(modalContent, document.getElementById('modal-root') || document.body);
 }
 
 export default function TasksPage({ initialPageKey = null }) {
