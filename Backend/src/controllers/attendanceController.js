@@ -1,4 +1,4 @@
-const { createAttendance, getAttendanceSummary, getAttendanceHistory, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday } = require("../models/attendanceModel");
+const { createAttendance, getAttendanceSummary, getAttendanceHistory, getEmployeeAttendance, updateAttendance, getEmployeeAttendanceToday, resolveAllPossibleEmployeeIds } = require("../models/attendanceModel");
 const { calculateAttendanceMetrics } = require("../utils/attendanceUtils");
 const { getDB } = require("../config/db");
 const { notifyAdminsSafely, resolveEmployeeName } = require("../utils/notificationService");
@@ -578,7 +578,57 @@ async function employeeAttendance(req, res) {
     }
 
     const rows = await getEmployeeAttendance({ employeeId, startDate, endDate });
-    return res.json({ data: rows, startDate, endDate });
+
+    // ── Fetch approved leaves for this employee ──────────────────────────────
+    // Leaves may be stored with any of these ID formats:
+    //   • numeric employee_id from employees table (e.g. "1")
+    //   • employee_code  (e.g. "EMPQT2")
+    //   • UUID user_id from users table (e.g. "f2eb9e41-...")  ← most common
+    // resolveAllPossibleEmployeeIds gives us #1 and #2 but NOT #3.
+    // So we also JOIN employees→users by email to get the UUID.
+    const db = getDB();
+    const possibleIds = await resolveAllPossibleEmployeeIds(db, employeeId);
+    let allLeaveIds = [...possibleIds];
+
+    if (possibleIds.length > 0) {
+      try {
+        const idPH = possibleIds.map(() => '?').join(', ');
+        // Find the UUID user_id(s) for these employees (linked by email)
+        const [linkedUsers] = await db.execute(
+          `SELECT DISTINCT u.user_id
+           FROM users u
+           INNER JOIN employees e
+             ON u.email = e.official_email OR u.email = e.personal_email
+           WHERE e.employee_id IN (${idPH}) OR e.employee_code IN (${idPH})`,
+          [...possibleIds, ...possibleIds]
+        );
+        linkedUsers.forEach(u => { if (u.user_id) allLeaveIds.push(String(u.user_id)); });
+        // De-duplicate
+        allLeaveIds = [...new Set(allLeaveIds)];
+      } catch (linkErr) {
+        console.error('Could not resolve user UUIDs for leave lookup:', linkErr.message);
+      }
+    }
+
+    let leaves = [];
+    if (allLeaveIds.length > 0) {
+      const leavePH = allLeaveIds.map(() => '?').join(', ');
+      const [leaveRows] = await db.execute(
+        `SELECT id, employee_id, leave_type,
+                DATE_FORMAT(from_date, '%Y-%m-%d') AS from_date,
+                DATE_FORMAT(to_date,   '%Y-%m-%d') AS to_date,
+                no_of_days, day_type, reason, status
+         FROM employee_leaves
+         WHERE employee_id IN (${leavePH})
+           AND LOWER(TRIM(status)) = 'approved'
+           AND from_date <= ? AND to_date >= ?
+         ORDER BY from_date ASC`,
+        [...allLeaveIds, endDate, startDate]
+      );
+      leaves = leaveRows || [];
+    }
+
+    return res.json({ data: rows, leaves, startDate, endDate });
   } catch (error) {
     console.error("Employee attendance error:", error);
     return res.status(500).json({ message: "Failed to retrieve employee attendance" });

@@ -221,15 +221,14 @@ const AttendancePage = () => {
       setHistoryLoading(true);
       setHistoryError(null);
       try {
-        const [attendanceRes, leaveRes] = await Promise.all([
-          api.get(
-            `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
-          ),
-          api.get(`/employee-leaves/employee/${historyEmployee.employee_id}`).catch(() => ({ data: { data: { leaves: [] } } }))
-        ]);
+        // Single call: backend now returns both attendance records AND approved leaves
+        const response = await api.get(
+          `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
+        );
         if (!cancelled) {
-          setEmployeeHistory(attendanceRes?.data?.data || []);
-          setEmployeeLeaves(leaveRes?.data?.data?.leaves || []);
+          setEmployeeHistory(response?.data?.data || []);
+          // Backend returns leaves[] with correctly-resolved employee_id
+          setEmployeeLeaves(response?.data?.leaves || []);
         }
       } catch (err) {
         if (cancelled) return;
