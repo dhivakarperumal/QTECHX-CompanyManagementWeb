@@ -91,8 +91,10 @@ const AttendancePage = () => {
   });
   const [employeeHistory, setEmployeeHistory] = useState([]);
   const [employeeLeaves, setEmployeeLeaves] = useState([]);
+  const [historyHolidays, setHistoryHolidays] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState(null);
+  const [historyHolidayError, setHistoryHolidayError] = useState(null);
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState('Today');
@@ -220,25 +222,42 @@ const AttendancePage = () => {
     const loadEmployeeHistory = async () => {
       setHistoryLoading(true);
       setHistoryError(null);
-      try {
-        // Single call: backend now returns both attendance records AND approved leaves
-        const response = await api.get(
+      setHistoryHolidayError(null);
+
+      const [attendanceResult, holidaysResult] = await Promise.allSettled([
+        api.get(
           `/attendance/${historyEmployee.employee_id}?startDate=${historyDateRange.startDate}&endDate=${historyDateRange.endDate}`
-        );
-        if (!cancelled) {
-          setEmployeeHistory(response?.data?.data || []);
-          // Backend returns leaves[] with correctly-resolved employee_id
-          setEmployeeLeaves(response?.data?.leaves || []);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Failed to load employee attendance history", err);
-        setHistoryError(err?.response?.data?.message || "Could not load attendance history.");
+        ),
+        api.get("/events"),
+      ]);
+
+      if (cancelled) return;
+
+      if (attendanceResult.status === "fulfilled") {
+        setEmployeeHistory(attendanceResult.value?.data?.data || []);
+        setEmployeeLeaves(attendanceResult.value?.data?.leaves || []);
+      } else {
+        console.error("Failed to load employee attendance history", attendanceResult.reason);
+        setHistoryError(attendanceResult.reason?.response?.data?.message || "Could not load attendance history.");
         setEmployeeHistory([]);
         setEmployeeLeaves([]);
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
       }
+
+      if (holidaysResult.status === "fulfilled" && Array.isArray(holidaysResult.value?.data)) {
+        setHistoryHolidays(holidaysResult.value.data.filter((event) =>
+          String(event.eventType || "").trim().toLowerCase() === "holiday" &&
+          String(event.status || "").trim().toLowerCase() !== "cancelled"
+        ));
+      } else {
+        const error = holidaysResult.status === "rejected"
+          ? holidaysResult.reason
+          : new Error("Office calendar returned an invalid events response.");
+        console.error("Failed to load office calendar holidays", error);
+        setHistoryHolidays([]);
+        setHistoryHolidayError("Could not load office calendar holidays.");
+      }
+
+      setHistoryLoading(false);
     };
 
     loadEmployeeHistory();
@@ -725,6 +744,7 @@ const AttendancePage = () => {
                     <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500/30"></span><span className="text-white/50">Present</span></span>
                     <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500/30"></span><span className="text-white/50">Absent</span></span>
                     <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-500/30"></span><span className="text-white/50">On Leave</span></span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-400/50"></span><span className="text-white/50">Holiday</span></span>
                     <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500/20"></span><span className="text-white/50">Saturday</span></span>
                     <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-slate-600/40"></span><span className="text-white/50">Sunday Off</span></span>
                   </div>
@@ -732,6 +752,11 @@ const AttendancePage = () => {
                 {historyError && (
                   <div role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-900/20 p-3 text-sm text-rose-200">
                     {historyError}
+                  </div>
+                )}
+                {historyHolidayError && (
+                  <div role="alert" className="mb-4 rounded-xl border border-amber-500/40 bg-amber-900/20 p-3 text-sm text-amber-200">
+                    {historyHolidayError}
                   </div>
                 )}
                 <table className="w-full min-w-[1050px] text-left text-sm">
@@ -767,6 +792,12 @@ const AttendancePage = () => {
                           String(l.to_date || '').slice(0, 10) >= dateStr
                         );
 
+                      const getHolidayForDate = (dateStr) =>
+                        historyHolidays.find(event =>
+                          String(event.startDate || '').slice(0, 10) <= dateStr &&
+                          String(event.endDate || event.startDate || '').slice(0, 10) >= dateStr
+                        );
+
                       // Generate every calendar date in the selected range
                       const allDates = [];
                       const rangeStart = new Date(historyDateRange.startDate + 'T00:00:00');
@@ -795,6 +826,30 @@ const AttendancePage = () => {
                         const displayDate = `${dateStr} (${dayLabel})`;
                         const record = attendanceMap[dateStr];
                         const leave  = !record ? getLeaveForDate(dateStr) : null;
+                        const holiday = getHolidayForDate(dateStr);
+
+                        /* ── Office calendar holiday ── */
+                        if (holiday) {
+                          const holidayDetails = holiday.reason || holiday.description;
+                          return (
+                            <tr key={dateStr}>
+                              <td colSpan={9} className="p-1.5">
+                                <div className="flex min-h-12 items-center gap-4 rounded-xl border border-emerald-400/20 bg-gradient-to-r from-emerald-500/15 via-emerald-900/10 to-transparent px-4 py-2.5">
+                                  <span className="shrink-0 text-xs font-medium text-white/55">{displayDate}</span>
+                                  <span className="h-6 w-px shrink-0 bg-emerald-200/15" />
+                                  <div className="flex min-w-0 items-center gap-2.5">
+                                    <CalendarDays size={15} className="shrink-0 text-emerald-300" />
+                                    <span className="text-sm font-semibold text-emerald-100">{holiday.title || 'Company holiday'}</span>
+                                    {holidayDetails && (
+                                      <span className="hidden max-w-[240px] truncate text-xs text-white/45 md:inline" title={holidayDetails}>{holidayDetails}</span>
+                                    )}
+                                  </div>
+                                  <span className="ml-auto shrink-0 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-200">Holiday</span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
 
                         /* ── Sunday ── */
                         if (isSunday) {
