@@ -3,6 +3,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { createTask, findTaskByUUID, listTasks, updateTask, deleteTask } = require('../models/taskModel');
 const { findProjectById, findProjectByUUID } = require('../models/projectModel');
+const { listAssignmentsByProject } = require('../models/projectAssignmentModel');
 const { getDB } = require('../config/db');
 const { notifySafely, notifyAdminsSafely } = require('../utils/notificationService');
 
@@ -132,6 +133,71 @@ async function getTaskByIdHandler(req, res) {
 }
 
 /* ─── CREATE ─── */
+async function createEmployeeTaskHandler(req, res) {
+  try {
+    const { project_id, task_name, description, priority, due_date } = req.body;
+    const trimmedName = task_name?.toString().trim();
+
+    if (!trimmedName) return fail(res, 'Task name is required', 400);
+    if (!project_id) return fail(res, 'Project is required', 400);
+    if (priority && !PRIORITIES.includes(priority)) {
+      return fail(res, `Invalid priority. Allowed: ${PRIORITIES.join(', ')}`, 400);
+    }
+    if (due_date && Number.isNaN(Date.parse(due_date))) {
+      return fail(res, 'Invalid due date', 400);
+    }
+
+    const resolvedProjectId = await resolveProjectId(project_id);
+    if (!resolvedProjectId) return fail(res, 'Project not found', 404);
+
+    const employeeId = await resolveEmployeeId(req.user?.employee_id)
+      || await resolveEmployeeId(req.user?.user_id);
+    if (!employeeId) return fail(res, 'Employee profile not found', 403);
+
+    const assignments = await listAssignmentsByProject(resolvedProjectId);
+    if (!assignments.some((assignment) => String(assignment.employee_id) === String(employeeId))) {
+      return fail(res, 'You must be assigned to this project to create a task', 403);
+    }
+
+    const actor = req.user?.user_id || employeeId;
+    const task = await createTask({
+      uuid: uuidv4(),
+      project_id: resolvedProjectId,
+      module_name: null,
+      task_name: trimmedName,
+      description: description?.toString().trim() || null,
+      category: null,
+      parent_task_uuid: null,
+      assigned_to: employeeId,
+      assigned_by: employeeId,
+      team: null,
+      assignment_date: new Date().toISOString().slice(0, 10),
+      start_date: null,
+      due_date: due_date || null,
+      completion_date: null,
+      estimated_hours: 0,
+      actual_hours: 0,
+      time_spent: 0,
+      remaining_hours: 0,
+      priority: priority || 'Medium',
+      status: 'Pending',
+      progress: 0,
+      is_overdue: due_date ? (new Date(due_date).setHours(23, 59, 59, 999) < Date.now() ? 1 : 0) : 0,
+      attachments: null,
+      comments: null,
+      internal_notes: null,
+      client_notes: null,
+      created_by: actor,
+      updated_by: actor,
+    });
+
+    return ok(res, { message: 'Task created successfully', data: task }, 201);
+  } catch (err) {
+    console.error('createEmployeeTaskHandler:', err);
+    return fail(res, 'Failed to create task');
+  }
+}
+
 async function createTaskHandler(req, res) {
   try {
     const {
@@ -375,6 +441,7 @@ async function deleteTaskHandler(req, res) {
 module.exports = {
   getAllTasksHandler,
   getTaskByIdHandler,
+  createEmployeeTaskHandler,
   createTaskHandler,
   updateTaskHandler,
   deleteTaskHandler,

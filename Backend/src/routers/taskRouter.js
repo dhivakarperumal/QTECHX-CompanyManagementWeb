@@ -3,6 +3,7 @@ const { authenticate, authorize } = require('../security/authMiddleware');
 const {
   getAllTasksHandler,
   getTaskByIdHandler,
+  createEmployeeTaskHandler,
   createTaskHandler,
   updateTaskHandler,
   deleteTaskHandler,
@@ -18,6 +19,7 @@ const managers = authorize('Super Admin', 'Admin', 'Manager');
 const allStaff = authorize('Super Admin', 'Admin', 'Manager', 'Staff', 'Employee');
 
 router.get('/', authenticate, allStaff, getAllTasksHandler);
+router.post('/employee', authenticate, authorize('Employee', 'Staff'), createEmployeeTaskHandler);
 router.post('/', authenticate, managers, createTaskHandler);
 router.post('/assign', authenticate, managers, assignTaskHandler);
 router.get('/assignments', authenticate, allStaff, listTaskAssignmentsHandler);

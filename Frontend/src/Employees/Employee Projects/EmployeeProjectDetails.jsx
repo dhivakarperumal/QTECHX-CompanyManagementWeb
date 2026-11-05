@@ -5,7 +5,7 @@
     User, DollarSign, TrendingUp, FolderKanban, Users, Code2, Paperclip,
     Globe, Phone, Mail, MapPin, Briefcase, Clock, AlertCircle, BarChart3,
     ExternalLink, Download, Image, FileArchive, Search, LayoutGrid, List,
-    X, ChevronLeft, ChevronRight, Eye, CheckSquare
+    X, ChevronLeft, ChevronRight, Eye, CheckSquare, Plus
   } from 'lucide-react';
   import api from '../../api';
   import { useAuth } from '../../PrivateRouter/AuthContext';
@@ -285,6 +285,10 @@
     const [statusError, setStatusError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
     const [progressData, setProgressData] = useState(null);
+    const [taskFormOpen, setTaskFormOpen] = useState(false);
+    const [taskForm, setTaskForm] = useState({ task_name: '', description: '', priority: 'Medium', due_date: '' });
+    const [taskSaving, setTaskSaving] = useState(false);
+    const [taskError, setTaskError] = useState('');
 
     const fetchProgress = useCallback(async (projectUUID) => {
       try {
@@ -302,7 +306,12 @@
           const [projRes, assignRes, tasksRes] = await Promise.all([
             api.get(`/projects/${id}`),
             api.get(`/projects/${id}/assignments`).catch(() => ({ data: {} })),
-            api.get(`/tasks?project_id=${id}`).catch(() => ({ data: { data: [] } })),
+            api.get('/tasks', {
+              params: {
+                project_id: id,
+                assigned_to: user?.user_id || user?.employee_id || user?.id,
+              },
+            }).catch(() => ({ data: { data: [] } })),
           ]);
           if (!projRes.data.success) throw new Error(projRes.data.message || 'Project not found');
           
@@ -316,11 +325,7 @@
                           || [];
           setAssignments(employees);
 
-          let projTasks = tasksRes.data?.data || [];
-          if (user?.user_id) {
-            projTasks = projTasks.filter(t => t.assigned_to === user.user_id || t.assigned_to === user.employee_id || !t.assigned_to);
-          }
-          setTasks(projTasks);
+          setTasks(tasksRes.data?.data || []);
 
         } catch (err) {
           setError(err?.response?.data?.message || err.message || 'Failed to load project');
@@ -377,6 +382,26 @@
         setProjectStatus(project.current_status || 'Planning');
       } finally {
         setStatusSaving(false);
+      }
+    };
+
+    const createEmployeeTask = async (event) => {
+      event.preventDefault();
+      setTaskSaving(true);
+      setTaskError('');
+      try {
+        const { data } = await api.post('/tasks/employee', {
+          ...taskForm,
+          project_id: project.uuid || project.id || id,
+        });
+        if (!data.success || !data.data) throw new Error(data.message || 'Failed to create task.');
+        setTasks(current => [data.data, ...current]);
+        setTaskForm({ task_name: '', description: '', priority: 'Medium', due_date: '' });
+        setTaskFormOpen(false);
+      } catch (saveError) {
+        setTaskError(saveError.response?.data?.message || saveError.message || 'Failed to create task.');
+      } finally {
+        setTaskSaving(false);
       }
     };
 
@@ -608,6 +633,84 @@
             {activeTab === 'tasks' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Section title={`Your Assigned Tasks (${tasks.length})`} icon={CheckSquare} iconCls="text-blue-400">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTaskError('');
+                        setTaskFormOpen(open => !open);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-blue-500/15 border border-blue-500/25 px-3 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-500/25 transition"
+                    >
+                      <Plus size={14} /> Create task
+                    </button>
+                  </div>
+                  {taskFormOpen && (
+                    <form onSubmit={createEmployeeTask} className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="space-y-1.5 text-xs text-white/60">
+                          Task name
+                          <input
+                            required
+                            maxLength={255}
+                            value={taskForm.task_name}
+                            onChange={event => setTaskForm(current => ({ ...current, task_name: event.target.value }))}
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            placeholder="Enter task name"
+                          />
+                        </label>
+                        <label className="space-y-1.5 text-xs text-white/60">
+                          Priority
+                          <select
+                            value={taskForm.priority}
+                            onChange={event => setTaskForm(current => ({ ...current, priority: event.target.value }))}
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                          >
+                            {['Low', 'Medium', 'High', 'Critical'].map(priority => (
+                              <option key={priority} value={priority}>{priority}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="space-y-1.5 text-xs text-white/60">
+                          Due date
+                          <input
+                            type="date"
+                            value={taskForm.due_date}
+                            onChange={event => setTaskForm(current => ({ ...current, due_date: event.target.value }))}
+                            className="w-full rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                          />
+                        </label>
+                        <label className="space-y-1.5 text-xs text-white/60 sm:col-span-2">
+                          Description
+                          <textarea
+                            rows={3}
+                            value={taskForm.description}
+                            onChange={event => setTaskForm(current => ({ ...current, description: event.target.value }))}
+                            className="w-full resize-y rounded-lg border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white outline-none focus:border-blue-400/50"
+                            placeholder="Describe the work"
+                          />
+                        </label>
+                      </div>
+                      {taskError && <p role="alert" className="text-xs text-rose-300">{taskError}</p>}
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTaskFormOpen(false)}
+                          disabled={taskSaving}
+                          className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/60 hover:bg-white/5 disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={taskSaving}
+                          className="rounded-lg bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
+                        >
+                          {taskSaving ? 'Creating…' : 'Create task'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                   {tasks.length === 0 ? (
                     <p className="text-sm text-white/40 text-center py-4">No tasks assigned to you for this project yet.</p>
                   ) : (
