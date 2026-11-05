@@ -130,7 +130,11 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
       return item.children.some((child) => {
         if (child.exact) {
-          return location.pathname === child.path;
+          return (
+            location.pathname === child.path ||
+            (child.path === "/employee/tasks" &&
+              location.pathname.startsWith("/employee/tasks/view/"))
+          );
         }
 
         return (
@@ -145,7 +149,11 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   const isRouteActive = (path, exact = false) => {
     if (exact) {
-      return location.pathname === path;
+      return (
+        location.pathname === path ||
+        (path === "/employee/tasks" &&
+          location.pathname.startsWith("/employee/tasks/view/"))
+      );
     }
 
     if (path === "/employee/leaves/history" && location.pathname.startsWith("/employee/leaves")) {
@@ -277,7 +285,7 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = location.pathname === sub.path;
+                        const isActive = isRouteActive(sub.path, sub.exact);
                         return (
                           <NavLink
                             key={sub.path}
