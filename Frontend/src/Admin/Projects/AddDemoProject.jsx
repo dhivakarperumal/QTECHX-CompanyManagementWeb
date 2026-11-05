@@ -12,13 +12,13 @@ const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
-    border: `1px solid ${state.isFocused ? '#a855f7' : 'rgba(255,255,255,0.1)'}`,
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
     boxShadow: 'none',
     outline: 'none',
     minHeight: '42px',
     height: '42px',
     borderRadius: '12px',
-    '&:hover': { border: '1px solid #a855f7' },
+    '&:hover': { border: '1px solid #f97316' },
   }),
   valueContainer: (p) => ({ ...p, padding: '0 12px', fontSize: '13px' }),
   singleValue: (p) => ({ ...p, color: '#fff', fontSize: '13px' }),
@@ -31,9 +31,9 @@ const customSelectStyles = {
   menuList: (p) => ({ ...p, padding: 0, fontSize: '13px' }),
   option: (p, s) => ({
     ...p, fontSize: '13px', padding: '8px 14px',
-    backgroundColor: s.isSelected ? '#a855f7' : s.isFocused ? 'rgba(168,85,247,.15)' : '#1a1d24',
+    backgroundColor: s.isSelected ? '#f97316' : s.isFocused ? 'rgba(249,115,22,.15)' : '#1a1d24',
     color: '#fff', cursor: 'pointer',
-    ':active': { backgroundColor: '#9333ea' },
+    ':active': { backgroundColor: '#ea580c' },
   }),
   indicatorSeparator: () => ({ display: 'none' }),
   dropdownIndicator: (p) => ({ ...p, color: '#888', padding: '6px' }),
@@ -101,7 +101,7 @@ const toForm = (p) => ({
   source_code_backup: p.source_code_backup || '', project_images: p.project_images || '',
 });
 
-const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 placeholder:text-white/30';
+const fieldClass = 'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 placeholder:text-white/30';
 const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6';
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 const DOCUMENT_FIELDS = ['proposal_doc', 'quotation_doc', 'api_documentation', 'database_schema', 'source_code_backup'];
@@ -274,7 +274,7 @@ export default function AddDemoProject() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={30} className="animate-spin text-purple-500/70" />
+          <Loader2 size={30} className="animate-spin text-orange-500/70" />
           <p className="text-sm text-white/40">Loading demo project…</p>
         </div>
       </div>
@@ -286,8 +286,8 @@ export default function AddDemoProject() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(168,85,247,.15)', border: '1px solid rgba(168,85,247,.25)' }}>
-            <FlaskConical size={18} className="text-purple-400" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500/15" style={{ border: '1px solid rgba(249,115,22,.25)' }}>
+            <FlaskConical size={18} className="text-orange-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
@@ -322,8 +322,8 @@ export default function AddDemoProject() {
           {/* ── Basic Information ──────────────────────────────────── */}
           <section className={sectionClass}>
             <div className="mb-5 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(168,85,247,.15)' }}>
-                <Building2 size={15} className="text-purple-400" />
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-orange-500/15">
+                <Building2 size={15} className="text-orange-400" />
               </div>
               <h2 className="text-base font-bold text-white">Basic Information</h2>
             </div>
@@ -494,7 +494,7 @@ export default function AddDemoProject() {
                 {documentFiles.nda_doc
                   ? <p className="mt-2 text-xs text-white/50">Selected NDA: {documentFiles.nda_doc.name}</p>
                   : formData.nda_doc
-                    ? <a href={buildUploadUrl(formData.nda_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-purple-300 underline truncate">View current NDA</a>
+                    ? <a href={buildUploadUrl(formData.nda_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">View current NDA</a>
                     : null}
               </label>
               {/* Agreement */}
@@ -507,7 +507,7 @@ export default function AddDemoProject() {
                   styles={customSelectStyles} isSearchable={false}
                 />
                 {formData.agreement_uploaded === 'Yes' && (
-                  <p className="mt-1 text-xs text-purple-300">Yes means you should upload the agreement file below.</p>
+                  <p className="mt-1 text-xs text-orange-300">Yes means you should upload the agreement file below.</p>
                 )}
               </label>
             </div>
@@ -634,7 +634,7 @@ export default function AddDemoProject() {
                 {documentFiles.agreement_doc
                   ? <p className="mt-2 text-xs text-white/50">Selected: {documentFiles.agreement_doc.name}</p>
                   : formData.agreement_doc
-                    ? <a href={buildUploadUrl(formData.agreement_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-purple-300 underline truncate">View current agreement</a>
+                    ? <a href={buildUploadUrl(formData.agreement_doc)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">View current agreement</a>
                     : null}
               </label>
 
@@ -650,7 +650,7 @@ export default function AddDemoProject() {
                     {selectedFile
                       ? <p className="mt-2 text-xs text-white/50">Selected: {selectedFile.name}</p>
                       : existingUrl
-                        ? <a href={buildUploadUrl(existingUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-purple-300 underline truncate">View current {labels[name].toLowerCase()}</a>
+                        ? <a href={buildUploadUrl(existingUrl)} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-orange-300 underline truncate">View current {labels[name].toLowerCase()}</a>
                         : null}
                   </label>
                 );
@@ -674,7 +674,7 @@ export default function AddDemoProject() {
         </button>
         <button type="submit" form="demo-project-form" disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
-          style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)' }}>
+          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
           {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Demo Project'}
         </button>

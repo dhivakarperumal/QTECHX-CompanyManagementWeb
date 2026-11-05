@@ -5,7 +5,7 @@ import {
   FolderKanban, Search, RefreshCw, Plus,
   LayoutGrid, List, CheckCircle, AlertCircle, PlayCircle,
   Eye, Edit2, Trash2, Building2, User, X, Loader2,
-  ChevronLeft, ChevronRight, ChevronDown, FlaskConical,
+  ChevronLeft, ChevronRight, FlaskConical,
 } from 'lucide-react';
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
@@ -14,13 +14,13 @@ const customSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     backgroundColor: '#1a1d24',
-    border: `1px solid ${state.isFocused ? '#a855f7' : 'rgba(255,255,255,0.1)'}`,
+    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
     boxShadow: 'none',
     outline: 'none',
     minHeight: '42px',
     height: '42px',
     borderRadius: '12px',
-    '&:hover': { border: '1px solid #a855f7' },
+    '&:hover': { border: '1px solid #f97316' },
   }),
   valueContainer: (p) => ({ ...p, padding: '0 12px', fontSize: '13px' }),
   singleValue: (p) => ({ ...p, color: '#fff', fontSize: '13px' }),
@@ -33,9 +33,9 @@ const customSelectStyles = {
   menuList: (p) => ({ ...p, padding: 0, fontSize: '13px' }),
   option: (p, s) => ({
     ...p, fontSize: '13px', padding: '8px 14px',
-    backgroundColor: s.isSelected ? '#a855f7' : s.isFocused ? 'rgba(168,85,247,.15)' : '#1a1d24',
+    backgroundColor: s.isSelected ? '#f97316' : s.isFocused ? 'rgba(249,115,22,.15)' : '#1a1d24',
     color: '#fff', cursor: 'pointer',
-    ':active': { backgroundColor: '#9333ea' },
+    ':active': { backgroundColor: '#ea580c' },
   }),
   indicatorSeparator: () => ({ display: 'none' }),
   dropdownIndicator: (p) => ({ ...p, color: '#888', padding: '6px' }),
@@ -44,13 +44,13 @@ const customSelectStyles = {
 const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
 
 const STATUS_CONFIG = {
-  'Planning':    { color: '#6366f1', bg: 'rgba(99,102,241,.15)',  icon: FolderKanban },
-  'In Progress': { color: '#f59e0b', bg: 'rgba(245,158,11,.15)', icon: PlayCircle },
-  'Testing':     { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: CheckCircle },
-  'On Hold':     { color: '#ef4444', bg: 'rgba(239,68,68,.15)',  icon: AlertCircle },
-  'Live':        { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: CheckCircle },
-  'Completed':   { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: CheckCircle },
-  'Cancelled':   { color: '#6b7280', bg: 'rgba(107,114,128,.15)',icon: X },
+  'Planning':    { color: '#6366f1', bg: 'rgba(99,102,241,.15)' },
+  'In Progress': { color: '#f59e0b', bg: 'rgba(245,158,11,.15)' },
+  'Testing':     { color: '#06b6d4', bg: 'rgba(6,182,212,.15)' },
+  'On Hold':     { color: '#f97316', bg: 'rgba(249,115,22,.15)' },
+  'Live':        { color: '#10b981', bg: 'rgba(16,185,129,.15)' },
+  'Completed':   { color: '#10b981', bg: 'rgba(16,185,129,.15)' },
+  'Cancelled':   { color: '#6b7280', bg: 'rgba(107,114,128,.15)' },
 };
 
 function StatusBadge({ status }) {
@@ -65,11 +65,10 @@ function StatusBadge({ status }) {
 
 function ProgressBar({ value }) {
   const v = Math.min(100, Math.max(0, Number(value) || 0));
-  const color = v >= 100 ? '#10b981' : v >= 60 ? '#a855f7' : v >= 30 ? '#f59e0b' : '#6366f1';
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 rounded-full bg-white/10">
-        <div className="h-full rounded-full transition-all" style={{ width: `${v}%`, background: color }} />
+        <div className="h-full rounded-full transition-all bg-orange-500" style={{ width: `${v}%` }} />
       </div>
       <span className="text-xs text-white/50 w-7 text-right">{v}%</span>
     </div>
@@ -83,7 +82,7 @@ function ConfirmDeleteModal({ project, onConfirm, onCancel, loading }) {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
         <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#111318] p-6 shadow-2xl">
           <div className="mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(239,68,68,.15)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/15">
               <Trash2 size={18} className="text-red-400" />
             </div>
             <div>
@@ -142,8 +141,8 @@ function ProjectDetailModal({ project, onClose, onEdit }) {
           {/* Header */}
           <div className="flex items-start justify-between p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'rgba(168,85,247,.15)' }}>
-                <FlaskConical size={20} className="text-purple-400" />
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-orange-500/15">
+                <FlaskConical size={20} className="text-orange-400" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">{project.project_name}</h2>
@@ -190,8 +189,9 @@ function ProjectDetailModal({ project, onClose, onEdit }) {
             <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition">
               Close
             </button>
-            <button onClick={() => onEdit(project.uuid)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)' }}>
+            <button onClick={() => onEdit(project.uuid)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
               <Edit2 size={14} /> Edit Project
             </button>
           </div>
@@ -203,17 +203,17 @@ function ProjectDetailModal({ project, onClose, onEdit }) {
 
 export default function AllDemoProjects() {
   const navigate = useNavigate();
-  const [projects, setProjects]         = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [search, setSearch]             = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [viewMode, setViewMode]         = useState('table'); // 'table' | 'grid'
-  const [page, setPage]                 = useState(1);
-  const [pagination, setPagination]     = useState({ total: 0, pages: 1 });
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [projects, setProjects]           = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState('');
+  const [search, setSearch]               = useState('');
+  const [statusFilter, setStatusFilter]   = useState('');
+  const [viewMode, setViewMode]           = useState('table');
+  const [page, setPage]                   = useState(1);
+  const [pagination, setPagination]       = useState({ total: 0, pages: 1 });
+  const [deleteTarget, setDeleteTarget]   = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [viewTarget, setViewTarget]     = useState(null);
+  const [viewTarget, setViewTarget]       = useState(null);
   const LIMIT = 15;
 
   const fetchProjects = useCallback(async () => {
@@ -232,8 +232,6 @@ export default function AllDemoProjects() {
   }, [page, search, statusFilter]);
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
-
-  // Reset page on filter change
   useEffect(() => { setPage(1); }, [search, statusFilter]);
 
   const handleDelete = async () => {
@@ -262,8 +260,8 @@ export default function AllDemoProjects() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(168,85,247,.15)', border: '1px solid rgba(168,85,247,.25)' }}>
-            <FlaskConical size={18} className="text-purple-400" />
+          <div className="w-11 h-11 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+            <FlaskConical size={22} className="text-orange-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Demo Projects</h1>
@@ -273,17 +271,24 @@ export default function AllDemoProjects() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setViewMode(v => v === 'table' ? 'grid' : 'table')}
-            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
-            {viewMode === 'table' ? <LayoutGrid size={16} /> : <List size={16} />}
-          </button>
+          {/* View toggle */}
+          <div className="flex items-center gap-1 rounded-xl bg-white/5 border border-white/10 p-1">
+            <button onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-lg transition ${viewMode === 'table' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}>
+              <List size={15} />
+            </button>
+            <button onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition ${viewMode === 'grid' ? 'bg-orange-500 text-white' : 'text-white/40 hover:text-white'}`}>
+              <LayoutGrid size={15} />
+            </button>
+          </div>
           <button onClick={fetchProjects}
             className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition flex items-center justify-center">
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={() => navigate('/admin/demo-projects/add')}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)' }}>
+            style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
             <Plus size={16} /> Add Demo Project
           </button>
         </div>
@@ -297,7 +302,7 @@ export default function AllDemoProjects() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, client, code…"
-            className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5 text-sm text-white outline-none transition focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 placeholder:text-white/30"
+            className="w-full rounded-xl border border-white/10 bg-[#111318] pl-10 pr-9 py-2.5 text-sm text-white outline-none transition focus:border-orange-500/50 placeholder:text-white/20"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
@@ -328,7 +333,7 @@ export default function AllDemoProjects() {
       {loading && (
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 size={30} className="animate-spin text-purple-500/70" />
+            <Loader2 size={30} className="animate-spin text-orange-500/70" />
             <p className="text-sm text-white/40">Loading demo projects…</p>
           </div>
         </div>
@@ -337,8 +342,8 @@ export default function AllDemoProjects() {
       {/* Empty State */}
       {!loading && projects.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(168,85,247,.1)', border: '1px solid rgba(168,85,247,.2)' }}>
-            <FlaskConical size={28} className="text-purple-400/60" />
+          <div className="w-16 h-16 rounded-2xl bg-orange-500/15 flex items-center justify-center">
+            <FlaskConical size={28} className="text-orange-400/60" />
           </div>
           <div className="text-center">
             <p className="text-white/50 font-medium">No demo projects found</p>
@@ -349,7 +354,7 @@ export default function AllDemoProjects() {
           {!search && !statusFilter && (
             <button onClick={() => navigate('/admin/demo-projects/add')}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:opacity-90 mt-2"
-              style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)' }}>
+              style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
               <Plus size={16} /> Add Demo Project
             </button>
           )}
@@ -372,10 +377,13 @@ export default function AllDemoProjects() {
                 {projects.map((p) => (
                   <tr key={p.uuid} className="hover:bg-white/[0.03] transition group">
                     <td className="px-4 py-3.5">
-                      <span className="text-xs font-mono text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">{p.project_code || '—'}</span>
+                      <span className="text-xs font-mono text-orange-400 bg-orange-500/10 px-2 py-1 rounded-lg">{p.project_code || '—'}</span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="font-semibold text-white leading-tight">{p.project_name}</div>
+                      <div
+                        className="font-semibold text-white leading-tight hover:text-orange-400 cursor-pointer transition-colors"
+                        onClick={() => setViewTarget(p)}
+                      >{p.project_name}</div>
                       {p.short_name && <div className="text-xs text-white/40 mt-0.5">{p.short_name}</div>}
                     </td>
                     <td className="px-4 py-3.5">
@@ -395,16 +403,16 @@ export default function AllDemoProjects() {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => setViewTarget(p)} title="View"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-purple-400 hover:bg-purple-500/10 transition">
-                          <Eye size={14} />
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center transition">
+                          <Eye size={13} />
                         </button>
                         <button onClick={() => navigate(`/admin/demo-projects/edit/${p.uuid}`)} title="Edit"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-blue-400 hover:bg-blue-500/10 transition">
-                          <Edit2 size={14} />
+                          className="w-7 h-7 rounded-lg bg-orange-500/10 hover:bg-orange-500/25 text-orange-400 border border-transparent hover:border-orange-500/30 flex items-center justify-center transition">
+                          <Edit2 size={13} />
                         </button>
                         <button onClick={() => setDeleteTarget(p)} title="Delete"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition">
-                          <Trash2 size={14} />
+                          className="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition">
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </td>
@@ -420,11 +428,14 @@ export default function AllDemoProjects() {
       {!loading && projects.length > 0 && viewMode === 'grid' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (
-            <div key={p.uuid} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:border-purple-500/30 transition group">
+            <div key={p.uuid} className="rounded-2xl border border-white/10 bg-[#111318] p-5 hover:border-orange-500/30 transition group">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-mono text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-lg">{p.project_code || '—'}</span>
-                  <h3 className="mt-2 text-sm font-bold text-white leading-tight truncate">{p.project_name}</h3>
+                  <span className="text-xs font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-lg">{p.project_code || '—'}</span>
+                  <h3
+                    className="mt-2 text-sm font-bold text-white leading-tight truncate hover:text-orange-400 cursor-pointer transition-colors"
+                    onClick={() => setViewTarget(p)}
+                  >{p.project_name}</h3>
                   {p.client_name && (
                     <p className="text-xs text-white/40 mt-0.5 flex items-center gap-1 truncate">
                       <Building2 size={10} /> {p.client_name}
@@ -448,10 +459,10 @@ export default function AllDemoProjects() {
                 <button onClick={() => setViewTarget(p)} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white/60 hover:text-white bg-white/5 hover:bg-white/10 transition flex items-center justify-center gap-1.5">
                   <Eye size={12} /> View
                 </button>
-                <button onClick={() => navigate(`/admin/demo-projects/edit/${p.uuid}`)} className="flex-1 py-2 rounded-xl text-xs font-semibold text-blue-400/80 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/15 transition flex items-center justify-center gap-1.5">
+                <button onClick={() => navigate(`/admin/demo-projects/edit/${p.uuid}`)} className="flex-1 py-2 rounded-xl text-xs font-semibold text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition flex items-center justify-center gap-1.5">
                   <Edit2 size={12} /> Edit
                 </button>
-                <button onClick={() => setDeleteTarget(p)} className="w-8 h-8 rounded-xl flex items-center justify-center text-red-400/60 hover:text-red-400 bg-red-500/10 hover:bg-red-500/15 transition">
+                <button onClick={() => setDeleteTarget(p)} className="w-8 h-8 rounded-xl flex items-center justify-center text-red-400/70 hover:text-red-400 bg-red-500/10 hover:bg-red-500/15 transition">
                   <Trash2 size={13} />
                 </button>
               </div>
@@ -472,12 +483,11 @@ export default function AllDemoProjects() {
               <ChevronLeft size={15} />
             </button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const p = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+              const pg = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
               return (
-                <button key={p} onClick={() => setPage(p)}
-                  className={`w-9 h-9 rounded-xl text-sm font-semibold transition ${p === page ? 'text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10'}`}
-                  style={p === page ? { background: 'linear-gradient(135deg,#a855f7,#7c3aed)' } : {}}>
-                  {p}
+                <button key={pg} onClick={() => setPage(pg)}
+                  className={`w-9 h-9 rounded-xl border text-sm font-semibold transition ${pg === page ? 'bg-orange-500 text-white border-orange-500' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white'}`}>
+                  {pg}
                 </button>
               );
             })}
@@ -490,17 +500,8 @@ export default function AllDemoProjects() {
       )}
 
       {/* Modals */}
-      <ConfirmDeleteModal
-        project={deleteTarget}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-        loading={deleteLoading}
-      />
-      <ProjectDetailModal
-        project={viewTarget}
-        onClose={() => setViewTarget(null)}
-        onEdit={handleEdit}
-      />
+      <ConfirmDeleteModal project={deleteTarget} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} loading={deleteLoading} />
+      <ProjectDetailModal project={viewTarget} onClose={() => setViewTarget(null)} onEdit={handleEdit} />
     </div>
   );
 }
