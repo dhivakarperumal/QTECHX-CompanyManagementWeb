@@ -103,10 +103,35 @@ const ProjectPage = () => {
         setProjects(Array.isArray(raw) ? raw : []);
 
       } else if (projectType === "live") {
-        // ── Live Projects: all projects from the projects table (public) ──
-        const res = await api.get("/projects/public/all?limit=500");
-        const raw = res.data?.data || [];
-        setProjects(Array.isArray(raw) ? raw : []);
+        // ── Projects: same combined fetch as All Projects but without demo projects ──
+        const [adminRes, completedRes] = await Promise.allSettled([
+          api.get("/projects/public/all?limit=500&current_status=Completed"),
+          api.get("/completed-projects/public/all?limit=500"),
+        ]);
+
+        let adminList = [];
+        if (adminRes.status === "fulfilled" && adminRes.value?.data) {
+          const raw = adminRes.value.data.data;
+          if (Array.isArray(raw)) {
+            adminList = raw.filter(
+              (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
+            );
+          }
+        }
+
+        let completedList = [];
+        if (completedRes.status === "fulfilled" && completedRes.value?.data) {
+          const raw = completedRes.value.data.data;
+          if (Array.isArray(raw)) completedList = raw;
+        }
+
+        const seen = new Set();
+        const combined = [];
+        [...completedList, ...adminList].forEach((p) => {
+          const key = p.uuid || p.id || p.project_name;
+          if (key && !seen.has(key)) { seen.add(key); combined.push(p); }
+        });
+        setProjects(combined);
 
       } else {
         // ── All Projects: completed regular + completed-projects + ALL demo projects ──
