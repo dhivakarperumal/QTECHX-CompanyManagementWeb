@@ -892,6 +892,26 @@ const AttendancePage = () => {
                           );
                         }
 
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (dateObj > today) {
+                          return (
+                            <tr key={dateStr} className="transition-colors hover:bg-white/5">
+                              <td className="whitespace-nowrap px-3 py-3 text-white/70">{displayDate}</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3 text-white/35">—</td>
+                              <td className="whitespace-nowrap px-3 py-3">
+                                <span className="rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-300">Upcoming</span>
+                              </td>
+                            </tr>
+                          );
+                        }
+
                         /* ── Working day with no record → Absent ── */
                         return (
                           <tr key={dateStr} className="transition-colors hover:bg-white/5">
