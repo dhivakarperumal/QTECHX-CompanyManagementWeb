@@ -394,38 +394,6 @@ const ProjectPage = () => {
               </div>
             </div>
 
-            {/* ── Project Type Tabs ── */}
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-2">
-              {[
-                { key: "completed", label: "All Projects",  Icon: FiGrid  },
-                { key: "live",      label: "Projects",       Icon: FiGlobe },
-                { key: "demo",      label: "Demo Projects",  Icon: FiBox   },
-              ].map(({ key, label, Icon }) => {
-                const isActive = projectType === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setProjectType(key)}
-                    className={`
-                      group relative flex items-center gap-2 rounded-full px-5 py-2.5
-                      text-xs font-bold uppercase tracking-wider transition-all duration-300
-                      ${
-                        isActive
-                          ? "border border-[#FF6A00] bg-[#FF6A00] text-white shadow-[0_0_20px_rgba(255,106,0,0.4)]"
-                          : "border border-white/10 bg-[#11171c] text-white/70 hover:border-[#FF6A00]/40 hover:text-white"
-                      }
-                    `}
-                  >
-                    <Icon size={13} />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Divider */}
-            <div className="h-px w-full bg-white/5 my-2" />
-
             {/* Category Filter Tabs */}
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
               {categories.map((cat) => {

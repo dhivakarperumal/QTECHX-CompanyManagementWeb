@@ -286,6 +286,7 @@ const Navbar = () => {
                         <NavLink
                           key={item.label}
                           to={item.path}
+                          onClick={() => setOpenMenu(null)}
                           className={({ isActive }) =>
                             `group/proj flex items-center justify-between rounded-xl px-3 py-3 text-sm
                             transition-all duration-300 hover:translate-x-1
