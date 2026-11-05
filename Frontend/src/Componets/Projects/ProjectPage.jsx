@@ -103,8 +103,8 @@ const ProjectPage = () => {
         setProjects(Array.isArray(raw) ? raw : []);
 
       } else if (projectType === "live") {
-        // ── Live Projects (public route, filter by Live status) ──
-        const res = await api.get("/projects/public/all?limit=500&current_status=Live");
+        // ── Live Projects: all projects from the projects table (public) ──
+        const res = await api.get("/projects/public/all?limit=500");
         const raw = res.data?.data || [];
         setProjects(Array.isArray(raw) ? raw : []);
 
@@ -362,7 +362,7 @@ const ProjectPage = () => {
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-2">
               {[
                 { key: "completed", label: "All Projects",  Icon: FiGrid  },
-                { key: "live",      label: "Live Projects",  Icon: FiGlobe },
+                { key: "live",      label: "Projects",       Icon: FiGlobe },
                 { key: "demo",      label: "Demo Projects",  Icon: FiBox   },
               ].map(({ key, label, Icon }) => {
                 const isActive = projectType === key;
