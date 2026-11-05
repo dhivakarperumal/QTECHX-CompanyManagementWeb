@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Head from "../Components/Head";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 import {
   FiSearch,
@@ -91,6 +91,17 @@ const ProjectPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProjectModal, setSelectedProjectModal] = useState(null);
   const [projectType, setProjectType] = useState("completed"); // 'completed' | 'live' | 'demo'
+
+  const location = useLocation();
+
+  // Auto-switch tab based on ?type= query param (e.g. from navbar links)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const type = params.get("type");
+    if (type === "demo") setProjectType("demo");
+    else if (type === "live") setProjectType("live");
+    else setProjectType("completed");
+  }, [location.search]);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);

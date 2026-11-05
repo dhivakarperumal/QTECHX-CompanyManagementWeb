@@ -110,6 +110,9 @@ const Navbar = () => {
   const isServicesActive =
     location.pathname === "/services" || location.pathname.startsWith("/services/");
 
+  const isProjectsActive =
+    location.pathname === "/projects" || location.pathname.startsWith("/projects/");
+
   const isWhoWeAreActive =
     whoWeAreLinks.some(
       (link) => location.pathname === link.path || location.pathname.startsWith(link.path + "/")
@@ -234,7 +237,78 @@ const Navbar = () => {
                 </div>
               </li>
 
-              <li><NavLink to="/projects" className={desktopLinkClass}>Projects</NavLink></li>
+              {/* ── Projects Dropdown ── */}
+              <li className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu("projects")}
+                  className={`group flex items-center gap-1 text-base font-semibold transition-all duration-300 ${
+                    isProjectsActive ? "text-primary" : "text-white hover:text-primary"
+                  }`}
+                >
+                  Projects
+                  <FiChevronDown
+                    className={`text-xs transition-all duration-300 ${
+                      openMenu === "projects"
+                        ? "rotate-180 text-primary"
+                        : isProjectsActive
+                          ? "text-primary"
+                          : "rotate-0 text-white/70 group-hover:text-primary"
+                    }`}
+                  />
+                </button>
+
+                <div
+                  className={`absolute left-1/2 top-full z-50 mt-4 w-56 -translate-x-1/2
+                    transition-all duration-300 ease-out
+                    ${
+                      openMenu === "projects"
+                        ? "visible translate-y-0 scale-100 opacity-100"
+                        : "invisible -translate-y-3 scale-95 opacity-0 pointer-events-none"
+                    }`}
+                >
+                  <div className="relative overflow-hidden rounded-2xl border border-[#FF6A00]/20 bg-[#0d0d0d]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+                    {/* Glow */}
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#FF6A00]/10 blur-3xl" />
+                    {/* Orange top line */}
+                    <div className="absolute left-6 right-6 top-0 h-px bg-gradient-to-r from-transparent via-[#FF6A00] to-transparent" />
+
+                    <div className="mb-2 px-2 py-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FF6A00]">Our Work</p>
+                      <h3 className="mt-1 text-sm font-bold text-white">Explore Projects</h3>
+                    </div>
+
+                    <div className="space-y-1">
+                      {[
+                        { label: "Projects",      path: "/projects",            desc: "All completed work" },
+                        { label: "Demo Projects", path: "/projects?type=demo",  desc: "Live demo builds" },
+                      ].map((item, index) => (
+                        <NavLink
+                          key={item.label}
+                          to={item.path}
+                          className={({ isActive }) =>
+                            `group/proj flex items-center justify-between rounded-xl px-3 py-3 text-sm
+                            transition-all duration-300 hover:translate-x-1
+                            ${
+                              isActive
+                                ? "bg-[#FF6A00]/10 text-[#FF6A00]"
+                                : "text-white/70 hover:bg-white/[0.04] hover:text-white"
+                            }`
+                          }
+                          style={{ transitionDelay: openMenu === "projects" ? `${index * 60}ms` : "0ms" }}
+                        >
+                          <div>
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-[10px] text-white/40 mt-0.5">{item.desc}</p>
+                          </div>
+                          <FiArrowRight className="text-sm text-[#FF6A00] opacity-0 transition-all duration-300 group-hover/proj:translate-x-1 group-hover/proj:opacity-100" />
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </li>
+
               <li><NavLink to="/prices" className={desktopLinkClass}>Prices</NavLink></li>
 
               <li className="relative">
@@ -513,9 +587,45 @@ const Navbar = () => {
               </div>
             )}
 
-            <NavLink to="/projects" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
+            {/* ── Projects Mobile Accordion ── */}
+            <button
+              type="button"
+              onClick={() => setMobileSubMenu((prev) => (prev === "projects" ? null : "projects"))}
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-base font-medium transition ${
+                isProjectsActive
+                  ? "border-primary/40 bg-primary/10 text-primary font-semibold"
+                  : "border-white/10 bg-white/3 text-white/80 hover:bg-white/5 hover:text-white"
+              }`}
+            >
               <span>Projects</span>
-            </NavLink>
+              <FiChevronDown
+                className={`text-sm transition ${
+                  mobileSubMenu === "projects" ? "rotate-180" : ""
+                } ${isProjectsActive ? "text-primary" : ""}`}
+              />
+            </button>
+
+            {mobileSubMenu === "projects" && (
+              <div className="space-y-1 rounded-xl border border-white/10 bg-white/3 p-2">
+                {[
+                  { label: "Projects",      path: "/projects" },
+                  { label: "Demo Projects", path: "/projects?type=demo" },
+                ].map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.path}
+                    onClick={() => { setMobileMenu(false); setMobileSubMenu(null); }}
+                    className={({ isActive }) =>
+                      `block rounded-lg px-3 py-2.5 text-sm ${
+                        isActive ? "bg-primary/10 text-primary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
 
             <NavLink to="/prices" onClick={() => setMobileMenu(false)} className={mobileLinkClass}>
               <span>Prices</span>
