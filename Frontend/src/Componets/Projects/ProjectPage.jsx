@@ -12,6 +12,9 @@ import {
   FiArrowRight,
   FiCheckCircle,
   FiZap,
+  FiGrid,
+  FiGlobe,
+  FiBox,
 } from "react-icons/fi";
 import ProjectCard from "../Components/ProjectCard";
 import PageContainer from "../CommonComponents/PageContainer";
@@ -87,63 +90,71 @@ const ProjectPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProjectModal, setSelectedProjectModal] = useState(null);
+  const [projectType, setProjectType] = useState("completed"); // 'completed' | 'live' | 'demo'
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
-        api.get("/projects/public/all?limit=500&current_status=Completed"),
-        api.get("/completed-projects/public/all?limit=500")
-      ]);
+      if (projectType === "demo") {
+        // ── Demo Projects ──
+        const res = await api.get("/demo-projects?limit=500");
+        const raw = res.data?.data || [];
+        setProjects(Array.isArray(raw) ? raw : []);
+      } else if (projectType === "live") {
+        // ── Live Projects ──
+        const res = await api.get("/projects/public/all?limit=500&current_status=Live");
+        const raw = res.data?.data || [];
+        setProjects(Array.isArray(raw) ? raw.filter(p => (p.current_status || "").toLowerCase() === "live") : []);
+      } else {
+        // ── Completed Projects (original logic preserved) ──
+        const [adminProjectsRes, completedProjectsRes] = await Promise.allSettled([
+          api.get("/projects/public/all?limit=500&current_status=Completed"),
+          api.get("/completed-projects/public/all?limit=500")
+        ]);
 
-      let adminList = [];
-      if (adminProjectsRes.status === "fulfilled" && adminProjectsRes.value?.data) {
-        const raw = adminProjectsRes.value.data.data;
-        if (Array.isArray(raw)) {
-          // Strictly only include projects where status is Completed
-          adminList = raw.filter(
-            (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
-          );
+        let adminList = [];
+        if (adminProjectsRes.status === "fulfilled" && adminProjectsRes.value?.data) {
+          const raw = adminProjectsRes.value.data.data;
+          if (Array.isArray(raw)) {
+            adminList = raw.filter(
+              (p) => (p.current_status || p.status || "").toString().toLowerCase() === "completed"
+            );
+          }
         }
+
+        let completedList = [];
+        if (completedProjectsRes.status === "fulfilled" && completedProjectsRes.value?.data) {
+          const raw = completedProjectsRes.value.data.data;
+          if (Array.isArray(raw)) completedList = raw;
+        }
+
+        const seen = new Set();
+        const combined = [];
+        [...completedList, ...adminList].forEach((p) => {
+          const key = p.uuid || p.id || p.project_name;
+          if (key && !seen.has(key)) { seen.add(key); combined.push(p); }
+        });
+        setProjects(combined);
       }
-
-      let completedList = [];
-      if (completedProjectsRes.status === "fulfilled" && completedProjectsRes.value?.data) {
-        const raw = completedProjectsRes.value.data.data;
-        if (Array.isArray(raw)) {
-          completedList = raw;
-        }
-      }
-
-      // Combine both lists (avoiding duplicates by uuid/id)
-      const seen = new Set();
-      const combined = [];
-      [...completedList, ...adminList].forEach((p) => {
-        const key = p.uuid || p.id || p.project_name;
-        if (key && !seen.has(key)) {
-          seen.add(key);
-          combined.push(p);
-        }
-      });
-
-      setProjects(combined);
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          err.message ||
-          "Failed to load projects"
-      );
+      setError(err?.response?.data?.message || err.message || "Failed to load projects");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectType]);
 
   useEffect(() => {
     fetchProjects();
     AOS.init({ duration: 900, easing: "ease-out-cubic", once: true, offset: 60 });
     AOS.refresh();
   }, [fetchProjects]);
+
+  // Reset category filter when switching project type
+  useEffect(() => {
+    setSelectedCategory("All");
+    setSearchQuery("");
+  }, [projectType]);
 
   // Transform API response
   const transformedProjects = useMemo(() => {
@@ -336,6 +347,38 @@ const ProjectPage = () => {
                 )}
               </div>
             </div>
+
+            {/* ── Project Type Tabs ── */}
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-2">
+              {[
+                { key: "completed", label: "All Projects",  Icon: FiGrid  },
+                { key: "live",      label: "Live Projects",  Icon: FiGlobe },
+                { key: "demo",      label: "Demo Projects",  Icon: FiBox   },
+              ].map(({ key, label, Icon }) => {
+                const isActive = projectType === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setProjectType(key)}
+                    className={`
+                      group relative flex items-center gap-2 rounded-full px-5 py-2.5
+                      text-xs font-bold uppercase tracking-wider transition-all duration-300
+                      ${
+                        isActive
+                          ? "border border-[#FF6A00] bg-[#FF6A00] text-white shadow-[0_0_20px_rgba(255,106,0,0.4)]"
+                          : "border border-white/10 bg-[#11171c] text-white/70 hover:border-[#FF6A00]/40 hover:text-white"
+                      }
+                    `}
+                  >
+                    <Icon size={13} />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Divider */}
+            <div className="h-px w-full bg-white/5 my-2" />
 
             {/* Category Filter Tabs */}
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
