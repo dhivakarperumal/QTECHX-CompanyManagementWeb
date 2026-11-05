@@ -683,13 +683,15 @@ export default function TasksPage({ initialPageKey = null }) {
   };
 
   const handleDeleteTask = async (taskUuid) => {
-    if (!taskUuid) return;
+    if (!taskUuid || !window.confirm('Are you sure you want to delete this task?')) return false;
     try {
       await api.delete(`/tasks/${taskUuid}`);
       setTaskActionMessage('Task deleted successfully.');
       fetchTasks(selectedProject || '');
+      return true;
     } catch (err) {
       setTaskActionMessage(err?.response?.data?.message || 'Failed to delete task.');
+      return false;
     }
   };
 
@@ -1283,7 +1285,9 @@ export default function TasksPage({ initialPageKey = null }) {
               className="rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition">
               Edit Task
             </button>
-            <button type="button" onClick={() => { handleDeleteTask(selectedTaskDetails?.uuid); setIsTaskModalOpen(false); }}
+            <button type="button" onClick={async () => {
+              if (await handleDeleteTask(selectedTaskDetails?.uuid)) setIsTaskModalOpen(false);
+            }}
               className="rounded-2xl border border-rose-500 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-200 hover:bg-rose-500/20 transition">
               Delete Task
             </button>
