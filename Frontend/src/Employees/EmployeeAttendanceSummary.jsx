@@ -133,6 +133,18 @@ const getLocalDateStr = (d = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
+const normalizeCalendarDate = (value) => {
+  if (!value) return '';
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
+};
+
+const isDateWithinRange = (date, start, end) => {
+  const startDate = normalizeCalendarDate(start);
+  const endDate = normalizeCalendarDate(end);
+  return Boolean(startDate && endDate && startDate <= date && endDate >= date);
+};
+
 const getLocalTimeStr = (d = new Date()) => {
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
@@ -322,8 +334,7 @@ const EmployeeAttendanceSummary = () => {
 
       const approved = leaveRows.some((leave) =>
         String(leave.status || '').toLowerCase() === 'approved' &&
-        String(leave.from_date || '').slice(0, 10) <= todayDateStr &&
-        String(leave.to_date || '').slice(0, 10) >= todayDateStr
+        isDateWithinRange(todayDateStr, leave.from_date, leave.to_date)
       );
       setApprovedLeaveToday(approved);
 
@@ -658,8 +669,7 @@ const EmployeeAttendanceSummary = () => {
     const record = attendanceByDate.get(date) || null;
     const leave = !record ? employeeLeaves.find((item) =>
       String(item.status || '').toLowerCase() === 'approved' &&
-      String(item.from_date || '').slice(0, 10) <= date &&
-      String(item.to_date || '').slice(0, 10) >= date
+      isDateWithinRange(date, item.from_date, item.to_date)
     ) : null;
     const holiday = calendarHolidays.find((event) => {
       const startDate = dayjs(event.startDate);
