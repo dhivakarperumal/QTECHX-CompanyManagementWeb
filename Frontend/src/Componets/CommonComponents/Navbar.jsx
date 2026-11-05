@@ -288,7 +288,7 @@ const Navbar = () => {
                             ${
                               isActive
                                 ? "bg-[#FF6A00]/10 text-[#FF6A00]"
-                                : "text-white/70 hover:bg-white/[0.04] hover:text-white"
+                                : "text-white hover:bg-white/[0.04]"
                             }`
                           }
                           style={{ transitionDelay: openMenu === "projects" ? `${index * 60}ms` : "0ms" }}
