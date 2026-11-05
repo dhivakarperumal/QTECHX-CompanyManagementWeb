@@ -1356,11 +1356,11 @@ export default function TasksPage({ initialPageKey = null }) {
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-900 overflow-hidden">
                   <div 
-                    className={`h-full rounded-full transition-all duration-700 ${getProgressColor(selectedTaskDetails.status, getEffectiveProgress(selectedTaskDetails))}`}
+                    className={`relative h-full rounded-full transition-all duration-700 ${getProgressColor(selectedTaskDetails.status, getEffectiveProgress(selectedTaskDetails))}`}
                     style={{ width: `${getEffectiveProgress(selectedTaskDetails)}%` }}
                   >
                     {selectedTaskDetails.status !== 'Completed' && selectedTaskDetails.status !== 'Cancelled' && (
-                      <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
+                      <div className="pointer-events-none absolute top-0 right-0 bottom-0 left-0 bg-white/20 animate-pulse"></div>
                     )}
                   </div>
                 </div>
