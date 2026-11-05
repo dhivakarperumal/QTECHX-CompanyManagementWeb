@@ -447,6 +447,8 @@ export default function EmployeeSalary() {
     return history.filter((record) => record.employee_id === selectedSalaryEmployee.employee_id);
   }, [history, selectedSalaryEmployee]);
 
+  const selectedFormEmployee = employees.find((employee) => employee.employee_id === formData.employee_id);
+
   return (
     <div className="space-y-6 text-white pb-10">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -558,6 +560,21 @@ export default function EmployeeSalary() {
               </label>
             </div>
             {detailsLoading && <p className="mt-4 text-xs text-orange-400 animate-pulse">Loading employee salary details...</p>}
+            {selectedFormEmployee && formData.month && formData.year && (
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.06] px-4 py-3">
+                <p className="text-xs text-white/55">
+                  View salary records for {new Date(0, Number(formData.month) - 1).toLocaleString('default', { month: 'long' })} {formData.year}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSalaryEmployee(selectedFormEmployee)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:border-emerald-400/40 hover:bg-emerald-500/20"
+                >
+                  <History size={14} />
+                  View History
+                </button>
+              </div>
+            )}
           </section>
 
           <section className={sectionClass}>
