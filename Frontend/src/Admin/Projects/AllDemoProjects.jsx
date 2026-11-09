@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Select from 'react-select';
 import {
   FolderKanban, Search, RefreshCw, Plus,
   LayoutGrid, List, CheckCircle, AlertCircle, PlayCircle,
@@ -10,55 +9,11 @@ import {
 import api from '../../api';
 import ModalPortal from '../../Componets/CommonComponents/ModalPortal';
 
-const customSelectStyles = {
-  control: (provided, state) => ({
-    ...provided,
-    backgroundColor: '#1a1d24',
-    border: `1px solid ${state.isFocused ? '#f97316' : 'rgba(255,255,255,0.1)'}`,
-    boxShadow: 'none',
-    outline: 'none',
-    minHeight: '42px',
-    height: '42px',
-    borderRadius: '12px',
-    '&:hover': { border: '1px solid #f97316' },
-  }),
-  valueContainer: (p) => ({ ...p, padding: '0 12px', fontSize: '13px' }),
-  singleValue: (p) => ({ ...p, color: '#fff', fontSize: '13px' }),
-  placeholder: (p) => ({ ...p, color: 'rgba(255,255,255,.35)', fontSize: '13px' }),
-  input: (p) => ({ ...p, color: '#fff', fontSize: '13px', margin: 0, padding: 0 }),
-  menu: (p) => ({
-    ...p, background: '#1a1d24', border: '1px solid rgba(255,255,255,.1)',
-    borderRadius: '12px', overflow: 'hidden', zIndex: 9999,
-  }),
-  menuList: (p) => ({ ...p, padding: 0, fontSize: '13px' }),
-  option: (p, s) => ({
-    ...p, fontSize: '13px', padding: '8px 14px',
-    backgroundColor: s.isSelected ? '#f97316' : s.isFocused ? 'rgba(249,115,22,.15)' : '#1a1d24',
-    color: '#fff', cursor: 'pointer',
-    ':active': { backgroundColor: '#ea580c' },
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-  dropdownIndicator: (p) => ({ ...p, color: '#888', padding: '6px' }),
-};
-
-const STATUS_OPTIONS = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
-
-const STATUS_CONFIG = {
-  'Planning':    { color: '#6366f1', bg: 'rgba(99,102,241,.15)' },
-  'In Progress': { color: '#f59e0b', bg: 'rgba(245,158,11,.15)' },
-  'Testing':     { color: '#06b6d4', bg: 'rgba(6,182,212,.15)' },
-  'On Hold':     { color: '#f97316', bg: 'rgba(249,115,22,.15)' },
-  'Live':        { color: '#10b981', bg: 'rgba(16,185,129,.15)' },
-  'Completed':   { color: '#10b981', bg: 'rgba(16,185,129,.15)' },
-  'Cancelled':   { color: '#6b7280', bg: 'rgba(107,114,128,.15)' },
-};
-
-function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG['Planning'];
+function StatusBadge() {
   return (
-    <span style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}33` }}
+    <span style={{ background: 'rgba(16,185,129,.15)', color: '#10b981', border: '1px solid #10b98133' }}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-      {status}
+      Completed
     </span>
   );
 }
@@ -150,7 +105,7 @@ function ProjectDetailModal({ project, onClose, onEdit }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <StatusBadge status={project.current_status} />
+              <StatusBadge />
               <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition">
                 <X size={16} />
               </button>
@@ -207,7 +162,6 @@ export default function AllDemoProjects() {
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState('');
   const [search, setSearch]               = useState('');
-  const [statusFilter, setStatusFilter]   = useState('');
   const [viewMode, setViewMode]           = useState('table');
   const [page, setPage]                   = useState(1);
   const [pagination, setPagination]       = useState({ total: 0, pages: 1 });
@@ -221,7 +175,6 @@ export default function AllDemoProjects() {
     try {
       const params = new URLSearchParams({ page, limit: LIMIT });
       if (search.trim()) params.append('search', search.trim());
-      if (statusFilter)  params.append('current_status', statusFilter);
       const { data } = await api.get(`/demo-projects?${params}`);
       if (!data.success) throw new Error(data.message || 'Failed');
       setProjects(data.data || []);
@@ -229,10 +182,10 @@ export default function AllDemoProjects() {
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load demo projects');
     } finally { setLoading(false); }
-  }, [page, search, statusFilter]);
+  }, [page, search]);
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
-  useEffect(() => { setPage(1); }, [search, statusFilter]);
+  useEffect(() => { setPage(1); }, [search]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -295,7 +248,7 @@ export default function AllDemoProjects() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
           <input
@@ -309,15 +262,6 @@ export default function AllDemoProjects() {
               <X size={14} />
             </button>
           )}
-        </div>
-        <div className="w-full sm:w-56">
-          <Select
-            options={[{ value: '', label: 'All Statuses' }, ...STATUS_OPTIONS.map(s => ({ value: s, label: s }))]}
-            value={statusFilter ? { value: statusFilter, label: statusFilter } : { value: '', label: 'All Statuses' }}
-            onChange={(opt) => setStatusFilter(opt?.value || '')}
-            styles={customSelectStyles}
-            isSearchable={false}
-          />
         </div>
       </div>
 
@@ -348,10 +292,10 @@ export default function AllDemoProjects() {
           <div className="text-center">
             <p className="text-white/50 font-medium">No demo projects found</p>
             <p className="text-sm text-white/30 mt-1">
-              {search || statusFilter ? 'Try adjusting your filters' : 'Create your first demo project to get started'}
+              {search ? 'Try adjusting your search' : 'Create your first demo project to get started'}
             </p>
           </div>
-          {!search && !statusFilter && (
+          {!search && (
             <button onClick={() => navigate('/admin/demo-projects/add')}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition hover:opacity-90 mt-2"
               style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}>
@@ -390,7 +334,7 @@ export default function AllDemoProjects() {
                       <div className="text-white/70">{p.client_name || '—'}</div>
                       {p.company_name && <div className="text-xs text-white/40">{p.company_name}</div>}
                     </td>
-                    <td className="px-4 py-3.5"><StatusBadge status={p.current_status} /></td>
+                    <td className="px-4 py-3.5"><StatusBadge /></td>
                     <td className="px-4 py-3.5 min-w-[120px]"><ProgressBar value={p.overall_progress} /></td>
                     <td className="px-4 py-3.5">
                       <span className="text-white/60 text-xs">{p.project_manager || '—'}</span>
@@ -442,7 +386,7 @@ export default function AllDemoProjects() {
                     </p>
                   )}
                 </div>
-                <StatusBadge status={p.current_status} />
+                <StatusBadge />
               </div>
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1">

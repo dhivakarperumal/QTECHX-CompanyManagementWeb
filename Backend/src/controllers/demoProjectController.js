@@ -6,8 +6,6 @@ const {
   updateDemoProject, deleteDemoProject, generateDemoProjectCode,
 } = require('../models/demoProjectModel');
 
-const DEMO_PROJECT_STATUSES = ['Planning', 'In Progress', 'Testing', 'On Hold', 'Live', 'Completed', 'Cancelled'];
-
 function ok(res, data, code = 200) {
   return res.status(code).json({ success: true, ...data });
 }
@@ -59,12 +57,9 @@ function getUploadedFiles(req) {
 /** POST /api/demo-projects */
 async function createDemoProjectHandler(req, res) {
   try {
-    const { project_name, current_status } = req.body;
+    const { project_name } = req.body;
     const trimmedProjectName = project_name?.trim();
     if (!trimmedProjectName) return fail(res, 'Project name is required', 400);
-    if (current_status && !DEMO_PROJECT_STATUSES.includes(current_status)) {
-      return fail(res, `Invalid status. Allowed: ${DEMO_PROJECT_STATUSES.join(', ')}`, 400);
-    }
     const uploadedFiles = getUploadedFiles(req);
     const actor = req.user?.user_id || 'SYSTEM';
     const hasAgreementFile = Boolean(uploadedFiles.agreement_doc);
@@ -163,9 +158,6 @@ async function updateDemoProjectHandler(req, res) {
   try {
     const existing = await findDemoProjectByUUID(req.params.id);
     if (!existing) return fail(res, 'Demo project not found', 404);
-    if (req.body.current_status && !DEMO_PROJECT_STATUSES.includes(req.body.current_status)) {
-      return fail(res, `Invalid status. Allowed: ${DEMO_PROJECT_STATUSES.join(', ')}`, 400);
-    }
     const uploadedFiles = getUploadedFiles(req);
     const allowed = [
       // legacy fields (kept for backwards compatibility)
@@ -187,6 +179,7 @@ async function updateDemoProjectHandler(req, res) {
     ];
     const updates = {};
     allowed.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+    updates.current_status = 'Completed';
 
     // Flatten uploaded files into updates
     Object.entries(uploadedFiles).forEach(([field, value]) => {

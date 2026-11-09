@@ -32,20 +32,9 @@ const CATEGORY_OPTIONS = [
   'Cybersecurity',
 ];
 
-const STATUS_OPTIONS = [
-  'Planning',
-  'In Progress',
-  'Testing',
-  'On Hold',
-  'Live',
-  'Completed',
-  'Cancelled',
-];
-
 const BLANK = {
   project_name: '',
   category: 'Web Development',
-  current_status: 'Planning',
   url: '',
   description: '',
   client_id: '',
@@ -58,7 +47,6 @@ const BLANK = {
 const toForm = (p) => ({
   project_name: p.project_name || '',
   category: p.category || 'Web Development',
-  current_status: p.current_status || 'Planning',
   url: p.url || '',
   description: p.description || '',
   client_id: p.client_id ? String(p.client_id) : '',
@@ -248,7 +236,7 @@ export default function AddDemoProject() {
       const form = new FormData();
       form.append('project_name', formData.project_name.trim());
       form.append('category', formData.category || 'Web Development');
-      form.append('current_status', formData.current_status || 'Planning');
+      form.append('current_status', 'Completed');
       form.append('description', formData.description || '');
       form.append('url', formData.url || '');
       form.append('technologies', JSON.stringify(technologiesList));
@@ -389,30 +377,19 @@ export default function AddDemoProject() {
               </select>
             </div>
 
-            {/* Current Status */}
+            {/* Demo projects are always completed. */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-white/70">
                 Current Status
               </label>
-              <select
-                name="current_status"
-                value={formData.current_status}
-                onChange={handleChange}
-                className={inputCls}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s} className="bg-[#161822] text-white">
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <div className={`${inputCls} text-emerald-400`}>Completed</div>
             </div>
           </div>
 
-          {/* Live URL */}
+          {/* Demo Project URL */}
           <div>
             <label className="mb-1.5 block text-xs font-semibold text-white/70">
-              Live Project URL / Website
+              Demo Project URL
             </label>
             <div className="relative">
               <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />

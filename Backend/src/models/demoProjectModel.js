@@ -23,7 +23,7 @@ async function createDemoProjectsTableIfNotExists() {
       nda_signed ENUM('Yes','No') DEFAULT 'No',
       agreement_uploaded ENUM('Yes','No') DEFAULT 'No',
       total_project_cost DECIMAL(15,2),
-      current_status ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') DEFAULT 'Planning',
+      current_status ENUM('Planning','In Progress','Testing','On Hold','Live','Completed','Cancelled') DEFAULT 'Completed',
       overall_progress INT DEFAULT 0,
       proposal_date DATE,
       approval_date DATE,
@@ -84,6 +84,8 @@ async function createDemoProjectsTableIfNotExists() {
     try { await db.execute(sql); } catch (_) { /* column already exists — safe to ignore */ }
   }
 
+  await db.execute("UPDATE demo_projects SET current_status = 'Completed' WHERE current_status IS NULL OR current_status <> 'Completed'");
+
   console.log('[demoProjectModel] demo_projects table ready.');
 }
 
@@ -136,7 +138,7 @@ async function createDemoProject(data) {
     nda_signed: data.nda_signed || 'No',
     agreement_uploaded: data.agreement_uploaded || 'No',
     total_project_cost: data.total_project_cost || null,
-    current_status: data.current_status || 'Planning',
+    current_status: 'Completed',
     overall_progress: data.overall_progress || 0,
     proposal_date: data.proposal_date || null,
     approval_date: data.approval_date || null,
