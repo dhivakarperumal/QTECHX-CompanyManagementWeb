@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  FlaskConical, FileText, Globe, Building2, Image as ImageIcon,
-  Tag, CheckCircle, AlertCircle, X, Loader2, Save, Search,
-  ChevronDown, Upload, Check,
+  FlaskConical, FileText, Globe, Building2,
+  Image as ImageIcon, Tag, CheckCircle, AlertCircle,
+  X, Loader2, Save, Search, ChevronDown, Upload, Check,
+  ArrowLeft,
 } from 'lucide-react';
 import api, { API_URL } from '../../api';
 
@@ -67,18 +68,21 @@ const toForm = (p) => ({
   completion_date: p.completion_date ? p.completion_date.slice(0, 10) : '',
 });
 
-const fieldClass =
+// ── Shared style tokens ──────────────────────────────────────────────────────
+const inputCls =
   'w-full rounded-xl border border-white/10 bg-[#161822] px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30';
 
-const sectionClass = 'rounded-2xl border border-white/10 bg-[#111318] p-5 sm:p-6';
-
-function SectionHeader({ icon: Icon, title, iconBg, iconColor }) {
+// ── SectionCard: exact copy of completed-projects modal card, orange theme ───
+function SectionCard({ icon: Icon, title, children }) {
   return (
-    <div className="mb-5 flex items-center gap-2">
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${iconBg}`}>
-        <Icon size={15} className={iconColor} />
+    <div className="rounded-2xl border border-white/10 bg-[#12141c]/90 p-5 sm:p-6 space-y-4">
+      <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+        <div className="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center shrink-0">
+          <Icon size={16} className="text-orange-400" />
+        </div>
+        <h2 className="text-sm font-bold text-white tracking-wide">{title}</h2>
       </div>
-      <h2 className="text-base font-bold text-white">{title}</h2>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }
@@ -108,7 +112,7 @@ export default function AddDemoProject() {
   // Technologies input (comma-separated string)
   const [techInput, setTechInput] = useState('');
 
-  // ── Load project for edit ──────────────────────────────────────────────
+  // ── Load project for edit ────────────────────────────────────────────────
   useEffect(() => {
     setSuccess('');
     setError('');
@@ -136,7 +140,7 @@ export default function AddDemoProject() {
     }
   }, [id, isEdit]);
 
-  // ── Load clients ───────────────────────────────────────────────────────
+  // ── Load clients ─────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       setClientsLoading(true);
@@ -152,7 +156,7 @@ export default function AddDemoProject() {
     })();
   }, []);
 
-  // ── Close client dropdown on outside click ─────────────────────────────
+  // ── Close client dropdown on outside click ───────────────────────────────
   useEffect(() => {
     function handleOutside(e) {
       if (clientDropdownRef.current && !clientDropdownRef.current.contains(e.target)) {
@@ -163,7 +167,7 @@ export default function AddDemoProject() {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  // ── Cleanup object URL on unmount ──────────────────────────────────────
+  // ── Cleanup object URL on unmount ────────────────────────────────────────
   useEffect(() => {
     return () => {
       if (selectedImageFile && imagePreviewUrl.startsWith('blob:')) {
@@ -172,7 +176,7 @@ export default function AddDemoProject() {
     };
   }, []);
 
-  // ── Filtered clients for dropdown ──────────────────────────────────────
+  // ── Filtered clients ─────────────────────────────────────────────────────
   const filteredClients = (() => {
     const q = clientSearchQuery.trim().toLowerCase();
     if (!q) return clients;
@@ -184,7 +188,7 @@ export default function AddDemoProject() {
     );
   })();
 
-  // ── Handlers ───────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -237,7 +241,6 @@ export default function AddDemoProject() {
     setError('');
     setSuccess('');
     try {
-      // Build technologies list from comma-separated input
       const technologiesList = techInput.trim()
         ? techInput.split(',').map((t) => t.trim()).filter(Boolean)
         : formData.technologies;
@@ -277,7 +280,7 @@ export default function AddDemoProject() {
     }
   };
 
-  // ── Loading state ──────────────────────────────────────────────────────
+  // ── Loading state ────────────────────────────────────────────────────────
   if (fetchLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -290,36 +293,53 @@ export default function AddDemoProject() {
   }
 
   return (
-    <div className="space-y-6 pb-6 text-white min-h-screen">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500/15"
-            style={{ border: '1px solid rgba(249,115,22,.25)' }}
+    <div className="space-y-6 pb-12 text-white min-h-screen">
+
+      {/* ── Page Header ───────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <button
+            type="button"
+            onClick={() => navigate('/admin/demo-projects')}
+            className="w-11 h-11 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition shadow-inner"
+            title="Back to Demo Projects"
           >
-            <FlaskConical size={18} className="text-orange-400" />
+            <ArrowLeft size={18} />
+          </button>
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}
+          >
+            <FlaskConical size={22} className="text-orange-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              {isEdit ? (formData.project_name || 'Edit Demo Project') : 'Create a Demo Project'}
-            </h1>
-            <p className="text-sm text-white/40 mt-1">
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold text-white tracking-tight">
+                {isEdit ? (formData.project_name || 'Edit Demo Project') : 'Add Demo Project'}
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                Demo
+              </span>
+            </div>
+            <p className="text-white/40 text-xs mt-0.5">
               {isEdit
                 ? 'Update demo project details and save changes.'
                 : 'Fill in demo project details, client info, and assets.'}
             </p>
           </div>
         </div>
+
         <button
+          type="button"
           onClick={() => navigate('/admin/demo-projects')}
-          className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition self-start"
+          className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition self-start"
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* ── Alerts ──────────────────────────────────────────────────────── */}
+      {/* ── Alerts ────────────────────────────────────────────────────────── */}
       {success && (
         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm px-5 py-3.5 rounded-2xl">
           <CheckCircle size={16} /> {success}
@@ -331,103 +351,104 @@ export default function AddDemoProject() {
         </div>
       )}
 
-      <form id="demo-project-form" onSubmit={handleSave} className="space-y-6 pb-6">
+      {/* ── Form ──────────────────────────────────────────────────────────── */}
+      <form id="demo-project-form" onSubmit={handleSave} className="space-y-5">
 
-        {/* ── 1. Project Overview ──────────────────────────────────────── */}
-        <section className={sectionClass}>
-          <SectionHeader icon={FileText} title="Project Overview" iconBg="bg-orange-500/15" iconColor="text-orange-400" />
-          <div className="space-y-4">
-            {/* Project Name */}
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">
-                Project Name <span className="text-rose-400">*</span>
-              </span>
-              <input
-                className={fieldClass}
-                type="text"
-                name="project_name"
-                value={formData.project_name}
-                onChange={handleChange}
-                placeholder="e.g. Modern E-Commerce Platform"
-                required
-              />
+        {/* ── 1. Project Overview ───────────────────────────────────────── */}
+        <SectionCard icon={FileText} title="Project Overview">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/70">
+              Project Name <span className="text-rose-400">*</span>
             </label>
+            <input
+              className={inputCls}
+              type="text"
+              name="project_name"
+              value={formData.project_name}
+              onChange={handleChange}
+              placeholder="e.g. Modern E-Commerce Platform"
+              required
+            />
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Category */}
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Category</span>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className={fieldClass}
-                >
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <option key={cat} value={cat} className="bg-[#161822] text-white">
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {/* Status */}
-              <label className="text-sm text-white/60">
-                <span className="mb-1.5 block font-medium">Current Status</span>
-                <select
-                  name="current_status"
-                  value={formData.current_status}
-                  onChange={handleChange}
-                  className={fieldClass}
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s} className="bg-[#161822] text-white">
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Category */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-white/70">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className={inputCls}
+              >
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <option key={cat} value={cat} className="bg-[#161822] text-white">
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Live URL */}
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Live Project URL / Website</span>
-              <div className="relative">
-                <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
-                <input
-                  className={`${fieldClass} pl-10`}
-                  type="url"
-                  name="url"
-                  value={formData.url}
-                  onChange={handleChange}
-                  placeholder="https://example.com"
-                />
-              </div>
-            </label>
-
-            {/* Description */}
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Project Description</span>
-              <textarea
-                className={`${fieldClass} min-h-20 resize-y`}
-                name="description"
-                value={formData.description}
+            {/* Current Status */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-white/70">
+                Current Status
+              </label>
+              <select
+                name="current_status"
+                value={formData.current_status}
                 onChange={handleChange}
-                placeholder="Provide an overview of the demo project, features, and goals…"
-                rows={3}
-              />
-            </label>
+                className={inputCls}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s} className="bg-[#161822] text-white">
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </section>
 
-        {/* ── 2. Client Details ────────────────────────────────────────── */}
-        <section className={sectionClass}>
-          <SectionHeader icon={Building2} title="Client Details" iconBg="bg-blue-500/15" iconColor="text-blue-400" />
+          {/* Live URL */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/70">
+              Live Project URL / Website
+            </label>
+            <div className="relative">
+              <Globe size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                className={`${inputCls} pl-10`}
+                type="url"
+                name="url"
+                value={formData.url}
+                onChange={handleChange}
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
 
+          {/* Description */}
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/70">
+              Project Description
+            </label>
+            <textarea
+              className={`${inputCls} min-h-20 resize-y`}
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Provide an overview of the demo project, features, and goals…"
+              rows={3}
+            />
+          </div>
+        </SectionCard>
+
+        {/* ── 2. Client Details ─────────────────────────────────────────── */}
+        <SectionCard icon={Building2} title="Client Details (From /admin/clients)">
           <div className="space-y-3" ref={clientDropdownRef}>
-            <label className="block text-sm font-medium text-white/60">
+            <label className="block text-xs font-semibold text-white/70">
               Select Client{' '}
-              <span className="text-white/40 text-xs">(Shows Client ID &amp; Name)</span>
+              <span className="text-white/40 text-[11px]">(Shows Client ID &amp; Name)</span>
             </label>
 
             {/* Dropdown Trigger */}
@@ -475,7 +496,7 @@ export default function AddDemoProject() {
 
               {/* Dropdown Panel */}
               {isClientDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-white/15 bg-[#12141c] shadow-2xl overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-white/15 bg-[#12141c] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                   {/* Search */}
                   <div className="p-3 border-b border-white/10 bg-[#161822]">
                     <div className="relative">
@@ -505,7 +526,7 @@ export default function AddDemoProject() {
                     {clientsLoading ? (
                       <div className="py-6 flex items-center justify-center gap-2 text-xs text-white/40">
                         <Loader2 size={14} className="animate-spin text-orange-400" />
-                        Loading clients…
+                        Loading clients from /admin/clients…
                       </div>
                     ) : filteredClients.length === 0 ? (
                       <div className="py-6 text-center text-xs text-white/40">
@@ -568,14 +589,12 @@ export default function AddDemoProject() {
               </div>
             )}
           </div>
-        </section>
+        </SectionCard>
 
-        {/* ── 3. Project Image ─────────────────────────────────────────── */}
-        <section className={sectionClass}>
-          <SectionHeader icon={ImageIcon} title="Project Showcase Image" iconBg="bg-amber-500/15" iconColor="text-amber-400" />
-
+        {/* ── 3. Project Image ──────────────────────────────────────────── */}
+        <SectionCard icon={ImageIcon} title="Project Showcase Image">
           <div className="space-y-3">
-            <label className="block text-sm font-medium text-white/60">
+            <label className="block text-xs font-semibold text-white/70">
               Upload Project Image / Screenshot
             </label>
 
@@ -621,76 +640,84 @@ export default function AddDemoProject() {
               </label>
             )}
           </div>
-        </section>
+        </SectionCard>
 
-        {/* ── 4. Technologies & Date ───────────────────────────────────── */}
-        <section className={sectionClass}>
-          <SectionHeader icon={Tag} title="Technologies & Date" iconBg="bg-emerald-500/15" iconColor="text-emerald-400" />
-
-          <div className="space-y-4">
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Technologies Used (Comma separated)</span>
-              <input
-                className={fieldClass}
-                type="text"
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                placeholder="e.g. React.js, Node.js, Tailwind CSS, MySQL"
-              />
+        {/* ── 4. Technologies & Date ────────────────────────────────────── */}
+        <SectionCard icon={Tag} title="Technologies & Date (Optional)">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/70">
+              Technologies Used (Comma separated)
             </label>
-
-            <label className="text-sm text-white/60">
-              <span className="mb-1.5 block font-medium">Completion Date</span>
-              <input
-                className={fieldClass}
-                type="date"
-                name="completion_date"
-                value={formData.completion_date}
-                onChange={handleChange}
-              />
-            </label>
+            <input
+              className={inputCls}
+              type="text"
+              value={techInput}
+              onChange={(e) => setTechInput(e.target.value)}
+              placeholder="e.g. React.js, Node.js, Tailwind CSS, MySQL"
+            />
           </div>
-        </section>
-      </form>
 
-      {/* ── Footer Actions ───────────────────────────────────────────────── */}
-      <div className="flex justify-end gap-3">
-        {!isEdit && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-white/70">
+              Completion Date
+            </label>
+            <input
+              className={inputCls}
+              type="date"
+              name="completion_date"
+              value={formData.completion_date}
+              onChange={handleChange}
+            />
+          </div>
+        </SectionCard>
+
+        {/* ── Footer Actions ────────────────────────────────────────────── */}
+        <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/10">
+          {!isEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(BLANK);
+                setTechInput('');
+                setSelectedImageFile(null);
+                setImagePreviewUrl('');
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
+            >
+              Reset
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => {
-              setFormData(BLANK);
-              setTechInput('');
-              setSelectedImageFile(null);
-              setImagePreviewUrl('');
-              setError('');
-              setSuccess('');
-            }}
+            onClick={() => navigate('/admin/demo-projects')}
             disabled={loading}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
+            className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
           >
-            Reset
+            Cancel
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => navigate('/admin/demo-projects')}
-          disabled={loading}
-          className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition disabled:opacity-40"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          form="demo-project-form"
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl px-8 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
-          style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
-        >
-          {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-          {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save Demo Project'}
-        </button>
-      </div>
+          <button
+            type="submit"
+            form="demo-project-form"
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl px-7 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 hover:opacity-90 active:scale-95 transition disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={15} className="animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Save size={15} />
+                {isEdit ? 'Save Changes' : 'Save Demo Project'}
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
