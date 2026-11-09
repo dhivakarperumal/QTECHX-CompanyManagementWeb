@@ -1,4 +1,3 @@
-import React from 'react';
 import { CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, FolderKanban, UserCog, FlaskConical } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
