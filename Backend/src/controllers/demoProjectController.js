@@ -22,16 +22,18 @@ function getUploadedFiles(req) {
     const relativePath = path.relative(uploadRoot, file.path).split(path.sep).join('/');
     return `/uploads/${relativePath}`;
   };
-  const fileFields = ['proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc', 'api_documentation', 'database_schema', 'source_code_backup', 'project_images'];
-  fileFields.forEach((field) => {
+
+  // Single-file document fields
+  const singleFields = [
+    'proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc',
+    'api_documentation', 'database_schema', 'source_code_backup',
+    'image', // new: single project showcase image
+  ];
+  singleFields.forEach((field) => {
     const files = req.files?.[field];
     if (!files?.length) return;
-    if (field === 'project_images') {
-      uploadedFiles[field] = files.map((file) => ({
-        original_name: file.originalname,
-        file_path: getFilePath(file),
-        asset_type: path.extname(file.originalname).toLowerCase() === '.zip' ? 'zip' : 'image',
-      }));
+    if (field === 'image') {
+      uploadedFiles[field] = getFilePath(files[0]);
     } else {
       uploadedFiles[field] = [{
         original_name: files[0].originalname,
@@ -40,6 +42,17 @@ function getUploadedFiles(req) {
       }];
     }
   });
+
+  // Multi-file field
+  const imageFiles = req.files?.['project_images'];
+  if (imageFiles?.length) {
+    uploadedFiles['project_images'] = imageFiles.map((file) => ({
+      original_name: file.originalname,
+      file_path: getFilePath(file),
+      asset_type: path.extname(file.originalname).toLowerCase() === '.zip' ? 'zip' : 'image',
+    }));
+  }
+
   return uploadedFiles;
 }
 
@@ -57,11 +70,13 @@ async function createDemoProjectHandler(req, res) {
     const hasAgreementFile = Boolean(uploadedFiles.agreement_doc);
     const agreementUploaded = hasAgreementFile || req.body.agreement_uploaded === 'Yes' ? 'Yes' : 'No';
 
-    // Flatten file paths for single-file fields
+    // Flatten file paths for single-file document fields
     const flatFiles = {};
     Object.entries(uploadedFiles).forEach(([field, value]) => {
       if (field === 'project_images') {
         flatFiles[field] = JSON.stringify(value);
+      } else if (field === 'image') {
+        flatFiles[field] = value; // already a string path
       } else if (Array.isArray(value) && value.length > 0) {
         flatFiles[field] = value[0];
       }
@@ -153,6 +168,7 @@ async function updateDemoProjectHandler(req, res) {
     }
     const uploadedFiles = getUploadedFiles(req);
     const allowed = [
+      // legacy fields (kept for backwards compatibility)
       'project_code','project_name','short_name','project_category','industry',
       'description','objective','business_requirements',
       'client_name','company_name','contact_person','email','phone_number',
@@ -166,6 +182,8 @@ async function updateDemoProjectHandler(req, res) {
       'ui_progress','frontend_progress','backend_progress','testing_progress','deployment_progress',
       'proposal_doc','quotation_doc','agreement_doc','nda_doc',
       'api_documentation','database_schema','source_code_backup','project_images',
+      // new fields (same as completed projects)
+      'url', 'image', 'technologies', 'completion_date', 'client_id', 'client_details',
     ];
     const updates = {};
     allowed.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
@@ -174,6 +192,8 @@ async function updateDemoProjectHandler(req, res) {
     Object.entries(uploadedFiles).forEach(([field, value]) => {
       if (field === 'project_images') {
         updates[field] = JSON.stringify(value);
+      } else if (field === 'image') {
+        updates[field] = value; // already a string path
       } else if (Array.isArray(value) && value.length > 0) {
         updates[field] = value[0];
       }

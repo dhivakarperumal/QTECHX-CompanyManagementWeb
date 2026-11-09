@@ -58,12 +58,32 @@ async function createDemoProjectsTableIfNotExists() {
       database_schema TEXT,
       source_code_backup TEXT,
       project_images LONGTEXT,
+      url VARCHAR(500),
+      image TEXT,
+      technologies JSON,
+      completion_date DATE,
+      client_id INT,
+      client_details JSON,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       created_by VARCHAR(100),
       updated_by VARCHAR(100)
     )
   `);
+
+  // ─── Safe migration: add new columns to existing tables ────────────────
+  const alterations = [
+    'ALTER TABLE demo_projects ADD COLUMN url VARCHAR(500)',
+    'ALTER TABLE demo_projects ADD COLUMN image TEXT',
+    'ALTER TABLE demo_projects ADD COLUMN technologies JSON',
+    'ALTER TABLE demo_projects ADD COLUMN completion_date DATE',
+    'ALTER TABLE demo_projects ADD COLUMN client_id INT',
+    'ALTER TABLE demo_projects ADD COLUMN client_details JSON',
+  ];
+  for (const sql of alterations) {
+    try { await db.execute(sql); } catch (_) { /* column already exists — safe to ignore */ }
+  }
+
   console.log('[demoProjectModel] demo_projects table ready.');
 }
 
@@ -83,6 +103,7 @@ const demoProjectFields = [
   'ui_progress', 'frontend_progress', 'backend_progress', 'testing_progress', 'deployment_progress',
   'proposal_doc', 'quotation_doc', 'agreement_doc', 'nda_doc',
   'api_documentation', 'database_schema', 'source_code_backup', 'project_images',
+  'url', 'image', 'technologies', 'completion_date', 'client_id', 'client_details',
   'created_at', 'updated_at', 'created_by', 'updated_by',
 ].join(', ');
 
@@ -150,6 +171,17 @@ async function createDemoProject(data) {
     database_schema: data.database_schema || null,
     source_code_backup: data.source_code_backup || null,
     project_images: data.project_images || null,
+    // ── New fields (same as completed projects) ──
+    url: data.url || null,
+    image: data.image || null,
+    technologies: data.technologies
+      ? (typeof data.technologies === 'string' ? data.technologies : JSON.stringify(data.technologies))
+      : null,
+    completion_date: data.completion_date || null,
+    client_id: data.client_id ? parseInt(data.client_id, 10) : null,
+    client_details: data.client_details
+      ? (typeof data.client_details === 'string' ? data.client_details : JSON.stringify(data.client_details))
+      : null,
     created_at: data.created_at || new Date().toISOString(),
     updated_at: data.updated_at || new Date().toISOString(),
     created_by: data.created_by || null,

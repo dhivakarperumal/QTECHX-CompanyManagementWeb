@@ -18,6 +18,7 @@ const admins   = authorize('Super Admin', 'Admin');
 const allStaff = authorize('Super Admin', 'Admin', 'Manager', 'Staff', 'Employee');
 
 const uploadFields = upload.fields([
+  { name: 'image',              maxCount: 1 }, // new: single showcase image
   { name: 'proposal_doc',       maxCount: 1 },
   { name: 'quotation_doc',      maxCount: 1 },
   { name: 'agreement_doc',      maxCount: 1 },
