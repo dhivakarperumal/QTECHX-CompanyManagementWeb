@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, FolderKanban, UserCog } from 'lucide-react';
+import { CalendarDays, BriefcaseBusiness, ArrowRight, FileText, ClipboardList, FolderKanban, UserCog, FlaskConical } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 
@@ -67,6 +67,13 @@ const AdminSettingsPage = () => {
       icon: ClipboardList,
       path: '/admin/settings/service-requests',
       accent: 'from-orange-500/20 to-rose-600/10',
+    },
+    {
+      title: 'Demo Projects',
+      description: 'Manage demo projects showcased on the website.',
+      icon: FlaskConical,
+      path: '/admin/demo-projects',
+      accent: 'from-purple-500/20 to-indigo-600/10',
     },
   ];
 
