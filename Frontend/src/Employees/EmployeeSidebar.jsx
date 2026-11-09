@@ -354,24 +354,42 @@ const EmployeeSidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           />
         </button>
 
-        {/* ========== BOTTOM USER STRIP ========== */}
-        {!collapsed && (
-          <div className="px-3 py-3 border-t border-white/10 shrink-0">
-            <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {(userProfile?.displayName?.[0] || "E").toUpperCase()}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-white truncate">
-                  {userProfile?.displayName || "Employee"}
-                </p>
-                <p className="text-[10px] text-white/40 truncate">
-                  {userProfile?.role || "Staff"}
-                </p>
+        {/* ========== SIDEBAR FOOTER ========== */}
+        <div className="px-3 py-3 border-t border-white/10 shrink-0 space-y-2">
+          <NavLink
+            to="/"
+            end
+            title={collapsed ? "Back Home" : ""}
+            onClick={() => isOpen && onClose()}
+            className={`
+              flex items-center gap-3 px-3 py-3.5 rounded-xl text-sm
+              text-white/60 hover:text-white hover:bg-white/8
+              transition-all duration-200
+              ${collapsed ? "justify-center" : ""}
+            `}
+          >
+            <Home className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && <span className="font-medium">Back Home</span>}
+          </NavLink>
+
+          {!collapsed && (
+            <div className="px-2 py-2 rounded-xl bg-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {(userProfile?.displayName?.[0] || "E").toUpperCase()}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {userProfile?.displayName || "Employee"}
+                  </p>
+                  <p className="text-[10px] text-white/40 truncate">
+                    {userProfile?.role || "Staff"}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>
   );

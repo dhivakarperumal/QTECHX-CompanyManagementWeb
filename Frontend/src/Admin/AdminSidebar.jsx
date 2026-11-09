@@ -474,24 +474,42 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           />
         </button>
 
-        {/* ========== BOTTOM USER STRIP ========== */}
-        {!collapsed && (
-          <div className="px-3 py-4 border-t border-white/10 shrink-0">
-            <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-white/5 border border-white/10 shadow-inner shadow-black/10">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                {(userProfile?.displayName?.[0] || "A").toUpperCase()}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-white truncate">
-                  {userProfile?.displayName || "Administrator"}
-                </p>
-                <p className="text-[10px] text-white/50 truncate">
-                  {userProfile?.role || "Super Admin"}
-                </p>
+        {/* ========== SIDEBAR FOOTER ========== */}
+        <div className="px-3 py-3 border-t border-white/10 shrink-0 space-y-2">
+          <NavLink
+            to="/"
+            end
+            title={collapsed ? "Back Home" : ""}
+            onClick={() => isOpen && onClose()}
+            className={`
+              flex items-center gap-3 px-3 py-3 rounded-2xl text-sm
+              text-white/60 hover:text-white hover:bg-white/10
+              transition-all duration-200
+              ${collapsed ? "justify-center" : ""}
+            `}
+          >
+            <Home className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && <span className="font-medium truncate">Back Home</span>}
+          </NavLink>
+
+          {!collapsed && (
+            <div className="px-3 py-3 rounded-2xl bg-white/5 border border-white/10 shadow-inner shadow-black/10">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {(userProfile?.displayName?.[0] || "A").toUpperCase()}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {userProfile?.displayName || "Administrator"}
+                  </p>
+                  <p className="text-[10px] text-white/50 truncate">
+                    {userProfile?.role || "Super Admin"}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>
   );
