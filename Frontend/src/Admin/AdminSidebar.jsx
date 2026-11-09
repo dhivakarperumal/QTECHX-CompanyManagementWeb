@@ -38,7 +38,6 @@ import {
   AlertCircle,
   XCircle,
   Mail,
-  FlaskConical,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -78,7 +77,6 @@ const navItems = [
     children: [
       { path: "/admin/projects", label: "All Projects", icon: FolderKanban },
       { path: "/admin/projects/assignments", label: "Assigned Projects", icon: UserCheck },
-      { path: "/admin/demo-projects", label: "Demo Projects", icon: FlaskConical },
     ],
   },
 
